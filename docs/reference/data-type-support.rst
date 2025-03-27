@@ -15,7 +15,7 @@ The ``hipDataType`` enumeration defines data precision types and is primarily
 used when the data reference itself does not include type information, such as
 in ``void*`` pointers. This enumeration is mainly utilized in BLAS libraries.
 
-The input and output types map listed in the following table.
+The hipBLASLt input and output types listed in the following table.
 
 .. list-table::
     :header-rows: 1
@@ -60,8 +60,7 @@ The input and output types map listed in the following table.
       - ``hipblasLtFloat``
       - 32-bit real single precision floating-point
 
-The compute types map listed in the following table.
-
+The hipBLASLt compute modes listed in the following table.
 
 .. list-table::
     :header-rows: 1
@@ -91,12 +90,12 @@ The compute types map listed in the following table.
       - Enables the library to utilize Tensor Cores with 32-bit float computation for matrices with 16-bit half precision input and output.
 
     * 
-      - ``HIPBLAS_COMPUTE_32F_FAST_TF32``
-      - Enables the library to utilize Tensor Cores with TF32 computation for matrices with 32-bit input and output.
-
-    * 
       - ``HIPBLAS_COMPUTE_32F_FAST_16BF``
       - Enables the library to utilize Tensor Cores with 32-bit float computation for matrices with 16-bit bfloat16 precision input and output.
+
+    * 
+      - ``HIPBLAS_COMPUTE_32F_FAST_TF32``
+      - Enables the library to utilize Tensor Cores with TF32 computation for matrices with 32-bit input and output.
 
 
 hipBLASLt GEMM operation equation:
