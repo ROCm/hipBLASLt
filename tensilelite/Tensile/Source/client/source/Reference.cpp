@@ -398,11 +398,7 @@ namespace TensileLite
         {
             // Only cast to float in BFloat16
             constexpr bool needCast = std::is_same<BFloat16, T>();
-#ifndef _WIN32
             using castT             = std::conditional_t<needCast, float, T>;
-#else
-            using castT = float;  //temp WA
-#endif
             const auto isForAll = activationType == ActivationType::All
                                   || activationType == ActivationType::Hipblaslt_all;
             auto new_type = isForAll ? activationType2 : activationType;
