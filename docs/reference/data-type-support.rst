@@ -15,7 +15,7 @@ The ``hipDataType`` enumeration defines data precision types and is primarily
 used when the data reference itself does not include type information, such as
 in ``void*`` pointers. This enumeration is mainly utilized in BLAS libraries.
 
-The hipBLASLt input and output types listed in the following table.
+The hipBLASLt input and output types are listed in the following table.
 
 .. list-table::
     :header-rows: 1
@@ -60,7 +60,7 @@ The hipBLASLt input and output types listed in the following table.
       - ``hipblasLtFloat``
       - 32-bit real single precision floating-point
 
-The hipBLASLt compute modes listed in the following table.
+The hipBLASLt compute modes are listed in the following table.
 
 .. list-table::
     :header-rows: 1
