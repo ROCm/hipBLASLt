@@ -182,9 +182,9 @@ install_packages( )
   fi
 
   if [[ "${use_rocroller}" == true ]]; then
-    library_dependencies_ubuntu+=( "rocm-llvm-dev" "libboost-container1.74-dev" "libzstd-dev" "libopenblas-dev" )
-    library_dependencies_centos8+=( "rocm-llvm-devel" "boost-container" "zstd" "openblas-devel" )
-    library_dependencies_sles+=( "rocm-llvm-devel" "libboost_container-devel" "zstd" "openblas-devel" )
+    library_dependencies_ubuntu+=( "rocm-llvm-dev" "libzstd-dev" )
+    library_dependencies_centos8+=( "rocm-llvm-devel" "zstd" )
+    library_dependencies_sles+=( "rocm-llvm-devel" "zstd" )
   fi
 
   if [[ "${legacy_hipblas_direct}" == false ]]; then

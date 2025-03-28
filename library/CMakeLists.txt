@@ -30,6 +30,8 @@ if(BUILD_VERBOSE)
   include(../cmake/Verbose.cmake)
 endif()
 
+include(../cmake/Utilities.cmake)
+
 # Configure a header file to pass the hipBLASLt version
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
                "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h"
@@ -167,16 +169,22 @@ endif()
 # RocRoller integration
 include(FetchContent)
 if(USE_ROCROLLER)
-  set(BUILD_TESTING OFF CACHE BOOL "Disable RocRoller tests")
+  _save_var(BUILD_TESTING)
+  set(BUILD_CLIENTS OFF)
+  _save_var(BUILD_CLIENTS)
+  set(BUILD_TESTING OFF)
+
   FetchContent_Declare(
     rocRoller
     GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
-    GIT_TAG 61ba530e12270020b086da1a467d38b697aa2890
+    GIT_TAG 04c171bdf7e6fcb8edfcf4fbef511043eb4f6913
   )
   FetchContent_MakeAvailable(rocRoller)
-
   target_link_libraries(hipblaslt PRIVATE rocroller_interface)
   add_definitions(-DUSE_ROCROLLER)
+
+  _restore_var(BUILD_TESTING)
+  _restore_var(BUILD_CLIENTS)
 endif()
 
 # Target properties

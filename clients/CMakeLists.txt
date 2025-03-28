@@ -114,9 +114,19 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       ../common/hipblaslt_init_device.cpp
       ${BLIS_CPP}
     )
-
+    
+  # RocRoller integration
+  include(FetchContent)
   if(USE_ROCROLLER)
       add_definitions(-DUSE_ROCROLLER)
+
+      FetchContent_Declare(
+        mxDataGenerator
+        GIT_REPOSITORY https://github.com/ROCm/mxDataGenerator.git
+        GIT_TAG 7a9778977f19111d3b9fc4497758df4aaa8165c5
+      )
+      FetchContent_MakeAvailable(mxDataGenerator)
+
       list( APPEND COMMON_LINK_LIBS mxDataGenerator )
       set( mxDataGen_SRC
        ../common/mxDataGen.cpp
