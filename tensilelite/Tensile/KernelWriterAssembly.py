@@ -3830,24 +3830,20 @@ class KernelWriterAssembly(KernelWriter):
             comment="lwFOB = lwB%s + lwB%s*MT%s + LDS_OFFSET_METADATA=%u" % (tP["tileChar"], \
             self.states.unrollChar, tP["tileChar"], kernel["LdsOffsetMetadata"])))
 
+    numLwa = 0;
     if tP["isA"]:
-      if self.states.a.numVgprLocalReadAddr > 1:
-        finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
-        module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr(destVgpr), \
-            comment="Final Offset Plus 64K" ))
-      if self.states.a.numVgprLocalReadAddr > 2:
-        finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
-        module.add(VAddU32(dst=finalVgpr128K, src0= 0x20000, src1= vgpr(destVgpr), \
-            comment="Final Offset Plus 128K" ))
-    else:
-      if self.states.b.numVgprLocalReadAddr > 1:
-        finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
-        module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr(destVgpr), \
-            comment="Final Offset Plus 64K" ))
-      if self.states.b.numVgprLocalReadAddr > 2:
-        finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
-        module.add(VAddU32(dst=finalVgpr128K, src0= 0x20000, src1= vgpr(destVgpr), \
-            comment="Final Offset Plus 128K" ))
+      numLwa = self.states.a.numVgprLocalWriteAddr
+    elif tP["isB"]:
+      numLwa = self.states.b.numVgprLocalWriteAddr
+
+    if numLwa > 1:
+      finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
+      module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr(destVgpr), \
+                         comment="Final Offset Plus 64K" ))
+    if numLwa > 2:
+      finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
+      module.add(VAddU32(dst=finalVgpr128K, src0= 0x20000, src1= vgpr(destVgpr), \
+                         comment="Final Offset Plus 128K" ))
 
     #LSC_ * LSP_
     numBytesPerElement = kernel["ProblemType"]["DataType"].numBytes()
@@ -8416,8 +8412,15 @@ class KernelWriterAssembly(KernelWriter):
       if internalPointerSwap or kernel["StoreSwapAddr"]:
 
         if not kernel["StoreSwapAddr"]:
-          tP["localWriteSwapByteOffset"] = 0 if tP["localWriteSwapByteOffset"] else kernel["LdsOffsetA_Blk"]
-          module.addComment1("(EPS=1) local write swap internal offset -> %u" % tP["localWriteSwapByteOffset"])
+          if kernel["LocalWriteUseSgpr%s"%tc]:
+            module.add(SXorB32(
+              dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              src0=hex(kernel["LdsOffsetA_Blk"]), \
+              src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="swap Red Blk SGPR"))
+          else:
+            tP["localWriteSwapByteOffset"] = 0 if tP["localWriteSwapByteOffset"] else kernel["LdsOffsetA_Blk"]
+            module.addComment1("(EPS=1) local write swap internal offset -> %u" % tP["localWriteSwapByteOffset"])
         else:
           if kernel["LocalWriteUseSgpr%s"%tc]:
             module.add(SXorB32(
@@ -8465,7 +8468,14 @@ class KernelWriterAssembly(KernelWriter):
                 src1=sgpr("LocalWriteAddr%s"%tPM["tensorChar"]), \
                 comment="swap Red Blk SGPR"))
           else:
-            numLwa = self.states.m.numVgprLocalWriteAddr
+            numLwa = 0;
+            if tP["isA"]:
+              numLwa = self.states.a.numVgprLocalWriteAddr
+            elif tP["isB"]:
+              numLwa = self.states.b.numVgprLocalWriteAddr
+            elif tc == "MetaData":
+              numLwa = self.states.m.numVgprLocalWriteAddr
+
             for i in range(0,numLwa):
               module.add(VXorB32(
                   dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
@@ -8546,29 +8556,26 @@ class KernelWriterAssembly(KernelWriter):
         if internalPointerSwap:
           tPM["localWriteSwapByteOffset"] = 0
         else:
-          module.add(VAndB32(
+          numVgprLocalWriteAddr = 0;
+          if tP["isA"]:
+            numVgprLocalWriteAddr = self.states.a.numVgprLocalWriteAddr
+          elif tP["isB"]:
+            numVgprLocalWriteAddr = self.states.b.numVgprLocalWriteAddr
+
+          if numVgprLocalWriteAddr > 0:
+            module.add(VAndB32(
               dst=vgpr("LocalWriteAddr%s"%tPM["tensorChar"]), \
               src0=resetMask, \
               src1=vgpr("LocalWriteAddr%s"%tPM["tensorChar"]), \
               comment="reset to Red"))
-          if tP["isA"]:
-            if self.states.a.numVgprLocalWriteAddr > 1:
-              finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
-              module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-                comment="Final Offset Plus 64K" ))
-            if self.states.a.numVgprLocalWriteAddr > 2:
-              finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
-              module.add(VAddU32(dst=finalVgpr128K, src0=0x20000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-                comment="Final Offset Plus 128K" ))
-          else:
-            if self.states.b.numVgprLocalWriteAddr > 1:
-              finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
-              module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-                comment="Final Offset Plus 64K" ))
-            if self.states.b.numVgprLocalWriteAddr > 2:
-              finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
-              module.add(VAddU32(dst=finalVgpr128K, src0=0x20000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-                comment="Final Offset Plus 128K" ))
+          if numVgprLocalWriteAddr > 1:
+            finalVgpr64K = vgpr("LocalWriteAddr%s+1"%tc)
+            module.add(VAddU32(dst=finalVgpr64K, src0=0x10000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+                               comment="Final Offset Plus 64K" ))
+          if numVgprLocalWriteAddr > 2:
+            finalVgpr128K = vgpr("LocalWriteAddr%s+2"%tc)
+            module.add(VAddU32(dst=finalVgpr128K, src0=0x20000, src1= vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+                               comment="Final Offset Plus 128K" ))
     return module
 
   ##############################################################################
