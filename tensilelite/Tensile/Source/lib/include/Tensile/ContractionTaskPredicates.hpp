@@ -66,13 +66,8 @@ namespace TensileLite
 
                 virtual bool operator()(Task const& task) const override
                 {
-                    const bool streamK = Debug::Instance().useExperimentalSelection() == 2;
-                    const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
-
                     if(task.problem.groupedGemm())
                         return task.problem.workspaceSizeGroupedGemm() <= task.problem.workspaceSize();
-                    else if(streamK && streamKDP)
-                        return true;
                     else
                         return task.solution.requiredWorkspaceSize(task.problem, task.hardware) <= task.problem.workspaceSize();
                 }

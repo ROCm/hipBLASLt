@@ -1257,12 +1257,7 @@ namespace TensileLite
             assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
             if(sizeMapping.streamK != 0)
             {
-                const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
-                if(streamKDP)
-                    skGrid = tiles;
-                    //TODO Use heuristic to decide fallback to reduced grid instead of DP
-                else
-                    skGrid = getSKGrid(problem, hardware, tiles);
+                skGrid = getSKGrid(problem, hardware, tiles);
                 rv.numWorkGroups.x = skGrid;
                 rv.numWorkGroups.y = 1;
                 rv.numWorkGroups.z = 1;
@@ -2142,9 +2137,15 @@ namespace TensileLite
         Task task(hardware, problem, *this);
         if(debug)
         {
+            std::cout << "hardwarePredicate:" << std::endl;
             hardwarePredicate->debugEval(hardware, std::cout);
+            std::cout << std::endl;
+            std::cout << "problemPredicate:" << std::endl;
             problemPredicate->debugEval(problem, std::cout);
+            std::cout << std::endl;
+            std::cout << "taskPredicate:" << std::endl;
             taskPredicate->debugEval(task, std::cout);
+            std::cout << std::endl;
         }
         return (*taskPredicate)(task) && (*problemPredicate)(problem)
                && (*hardwarePredicate)(hardware);
@@ -3034,10 +3035,11 @@ namespace TensileLite
 
         if(sizeMapping.streamK > 0 && sizeMapping.streamKAtomic == 0)
         {
+            const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
             auto   tiles  = problem.getNumTiles(sizeMapping);
             size_t skGrid = getSKGrid(problem, hardware, tiles);
             // Get space required for partial tiles
-            if(tiles % skGrid != 0)
+            if(tiles % skGrid != 0 && !streamKDP)
                 size += partialTileSize(skGrid);
         }
         else
@@ -3131,6 +3133,10 @@ namespace TensileLite
                                           Hardware const& hardware,
                                           size_t          tiles) const
     {
+        const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
+        if(streamKDP)
+            return tiles;
+
         // If K==0, run kernel as DP with Alpha=0 to skip main loop and apply beta*c
         size_t z = 1;
         for(size_t i = 0; i < problem.boundIndices().size(); ++i)
