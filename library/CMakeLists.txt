@@ -169,22 +169,28 @@ endif()
 # RocRoller integration
 include(FetchContent)
 if(USE_ROCROLLER)
-  _save_var(BUILD_TESTING)
-  set(BUILD_CLIENTS OFF)
-  _save_var(BUILD_CLIENTS)
-  set(BUILD_TESTING OFF)
+  find_package(Boost REQUIRED)
+  if(Boost_VERSION VERSION_GREATER_EQUAL "1.74.0")
+    _save_var(BUILD_TESTING)
+    set(BUILD_CLIENTS OFF)
+    _save_var(BUILD_CLIENTS)
+    set(BUILD_TESTING OFF)
 
-  FetchContent_Declare(
-    rocRoller
-    GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
-    GIT_TAG 04c171bdf7e6fcb8edfcf4fbef511043eb4f6913
-  )
-  FetchContent_MakeAvailable(rocRoller)
-  target_link_libraries(hipblaslt PRIVATE rocroller_interface)
-  add_definitions(-DUSE_ROCROLLER)
+    FetchContent_Declare(
+      rocRoller
+      GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
+      GIT_TAG 04c171bdf7e6fcb8edfcf4fbef511043eb4f6913
+    )
+    FetchContent_MakeAvailable(rocRoller)
+    target_link_libraries(hipblaslt PRIVATE rocroller_interface)
+    add_definitions(-DUSE_ROCROLLER)
 
-  _restore_var(BUILD_TESTING)
-  _restore_var(BUILD_CLIENTS)
+    _restore_var(BUILD_TESTING)
+    _restore_var(BUILD_CLIENTS)
+  else()
+    message(WARNING "Boost version ${Boost_VERSION} too old, not building RocRoller")
+    set(USE_ROCROLLER OFF)
+  endif()
 endif()
 
 # Target properties
