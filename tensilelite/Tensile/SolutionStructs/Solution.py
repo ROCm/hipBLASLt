@@ -1608,6 +1608,10 @@ class Solution(collections.abc.Mapping):
               optPadA *= 2
             if readRegsB == 4 or readRegsB == 1:
               optPadB *= 2
+        if state["DirectToLdsA"] and ldsPadA == -1:
+          ldsPadA = lrvw
+        if state["DirectToLdsB"] and ldsPadB == -1:
+          ldsPadB = lrvw
         if ldsPadA == -1:
           if not state["UnrollMajorLDSA"]:
             if state["EnableMatrixInstruction"]:
