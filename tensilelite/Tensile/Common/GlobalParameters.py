@@ -28,6 +28,7 @@ import os.path
 import subprocess
 import sys
 import time
+import shutil
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Dict
@@ -287,6 +288,7 @@ globalParameters["AsmDebug"] = (
 )
 
 globalParameters["UseEffLike"] = True  # Set to False to use winnerGFlops as the performance metric
+globalParameters["MakeProgram"] = None
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 # we should do this here...
@@ -539,8 +541,13 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
     if "TENSILE_ROCM_PATH" in os.environ:
         globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
-    if os.name == "nt" and "HIP_DIR" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("HIP_DIR")  # windows has no ROCM
+    if os.name == "nt":
+        possibleHipPaths = ('HIP_DIR', 'HIP_PATH',)
+
+        for p in possibleHipPaths:
+            if p in os.environ:
+                globalParameters["ROCmPath"] = os.environ.get(p) # windows has no ROCM
+                break # use the first non-null one
     globalParameters["CmakeCxxCompiler"] = None
     if "CMAKE_CXX_COMPILER" in os.environ:
         globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
@@ -548,7 +555,8 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
     globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
-    globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
+    if os.name != "nt":
+        globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
     globalParameters["ROCmLdPath"] = locateExe(
         os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
     )
@@ -579,10 +587,16 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     # The following try except block computes the hipcc version
     # TODO: hipcc is deprecated, this block should be removed.
     try:
-        compiler = "hipcc"
-        output = subprocess.run(
-            [compiler, "--version"], check=True, stdout=subprocess.PIPE
-        ).stdout.decode()
+        if os.name == "nt":
+            os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
+            compiler = os.environ.get("HIP_PATH") + '/bin/hipcc'
+            compileArgs = ['perl'] + [compiler] + ['--version']
+            output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
+        else:
+            compiler = "hipcc"
+            output = subprocess.run(
+                [compiler, "--version"], check=True, stdout=subprocess.PIPE
+            ).stdout.decode()
 
         for line in output.split("\n"):
             if "HIP version" in line:

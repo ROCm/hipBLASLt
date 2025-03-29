@@ -270,6 +270,7 @@ typedef enum rocblaslt_status_
  *
  *  \details
  */
+#if (HIP_VERSION_MAJOR >= 6)
 typedef enum rocblaslt_compute_type_
 {
     rocblaslt_compute_f16          = 0, /**< 16-bit floating-point precision. */
@@ -298,6 +299,15 @@ typedef enum rocblaslt_compute_type_
     rocblaslt_compute_f32_fast_bf8f8
     = 107, /**< 32-bit input can use bf8 for A and fp8 for B compute */
 } rocblaslt_compute_type;
+#else
+typedef enum rocblaslt_compute_type_
+{
+    rocblaslt_compute_f32           = 151, /**< 32-bit floating-point precision. */
+    rocblaslt_compute_f64           = 152, /**< 64-bit floating-point precision. */
+    rocblaslt_compute_i32           = 166, /**< 32-bit floating-point precision. */
+    rocblaslt_compute_f32_fast_xf32 = 167
+} rocblaslt_compute_type;
+#endif
 
 /*! \ingroup types_module
  *  \brief Specify the additional attributes of a matrix descriptor

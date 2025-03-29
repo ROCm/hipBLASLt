@@ -59,12 +59,17 @@
 #include <type_traits>
 #include <vector>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#else
+#include <link.h>
 #include <glob.h>
 #include <libgen.h>
-#include <link.h>
+#include <unistd.h>
+#endif
 #include <regex>
 #include <string_view>
-#include <unistd.h>
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/lib"
 
@@ -73,6 +78,18 @@
 #endif
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
+
+#ifdef _WIN32
+#if __has_include(<filesystem>)
+#include <filesystem>
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#error no filesystem found
+#endif
+#endif
 
 namespace
 {
@@ -1700,7 +1717,7 @@ namespace
         void initialize(TensileLite::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
             std::string path;
-#ifndef WIN32
+#ifndef _WIN32
             path.reserve(PATH_MAX);
 #endif
 
@@ -1722,15 +1739,31 @@ namespace
                 // Fall back on hard-coded path if static library or not found
 
 #ifndef HIPBLASLT_STATIC_LIB
+#ifdef _WIN32
+                std::vector<TCHAR> dll_path(MAX_PATH + 1);
+                if(GetModuleFileNameA(
+                       GetModuleHandleA("hipblaslt.dll"), dll_path.data(), MAX_PATH + 1))
+                {
+                    std::string tmp(dll_path.begin(), dll_path.end());
+                    std::filesystem::path exepath = tmp;
+                    if(exepath.has_filename())
+                    {
+                        path = exepath.remove_filename().string();
+                    }
+                }
+#else
                 auto hipblaslt_so_path = getHipblasltSoPath();
 
                 if(hipblaslt_so_path.size())
                     path = std::string{dirname(&hipblaslt_so_path[0])};
+#endif
 #endif // ifndef HIPBLASLT_STATIC_LIB
 
                 // Find the location of the libraries
                 if(TestPath(path + "/../Tensile/library"))
                     path += "/../Tensile/library";
+                else if(TestPath(path + "/../../Tensile/library"))
+                    path += "/../../Tensile/library";
                 else if(TestPath(path + "library"))
                     path += "/library";
                 else
@@ -1747,7 +1780,7 @@ namespace
             auto dir = path + "/*" + processor + "*co";
 #if ROCBLASLT_TENSILE_LAZY_LOAD == 0
             bool no_match = false;
-#ifdef WIN32
+#ifdef _WIN32
             std::replace(dir.begin(), dir.end(), '/', '\\');
             WIN32_FIND_DATAA finddata;
             HANDLE           hfine = FindFirstFileA(dir.c_str(), &finddata);

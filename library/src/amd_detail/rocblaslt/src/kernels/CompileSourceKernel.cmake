@@ -21,6 +21,12 @@
 # SOFTWARE.
 #
 ################################################################################
+if(WIN32)
+    SET(clang_path "${ROCM_PATH}\\bin\\clang++.exe")
+else()
+    SET(clang_path "${ROCM_PATH}/bin/amdclang++")
+endif()
+
 function(CompileSourceKernel source archs buildIdKind outputFolder)
     message("Setup source kernel targets")
     string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${archs}")
@@ -31,6 +37,6 @@ function(CompileSourceKernel source archs buildIdKind outputFolder)
                       DEPENDS ${outputFolder}/hipblasltTransform.hsaco
                       VERBATIM)
     add_custom_command(OUTPUT ${outputFolder}/hipblasltTransform.hsaco
-                       COMMAND bash  ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco
+                       COMMAND bash  ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/compile_code_object.sh ${source} ${archs} ${CMAKE_BUILD_TYPE} ${buildIdKind} ${outputFolder}/hipblasltTransform.hsaco ${clang_path}
                        COMMENT "Compiling source kernels")
 endfunction()

@@ -23,7 +23,7 @@
 ################################################################################
 
 import subprocess
-
+import threading
 from functools import lru_cache
 from typing import List, Dict
 
@@ -46,6 +46,8 @@ def _tryAssembler(
 
     if isaVersion[0] >= 10:
         options += ["-mwavefrontsize64"]
+        options += ['-o']
+        options += [str(threading.get_ident())]
 
     args = [
         str(assemblerPath),

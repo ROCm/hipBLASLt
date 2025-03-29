@@ -1,0 +1,10 @@
+# rmake
+psutil
+# hipblaslt clients use
+pyyaml
+# tensilelite related
+msgpack
+six
+wheel
+virtualenv
+joblib

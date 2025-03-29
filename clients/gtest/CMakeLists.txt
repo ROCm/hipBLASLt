@@ -62,6 +62,11 @@ target_include_directories( hipblaslt-test
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
 target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipblaslt )
 
+if(WIN32)
+  find_package(lapack REQUIRED)
+  target_link_libraries( hipblaslt-test PRIVATE ${LAPACK_LIBRARIES})
+endif()
+
 if( NOT BUILD_CUDA )
   target_link_libraries( hipblaslt-test PRIVATE hip::host hip::device )
 else()
@@ -84,18 +89,22 @@ target_compile_definitions( hipblaslt-test PRIVATE ROCM_USE_FLOAT16 HIPBLASLT_IN
 target_compile_options(hipblaslt-test PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COMMON_CXX_OPTIONS}>)
 # target_compile_options does not go to linker like CMAKE_CXX_FLAGS does, so manually add
 
-if (BUILD_CUDA)
-  target_link_libraries( hipblaslt-test PRIVATE -llapack -lcblas )
-else()
-  target_link_libraries( hipblaslt-test PRIVATE lapack cblas )
-endif()
+if (NOT WIN32)
+  if (BUILD_CUDA)
+    target_link_libraries( hipblaslt-test PRIVATE -llapack -lcblas )
+  else()
+    target_link_libraries( hipblaslt-test PRIVATE lapack cblas )
+  endif()
 
-list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
+  list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
-if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
-  list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU")
+    list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+  else()
+    list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
+  endif()
 else()
-  list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
+  list( APPEND COMMON_LINK_LIBS "libomp")
 endif()
 
 #if (NOT WIN32)
@@ -109,6 +118,23 @@ endif()
 #endif()
 
 target_link_libraries( hipblaslt-test PRIVATE ${COMMON_LINK_LIBS} )
+
+if (WIN32)
+  # for now adding in all .dll as dependency chain is not cmake based on win32
+  file( GLOB third_party_dlls
+    LIST_DIRECTORIES OFF
+    CONFIGURE_DEPENDS
+    ${OPENBLAS_DIR}/bin/*.dll
+    ${HIP_DIR}/bin/amd*.dll
+    ${HIP_DIR}/bin/hiprt*.dll
+    ${HIP_DIR}/bin/hipinfo.exe
+    ${CMAKE_SOURCE_DIR}/rtest.*
+    C:/Windows/System32/libomp140*.dll
+  )
+  foreach( file_i ${third_party_dlls})
+    add_custom_command( TARGET hipblaslt-test POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy ${file_i} ${PROJECT_BINARY_DIR}/staging/ )
+  endforeach( file_i )
+endif()
 
 set_target_properties( hipblaslt-test PROPERTIES
   IMPORT_PREFIX ""

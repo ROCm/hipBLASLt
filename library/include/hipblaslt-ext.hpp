@@ -418,8 +418,13 @@ namespace hipblaslt_ext
     {
     public:
         HIPBLASLT_EXPORT virtual ~GemmInstance(){};
+#ifdef _WIN32
+        GemmInstance(const GemmInstance& rhs) = delete;
+        GemmInstance& operator=(const GemmInstance& rhs) = delete;
+#else
         HIPBLASLT_EXPORT GemmInstance(const GemmInstance& rhs) = delete;
         HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs) = delete;
+#endif
         HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
         HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
@@ -764,10 +769,15 @@ namespace hipblaslt_ext
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
 
+#ifdef _WIN32
+        Gemm(const Gemm&) = delete;
+        Gemm& operator=(const Gemm&) = delete;
+#else
         HIPBLASLT_EXPORT Gemm(const Gemm&) = delete;
-        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
         HIPBLASLT_EXPORT Gemm& operator=(const Gemm&) = delete;
-        HIPBLASLT_EXPORT Gemm& operator               =(Gemm&&) noexcept;
+#endif
+        HIPBLASLT_EXPORT Gemm(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm& operator=(Gemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Sets the problem for a gemm problem. (Deprecated)
@@ -1020,10 +1030,15 @@ namespace hipblaslt_ext
                                               hipDataType          typeC,
                                               hipDataType          typeD,
                                               hipblasComputeType_t typeCompute);
+#ifdef _WIN32
+        GroupedGemm(const GroupedGemm&) = delete;
+        GroupedGemm& operator=(const GroupedGemm&) = delete;
+#else
         HIPBLASLT_EXPORT GroupedGemm(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT GroupedGemm(GroupedGemm&&) noexcept;
         HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
-        HIPBLASLT_EXPORT GroupedGemm& operator                      =(GroupedGemm&&) noexcept;
+#endif
+        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures

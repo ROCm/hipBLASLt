@@ -91,7 +91,9 @@
     )
   endif()
 
-  TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}")
+  if(NOT WIN32)
+    TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}")
+  endif()
 
   # Create a unique name for TensileHost compiled for rocBLAS
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocblaslt-tensile CXX_EXTENSIONS NO )
