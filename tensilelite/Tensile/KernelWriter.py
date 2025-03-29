@@ -1182,9 +1182,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
                                         })
         # if start to schedule localwrite, but still have localreads not scheduled yet,
         # reject to use 1LDSB, since it will write and read same lds buffer at same time.
-        #if mfmaIndex > self.states.sync1LdsMfmaIndex and localReadItemsThisLoop and oneBufferScheduling:
-          # TODO: can we remove this restriction?
-          #self.states.overflowedResources = 5
+        if mfmaIndex > self.states.sync1LdsMfmaIndex and localReadItemsThisLoop and oneBufferScheduling:
+          #TODO: can we remove this restriction?
+          self.states.overflowedResources = 5
         for j in range(readLeft):
           if localReadItemsThisLoop:
             item = localReadItemsThisLoop.pop(0)
@@ -3952,27 +3952,27 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.b.numVgprLocalWriteSwapAddr = 0
 
     if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]:
-      if kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
+      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
         self.states.a.numVgprLocalReadAddr =3* self.states.rpla
-      elif kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
+      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
         self.states.a.numVgprLocalReadAddr =2* self.states.rpla
-      if kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
+      if (kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
         self.states.b.numVgprLocalReadAddr =3* self.states.rpla
-      elif kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
+      elif (kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
         self.states.b.numVgprLocalReadAddr =2* self.states.rpla
 
     if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] \
        and not kernel["StoreSwapAddr"] and not kernel["LocalWriteUseSgprA"]:
-      if kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
+      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
         self.states.a.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
+      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
         self.states.a.numVgprLocalWriteAddr = 2* self.states.rpla
 
     if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] \
        and not kernel["StoreSwapAddr"] and not kernel["LocalWriteUseSgprB"]:
-      if kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
+      if (kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
         self.states.b.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
+      elif (kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
         self.states.b.numVgprLocalWriteAddr = 2* self.states.rpla
 
     if not (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]):
@@ -3993,11 +3993,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.b.numVgprLocalWriteAddr = 0
 
     if kernel["StoreSwapAddr"]:
-      self.states.a.numVgprLocalReadSwapAddr = 1
-      self.states.b.numVgprLocalReadSwapAddr = 1
-      if not kernel["LocalWriteUseSgprA"]:
+      if self.states.a.numVgprLocalReadAddr > 0:
+        self.states.a.numVgprLocalReadSwapAddr = 1
+      if self.states.b.numVgprLocalReadAddr > 0:
+        self.states.b.numVgprLocalReadSwapAddr = 1
+      if not kernel["LocalWriteUseSgprA"] and self.states.a.numVgprLocalWriteAddr > 0:
         self.states.a.numVgprLocalWriteSwapAddr = 1
-      if not kernel["LocalWriteUseSgprB"]:
+      if not kernel["LocalWriteUseSgprB"] and self.states.b.numVgprLocalWriteAddr > 0:
         self.states.b.numVgprLocalWriteSwapAddr = 1
 
     ####################################
