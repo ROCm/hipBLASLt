@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from copy import deepcopy
 import functools
 
 from pathlib import Path
@@ -105,24 +106,18 @@ def _runUpdates(logicPath: Path, action: Action, files: List[Path]):
         if yaml:
             for s in yaml[5]:
                 name = s["KernelNameMin"]
-                # build= s.get("BuildKernel", False)
                 if name in kernelBuildSet:
                     if "BuildKernel" in s:
                         del s["BuildKernel"]
-                        print(
-                            f"  -- removing `BuildKernel`: (file: {file.relative_to(logicPath)}, index: {s['SolutionIndex']})"
-                        )
+                        print(f"  - removing `BuildKernel`: (file: {file.relative_to(logicPath)}, index: {s['SolutionIndex']})")
                 else:
-                    if "BuildKernel" in s and s["BuildKernel"]:
-                        pass
-                        # print(f"     already has  `BuildKernel`: (file: {file.relative_to(logicPath)}, index: {s['SolutionIndex']})")
-                    else:
+                    if "BuildKernel" not in s:
                         s["BuildKernel"] = True
-                        print(
-                            f"  -- + adding `BuildKernel`: (file: {file.relative_to(logicPath)}, index: {s['SolutionIndex']})"
-                        )
+                        print(f"  + adding `BuildKernel`: (file: {file.relative_to(logicPath)}, index: {s['SolutionIndex']})")
+                    elif not s["BuildKernel"]:
+                        raise ValueError("False values for `BuildKernel` are not permitted, remove `BuildKernel` to express False")
                     kernelBuildSet.add(name)
-        writeYAML(file, yaml)
+            writeYAML(file, yaml)
 
 
 def _runChecks(
@@ -241,14 +236,14 @@ def main():
 
         # Post processing
         rejects = total - keep
-        print(f"  Total  {total} solutions")
-        print(f"  Keep   {keep} solutions")
-        print(f">>  Reject {rejects} solutions")
+        print(f"  Total    {total} solutions")
+        print(f"  Keep     {keep} solutions")
+        print(f">>  Reject {rejects} solution(s)")
 
         buildkDiff = abs(numBuildKernels - len(set(names)))
-        print(f"  Unique names        {len(set(names))}")
-        print(f"  Num names (batched) {numNames}")
-        print(f"  With BuildKernel    {numBuildKernels}")
+        print(f"  Num names (batched)   {numNames}")
+        print(f"  Unique names          {len(set(names))}")
+        print(f"  With BuildKernel      {numBuildKernels}")
         print(f">>  Difference          {buildkDiff}")
 
         if rejects > 0 or buildkDiff > 0:

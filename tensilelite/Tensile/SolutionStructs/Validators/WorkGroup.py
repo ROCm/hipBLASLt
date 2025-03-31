@@ -25,6 +25,7 @@
 from Tensile.Common.Utilities import elineno
 from Tensile.Common.ValidParameters import makeValidWorkGroups
 
+
 def validateWorkGroup(solution: dict):
     assert "WorkGroup" in solution, elineno()
     validWorkGroups = makeValidWorkGroups()
