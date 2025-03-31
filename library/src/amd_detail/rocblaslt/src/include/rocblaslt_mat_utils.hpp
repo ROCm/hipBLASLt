@@ -148,6 +148,49 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 }
 
 /*******************************************************************************
+ * Validate Matmul Swizzle Arguments
+ ******************************************************************************/
+inline rocblaslt_status validateMatmulSwizzleArgs(const rocblaslt_matmul_desc   matmul_descr,
+                                                  const rocblaslt_matrix_layout matA,
+                                                  const rocblaslt_matrix_layout matB,
+                                                  hipDataType                   a_type,
+                                                  hipDataType                   b_type,
+                                                  bool                          swizzleA,
+                                                  bool                          swizzleB)
+{
+    //support TN for swizzle
+    if(swizzleA && matmul_descr->op_A != HIPBLAS_OP_T)
+        return rocblaslt_status_invalid_value;
+
+    if(swizzleB && matmul_descr->op_B != HIPBLAS_OP_N)
+        return rocblaslt_status_invalid_value;
+
+    if(swizzleA && !isValidOrderForDatatype(a_type, matA->order))
+    {
+        log_error(__func__, "Error: Invalid Order for hipDataType A.");
+        return rocblaslt_status_invalid_value;
+    }
+
+    if(swizzleB && !isValidOrderForDatatype(b_type, matB->order))
+    {
+        log_error(__func__, "Error: Invalid Order for hipDataType B.");
+        return rocblaslt_status_invalid_value;
+    }
+
+    if(swizzleA && matA->ld != matA->m)
+        log_hints(__func__,
+                  "Warning: The lda parameter is ignored and disabled when swizzle_a is true. "
+                  "There's no need to set lda.");
+
+    if(swizzleB && matB->ld != matB->m)
+        log_hints(__func__,
+                  "Warning: The ldb parameter is ignored and disabled when swizzle_b is true. "
+                  "There's no need to set ldb.");
+
+    return rocblaslt_status_continue;
+}
+
+/*******************************************************************************
  * Validate Matmul Arguments
  ******************************************************************************/
 inline rocblaslt_status validateMatmulArgs(int64_t                       m,
@@ -265,26 +308,31 @@ inline rocblaslt_status validateMatmulArgs(int64_t                       m,
     return rocblaslt_status_continue;
 }
 
-inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& epilogue,
-                                                      const int64_t&            num_rows_e,
-                                                      const int64_t&            num_cols_e,
-                                                      const hipDataType&        d_type,
-                                                      const hipDataType&        original_bias_type,
-                                                      const void*               e_ptr,
-                                                      const int64_t&            original_lde,
-                                                      const int64_t&            original_stride_e,
-                                                      const void*               original_bias,
-                                                      const void*  original_scaleAlphaVec,
-                                                      const void*  alpha,
-                                                      const bool   isScaleAVec,
-                                                      const bool   isScaleBVec,
-                                                      void*&       E,
-                                                      int64_t&     lde,
-                                                      int64_t&     batch_stride_e,
-                                                      void*&       bias,
-                                                      hipDataType& bias_type,
-                                                      void*&       scaleAlphaVec,
-                                                      bool&        gradient)
+inline rocblaslt_status
+    rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& epilogue,
+                                  const int64_t&            num_rows_e,
+                                  const int64_t&            num_cols_e,
+                                  const hipDataType&        d_type,
+                                  const hipDataType&        original_bias_type,
+                                  const void*               e_ptr,
+                                  const int64_t&            original_lde,
+                                  const int64_t&            original_stride_e,
+                                  const void*               original_bias,
+                                  const void*               original_scaleAlphaVec,
+                                  const void*               alpha,
+                                  const RocblasltContractionProblem::ScalingFormat scaleAType,
+                                  const RocblasltContractionProblem::ScalingFormat scaleBType,
+                                  const uint32_t scaleABlockRowSize,
+                                  const uint32_t scaleABlockColSize,
+                                  const uint32_t scaleBBlockRowSize,
+                                  const uint32_t scaleBBlockColSize,
+                                  void*&         E,
+                                  int64_t&       lde,
+                                  int64_t&       batch_stride_e,
+                                  void*&         bias,
+                                  hipDataType&   bias_type,
+                                  void*&         scaleAlphaVec,
+                                  bool&          gradient)
 {
     // Set status
     rocblaslt_status status = rocblaslt_status_continue;
@@ -317,10 +365,28 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
     batch_stride_e = original_stride_e > 0 ? original_stride_e : original_lde * num_cols_e;
     if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
         status = rocblaslt_status_invalid_value;
-    if(isScaleAVec != isScaleBVec)
+    if(scaleAType != RocblasltContractionProblem::ScalingFormat::None
+       && scaleBType != RocblasltContractionProblem::ScalingFormat::None
+       && scaleAType != scaleBType)
     {
-        log_error(__func__, "Scale A and Scale B must be both scalar or vector.");
+        log_error(__func__, "Scale A and Scale B must be both scalar, vector or block.");
         status = rocblaslt_status_invalid_value;
+    }
+    if(scaleAType == RocblasltContractionProblem::ScalingFormat::Block)
+    {
+        if(scaleABlockRowSize != 32 || scaleABlockColSize != 1)
+        {
+            log_error(__func__, "ScaleA block row and column sizes currently only support 32x1");
+            status = rocblaslt_status_invalid_value;
+        }
+    }
+    if(scaleBType == RocblasltContractionProblem::ScalingFormat::Block)
+    {
+        if(scaleBBlockRowSize != 1 || scaleBBlockColSize != 32)
+        {
+            log_error(__func__, "ScaleB block row and column sizes currently only support 1x32");
+            status = rocblaslt_status_invalid_value;
+        }
     }
     return status;
 }
@@ -366,27 +432,11 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     hipblasOperation_t opA = matmul_descr->op_A;
     hipblasOperation_t opB = matmul_descr->op_B;
 
-    if(swizzleA && opA != HIPBLAS_OP_T)
-    {
-        return rocblaslt_status_invalid_value;
-    }
+    auto matmul_swizzle_status
+        = validateMatmulSwizzleArgs(matmul_descr, matA, matB, a_type, b_type, swizzleA, swizzleB);
 
-    if(swizzleB && opB != HIPBLAS_OP_N)
-    {
-        return rocblaslt_status_invalid_value;
-    }
-
-    if(swizzleA && !isValidOrderForDatatype(a_type, matA->order))
-    {
-        log_error(__func__, "Error: Invalid Order for hipDataType A.");
-        return rocblaslt_status_invalid_value;
-    }
-
-    if(swizzleB && !isValidOrderForDatatype(b_type, matB->order))
-    {
-        log_error(__func__, "Error: Invalid Order for hipDataType B.");
-        return rocblaslt_status_invalid_value;
-    }
+    if(matmul_swizzle_status != rocblaslt_status_continue)
+        return matmul_swizzle_status;
 
     // matrix A
     int64_t num_rows_a    = matA->m;
@@ -460,8 +510,12 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                          matmul_descr->bias,
                                                          alphaVecPtr,
                                                          alpha,
-                                                         matmul_descr->isScaleAVec,
-                                                         matmul_descr->isScaleBVec,
+                                                         matmul_descr->scaleAType,
+                                                         matmul_descr->scaleBType,
+                                                         matmul_descr->scaleABlockRowSize,
+                                                         matmul_descr->scaleABlockColSize,
+                                                         matmul_descr->scaleBBlockRowSize,
+                                                         matmul_descr->scaleBBlockColSize,
                                                          E,
                                                          lde,
                                                          batch_stride_e,

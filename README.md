@@ -25,21 +25,8 @@ Where *op( )* refers to in-place operations, such as transpose and non-transpose
 The activation function supports GELU, ReLU, and Swish (SiLU). the bias vector matches matrix D rows and
 broadcasts to all D columns.
 
-The following table provides data type support. Note that fp8 and bf8 are only supported on the
-gfx94x platform.
-
-| A | B | C | D | Compute(Scale) |
-| :--- | :--- | :--- | :--- | :--- |
-| fp32  | fp32  | fp32  | fp32  | fp32  |
-| fp16  | fp16  | fp16  | fp16  | fp32  |
-| fp16  | fp16  | fp16  | fp32  | fp32  |
-| bf16  | bf16  | bf16  | bf16  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp32   | fp32  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp16   | fp16  | fp32  |
-| fp8/bf8  | fp8/bf8  | bf16   | bf16  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp8   | fp8  | fp32  |
-| fp8/bf8  | fp8/bf8  | bf8   | bf8  | fp32  |
-| int8  | int8 | int8  | int8  | int32 |
+For the supported data types, see
+[Supported data types](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/data-type-support.html).
 
 ## Documentation
 
@@ -115,6 +102,15 @@ You can find more information at the following links:
 
 * [hipblaslt-test](clients/gtest/README.md)
 * [hipblaslt-bench](clients/benchmarks/README.md)
+
+## TensileLite Host Library Tests
+To build and run TensileLite Host Library Tests, use the following commands:
+``` 
+ cd tensilelite && mkdir build && cd build
+ cmake -DTENSILE_DISABLE_CTEST=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo  -DCMAKE_CXX_COMPILER=/opt/rocm/bin/amdclang++ -DTensile_ROOT=$(pwd)/../Tensile ../HostLibraryTests
+ make -j
+ ./TensileTests 
+```
 
 ## Contribute
 
