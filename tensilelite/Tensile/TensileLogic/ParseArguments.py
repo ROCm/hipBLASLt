@@ -33,13 +33,13 @@ def parseArguments():
         A dictionary containing the keys representing options and their values.
     """
 
-    argParser = ArgumentParser(
+    parser = ArgumentParser(
         description="TensileLogic runs critical checks to ensure the "
         "integrity of the supplied logic files.",
     )
-    argParser.add_argument("logic_path", help="path to library logic (yaml) files")
+    parser.add_argument("logic_path", help="path to library logic (yaml) files")
 
-    argParser.add_argument(
+    parser.add_argument(
         "-v",
         "--verbose",
         type=int,
@@ -47,24 +47,22 @@ def parseArguments():
         choices=[0, 1, 2, 3],
         help="set print level with `-v 2`",
     )
-    argParser.add_argument(
+    parser.add_argument(
         "-j",
         "--jobs",
-         action="store",
+        action="store",
         default=48,
         help="number of worker processes to use during validation checks",
     )
-    argParser.add_argument(
+    parser.add_argument(
         "--cxx-compiler",
         action="store",
         default=ToolchainDefaults.CXX_COMPILER,
         help=f"default: {ToolchainDefaults.CXX_COMPILER}",
     )
 
-    group = argParser.add_mutually_exclusive_group()
-    group.add_argument(
-        "-c", "--check-all", action="store_true", help="run all logic file checks"
-    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-c", "--check-all", action="store_true", help="run all logic file checks")
     group.add_argument(
         "--check-only-custom-kernels",
         action="store_true",
@@ -76,6 +74,6 @@ def parseArguments():
         help="update kernels marked with `BuildKernel` to match unique kernel names",
     )
 
-    args = argParser.parse_args()
+    args = parser.parse_args()
 
     return args
