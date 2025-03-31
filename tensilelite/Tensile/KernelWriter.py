@@ -2858,7 +2858,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self._loopBody( kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, isDTVGRSecondBuf=isDTVGRSecondBuf ))
 
     if kernel["ExpertSchedulingMode"] > 0:
-      module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
+      module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="26", value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
 
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
 
@@ -2883,7 +2883,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
         module.add(loopLabelToNoGRloopAfterABLoop)
         if kernel["ExpertSchedulingMode"] > 0:
-          module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
+          module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="26", value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
         NGLLindex += 1
       module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
 

@@ -5439,7 +5439,7 @@ class KernelWriterAssembly(KernelWriter):
 
       if kernel["ExpertSchedulingMode"] > 0:
         expertSchedulingMode = int(kernel["ExpertSchedulingMode"])
-        module.add(SSetRegIMM32B32(dst=HWRegContainer(reg=26, value=[0,2]), src=expertSchedulingMode, comment="disable conservative hardware dependency checking to allow scheduling by software"))
+        module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="26", value=[0,2]), src=expertSchedulingMode, comment="disable conservative hardware dependency checking to allow scheduling by software"))
 
       if not noLabelGen:
         module.add(loopLabelBegin)

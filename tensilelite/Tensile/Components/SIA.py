@@ -26,7 +26,7 @@ from rocisa.base import Item, DummyItem
 from rocisa.code import Module
 from rocisa.container import DSModifiers, HolderContainer, replaceHolder
 
-from rocisa.instruction import SWaitCnt, DSStoreB128, DSStoreB64, DSStoreB32
+from rocisa.instruction import SWaitCnt, SWaitAlu, DSStoreB128, DSStoreB64, DSStoreB32
 
 from ..Common import roundUp, print2
 from ..Component import SIA
