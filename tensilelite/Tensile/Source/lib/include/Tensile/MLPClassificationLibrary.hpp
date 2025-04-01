@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,11 +26,13 @@
 
 #pragma once
 
+#include <queue>
 #include <set>
 #include <vector>
 
 #include <Tensile/Debug.hpp>
-#include <Tensile/DecisionTree.hpp>
+#include <Tensile/MLFeatures.hpp>
+#include <Tensile/MLPClassification.hpp>
 #include <Tensile/ProblemKey.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Utils.hpp>
@@ -40,23 +42,24 @@ namespace TensileLite
     /**
      * \ingroup SolutionLibrary
      *
-     * Uses a set of decision trees to select a solution. Each decision tree manages
-     * a single solution and decides if said solution will perform well for the size
-     * asked for.
+     * Uses a small neural network to rank solutions for a given size.
      */
 
     template <typename MyProblem, typename MySolution = typename MyProblem::Solution>
-    struct DecisionTreeLibrary : public SolutionLibrary<MyProblem, MySolution>
+    struct MLPClassificationLibrary : public SolutionLibrary<MyProblem, MySolution>
     {
-        using Element = std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>;
-        using Forest  = DecisionTree::Forest<MyProblem, Element, std::shared_ptr<MySolution>>;
-        using MySolutionVector = SolutionVector<MySolution>;
+        using MLPNet           = MLPClassification::MLPNet;
+        using SolutionFeatures = std::vector<std::shared_ptr<MLFeatures::MLFeature<MySolution>>>;
+        using ProblemFeatures  = std::vector<std::shared_ptr<MLFeatures::MLFeature<MyProblem>>>;
 
-        std::shared_ptr<Forest> forest;
+        std::map<int, std::shared_ptr<MySolution>> solutionmap;
+        std::shared_ptr<MLPNet>                   model;
+        SolutionFeatures                           solFeatures;
+        ProblemFeatures                            probFeatures;
 
         static std::string Type()
         {
-            return "DecisionTree";
+            return "MLPClassification";
         }
         virtual std::string type() const override
         {
@@ -64,10 +67,10 @@ namespace TensileLite
         }
         virtual std::string description() const override
         {
-            if(forest == nullptr)
-                return concatenate(type(), ", forest: nullptr");
+            if(model == nullptr)
+                return concatenate(type(), ", MLPNet: nullptr");
             else
-                return concatenate(type(), ": ", forest->description());
+                return concatenate(type(), ": ", model->description());
         }
 
         virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
@@ -75,17 +78,16 @@ namespace TensileLite
                                                                const int index) const override
         {
             const bool experimental = Debug::Instance().useExperimentalSelection();
-            if(! experimental)
+            if(!experimental)
             {
                 // If the experimental library mode is not on treat it like it asserted out
                 return nullptr;
             }
-
-            typename Forest::Transform transform
-                = [&](Element library) -> std::shared_ptr<MySolution> {
-                return library->getSolutionByIndex(problem, hardware, index);
-            };
-            return forest->findBestMatch(problem, transform);
+            // ;
+            auto indexMatch = solutionmap.find(index);
+            if(indexMatch != solutionmap.end())
+                return indexMatch->second;
+            return nullptr;
         }
 
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
@@ -93,11 +95,11 @@ namespace TensileLite
                                                              double*          fitness
                                                              = nullptr) const override
         {
-            typename Forest::Transform transform
-                = [&](Element library) -> std::shared_ptr<MySolution> {
-                return library->findBestSolution(problem, hardware);
-            };
-            return forest->findBestMatch(problem, transform);
+            SolutionVector<MySolution>  solutions = findTopSolutions(problem, hardware, 1);
+            std::shared_ptr<MySolution> solution  = nullptr;
+            if(solutions.size() > 0)
+                solution = solutions[0];
+            return solution;
         }
 
         virtual SolutionSet<MySolution>
@@ -106,40 +108,54 @@ namespace TensileLite
                              SolutionLibrarySearchType searchType
                              = SolutionLibrarySearchType::DEFAULT) const override
         {
-            if(searchType != SolutionLibrarySearchType::DEFAULT)
-            {
-                // if the solution library search is not default then return an empty
-                // set of solutions.
-                SolutionSet<MySolution> rv;
-                return rv;
-	        }
-
             const bool experimental = Debug::Instance().useExperimentalSelection();
-            if(! experimental)
+            if(!experimental)
             {
                 // Skip the search for solutions if the environment variable
                 // that enables the experimental method is not set
                 SolutionSet<MySolution> rv;
                 return rv;
             }
+            SolutionSet<MySolution> rv;
+            for(auto const& row : solutionmap)
+                rv.insert(row.second);
 
-            typename Forest::Transform transform
-                = [&](Element library) -> std::shared_ptr<MySolution> {
-                return library->findBestSolution(problem, hardware);
-            };
-            return forest->matchesInOrder(problem, transform);
+            return rv;
         }
-        
-        virtual MySolutionVector findTopSolutions(MyProblem const& problem,
+
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
                                                             Hardware const&  hardware,
                                                             int numSolutions) const override
         {
-            typename Forest::Transform transform
-                = [&](Element library) -> std::shared_ptr<MySolution> {
-                return library->findBestSolution(problem, hardware);
-            };
+            std::vector<float> problemkey
+                = ProblemKey::keyForProblem<std::vector<float>, MyProblem, float>(
+                    problem, this->probFeatures);
 
-            return forest->topMatches(problem, transform, numSolutions);
+            auto logits = model->predict(problemkey);
+            assert(logits.size() == solutionmap.size());
+
+            std::vector<std::pair<decltype(logits)::value_type,
+                                  std::shared_ptr<MySolution>*>> solution_ranking;
+            solution_ranking.reserve(solutionmap.size());
+            for(auto& s : solutionmap)
+                solution_ranking.emplace_back(logits[s.second->libraryLogicIndex],
+                    (std::shared_ptr<MySolution>*)(&s.second));
+
+            SolutionVector<MySolution> rv;
+            int numToSort = std::min(numSolutions, int(solution_ranking.size()));
+            rv.reserve(numToSort);
+            auto it = solution_ranking.begin(), it_end = solution_ranking.end();
+            while(it != it_end && numToSort)
+            {
+                std::partial_sort(it, it + numToSort, it_end, std::greater{});
+                for(; it != it + numToSort; it++)
+                    if((*((*it->second)->problemPredicate))(problem))
+                    {
+                        rv.emplace_back(*it->second);
+                        numToSort--;
+                    }
+            }
+            return rv;
         }
 
         virtual SolutionSet<MySolution>
@@ -148,16 +164,8 @@ namespace TensileLite
                                         SolutionLibrarySearchType     searchType
                                         = SolutionLibrarySearchType::DEFAULT) const override
         {
-            if(searchType != SolutionLibrarySearchType::DEFAULT)
-            {
-                // if the solution library search is notSolutionSet default then return an empty
-                // set of solutions
-                SolutionSet<MySolution> rv;
-                return rv;
-            }
-
             const bool experimental = Debug::Instance().useExperimentalSelection();
-            if(! experimental)
+            if(!experimental)
             {
                 // Skip the search for solutions if the environment variable
                 // that enables the experimental method is not set
@@ -165,11 +173,11 @@ namespace TensileLite
                 return rv;
             }
 
-            typename Forest::Transform transform
-                = [&](Element library) -> std::shared_ptr<MySolution> {
-                return library->findBestSolution(problems, hardware);
-            };
-            return forest->matchesInOrder(problems[0], transform);
+            SolutionSet<MySolution> rv;
+            for(auto const& row : solutionmap)
+                rv.insert(row.second);
+
+            return rv;
         }
     };
 
