@@ -22,6 +22,8 @@
 #
 ################################################################################
 
+import rocisa
+
 import functools
 import glob
 import itertools
@@ -63,7 +65,6 @@ from Tensile.KernelWriterBase import (
 )
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
-from Tensile.TensileInstructions import TensileInstructions
 from Tensile.Toolchain.Assembly import makeAssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles
 from Tensile.Toolchain.Validators import (
@@ -87,13 +88,13 @@ class KernelCodeGenResult(NamedTuple):
     wavefrontSize: int
 
 
-def processKernelSource(kernelWriterAssembly, ti, useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) -> KernelCodeGenResult:
+def processKernelSource(kernelWriterAssembly, data, useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
     kernelWriter = kernelWriterAssembly
-    kernelWriter.setTensileInstructions(ti)
+    kernelWriter.setTensileInstructions(data)
     asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel)
     err, src = kernelWriter.getSourceFileString(kernel, useShortNames)
     header = kernelWriter.getHeaderFileString(kernel)
@@ -242,7 +243,7 @@ def writeSolutionsAndKernels(
 
     asmIter = zip(
         itertools.repeat(kernelWriterAssembly),
-        itertools.repeat(TensileInstructions()),
+        itertools.repeat(rocisa.rocIsa.getInstance().getData()),
         itertools.repeat(useShortNames),
         itertools.repeat(splitGSU),
         itertools.repeat(kernelMinNaming),
@@ -345,7 +346,7 @@ def writeSolutionsAndKernelsTCL(
     unaryProcessKernelSource = functools.partial(
         processKernelSource,
         kernelWriterAssembly,
-        TensileInstructions(),
+        rocisa.rocIsa.getInstance().getData(),
         useShortNames,
         splitGSU,
         kernelMinNaming,
@@ -488,22 +489,21 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
     # Sort masterLibraries to make global soln index values deterministic
     solnReIndex = 0
     masterLibraries = dict(sorted(masterLibraries.items()))
-    for k, v in masterLibraries.items():
-        for _, masterLibrary in masterLibraries.items():
-            for _, sol in masterLibrary.solutions.items():
+    for _, masterLibrary in masterLibraries.items():
+        for _, sol in masterLibrary.solutions.items():
+            sol.index = solnReIndex
+            solnReIndex += 1
+        # Sort masterLibrary to make global soln index values deterministic
+        masterLibrary.lazyLibraries = dict(sorted(masterLibrary.lazyLibraries.items()))
+        for name, lib in masterLibrary.lazyLibraries.items():
+            # Sort solns by the lib logic file they were generated from
+            lib.solutions = {
+                k: lib.solutions[k]
+                for k in sorted(lib.solutions, key=lambda idx: lib.solutions[idx].srcName)
+            }
+            for _, sol in lib.solutions.items():
                 sol.index = solnReIndex
                 solnReIndex += 1
-            # Sort masterLibrary to make global soln index values deterministic
-            masterLibrary.lazyLibraries = dict(sorted(masterLibrary.lazyLibraries.items()))
-            for name, lib in masterLibrary.lazyLibraries.items():
-                # Sort solns by the lib logic file they were generated from
-                lib.solutions = {
-                    k: lib.solutions[k]
-                    for k in sorted(lib.solutions, key=lambda idx: lib.solutions[idx].srcName)
-                }
-                for _, sol in lib.solutions.items():
-                    sol.index = solnReIndex
-                    solnReIndex += 1
 
     if args["GenSolTable"]:
         matchTable = {}
@@ -563,7 +563,7 @@ def run():
         archs = arguments["Architecture"].split(";")
     else:
         archs = arguments["Architecture"].split("_")
-    archs = SUPPORTED_GFX if archs == "all" else archs
+    archs = SUPPORTED_GFX if "all" in archs else archs
 
     targetIsas = [gfxToIsa(a) for a in archs]
     isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)

@@ -1,3 +1,26 @@
+################################################################################
+#
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+################################################################################
 
 from os import name as os_name
 from os import environ
@@ -7,8 +30,8 @@ from shlex import split
 from subprocess import check_output, STDOUT, CalledProcessError, PIPE, run
 from typing import List
 
-from Tensile.Common import SemanticVersion, print1
-from .Validators import ToolchainDefaults
+from Tensile.Common import SemanticVersion
+from .Validators import ToolchainDefaults, validateToolchain
 
 def _invoke(args: List[str], desc: str=""):
   """Invokes a command with the provided arguments in a subprocess.
@@ -28,7 +51,6 @@ def _invoke(args: List[str], desc: str=""):
           f"Error with {desc}: {err.output}\n"
           f"Failed command: {' '.join(args)}"
       )
-  #print2(f"Output: {out}")
   return out
 
 
@@ -44,12 +66,15 @@ def _getVersion(executable: str, versionFlag: str, regex: str) -> str:
     Return:
         Executable version
     """
+    executable = validateToolchain(executable)
     args = f'"{executable}" "{versionFlag}"'
     try:
         output = run(args, stdout=PIPE, shell=True).stdout.decode().strip()
         match = search(regex, output, IGNORECASE)
-        result = match.group(1) if match else "<unknown>"
-        return SemanticVersion(*[int(c.split("-")[0]) for c in result.split(".")[:3]])
+        if match:
+            result = match.group(1)
+            return SemanticVersion(*[int(c.split("-")[0]) for c in result.split(".")[:3]])
+        raise Exception(f"No version from {output} matches regex {regex}")
     except Exception as e:
         raise RuntimeError(f"Failed to get version when calling {args}: {e}")
 

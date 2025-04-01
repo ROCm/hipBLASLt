@@ -1029,7 +1029,7 @@ class ProblemType(Mapping):
       if self["Gradient"]:
         name += "_Grad%s"%self["DataTypeE"].toChar()
       else:
-        name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
+        name += "_Aux%s"%self["DataTypeE"].toChar()
     if self["OutputAmaxD"]:
       name += "_AmaxD"
     if self["Sparse"]:
@@ -1103,9 +1103,9 @@ def getBiasDataTypeListDefault(problem: ProblemType) -> List[DataType]:
   bList = []
   for d in ["DataType", "ComputeDataType", "DestDataType"]:
     dtype = DataType(problem[d])
-    # filter out int8, because it is not supported by bias datatype
+    # filter out int8/f8/b8, because it is not supported by bias datatype
     # TODO
-    if not dtype.isInt8():
+    if not dtype.isInt8() and not dtype.is8bitFloat():
       bList.append(dtype)
 
   biasDataTypeList = list(set(bList))

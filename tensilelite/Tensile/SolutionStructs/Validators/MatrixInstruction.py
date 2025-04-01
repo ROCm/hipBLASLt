@@ -40,15 +40,14 @@ from ..Utilities import reject
 MI_KEY: str = "MatrixInstruction"
 MI_ENABLED_KEY: str = "EnableMatrixInstruction"
 
-
 def matrixInstructionToMIParameters(
-    mi: list,
-    isa: IsaVersion,
-    wavefrontSize: int,
-    problemType: dict,
-    workGroup: Optional[list],
-    isaInfoMap: Dict[IsaVersion, IsaInfo],
-):
+      mi: list,
+      isa: IsaVersion,
+      wavefrontSize: int,
+      problemType: dict,
+      workGroup: Optional[list],
+      isaInfoMap: Dict[IsaVersion, IsaInfo]
+    ):
     """
     Converts a 9-item matrix instruction into the associated 4-item representation and
     populates supporting MI parameters.
@@ -62,23 +61,21 @@ def matrixInstructionToMIParameters(
     print2(f">> Converting MatrixInstruction {mi} to MI parameters")
 
     if len(mi) != 9:
-        raise ValueError(
-            f"MatrixInstruction must be 9 items long to convert into MI"
-            f" Parameters, found {mi} with length {len(mi)}"
-        )
+      raise ValueError(f"MatrixInstruction must be 9 items long to convert into MI"
+                       f" Parameters, found {mi} with length {len(mi)}")
 
     result = {}
     result["ISA"] = isa
 
     # Enable F32 XDL math operation only when the input type is f32.
     enableF32xdl = (
-        "F32XdlMathOp" in problemType
-        and not problemType["F32XdlMathOp"].isSingle()
-        and problemType["DataType"].isSingle()
+      "F32XdlMathOp" in problemType
+      and not problemType["F32XdlMathOp"].isSingle()
+      and problemType["DataType"].isSingle()
     )
     result["EnableF32XdlMathOp"] = enableF32xdl
 
-    mi4 = [mi[0], mi[1], mi[2], mi[3]]
+    mi4  = [mi[0], mi[1], mi[2], mi[3]]
     result["MatrixInstruction"] = mi4
     result["EnableMatrixInstruction"] = True
     result["MatrixInstM"] = mi[0]
@@ -99,16 +96,16 @@ def matrixInstructionToMIParameters(
 
     isSparse = problemType.get("Sparse", 0)
     miDataType = DataType(
-        problemType["DataType"] if not enableF32xdl else problemType["F32XdlMathOp"]
+        problemType["DataType"]
+        if not enableF32xdl
+        else problemType["F32XdlMathOp"]
     )
 
     validMFMA = makeValidMFMA()
     result["MFMA_BF16_1K"] = (
         not isSparse
         and isaInfoMap[isa].asmCaps["HasMFMA"]
-        and not (
-            miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]
-        )
+        and not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()])
         and miDataType.isBFloat16()
         and mi4 in validMFMA["B1k"]
     )
@@ -119,43 +116,35 @@ def matrixInstructionToMIParameters(
     MIBlockBN = mi[3] // MIBlockBM
     result["MatrixInstBM"] = MIBlockBM
     result["MatrixInstBN"] = MIBlockBN
-    result["MIBlock"] = [mi[0], mi[1], mi[2], mi[3], MIBlockBM, MIBlockBN]
+    result["MIBlock"]    = [mi[0], mi[1], mi[2], mi[3], MIBlockBM, MIBlockBN]
 
     # set MIWaveGroup
     miwg0 = min((wg0 // mi[0]) // MIBlockBM, waves)
-    result["MIWaveGroup"] = [miwg0, waves // miwg0]
+    result['MIWaveGroup'] = [miwg0, waves // miwg0]
 
     # set MIWaveTile
-    result["MIWaveTile"] = [mi[5], mi[6]]
+    result['MIWaveTile'] = [mi[5], mi[6]]
 
     # set MIInputPerThread
     hasMFMA = isaInfoMap[isa].asmCaps["HasMFMA"]
     hasWMMA = isaInfoMap[isa].asmCaps["HasWMMA"]
 
-    result["MIInputPerThread"] = mi[0] * mi[2] * mi[3] // wavefrontSize
+    result['MIInputPerThread'] = mi[0] * mi[2] * mi[3] // wavefrontSize
     if (not hasMFMA) and hasWMMA and (isa[0] == 10 or isa[0] == 11):
-        result["MIInputPerThread"] = mi[2]
+      result['MIInputPerThread'] = mi[2]
 
     sparseA = False if not isSparse else False if isSparse == 2 else True
     sparseB = False if not isSparse else True if isSparse == 2 else False
-    result["MIInputPerThreadA"] = (
-        result["MIInputPerThread"] if not sparseA else result["MIInputPerThread"] // 2
-    )
-    result["MIInputPerThreadB"] = (
-        result["MIInputPerThread"] if not sparseB else result["MIInputPerThread"] // 2
-    )
-    result["MIInputPerThreadMetadata"] = (
-        result["MIInputPerThread"] if not isSparse else result["MIInputPerThread"] // 8
-    )
+    result['MIInputPerThreadA'] = result['MIInputPerThread'] if not sparseA else result['MIInputPerThread'] // 2
+    result['MIInputPerThreadB'] = result['MIInputPerThread'] if not sparseB else result['MIInputPerThread'] // 2
+    result['MIInputPerThreadMetadata'] = result['MIInputPerThread'] if not isSparse else result['MIInputPerThread'] // 8
 
     print2(f">> MI Parameters: {pprint.pformat(result)}")
     return result
 
 
 def validateMIParameters(
-    solution: dict,
-    isaInfoMap: Dict[IsaVersion, IsaInfo],
-    printSolutionRejectionReason: bool = True,
+    solution: dict, isaInfoMap: Dict[IsaVersion, IsaInfo], printSolutionRejectionReason: bool = True
 ):
     """
     Validates matrix instruction (MI) related parameters in the given solution.
@@ -217,9 +206,7 @@ def validateMIParameters(
     assert solution["MatrixInstK"] == mi4[2]
     assert solution["MatrixInstB"] == mi4[3]
 
-    assert (
-        mi4 in validMatrixInstructions
-    ), f"{elineno()} : invalid MI4: {str(mi4)} for type {miDataType.toChar()}"
+    assert mi4 in validMatrixInstructions, f"{elineno()} : invalid MI4: {str(mi4)} for type {miDataType.toChar()}"
 
     mi9 = [mi4[0], mi4[1], mi4[2], mi4[3]]
     assert "MatrixInstBM" in solution, elineno() + ": missing MatrixInstBM"
@@ -229,9 +216,7 @@ def validateMIParameters(
     assert "MIWaveGroup" in solution, elineno() + ": missing MIWaveGroup"
     mi9.extend(solution["MIWaveGroup"])
 
-    assert len(mi4) == 4 and len(mi9) == 9, (
-        elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
-    )
+    assert len(mi4) == 4 and len(mi9) == 9, elineno() + " MI4: " + str(mi4) + " MI9: " + str(mi9)
 
     if not miEnabled:
         return False
@@ -249,13 +234,8 @@ def validateMIParameters(
 
     if not isSparse:
         if hasMFMA:
-            if not (
-                miDataType.toChar() in validMFMA
-                and mi4 in validMFMA[miDataType.toChar()]
-            ):
-                if (
-                    miDataType.isBFloat16() and mi4 in validMFMA["B1k"]
-                ):  # but is valid bf16 MFMA
+            if not (miDataType.toChar() in validMFMA and mi4 in validMFMA[miDataType.toChar()]):
+                if miDataType.isBFloat16() and mi4 in validMFMA["B1k"]:  # but is valid bf16 MFMA
                     assert solution["MFMA_BF16_1K"], elineno()
                 else:
                     return not reject(
@@ -265,18 +245,12 @@ def validateMIParameters(
                     )
         elif hasWMMA and (not mi4 in validWMMA):
             return not reject(
-                solution,
-                printSolutionRejectionReason,
-                f"Invalid WMMA configuration: {solution}",
+                solution, printSolutionRejectionReason, f"Invalid WMMA configuration: {solution}"
             )
     else:
-        if not (
-            miDataType.toChar() in validSMFMA and mi4 in validSMFMA[miDataType.toChar()]
-        ):
+        if not (miDataType.toChar() in validSMFMA and mi4 in validSMFMA[miDataType.toChar()]):
             return not reject(
-                solution,
-                printSolutionRejectionReason,
-                f"Invalid SMFMA configuration: {solution}",
+                solution, printSolutionRejectionReason, f"Invalid SMFMA configuration: {solution}"
             )
 
     # Check MIBlock
@@ -306,33 +280,19 @@ def validateMIParameters(
     if IsaVersion(10, 0, 0) <= isa <= IsaVersion(11, 0, 2):
         assert miInputPerThread == mi4[2], elineno()
     else:
-        assert (
-            miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize
-        ), f"{elineno()} MIInputPerThread: {miInputPerThread} != {mi4[0]} * {mi4[2]} * {mi4[3]} / {wfsize} = {mi4[0] * mi4[2] * mi4[3] // wfsize}"
+        assert miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize, f"{elineno()} MIInputPerThread: {miInputPerThread} != {mi4[0]} * {mi4[2]} * {mi4[3]} / {wfsize} = {mi4[0] * mi4[2] * mi4[3] // wfsize}"
 
     if "MIInputPerThreadA" in solution:
         miInputPerThreadA = solution["MIInputPerThreadA"]
         sparseA = False if not isSparse else False if isSparse == 2 else True
-        assert (
-            miInputPerThreadA == miInputPerThread
-            if not sparseA
-            else miInputPerThread // 2
-        ), elineno()
+        assert miInputPerThreadA == miInputPerThread if not sparseA else miInputPerThread // 2, elineno()
 
     if "MIInputPerThreadB" in solution:
         miInputPerThreadB = solution["MIInputPerThreadB"]
         sparseB = False if not isSparse else True if isSparse == 2 else False
-        assert (
-            miInputPerThreadB == miInputPerThread
-            if not sparseB
-            else miInputPerThread // 2
-        ), elineno()
+        assert miInputPerThreadB == miInputPerThread if not sparseB else miInputPerThread // 2, elineno()
 
     if "MIInputPerThreadMetadata" in solution:
         miInutPerThreadMeta = solution["MIInputPerThreadMetadata"]
-        assert (
-            miInutPerThreadMeta == miInputPerThread
-            if not isSparse
-            else miInputPerThread // 8
-        ), elineno()
+        assert miInutPerThreadMeta == miInputPerThread if not isSparse else miInputPerThread // 8, elineno()
     return True

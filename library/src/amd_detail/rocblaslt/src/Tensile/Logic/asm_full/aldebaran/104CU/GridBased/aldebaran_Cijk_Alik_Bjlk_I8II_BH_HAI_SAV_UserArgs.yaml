@@ -1,4 +1,3 @@
----
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -72,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ''
+  UseScaleAB: ""
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -86,7 +85,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -117,7 +115,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_LDSB0_AFC1_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA16_GRVWB1_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB512_LBSPPM0_LPA32_LPB16_LPM0_LRVW16_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA2_WSGRB0_WS64_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_LDSB0_GRVWA16_GRVWB1_LBSPPA128_LBSPPB512_LPB16_MIWT1_1_NLCA1_SVW1_VWA1_VWB1
     LSCA: 128
     LSCB: 32
     LSPA: 4
@@ -277,7 +275,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
+      UseScaleAB: ""
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -345,7 +343,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -376,7 +373,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_LDSB1_AFC1_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA16_GRVWB16_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA256_LBSPPB1024_LBSPPM0_LPA32_LPB32_LPM0_LRVW16_LWPMn1_MIAV0_MIWT2_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW2_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA2_VWB2_WSGRA2_WSGRB0_WS64_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB1024_LPB32_MIWT2_2_NLCA1_SVW2_VWA2_VWB2
     LSCA: 128
     LSCB: 64
     LSPA: 4
@@ -536,7 +533,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
+      UseScaleAB: ""
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -610,4 +607,3 @@
 - null
 - DeviceEfficiency
 - GridBased
-...

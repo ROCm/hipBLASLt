@@ -22,7 +22,6 @@
 # ########################################################################
 
 # Set up Tensile Dependency
-if( BUILD_WITH_TENSILE )
   # If we want to build a shared rocblaslt lib, force Tensile to build as a static lib to absorb into rocblaslt
   if( BUILD_SHARED_LIBS )
     set( ROCBLASLT_SHARED_LIBS ON )
@@ -73,6 +72,7 @@ if( BUILD_WITH_TENSILE )
     TensileCreateLibraryFiles(
       "${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile/Logic/${Tensile_LOGIC}"
       "${PROJECT_BINARY_DIR}/Tensile"
+      "TENSILE_LIBRARY_TARGET"
       ARCHITECTURE        ${Tensile_ARCHITECTURE}
       CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
       COMPILER            ${Tensile_COMPILER}
@@ -84,6 +84,7 @@ if( BUILD_WITH_TENSILE )
     TensileCreateLibraryFiles(
       "${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile/Logic/${Tensile_LOGIC}"
       "${PROJECT_BINARY_DIR}/Tensile"
+      "TENSILE_LIBRARY_TARGET"
       ARCHITECTURE        ${Tensile_ARCHITECTURE}
       CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
       COMPILER            ${Tensile_COMPILER}
@@ -91,8 +92,10 @@ if( BUILD_WITH_TENSILE )
       ${Tensile_Options}
     )
   endif()
+  add_dependencies(TENSILE_LIBRARY_TARGET rocisa)
 
-  TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}")
+  TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}" "build_ext_op_library")
+  add_dependencies(build_ext_op_library rocisa)
 
   # Create a unique name for TensileHost compiled for rocBLAS
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocblaslt-tensile CXX_EXTENSIONS NO )
@@ -101,7 +104,9 @@ if( BUILD_WITH_TENSILE )
   set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
 
   # Tensile host depends on libs build target
-  add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  if(NOT Tensile_SKIP_BUILD)
+    add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  endif()
 
   if( ROCBLASLT_SHARED_LIBS )
     set( BUILD_SHARED_LIBS ON )
@@ -130,16 +135,23 @@ endif()
   set( Tensile_SRC
     src/amd_detail/rocblaslt/src/tensile_host.cpp
   )
+  set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
 
   set( Tensile_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile
   )
 
-endif( ) # BUILD_WITH_TENSILE
+if(USE_ROCROLLER)
+  set( RocRoller_SRC
+    src/amd_detail/rocblaslt/src/rocroller_host.cpp
+  )
+  set_source_files_properties(${RocRoller_SRC} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++20;-x;c++")
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
 
 CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
+add_dependencies(MatrixTransformKernels TENSILE_LIBRARY_TARGET)
 
 set(DL_LIB dl)
 

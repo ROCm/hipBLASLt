@@ -37,7 +37,8 @@ osSelect = lambda linux, windows: linux if os.name != "nt" else windows
 
 
 def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
-    """Get the path to the latest ROCm bin directory, on Windows.
+    """
+    Get the path to the latest ROCm bin directory, on Windows.
 
     This function assumes that ROCm versions are differentiated with the form ``X.Y``.
 
@@ -105,7 +106,7 @@ def _posixSearchPaths() -> List[Path]:
 
 
 def isRhel8():
-    import platform
+    import platform  # import here b/c it's only needed in this context
     osRelease = platform.freedesktop_os_release()
     return ("8.8" == osRelease["VERSION_ID"] and "rhel" == osRelease["ID"])
 
@@ -127,7 +128,8 @@ def _supportedComponent(component: str, targets: List[str]) -> bool:
 
 
 def supportedCCompiler(compiler: str) -> bool:
-    """Determine if a C compiler/assembler is supported by Tensile.
+    """
+    Determine if a C compiler/assembler is supported by Tensile.
 
     Args:
         compiler: The name of a compiler to test for support.
@@ -139,7 +141,8 @@ def supportedCCompiler(compiler: str) -> bool:
 
 
 def supportedCxxCompiler(compiler: str) -> bool:
-    """Determine if a C++/HIP compiler/assembler is supported by Tensile.
+    """
+    Determine if a C++/HIP compiler/assembler is supported by Tensile.
 
     Args:
         compiler: The name of a compiler to test for support.
@@ -151,7 +154,8 @@ def supportedCxxCompiler(compiler: str) -> bool:
 
 
 def supportedOffloadBundler(bundler: str) -> bool:
-    """Determine if an offload bundler is supported by Tensile.
+    """
+    Determine if an offload bundler is supported by Tensile.
 
     Args:
         bundler: The name of an offload bundler to test for support.
@@ -163,7 +167,8 @@ def supportedOffloadBundler(bundler: str) -> bool:
 
 
 def supportedHip(hip: str) -> bool:
-    """Determine if a hip callable binary is supported by Tensile.
+    """
+    Determine if a hip callable binary is supported by Tensile.
 
     Args:
         hip: The name of an offload bundler to test for support.
@@ -175,7 +180,8 @@ def supportedHip(hip: str) -> bool:
 
 
 def supportedDeviceEnumerator(enumerator: str) -> bool:
-    """Determine if a device enumerator is supported by Tensile.
+    """
+    Determine if a device enumerator is supported by Tensile.
 
     Args:
         enumerator: The name of a device enumerator to test for support.
@@ -189,7 +195,8 @@ def supportedDeviceEnumerator(enumerator: str) -> bool:
 
 
 def _exeExists(file: Path) -> bool:
-    """Check if a file exists and is executable.
+    """
+    Check if a file exists and is executable.
 
     Args:
         file: The file to check.
@@ -201,7 +208,8 @@ def _exeExists(file: Path) -> bool:
 
 
 def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
-    """Validate that the given toolchain component is in the PATH and executable.
+    """
+    Validate that the given toolchain component is in the PATH and executable.
 
     Args:
         file: The executable to validate.
@@ -217,7 +225,7 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
         supportedHip(file),
         supportedDeviceEnumerator(file)
     )):
-        raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
+        raise ValueError(f"`{file}` is not a supported toolchain component on {'Windows' if os.name == 'nt' else 'Linux'}")
 
     # Check if the file is an absolute path and executable
     if _exeExists(Path(file)):
@@ -233,8 +241,10 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
     raise FileNotFoundError(f"`{file}` either not found or not executable in any search path: {':'.join(map(str, searchPaths))}")
 
 
-def validateToolchain(*args: str):
-    """Validate that the given toolchain components are in the PATH and executable.
+def validateToolchain(*args: str) :
+    """
+    Validate that the given toolchain components are in the PATH and executable,
+    returning the absolute path to each.
 
     Args:
         args: List of executable toolchain components to validate.

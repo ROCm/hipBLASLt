@@ -1,4 +1,3 @@
----
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -71,7 +70,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ''
+  UseScaleAB: ""
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -85,7 +84,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -114,7 +112,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_UserArgs_MT32x16x256_MI16x16x1_SN_LDSB0_AFC1_AFEM8_AFEM1_ASEM32_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA1024_LBSPPB512_LBSPPM0_LPA8_LPB8_LPM0_LRVW4_LWPM0p50_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD1_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA2_WSGRB1_WS64_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_BBS_BH_Bias_HAS_SAV_MT32x16x256_MI16x16x1_SN_GRVWA8_GRVWB8_LBSPPA1024_LBSPPB512_LPA8_LPB8_MIWT1_1_NTA0_NTD1_PLR1_SU0_SUS0
     LSCA: 256
     LSCB: 256
     LSPA: 2
@@ -274,7 +272,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ''
+      UseScaleAB: ""
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -336,4 +334,3 @@
 - null
 - DeviceEfficiency
 - FreeSize
-...

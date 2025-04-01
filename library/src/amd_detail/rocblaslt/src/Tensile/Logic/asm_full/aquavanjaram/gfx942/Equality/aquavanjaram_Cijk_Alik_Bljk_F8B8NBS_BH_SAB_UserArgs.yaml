@@ -1,4 +1,3 @@
----
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -90,7 +89,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -128,7 +126,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8B8NBS_BH_SAB_UserArgs_MT256x208x128_MI16x16x1_SN_LDSB1_AFC0_AFEM1_AFEM1_ASEM64_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB128_LBSPPM0_LPA8_LPB8_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_13_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA1_WSGRB1_WS64_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8B8NBS_BH_SAB_UserArgs_MT256x208x128_MI16x16x1_SN_AFEM1_AFEM1_ASEM64_GRVWA8_GRVWB8_K1_LBSPPA512_LBSPPB128_LPA8_LPB8_LRVW8_MIWT4_13_VWB1
     LSCA: 128
     LSCB: 128
     LSPA: 4
@@ -370,7 +368,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
@@ -408,7 +405,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8B8NBS_BH_SAB_UserArgs_MT256x208x128_MI16x16x1_SN_LDSB1_AFC0_AFEM8_AFEM8_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSUAMB_GLS0_ISA942_IU1_K1_LBSPPA512_LBSPPB128_LBSPPM0_LPA8_LPB8_LPM0_LRVW8_LWPMn1_MIAV0_MIWT4_13_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL0_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW4_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA4_VWB1_WSGRA1_WSGRB1_WS64_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8B8NBS_BH_SAB_UserArgs_MT256x208x128_MI16x16x1_SN_AFEM8_AFEM8_ASEM1_GRVWA8_GRVWB8_K1_LBSPPA512_LBSPPB128_LPA8_LPB8_LRVW8_MIWT4_13_VWB1
     LSCA: 128
     LSCB: 128
     LSPA: 4
@@ -646,4 +643,3 @@
 - null
 - DeviceEfficiency
 - Equality
-...

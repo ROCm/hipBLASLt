@@ -1,4 +1,3 @@
----
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -18,6 +17,7 @@
   DataType: 4
   DestDataType: 4
   GroupedGemm: true
+  SupportUserArgs: true
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -44,7 +44,6 @@
   SetConstStrideB: []
   SilentHighPrecisionAccumulate: false
   StridedBatched: true
-  SupportUserArgs: true
   TLUA: false
   TLUB: true
   Tensor0: 0
@@ -69,7 +68,6 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    BuildKernel: true
     ClusterLocalRead: 1
     CodeObjectVersion: default
     CustomKernelName: ''
@@ -96,7 +94,6 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_HHS_BH_UserArgs_MT64x64x32_MI32x32x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR1_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA1_GRVWB1_GSUAMB_GLS0_ISA90a_IU1_K1_LBSPPA128_LBSPPB0_LBSPPM0_LPA8_LPB0_LPM0_LRVW8_LWPMn1_MIAV0_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK0_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGROn1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -187,6 +184,7 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -213,7 +211,6 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
-      SupportUserArgs: true
       TLUA: false
       TLUB: true
       Tensor0: 0
@@ -282,4 +279,3 @@
 - null
 - DeviceEfficiency
 - GridBased
-...

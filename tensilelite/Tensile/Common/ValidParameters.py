@@ -112,7 +112,7 @@ def makeValidMFMA():
         [16, 16, 16, 1],
         [4, 4, 4, 16],
     ] + [[32, 32, 16, 1], [16, 16, 32, 1]]
-    validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
+    validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1], [16, 16, 16, 1]]
     validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1], [32, 32, 64, 1], [16, 16, 128, 1]]
     validMFMA["B8"] = validMFMA["F8"]
     validMFMA["F8B8"] = validMFMA["F8"]
@@ -800,11 +800,22 @@ validParameters = {
     # Force disable shadow init to release more sgpr in preloop
     "ForceDisableShadowInit": [False, True],
     # Enable LDS Transpose Instruction
-    "LDSTrInst": [False, True]
+    "LDSTrInst": [False, True],
+    # False: Use LocalSplitU. Number of WorkGroup[2] WorkItems (wave or thread) will compute the same output elements (matrix D) along different 
+    #        unroll indices. The local sum from those WorkItems are reduced through LDS.
+    # True:  Use WaveSplitK. Number of WorkGroup[2] threads in the same wave compute the same output elements (matrix D) along different unroll indices.
+    #        The local sum from those threads are reduced through suffling using VALU instructions. Currently only support dot2 kernel.
+    "WaveSplitK": [False, True],
+    # Control mbsk reduction prefetch order
+    # -1 : Select between 0/1 based on # store elements.
+    # 0  : Fetch from workgroup dim -> elements dim. (default)
+    # 1  : Fetch from elements dim -> workgroup dim. Has better prefetch pattern when # store elements is large.
+    "MbskPrefetchOpt": [-1, 0, 1],
 }
 
 newMIValidParameters = {
     "EnableF32XdlMathOp": [False, True],
+    "UseF32XEmulation": [False, True],
     'EnableMatrixInstruction': [False, True],
     'ISA': -1,
     'MFMA_BF16_1K': [False, True],

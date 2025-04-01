@@ -63,27 +63,6 @@ custom.config:
       Activation: True
       UseScaleAlphaVec: 1
       SupportUserArgs: False
-   EnableF32XdlMathOp: False
-   EnableMatrixInstruction: True
-   MFMA_BF16_1K: False
-   MIBlock: [16, 16, 16, 1, 1, 1]
-   MIInputPerThread: 4
-   MIInputPerThreadA: 4
-   MIInputPerThreadB: 4
-   MIInputPerThreadMetadata: 4
-   MIWaveGroup: [4, 1]
-   MIWaveTile: [2, 1]
-   MatrixInstB: 1
-   MatrixInstBM: 1
-   MatrixInstBN: 1
-   MatrixInstK: 16
-   MatrixInstM: 16
-   MatrixInstN: 16
-   MatrixInstruction: [16, 16, 16, 1]
-   Sparse: 0
-   ThreadTile: [1, 1]
-   WavefrontSize: 64
-   WorkGroup: [64, 4, 1]
    1LDSBuffer: 1
    DepthU: 128
    StaggerU: 4

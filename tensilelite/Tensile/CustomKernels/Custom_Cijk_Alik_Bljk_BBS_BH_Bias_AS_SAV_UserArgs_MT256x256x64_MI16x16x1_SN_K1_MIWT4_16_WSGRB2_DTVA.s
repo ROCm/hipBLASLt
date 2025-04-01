@@ -80,8 +80,8 @@ custom.config:
    MatrixInstruction: [16, 16, 16, 1]
    Sparse: 0
    ThreadTile: [1, 1]
-   WavefrontSize: 64
    WorkGroup: [64, 4, 1]
+   WavefrontSize: 64
    1LDSBuffer: 1
    ScheduleIterAlg: 3
    DepthU: 64

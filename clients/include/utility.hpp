@@ -120,6 +120,8 @@ enum class hipblaslt_batch_type
 class hipblaslt_local_handle
 {
     hipblasLtHandle_t m_handle;
+    std::string    m_sol_selec_saved_status = "";
+    bool           m_sol_selec_env_set{false};
 
 public:
     hipblaslt_local_handle();
@@ -525,3 +527,4 @@ typename std::enable_if<!std::is_same<int8_t, T>::value, T>::type saturate_cast(
 
 std::vector<void*> benchmark_allocation();
 int32_t            hipblaslt_get_arch_major();
+void hipblaslt_print_version();

@@ -23,6 +23,7 @@
 ################################################################################
 
 import itertools
+import rocisa
 import math
 import os.path
 import subprocess
@@ -415,6 +416,7 @@ defaultBenchmarkCommonParameters = [
     {"ForceDisableShadowInit": [False]},
     {"LDSTrInst": [False]},
     {"WaveSplitK": [ False ]},
+    {"MbskPrefetchOpt": [0]},
 ]
 
 # dictionary of defaults comprised of default option for each parameter
