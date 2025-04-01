@@ -43,7 +43,7 @@ static std::string hipblaslt_parse_yaml(const std::string& yaml)
                + "hipblaslt_template.yaml -o " + tmp + " " + yaml;
     hipblaslt_cerr << cmd << std::endl;
 
-#ifdef WIN32
+#ifdef _WIN32
     int status = std::system(cmd.c_str());
     if(status == -1)
         exit(EXIT_FAILURE);

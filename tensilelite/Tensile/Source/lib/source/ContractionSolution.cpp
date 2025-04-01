@@ -2278,8 +2278,13 @@ namespace TensileLite
         gsuTemp |= gsuTemp >> 16;
         gsuTemp++;
 
+#ifdef _WIN32
+        name += "_PostGSU"
+                + std::to_string(std::min((unsigned long long)gsuTemp, sizeMapping.globalSplitUPGR));
+#else
         name += "_PostGSU"
                 + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
+#endif
 
         name += "_VW" + std::to_string(vw);
 
