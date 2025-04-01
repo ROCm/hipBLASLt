@@ -1,4 +1,4 @@
-################################################################################
+#################################################################################
 #
 # Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
@@ -18,7 +18,7 @@
 # COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 # IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNE-
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-################################################################################
+#################################################################################
 
 from rocisa.instruction import BranchInstruction, CommonInstruction, Instruction, \
                           CompositeInstruction, MacroInstruction, \
