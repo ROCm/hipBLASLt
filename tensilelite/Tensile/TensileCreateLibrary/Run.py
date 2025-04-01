@@ -225,17 +225,20 @@ def writeSolutionsAndKernels(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
 
-    visited = set()
-    duplicates = 0
-    for k in kernels:
-        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
-        k.duplicate = True if base in visited else False
-        if not k.duplicate:
-            k["BaseName"] = base
-        duplicates += k.duplicate
-        print2(f"Duplicate: {base}")
-        visited.add(base)
-    print1(f"Number of duplicate kernels: {duplicates}")
+    buildKernels = [k for k in kernels if "BuildKernel" in k]
+    if len(buildKernels) == 0:
+        visited = set()
+        duplicates = 0
+        for k in kernels:
+            base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+            k.duplicate = True if base in visited else False
+            duplicates += k.duplicate
+            print2(f"Duplicate: {base}")
+            visited.add(base)
+        print1(f"Number of duplicate kernels: {duplicates}")
+
+        buildKernels = [k for k in kernels if not k.duplicate]
+
 
     asmIter = zip(
         itertools.repeat(kernelWriterAssembly),
@@ -276,6 +279,10 @@ def writeSolutionsAndKernels(
             kernels,
             destLibPath,
             assemblyTmpPath,
+            useShortNames,
+            splitGSU,
+            kernelMinNaming,
+            kernelSerialNaming,
             compress,
         )
         buildSourceCodeObjectFiles(
@@ -361,6 +368,10 @@ def writeSolutionsAndKernelsTCL(
         kernels,
         destLibPath,
         assemblyTmpPath,
+        useShortNames,
+        splitGSU,
+        kernelMinNaming,
+        kernelSerialNaming,
         compress,
     )
 

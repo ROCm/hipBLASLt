@@ -248,6 +248,8 @@ def writeBenchmarkFiles(
     # cmdLineArchs = [variant isaToGfx(isa) for isa in isaInfoMap.keys() for gfxToVariants()]
     # write solution, kernels and CMake
     problemType = solutions[0]["ProblemType"]
+    for k in kernels:
+        k["BuildKernel"] = True
     codeObjectFiles, _= writeSolutionsAndKernels( \
                             sourcePath,
                             asmToolchain,

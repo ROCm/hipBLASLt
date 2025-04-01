@@ -120,9 +120,9 @@ class KernelWriterAssembly(KernelWriter):
                           useShortNames: bool=False) -> Tuple[int, str]:
     assert kernel["KernelLanguage"] == "Assembly"
     # Skip if .o files will have already been built for this file
-    if kernel.duplicate:
+    if "BuildKernel" not in kernel:
       self.language = "ASM"
-      return (0, "") # should this be an non zero number
+      return (0, "")
 
     try:
       code = self._getCustomKernelSource(useShortNames, kernel, CUSTOM_KERNEL_PATH) if isCustomKernelConfig(kernel) else self._getKernelSource(kernel)
