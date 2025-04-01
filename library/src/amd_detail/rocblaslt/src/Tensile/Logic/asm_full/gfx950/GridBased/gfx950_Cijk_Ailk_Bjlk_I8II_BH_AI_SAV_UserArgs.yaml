@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -114,7 +115,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_LDSB0_GRVWA1_GRVWB1_LBSPPA256_LBSPPB256_LPA16_LPB16_MIWT1_1_SVW1_VWA1_VWB1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT32x32x5yOkt89_ZFCi7OshY6Xx-nLqncrokO2nVqORBIS-uzQ=
     LSCA: 32
     LSCB: 32
     LSPA: 4
@@ -276,7 +277,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -371,7 +372,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_MT32x32x64_MI16x16x1_SN_LDSB0_AFC1_GRVWB8_GSU1_LPA16_LPB16_MIWT1_1_PGR1_PLR1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT32x32xSLSXfy3cSDkP82zYlIA9IQ3RYIsXQqvMajBJQBFWpYw=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -529,7 +530,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -623,7 +624,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_MT32x32x64_MI32x32x1_SN_LDSB0_AFC1_GRVWB8_GSU1_LPA0_LPB0_MIWT1_1_PGR2_PLR1_WG32_2_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT32x32xVGowQVdAD6BMyj19lqac5ifTLbsGwvu0MVCw4EpAmJE=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -781,7 +782,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -875,7 +876,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_MT64x64x64_MI32x32x1_SN_LDSB0_AFC1_GRVWB8_GSU1_LPA0_LPB0_MIWT1_1_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT64x64xSoayOER6dzWZythem8rvWK9nX1yT61fbO8s7ZOPuVSs=
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -1033,7 +1034,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1127,7 +1128,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_MT128x128x64_MI32x32x1_SN_LDSB0_AFC1_GRVWB8_GSU1_LPA0_LPB0_MIWT2_2_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT128x12si-L7Y6uCCtUUpwDkucK_4-6AgLFcGxozrFFC8K2Vtc=
     LSCA: 128
     LSCB: 128
     LSPA: 2
@@ -1285,7 +1286,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1379,7 +1380,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_AI_SAV_MT128x128x64_MI32x32x1_SN_LDSB1_AFC1_GRVWB8_GSU1_LPA0_LPB0_MIWT2_2_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8II_BH_HAI_SAV_UserArgs_MT128x128txcII-9hpOgRVsp-mvgZz4bd2OC6nOH55_d-ra9mzE=
     LSCA: 128
     LSCB: 128
     LSPA: 2
@@ -1537,7 +1538,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1610,3 +1611,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

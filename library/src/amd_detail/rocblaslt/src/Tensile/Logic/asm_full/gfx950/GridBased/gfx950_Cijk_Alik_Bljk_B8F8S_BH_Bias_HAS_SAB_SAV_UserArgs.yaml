@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -75,7 +76,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 1
@@ -93,7 +94,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -128,7 +129,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UservhNgd9AuZzKLjbcWbzkn4J2RVkS6MDRG_I1l5ewNCY4=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -298,7 +299,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -384,7 +385,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -419,7 +420,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserLpfjIEyUOlDTtlSHnLX2r-rsWxpMWNnWF79dIyivVUM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -589,7 +590,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -675,7 +676,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -710,7 +711,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userhm4Pnmgyk-77kk6xyqaWoRDwRWwXpEIuZ_gVKuMRivQ=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -880,7 +881,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -966,7 +967,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1001,7 +1002,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserMGNWVskTHGosq2LHOGDXS716ulfxHAfHYJ8k6vhAEA8=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -1171,7 +1172,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1257,7 +1258,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1292,7 +1293,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserFDyG-1-64u6gZFkiZ5lO0kWRo3T3mcA2Txgx2yGhID4=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -1462,7 +1463,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1548,7 +1549,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1583,7 +1584,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT8_8_VWA8_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserWaroCZDHA1GLgdpbH1NqkGZGpBRxXx5fyLPWbbwTkDk=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -1753,7 +1754,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1839,7 +1840,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1874,7 +1875,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x256x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB1024_MIWT4_8_VWA4_VWB8
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserUGryVNfHzWryLLqZdMgIn-EpALB6m0VKBuOKnC0uHqE=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -2044,7 +2045,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -2130,7 +2131,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -2165,7 +2166,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT8_4_VWA8_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userso0Wo56pk9vWTkWMYRQUjkusAg3Xtg-TD8SX9hL4Xkk=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -2335,7 +2336,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -2421,7 +2422,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -2456,7 +2457,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT8_4_VWA8_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserHEquEGarfw63VIrK3KHtqUV3p1K739muE6TSs06iisc=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -2626,7 +2627,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -2712,7 +2713,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -2747,7 +2748,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT8_4_VWA8_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserpWUWzRROJjZColHl32a4oekLfh5iKe_jV0fFzVFuD3k=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -2917,7 +2918,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -3003,7 +3004,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -3038,7 +3039,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB256_MIWT8_2_VWA8_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserEOV9iztePqTe44dX1S8d9Z9vyGplwAKHyW6aADg24tM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -3208,7 +3209,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -3294,7 +3295,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -3329,7 +3330,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB256_MIWT8_2_VWA8_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userg4joc9TaFPdtBJZlOWvhimIFr5BsUBhapo9NdDXFQi4=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -3499,7 +3500,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -3585,7 +3586,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -3620,7 +3621,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UsergfeRNmhznyrvm3ekrpZC1tI3hcOf2YanefMGYr9dajk=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -3790,7 +3791,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -3876,7 +3877,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -3911,7 +3912,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserftREuXsOmd42OZwYyj-D19C4CPg6LqgGOr1j8tiRp1Q=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -4081,7 +4082,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -4167,7 +4168,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -4202,7 +4203,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserLTK2WbmEq62fMTH49TjBbr6_MkfdGJC_IKN7oE8dPyM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -4372,7 +4373,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -4458,7 +4459,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -4493,7 +4494,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UsernYG4hVbf_U63lh9XuBCGo4JaBpAp3jRAW58zLb0Sfgo=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -4663,7 +4664,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -4749,7 +4750,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -4784,7 +4785,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserdKDsJ5K3UZKnGYclKvuF_L3azitiBXqT9mgyrn-GMX4=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -4954,7 +4955,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -5040,7 +5041,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -5075,7 +5076,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserAuRhcU0jaIVn_WT4-6Oalu8sbA_5GjZKOmEcdT1K_Kc=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -5245,7 +5246,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -5331,7 +5332,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -5366,7 +5367,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB512_MIWT2_4_VWA2_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserSMLF0_FKwkXCGKR0L9z3zQoIQZYJIdKEAPMzZATx9K8=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -5536,7 +5537,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -5622,7 +5623,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -5657,7 +5658,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x128x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB512_MIWT2_4_VWA2_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Usern1ZSPW42YrHvEODUfyqKmjVUq_kNCBE9fchGUolCII8=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -5827,7 +5828,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -5913,7 +5914,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -5948,7 +5949,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserUqWMQV9GC9blxWBe8WHFEEI49cO884SNP0bSnhvmQrE=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -6118,7 +6119,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -6204,7 +6205,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -6239,7 +6240,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserJoMNnpmfrEmQe2MZjtp-tM2rj-ma9RRwX6GGPyUlrSE=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -6409,7 +6410,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -6495,7 +6496,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -6530,7 +6531,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserGiXQfwlSg8gARYkQrqdpPPr1uhWEFSEwlGnPPwIveAM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -6700,7 +6701,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -6786,7 +6787,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -6821,7 +6822,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User464pjUM5FO6Y9PH7zckqis4FGDorWpKSMnhlwWKIiD0=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -6991,7 +6992,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -7077,7 +7078,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -7112,7 +7113,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x64x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB256_MIWT1_2_VWA1_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userwhkxics4hc3nKrIxRzDfZC8NApyVX0XO78inCMA3jmM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -7282,7 +7283,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -7368,7 +7369,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -7403,7 +7404,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB128_MIWT2_1_VWA2_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Usery-NK1jk4Ps7pcAfe6W3AxoF4Wa6e2Flp0mebbt4U0Og=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -7573,7 +7574,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -7659,7 +7660,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -7694,7 +7695,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB128_MIWT2_1_VWA2_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserAyiifFG4ehuziWkOc7VcBaVtYHid8zhWIA0HjkUbPTY=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -7864,7 +7865,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -7950,7 +7951,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -7985,7 +7986,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserlZNIBG-t_zd3a_a0FjAsF9B-O8SzKx2mg2WMgp_WMwg=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -8155,7 +8156,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -8241,7 +8242,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -8276,7 +8277,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserEI-oe73y5TOFZkKJ50bynve2rgyEeBjVI7k8p0hYQLc=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -8446,7 +8447,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -8532,7 +8533,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -8567,7 +8568,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserBSJd24H3-pwawdLuQTESkHf1pFgMpbTB9xZ_FlAte2E=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -8737,7 +8738,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -8823,7 +8824,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -8858,7 +8859,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User3kWl_uYDiHkPyHhteGbBcEhRDW7kQBQBJJIe1-usnkQ=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -9028,7 +9029,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -9114,7 +9115,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -9149,7 +9150,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserV38HW29gZ0WOK7zyZR53sLNYoqHRnvflcI0MnGVDejY=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -9319,7 +9320,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -9405,7 +9406,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -9440,7 +9441,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserEW35E6gdM_UcOCQGsufc7JxZbr513azIO5Ptss_VL88=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -9610,7 +9611,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -9696,7 +9697,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -9731,7 +9732,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI32x32x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserL-D-KHiDQBl0fqdqdFEzc4iKeDq_Y97yu2wpGP2HPFM=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -9901,7 +9902,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -9987,7 +9988,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -10022,7 +10023,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x256x128_MI32x32x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserLe3-O_svShEp6g9ofMNFjwPzkidu4W93w-KCZ0lbehw=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -10192,7 +10193,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -10278,7 +10279,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -10313,7 +10314,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI32x32x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User1G70rNo32BwGcDjRIMDDr8pVqLyw1iCNGAEpqjmm8R4=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -10483,7 +10484,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -10569,7 +10570,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -10604,7 +10605,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI32x32x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User57_R-8_kRFkxYOk6yfg11kkLuPZuw_tnoDpg2aLuWKU=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -10774,7 +10775,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -10860,7 +10861,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -10895,7 +10896,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT256x128x128_MI32x32x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserMlUTOQOmzMzsJVG3GjKYPbgFJ82DLFz_IosPA-cIl6U=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -11065,7 +11066,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -11151,7 +11152,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -11186,7 +11187,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x128x256_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB1024_MIWT4_4_VWA4_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User9rw3S-YX41YZcClVCEHOxI7MrGr9j6weMsTZIr7KBX4=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -11356,7 +11357,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -11442,7 +11443,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -11477,7 +11478,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x128x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB1024_MIWT2_4_VWA2_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User7TsDgsfSJ47N8tg1peB29tN-OpqRcyrSO06mpKnSdvI=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -11647,7 +11648,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -11733,7 +11734,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -11768,7 +11769,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x128x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB1024_MIWT2_4_VWA2_VWB4
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserMhgnSv1F6CC4qLXRHztf1hbKQYLGWnZiEKrj3H_xxh0=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -11938,7 +11939,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -12024,7 +12025,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -12059,7 +12060,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User8Y2S5Hqd0hT3vs5dcDyPCdu05YeZIolvXqrhfQ6x9PY=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -12229,7 +12230,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -12315,7 +12316,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -12350,7 +12351,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Usermdwxr4bmto4VMDR-MMxxifbeWkczyIVq27hzYPB0wB0=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -12520,7 +12521,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -12606,7 +12607,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -12641,7 +12642,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Useru_qZGQKxTqZ0mK9YXkoZwVuPYmVDUrYRqG2de534IRs=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -12811,7 +12812,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -12897,7 +12898,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -12932,7 +12933,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT128x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA1024_LBSPPB512_MIWT4_2_VWA4_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserBvK5GZ6exR5MnFFLKkNuc3a1NKxQwfSGDZ5PMScgVRQ=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -13102,7 +13103,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -13188,7 +13189,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -13223,7 +13224,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserqPc83XE_uRRNqgMUA5-pWvrObu74wdu_yBTZcJdycRk=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -13393,7 +13394,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -13479,7 +13480,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -13514,7 +13515,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserPpgve4Tp1snOtP-b_C4-IMEkBiMWWzTISqMKfTZhLDk=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -13684,7 +13685,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -13770,7 +13771,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -13805,7 +13806,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userx-34Xa6UKrlduhg1BdCsv5DVbp7Qjdg45kPd4ZenIkA=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -13975,7 +13976,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -14061,7 +14062,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -14096,7 +14097,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User8vnFclyIEVVTlRWYCjmNgfD-kZPXsK8QKjUvp4USUiA=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -14266,7 +14267,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -14352,7 +14353,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -14387,7 +14388,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userc8qzztUfXOcUnQQx-GXLilRc65-oSwFI3MDD3a3qhvA=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -14557,7 +14558,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -14643,7 +14644,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -14678,7 +14679,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB512_MIWT2_2_VWA2_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserWYeKWc5IJIWr15bk6sme-KIG5o18fcx0ab3_IJviYX4=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -14848,7 +14849,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -14934,7 +14935,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -14969,7 +14970,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB512_MIWT1_2_VWA1_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User9QAPDmVViCQVbMGcn8f2j4I3p4qH8cLczpisx4k8Q6s=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -15139,7 +15140,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -15225,7 +15226,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -15260,7 +15261,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB512_MIWT1_2_VWA1_VWB2
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserGurA5FJKykpVeRjgCrL_lV6MljzPH91yPIxWow-vUco=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -15430,7 +15431,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -15516,7 +15517,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -15551,7 +15552,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT2_1_VWA2_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Userevwa79TZypDNFxvHN-cCmgqrUTo0ojLAtonzt5w45Gs=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -15721,7 +15722,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -15807,7 +15808,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -15842,7 +15843,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA512_LBSPPB256_MIWT2_1_VWA2_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Usermn8CxDu3plw5LZRS41i8Eajz3iACivU5QTvjxyYbc9o=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -16012,7 +16013,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -16098,7 +16099,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -16133,7 +16134,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User59kLWhFen2Mf82aVBFcp5pQux5030nhc8HqFLsJD3DY=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -16303,7 +16304,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -16389,7 +16390,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -16424,7 +16425,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserONJASbssDTdNfD9uSqrA-s5GBeUayDErq1BwgYMLrZQ=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -16594,7 +16595,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -16680,7 +16681,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -16715,7 +16716,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserAuvE3PAozBjblCABL-QUl20wIyFtWniDOm727uzo4MI=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -16885,7 +16886,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -16971,7 +16972,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -17006,7 +17007,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_Usera27-7vMbkN_r2wlXZAk6meKz3h176i6HpQgqfn0ojG8=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -17176,7 +17177,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -17262,7 +17263,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: true
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -17297,7 +17298,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT64x64x256_MI32x32x1_SN_GSU0_K1_LBSPPA256_LBSPPB256_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_User2ZcWm2GZ5SEZmiatyHn3Fj9U_Hmd0i3_u3nF_Fg0rRQ=
     LDSTrInst: false
     LSCA: 256
     LSCB: 256
@@ -17467,7 +17468,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -17553,7 +17554,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -17588,7 +17589,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8F8S_BH_Bias_HAS_SAB_SAV_UserArgs_MT32x32x128_MI16x16x1_SN_GSU0_K1_LBSPPA128_LBSPPB128_MIWT1_1_VWA1_VWB1
+    KernelNameMin: Cijk_Alik_Bljk_B8F8S_BH_BiasSHB_HAS_SAB_SAV_UserGZLj_IKAktWIACU54C7P-k2XbCz0j1bzXVk_2mx_ctI=
     LDSTrInst: false
     LSCA: 128
     LSCB: 128
@@ -17758,7 +17759,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -18522,3 +18523,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

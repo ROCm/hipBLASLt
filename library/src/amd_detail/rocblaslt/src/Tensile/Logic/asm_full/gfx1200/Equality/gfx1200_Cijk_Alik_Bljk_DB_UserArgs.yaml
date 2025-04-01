@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx1200
 - gfx1200
@@ -124,7 +125,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_DB_UserArgs_MT8x16x8_SN_K1_LRVW16_PGR0_TT2_2_WG4_8_1
+    KernelNameMin: Cijk_Alik_Bljk_DB_UserArgs_MT8x16x8_SN_LDSB0_AFCskL7yP5DX87ckA90aUlMzv_pi58zJXj87wxf_KMXoFE=
     LSCA: 8
     LSCB: 8
     LSPA: 4
@@ -335,3 +336,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

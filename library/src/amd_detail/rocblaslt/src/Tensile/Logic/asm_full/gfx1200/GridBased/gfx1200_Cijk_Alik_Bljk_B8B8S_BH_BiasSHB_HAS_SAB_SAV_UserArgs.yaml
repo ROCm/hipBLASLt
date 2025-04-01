@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx1200
 - gfx1200
@@ -119,7 +120,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT16x64x32_MI16x16x1_SN_CLR0_LBSPPA128_LBSPPB512_LPA16_LPB16_MIWT1_1_PGR1_PLR0_TLDS0_WG16_8_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_cp4ktsVfnsWesLjQSB0gjzmlxarjj-UxHEcQwpjqbP8=
     LSCA: 32
     LSCB: 32
     LSPA: 4
@@ -386,7 +387,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR1_PLR3_TLDS1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_-xHSsg2dTqipBkXVSys2fqhbfMRW2G6gL0I5ut-DKik=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -653,7 +654,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_CLR0_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR1_PLR0_TLDS1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_PPeYyWD9guPu2jGfEesejIrwaU4RPon_9DjewfOtruY=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -920,7 +921,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT64x16x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR1_PLR1_TLDS1_WG64_2_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_HLBrIAlkHZWwmheu0xoZzsphNzK4yBpZv96tEOxM_A8=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1187,7 +1188,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR1_PLR1_TLDS1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_7fZqbWqANgLDqYRXEmj_FV8SqoCj-hZF9UqNHX9pkS0=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1454,7 +1455,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT32x32x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR2_PLR3_TLDS1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_uPUZcYaRMgPOVwsmmAE--80F_QTIr4XnbgqAm-B39wM=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1721,7 +1722,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT64x16x64_MI16x16x1_SN_LDSB0_CLR0_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR1_PLR0_TLDS1_WG64_2_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_FTtbVlf5iXuZqU0DOdk6-HvdKKA7SKhz8brdJhD4nSs=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1988,7 +1989,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT16x64x64_MI16x16x1_SN_LDSB0_CLR1_GRVWA8_GRVWB8_LBSPPA128_LBSPPB128_LPA8_LPB8_MIWT1_1_PGR2_PLR3_TLDS1_WG16_8_1
+    KernelNameMin: Cijk_Alik_Bljk_B8B8S_BH_BiasSHB_HAS_SAB_SCD_SAV_dCAxrPRn8r5mFgya60W8Ag1AzaraVBldIPP2axh92Tw=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -2235,3 +2236,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

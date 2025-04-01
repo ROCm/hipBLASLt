@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -92,6 +93,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT128x192x16_MI32om2USjveRhpFurJdVOFWRVO-bx-xr6ShezGe_rF-yR0=
     LSCA: 16
     LSCB: 16
     LSPA: 8
@@ -305,6 +307,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT256x128x16_MI32nqt2hyZuKfZMecdIn2S9ncUccpedWwxF6KChPqyAfXs=
     LSCA: 16
     LSCB: 16
     LSPA: 8
@@ -517,6 +520,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT96x128x16_MI32xNOoWH6Dpch3W9fsJNsjxyGhO7D4Y2FnRTo7tF_y5PPM=
     LSCA: 16
     LSCB: 16
     LSPA: 8
@@ -730,6 +734,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT96x128x16_MI32x7FcTOQc265Rvh5UBVrK-52lTVLF5VqLyUQe-8XyWhWU=
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -943,6 +948,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT32x64x32_MI16x11y6G7weuwD3XGO8erKTxcn5LuYH8Fh13e3oVENxXwAU=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -1135,3 +1141,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -94,7 +95,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -130,7 +131,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_S_MX_B_UserArgs_MT64x16x16_MI16x16x1_SN_K1_MIWT1_1
+    KernelNameMin: Cijk_Ailk_Bjlk_S_MX_B_UserArgs_MT64x16x16_MI16x1gSEMk9vhkbfStYMnZHe7pNxKGfVprX0-04S7Kd8xY1c=
     LDSTrInst: false
     LSCA: 64
     LSCB: 16
@@ -382,3 +383,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

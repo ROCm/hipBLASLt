@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx1200
 - gfx1200
@@ -117,7 +118,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT16x16x64_MI16x16x1_SN_LBSPPA256_LBSPPB256_MIWT1_1_SS0_SVW8_TLDS0_WG16_2_1
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT16x16x64_MI16x1f5--thrXFoSdMIw_wUDLCff97bOh7gLz1vqJ1PFWBII=
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -338,3 +339,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

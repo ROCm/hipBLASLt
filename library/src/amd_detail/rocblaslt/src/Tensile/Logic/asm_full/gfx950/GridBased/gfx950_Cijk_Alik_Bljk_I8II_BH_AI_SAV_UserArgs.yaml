@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -114,7 +115,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_UserArgs_MT32x64x128_MI16x16x1_SN_LDSB0_GRVWA1_GRVWB16_LBSPPA128_MIWT1_2_NLCA2_SVW1_VWA1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT32x64xJkMQB12zCNM6WLZRXPqY5nrL3UrfDrYejvludk_-nVc=
     LSCA: 64
     LSCB: 128
     LSPA: 4
@@ -276,7 +277,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -371,7 +372,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_MT32x32x32_MI16x16x1_SN_LDSB0_AFC1_GRVWB4_GSU1_LPA16_LPB16_MIWT1_1_PGR2_PLR1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT32x32xUxhOSVvj7z8CP07qYfiUayP3_EuJn-dFGwb18V3RprI=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -529,7 +530,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -623,7 +624,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_MT64x64x32_MI32x32x1_SN_LDSB0_AFC0_GRVWB8_GSUM_LPA0_LPB0_MIWT1_1_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT64x64x8zREXlBoyVvooxFlIhZ7hDQ8N6-b3r-ZGVZQd6KoWtI=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -781,7 +782,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -875,7 +876,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_MT64x64x32_MI16x16x1_SN_LDSB0_AFC0_GRVWB16_GSUM_LPA16_LPB16_MIWT4_4_PGR1_PLR1_WG16_4_1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT64x64x18VdpcRXXRfY8ATT37aIXgaCtduSFR5xbCHnFQ2r5Ys=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -1033,7 +1034,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1127,7 +1128,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_MT128x128x32_MI32x32x1_SN_LDSB1_AFC0_GRVWB16_GSUM_LPA0_LPB0_MIWT2_2_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT128x12izSbB2NmtP1ybQf-JSJBOkY7ByYzqmHi0RgtdzSEVdU=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -1285,7 +1286,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1379,7 +1380,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_AI_SAV_MT128x128x32_MI32x32x1_SN_LDSB0_AFC1_GRVWB16_GSU1_LPA0_LPB0_MIWT2_2_PGR2_PLR1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_I8II_BH_HAI_SAV_UserArgs_MT128x12ABK9akH2e1a8CGir0oAxL9ahiUfNE1uuNTlifCUwhHA=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -1537,7 +1538,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1610,3 +1611,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

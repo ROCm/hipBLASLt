@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - navi32
 - gfx1101
@@ -71,7 +72,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 0
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -117,7 +118,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT8x8x8_SN_TT1_1
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT8x8x8_SN_LDSB0_AFC0OWVNlNixLR5XAnfSQv2KDQVBneaN5nN-IeQQx5f3FsM=
     LSCA: 8
     LSCB: 8
     LSPA: 8
@@ -260,7 +261,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -360,7 +361,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x8_SN_TT2_2
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x8_SN_LDSB0_AF-YOvZR8x57-Gtk_QXKpdWUcta0rBzc_kZPduGV66qI0=
     LSCA: 16
     LSCB: 8
     LSPA: 4
@@ -503,7 +504,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -603,7 +604,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT8x8x16_SN_TT1_1
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT8x8x16_SN_LDSB0_AFC3yZlgsvC3ngzQTPQsXitkyWpsMciV-UiuCPh6eT52i0=
     LSCA: 8
     LSCB: 16
     LSPA: 8
@@ -746,7 +747,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -846,7 +847,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x16_SN_TT2_2
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x16_SN_LDSB0_ACUgymeJrFcmr4gm2ITJcjpC4wqVaXbOldLa7tvOLkoU=
     LSCA: 16
     LSCB: 16
     LSPA: 4
@@ -989,7 +990,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1563,3 +1564,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

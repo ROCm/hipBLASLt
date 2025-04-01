@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -98,6 +99,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_Bias_BiasSrcA_SAV_UserArgs-MXcB0ahpjdS2TZWdSy3oT5ISPGm4tq7Xfjk4R260AI=
     LSCA: 16
     LSCB: 16
     LSPA: 128
@@ -319,6 +321,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_Bias_BiasSrcA_SAV_UserArgsSAvuRdxpYEWT2Pw5PBw86P2QvVUdt9mF37avmI3izkg=
     LSCA: 32
     LSCB: 32
     LSPA: 64
@@ -514,3 +517,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -71,7 +72,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 0
   UseScaleCD: false
 - - 1LDSBuffer: 1
@@ -114,7 +115,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT32x32x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_LBSPPA128_LBSPPB128_LPA16_LPB16_MIAV0_MIWT1_1_SS1_SVW1_VWA1_VWB1_WSGRA1_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT32x32x32_MI16x16xlroc-ihoULfz85XhLjZum7JJBQ3uDbRuZfNVDJ_eR0M=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -274,7 +275,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -371,7 +372,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SVW4_VWA4_VWB4_WSGRA1_WSGRB0_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x13bmN6e03II0pPKOw_-c27qTQcaDVtqEdbVelFvq6e1A=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -531,7 +532,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -628,7 +629,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA512_LBSPPB512_LPA64_LPB64_MIAV0_MIWT4_4_SS1_SVW4_VWA4_VWB4_WSGRA0_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT128x128x32_MI16x1Co9YthXUl1BSSp-YJFvqIBeDcKGtF90opqWwSZSKOxs=
     LSCA: 128
     LSCB: 128
     LSPA: 32
@@ -788,7 +789,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -885,7 +886,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB0_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV0_MIWT2_2_SS1_SVW2_VWA2_VWB2_WSGRA1_WSGRB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16xUG2uln3NXJfhfG2kx8prz6-pZByu9mhy4Jwsbsng3tA=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1045,7 +1046,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1142,7 +1143,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_SS1_SVW2_VWA2_VWB2_WSGRA1_WSGRB0_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_I8BH_UserArgs_MT64x64x64_MI16x16xo0pm7H0Bgr9XDpshlh1lpaKgf-zdFzYklIDJ_AjQ7dw=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1302,7 +1303,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1374,3 +1375,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -67,7 +68,7 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -106,6 +107,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bjlk_SB_Bias_BiasSrcD_GradS_HAS_SAV_UsEfQ7aAacRwNmt1YdNFweoDvT7shRlcy5FNqbCx9zJYg=
     LSCA: 16
     LSCB: 128
     LSPA: 8
@@ -261,7 +263,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -323,3 +325,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

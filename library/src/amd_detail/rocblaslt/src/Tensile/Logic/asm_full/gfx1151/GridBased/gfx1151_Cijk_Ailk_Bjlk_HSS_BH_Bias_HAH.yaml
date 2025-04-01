@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx1151
 - gfx1151
@@ -102,6 +103,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_UserArgs_MT32x32xdRIZc0AOBFFiO3003wa2nIZhBYipyeNOeCJidOFmnK0=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -343,6 +345,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_UserArgs_MT16x16xToD3DI-SIO-QIwxenLgyzWUza3bk50oMR3F8INTAQLM=
     LSCA: 16
     LSCB: 16
     LSPA: 16
@@ -584,6 +587,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_UserArgs_MT32x16x2aPupiolqEVF0LXWSOr10z5sUkoaU__GYxMHyvozC2o=
     LSCA: 32
     LSCB: 16
     LSPA: 8
@@ -825,6 +829,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bjlk_HSS_BH_Bias_HAS_UserArgs_MT16x32x9llDxzvMOWPAv3B4A3dHhuNLRrtgH78D2UTlLlp6gvY=
     LSCA: 16
     LSCB: 32
     LSPA: 16
@@ -9482,3 +9487,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

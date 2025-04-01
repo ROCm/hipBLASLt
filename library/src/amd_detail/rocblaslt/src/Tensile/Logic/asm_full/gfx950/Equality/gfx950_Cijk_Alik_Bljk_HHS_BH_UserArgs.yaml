@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -126,7 +127,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_K1_MIWT4_4
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT256x256x64_MI32rkuueFMZLJm_xoeK1pUNV4MHzXrqMtKGGWYhnZptcm8=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -364,3 +365,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

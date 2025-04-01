@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -17,7 +18,6 @@
   DataType: 4
   DestDataType: 4
   GroupedGemm: true
-  SupportUserArgs: true
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -44,6 +44,7 @@
   SetConstStrideB: []
   SilentHighPrecisionAccumulate: false
   StridedBatched: true
+  SupportUserArgs: true
   TLUA: true
   TLUB: false
   Tensor0: 0
@@ -95,6 +96,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12pcmVdKp6bxwU0pXemGcXFiHFXTu8TsVx8NWcYTyxkZQ=
     LSCA: 128
     LSCB: 32
     LSPA: 4
@@ -185,7 +187,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -212,6 +213,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -310,6 +312,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19r7cwZ4VwlHEI8SCFfeTyARW0aIZAkURVx8u3e4_vocc=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -400,7 +403,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -427,6 +429,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -525,6 +528,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT327Y01ssjGhEKNjg2WJEAKQuw1smc9fpmBPgFyNOKQLqE=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -615,7 +619,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -642,6 +645,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -740,6 +744,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64rYhssXsFKMCitXztkUtImHLHYzLHuPNexAX-rGnOcmI=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -830,7 +835,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -857,6 +861,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -955,6 +960,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96ypLG9Ad4WifOAPWHwMTlsIfzh3myZxJAaz-FIEFRZ_8=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1045,7 +1051,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1072,6 +1077,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1170,6 +1176,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12XT8-14K41S37JjnXE7P0q9u1PcyPsJwZiqDCXhM7w7M=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -1260,7 +1267,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1287,6 +1293,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1385,6 +1392,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16o8Xevo5Xq6dXb9m9fhW11jdPPgQouwUkppR-vwoqOZU=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -1475,7 +1483,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1502,6 +1509,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1600,6 +1608,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19e_fOrrChZUSluu193D1sAHYHCAtNUALwpy-hg3JTj6U=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -1690,7 +1699,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1717,6 +1725,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -1815,6 +1824,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64BxdV2Lcn3eta9sgmf7H_7TTJVg8pg10z9OlWhMYksdo=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -1905,7 +1915,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1932,6 +1941,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2030,6 +2040,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12lgrekKdK8kP2S_l9eOTFHBJ0ER-Uu6F8otBZkjDHJ2Y=
     LSCA: 128
     LSCB: 32
     LSPA: 4
@@ -2120,7 +2131,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2147,6 +2157,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2245,6 +2256,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19IoT5hxECN5JOt2-aJZ182HhuJDJ-htFJzQ2Pajet80M=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -2335,7 +2347,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2362,6 +2373,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2460,6 +2472,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16r3eit-fiDHYGPSUTLb5UFUbV5wP-hxWqPc6PqfzGVMw=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -2550,7 +2563,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2577,6 +2589,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2675,6 +2688,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32jYo_65dRWUDAYTClIZuLB6vS6PX8mEZCndM4SojArgs=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -2765,7 +2779,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2792,6 +2805,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -2890,6 +2904,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT481IDvQvYErhV8qecQ9_JmE_n86fYjPz2FwGoXZxt8lpU=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -2980,7 +2995,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3007,6 +3021,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3105,6 +3120,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64dHKsodmozKH74Wjx81OUhNaeplTR5qxGSLtPLtzqdfc=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -3195,7 +3211,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3222,6 +3237,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3320,6 +3336,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT80n-4nCAwIu7FPigTYSwPUtLEXRVcvhp51lq4MF1TP1q4=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -3410,7 +3427,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3437,6 +3453,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3535,6 +3552,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96VNUqcgIgeFeYjf1iD4jK8ZZwnAmQcVvyFtVvXRWsJpY=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -3625,7 +3643,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3652,6 +3669,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3750,6 +3768,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT11f5v0POY6ObQ44QvUuC9nn3tXsbaklrqvbpr7w_52Dsg=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -3840,7 +3859,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3867,6 +3885,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -3965,6 +3984,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12vBlOAishCeVq3mvH8msXNRzXnjr_MJkUuLlM0TlGfi4=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -4055,7 +4075,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4082,6 +4101,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -4180,6 +4200,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT14zgkmbVrmimYmFcrFBKm8gF6YlMOT-KUxgs162hLRHMI=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -4270,7 +4291,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4297,6 +4317,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -4395,6 +4416,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16JwM9YgS6ZjLJxLJid79EQQTz3L8vO6yZowqBx_V82No=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -4485,7 +4507,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4512,6 +4533,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -4610,6 +4632,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT17SzFSSKOlykYMBGcjLbP2qD7Wbt_j1UNQ7gZbWxzbMbk=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -4700,7 +4723,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4727,6 +4749,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -4825,6 +4848,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19B4OpSJSslPPt-J79Q_iOMko-xHKvgXQpdOooqHufy1Y=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -4915,7 +4939,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4942,6 +4965,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -5040,6 +5064,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25T5GNhfylRI3g3MGlSKZukbxfG6eDlvhoZJEceaG0Chs=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -5130,7 +5155,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5157,6 +5181,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -5255,6 +5280,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64QK11fNuNe9p8POuVeYl4SqhcioYy5xS-vN33dwpzieM=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -5345,7 +5371,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5372,6 +5397,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -5470,6 +5496,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12zg3oRGAvI9Gy4rkOM-aSm5BdHMERO4JkwTiFUM8Jp5M=
     LSCA: 128
     LSCB: 32
     LSPA: 4
@@ -5560,7 +5587,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5587,6 +5613,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -5685,6 +5712,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32UJfuE_n6jRHt6Q929G4CeHMFWe07NtHibO1HTl4dw4o=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -5775,7 +5803,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5802,6 +5829,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -5900,6 +5928,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT643jQXD4_cB0HkBj-e8C8uheSsHlDXyZ7XNjGhy5EgpjQ=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -5990,7 +6019,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6017,6 +6045,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -6115,6 +6144,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96RDfs_avJa9XjwnmVIrwevmiD3970A6kJkAkG6nLcs4c=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -6205,7 +6235,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6232,6 +6261,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -6330,6 +6360,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12mwU7bCxAcB8UmWOkh1uNQgnt0uskCssre0kHJ3WnoEs=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -6420,7 +6451,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6447,6 +6477,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -6545,6 +6576,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25_UKCdRkH2K20EKVG9SY_LwzTMD46o2MfPF6YKI8TVqA=
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -6635,7 +6667,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6662,6 +6693,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -6760,6 +6792,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64oFCtmZXLn64UKiprnuL6vcMvvKGahRHN4FurSgWg754=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -6850,7 +6883,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6877,6 +6909,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -6975,6 +7008,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Wi10q0iGs6uXO7jjYHw7md_Y5kmAbraEUp7pz8EZnGw=
     LSCA: 128
     LSCB: 32
     LSPA: 4
@@ -7065,7 +7099,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7092,6 +7125,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -7190,6 +7224,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT160KfmIfsB1RO0GowkxgmUlnSen6kjZcvXe071YXmGGGM=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -7280,7 +7315,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7307,6 +7341,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -7405,6 +7440,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT323eEXWB1qV2hZso_gmSZ0z8lzCmdOe5b9YmM4isIOZCo=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -7495,7 +7531,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7522,6 +7557,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -7620,6 +7656,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT489gZjWJvtv9hmHW1cHQLJe3VcwgpLyz-c32cEF2yE_SY=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -7710,7 +7747,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7737,6 +7773,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -7835,6 +7872,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT645ATMiCzBQfwhofKuo7JUI44P7rX3wEQ9kazZjfldmf4=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -7925,7 +7963,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7952,6 +7989,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -8050,6 +8088,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT80_kHlgLlU7Tsp6LcGB4uec6lgo0XMsWFbZk0GQZb0vm4=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -8140,7 +8179,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8167,6 +8205,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -8265,6 +8304,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96bUlSBt3M1C3SVA_r6scMl4uPpKme4_8kk5feDaSRm5Y=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -8355,7 +8395,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8382,6 +8421,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -8480,6 +8520,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT11WtLcmdW6E7bPJTDKCshPQYKzkKLXiPyAqe6n57IeQ8w=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -8570,7 +8611,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8597,6 +8637,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -8695,6 +8736,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12nol7viuwisT-X8epbGfPCsfHG1Rp2FjpPkg3eOx5TEo=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -8785,7 +8827,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8812,6 +8853,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -8910,6 +8952,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16XDMLlFsqNTJP5Y5tqShQELKnuLPW86WV9lhs9Fj_rv0=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -9000,7 +9043,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9027,6 +9069,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -9125,6 +9168,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19FMe98ibH2KIRcWyHF8m8cDJKqLQgiNDhIw3Y-I_qhBA=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -9215,7 +9259,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9242,6 +9285,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -9340,6 +9384,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22mQzq7Kr1WDNYnEhIKZzEfGOMDy80rXBKtA1IqXSF1Ak=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -9430,7 +9475,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9457,6 +9501,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -9555,6 +9600,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25ns4StbDbWC5QBg_frKwchqRIqmf0P2CiU6zGstp8m7o=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -9645,7 +9691,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9672,6 +9717,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -9770,6 +9816,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64Pb0XIYs4w1SMGSfQQFXXlhpnTOaBvQlg9fEdl1EuS8I=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -9860,7 +9907,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9887,6 +9933,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -9985,6 +10032,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25EpD44DjpuBdBJYLz0557HBzL9veFIJvG2wbye5CxopQ=
     LSCA: 256
     LSCB: 32
     LSPA: 2
@@ -10075,7 +10123,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10102,6 +10149,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -10200,6 +10248,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32r24vVDSHtXh6_sMKRSXaEuKyRTybuTMEeaZMDBCeRk0=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -10290,7 +10339,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10317,6 +10365,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -10415,6 +10464,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64QWFshJ92nbmyPet47_G1Z9VSsgHKSmVfRgJe2Xc6ri4=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -10505,7 +10555,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10532,6 +10581,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -10630,6 +10680,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Fz2xnJ6OrMP2pFlCD-vOvd_a6z5V7q7dnhjq0r8lph8=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -10720,7 +10771,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10747,6 +10797,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -10845,6 +10896,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22GOZ4jhzfy6WuMVgt11XIvUOuY5SoODLxID00gN7Dg6Q=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -10935,7 +10987,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10962,6 +11013,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -11060,6 +11112,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25FtcGkoWSj0PU0dsYGM-wZ17GnYH-aXa1vS5wkkXCQ0Y=
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -11150,7 +11203,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11177,6 +11229,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -11275,6 +11328,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64MmH43qdY09wAbDKioPy40w2LfyYLiR9eRJgT1esXRBI=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -11365,7 +11419,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11392,6 +11445,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -11490,6 +11544,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT198FAtzH90Q11Ly3d4_RqyO2ZxGR-0vIWzQAiRVqt14qE=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -11580,7 +11635,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11607,6 +11661,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -11705,6 +11760,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25MtILUcMAiHEDisIOJrkKiK6jqf0mhHJbshg9MikYVQc=
     LSCA: 256
     LSCB: 32
     LSPA: 2
@@ -11795,7 +11851,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11822,6 +11877,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -11920,6 +11976,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16an9_HrZxubFm8k5JRZFw9ChFp-gY0XmCvJpWByyuHnQ=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -12010,7 +12067,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12037,6 +12093,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -12135,6 +12192,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32xtnorPlBzywA4V82-UT-d2mvV5gJRZqerjzFC_GRgUE=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -12225,7 +12283,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12252,6 +12309,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -12350,6 +12408,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT48jh7yYdARDW1bieUbalDfQy-KbjbPZ7M5Ynqt-w0I4Iw=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -12440,7 +12499,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12467,6 +12525,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -12565,6 +12624,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64PRe0cJkYHA1BQA1UfIbRioWBwfqrduI6wTLOjY07_Y4=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -12655,7 +12715,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12682,6 +12741,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -12780,6 +12840,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12XhruzNglZKvncdVPtyjx4dMIXn5MtadOwDvwLdXEvVc=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -12870,7 +12931,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12897,6 +12957,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -12995,6 +13056,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT17-xM--42CBlRzZQU-CJ6d7rk1N0wqQmQbk1p-v1sCyG0=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -13085,7 +13147,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13112,6 +13173,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -13210,6 +13272,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT195XsoJl95zXES5AyhcVj73XIlsTf_57PTT1dYDTzRPSg=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -13300,7 +13363,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13327,6 +13389,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -13425,6 +13488,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT200zwJFUWBmO9MQ4xyi94U1KEwr9G9xviS5clkbVOnrxI=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -13515,7 +13579,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13542,6 +13605,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -13640,6 +13704,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22cx7V_PXUdiN-ckUy7eDEXTPk_fFEYabe_btpT2-eTmA=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -13730,7 +13795,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13757,6 +13821,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -13855,6 +13920,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT24CUnokaEHjl4a8vnJ2luNoDnv5SqwzkFdh3SibITw-T0=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -13945,7 +14011,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13972,6 +14037,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -14070,6 +14136,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25vr05bMDdH9SQ17VMt8dGszNdBBNJH45qIhYFCybeR3E=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -14160,7 +14227,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14187,6 +14253,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -14285,6 +14352,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19LUwjR5uopuTdfV9G1qXYxYHp5sS1FHW7EqPKdAscuLg=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -14375,7 +14443,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14402,6 +14469,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -14500,6 +14568,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT257I2qtGuqQiB6X3Zev7ZjQAUkrDeDVWLq5dFIiLYY6JY=
     LSCA: 256
     LSCB: 32
     LSPA: 2
@@ -14590,7 +14659,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14617,6 +14685,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -14715,6 +14784,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12p_5RyDpKskX0sKHvznjS-HhgZ8VhdhxwB6_E3EMfCRA=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -14805,7 +14875,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14832,6 +14901,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -14930,6 +15000,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16j_4sllhlVZdmdkztIGOUzMO8jp1FnmyGFlYKV7cYfRc=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -15020,7 +15091,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15047,6 +15117,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -15145,6 +15216,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19v0n8GE5QD-LzydjYr_NjyCfIaZegQbd9pB0UyMPGiLQ=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -15235,7 +15307,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15262,6 +15333,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -15360,6 +15432,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22txRfk1zczN4Anpz4oyi0SU9IcDN034uiFCTzUChDaRQ=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -15450,7 +15523,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15477,6 +15549,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -15575,6 +15648,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25f7Nv79NBlxeUuoZT_SsC6oAUG2z8NsBqgzYgJWjM9Lw=
     LSCA: 256
     LSCB: 32
     LSPA: 4
@@ -15665,7 +15739,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15692,6 +15765,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -15790,6 +15864,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19bInXT3IIWNbMrzZSsMQyIIKUg_Y9din-LN3Qvvj6fEs=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -15880,7 +15955,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15907,6 +15981,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -16005,6 +16080,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25-t5ZCBgEosM5TyFqrF1FYZIHlYkXZLPLcp8NKvHmdM4=
     LSCA: 256
     LSCB: 32
     LSPA: 2
@@ -16095,7 +16171,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16122,6 +16197,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -16220,6 +16296,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64yNgWVyFqZ9Ow5gglgLlpbY6pBDSkt8rhHIp7dAgPVmw=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -16310,7 +16387,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16337,6 +16413,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -16435,6 +16512,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96Hr1XC6dcHlmgcdby8D0yoVV1ImZ1SL7KlcgUNiyNquQ=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -16525,7 +16603,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16552,6 +16629,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -16650,6 +16728,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12c5hm7nHl4CPwch9Ol6tX4waWX9ND1fqC5x0xtllQ1kI=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -16740,7 +16819,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16767,6 +16845,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -16865,6 +16944,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT142w_sTJt8zoUZzhUyC2A_Kl1xPd754TlGbG0g-CxntIE=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -16955,7 +17035,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16982,6 +17061,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -17080,6 +17160,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16vQYLseXih6h27xw_gGOrVqg1ixIfl7MqDJqrCXctnH4=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -17170,7 +17251,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17197,6 +17277,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -17295,6 +17376,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT17t0AIuhQvf5UFJUovYqgb8CruUjmi0UPDRTUF_bfZvgw=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -17385,7 +17467,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17412,6 +17493,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -17510,6 +17592,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19PVJADEIBduQzM7RW1XjuU5yke8EHVnrBDzuCzaKFgT0=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -17600,7 +17683,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17627,6 +17709,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -17725,6 +17808,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT20-bhuYeDJ0FPNJGvHb-ZYCk8QO6vrZ9Nxfd6FgtYnS4c=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -17815,7 +17899,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17842,6 +17925,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -17940,6 +18024,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22V9_Nz3WJca4FmohiQf4JbBbxLvGeMjqay81APs-9C8Y=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -18030,7 +18115,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18057,6 +18141,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -18155,6 +18240,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT24oMO6x3zONCISH46ufPEBWt9qc5lyENP1HzNTn23FNxA=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -18245,7 +18331,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18272,6 +18357,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -18370,6 +18456,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25_7c7BOJB9-SsxS0ZCurIt_C-iLvbzYoey3dFX-lXmKs=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -18460,7 +18547,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18487,6 +18573,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -18585,6 +18672,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32aDakNIFsmjWZS_9cJbeDiKy_NlKP7tW0a7itECANmvU=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -18675,7 +18763,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18702,6 +18789,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -18800,6 +18888,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64w704SWXpSSb6NG8HBOfYo_JZ35YBiImUtpG89n6TSHA=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -18890,7 +18979,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18917,6 +19005,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -19015,6 +19104,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12XBqveX8SEIMqg1WMCGKybjVVge-McEE_cpBxo-MWPLI=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -19105,7 +19195,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19132,6 +19221,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -19230,6 +19320,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64tk40dSk3EEVy4HCK0CHO5hFsSDZ5iwdiCtp0t3lmsoc=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -19320,7 +19411,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19347,6 +19437,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -19445,6 +19536,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Hds3U_uPp2Se6z_HvNlhbWQVratmGyKYGFpbqVFx-SQ=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -19535,7 +19627,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19562,6 +19653,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -19660,6 +19752,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19boqxz5aDCSeRq6sauDe_5sP2-PILIzZA2SNc4mjj4Hw=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -19750,7 +19843,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19777,6 +19869,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -19875,6 +19968,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25Js4P8WP9g4lxmNWtAl_2X_Mq_2CIGePV-kOh4wulo9E=
     LSCA: 256
     LSCB: 64
     LSPA: 4
@@ -19965,7 +20059,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19992,6 +20085,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -20090,6 +20184,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16fnrzEKZ3raVcrLbsSbvxaKpOxcldnaLCM6XpdPzae9M=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -20180,7 +20275,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20207,6 +20301,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -20305,6 +20400,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32JuK1NmQR_U3Dy_ODbN75Gse7rl7a2MhYmzyVo1w0ydA=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -20395,7 +20491,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20422,6 +20517,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -20520,6 +20616,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT48SG-YLK03r-t7PCcLbEEY3WV1hZzv26EnrOd7KNj59Ss=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -20610,7 +20707,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20637,6 +20733,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -20735,6 +20832,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64cYkAf6GbUnMkls1AjSi0EiebvElvNEYBPr8bQIF8UiM=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -20825,7 +20923,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20852,6 +20949,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -20950,6 +21048,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19oTmfBv8Jhqy3_Ufuo6v8wbgIP8H7yW_IK5uo_r4wmvQ=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -21040,7 +21139,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21067,6 +21165,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -21165,6 +21264,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25KT7JE_sEIE8SlaBo1SdTcy3ak0UE9Tk9v7ENkueT12U=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -21255,7 +21355,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21282,6 +21381,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -21380,6 +21480,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64t7QmvdJ5ABXb1K3RcJlaxz4_VmeltnAcyZgZvzyzn2g=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -21470,7 +21571,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21497,6 +21597,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -21595,6 +21696,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Vhvhqqu0xbfkboACkkBO-PNLmX1QZE5B_tuSqtpZYHQ=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -21685,7 +21787,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21712,6 +21813,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -21810,6 +21912,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19CdJoTcD5WugH2hxGZjVuaLBBqIsZMzzP8saTuC57hyw=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -21900,7 +22003,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21927,6 +22029,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -22025,6 +22128,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25hwE1YIVaY-8YtNqEAa76xGlYPddzB0NkYAuxE0KdM4Q=
     LSCA: 256
     LSCB: 64
     LSPA: 4
@@ -22115,7 +22219,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22142,6 +22245,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -22240,6 +22344,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT647W2WLq5uhZhZ_VnGg6dVehHhBxatUk9pM2cCA2xbyLM=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -22330,7 +22435,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22357,6 +22461,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -22455,6 +22560,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96MUvyevtRiDD6pdEgjaM1iIV-xhJCXqsoDRgECPsfTms=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -22545,7 +22651,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22572,6 +22677,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -22670,6 +22776,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12R7p-UjqKBjZfHe7-1Z9eq4hgt2myv4xhgXnYg5flzG8=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -22760,7 +22867,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22787,6 +22893,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -22885,6 +22992,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16nXIn3daXS_ggLcOMir6v-vSr5QoOt9JNbOb3kFV0IO0=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -22975,7 +23083,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23002,6 +23109,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -23100,6 +23208,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19Z0G-z6rZq4uWvynEtQocCJ8HVw190ZdJ-btSjuqOrCY=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -23190,7 +23299,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23217,6 +23325,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -23315,6 +23424,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT225t-CRzx13ZthY-4PH_XIMMCAL-NQRfwPXOzvj_Uk9YQ=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -23405,7 +23515,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23432,6 +23541,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -23530,6 +23640,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25E_Wxzs3QB38rhWchb5UK--nJhKmWY-YFmt8zzJhs0YI=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -23620,7 +23731,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23647,6 +23757,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -23745,6 +23856,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT649o3umco2fkr3bYUfdNN6rMgKHSUUzNWr7a5CoyB9yVM=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -23835,7 +23947,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23862,6 +23973,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -23960,6 +24072,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Xh5HfTv9eUBE8lkvGIkhGqMougXUAqwFdOT0R3WGbgo=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -24050,7 +24163,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24077,6 +24189,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -24175,6 +24288,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT191uovPh0Ls_oKtgHDMoiv2fP2Hz70Hj_m6Fwjq1zXid0=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -24265,7 +24379,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24292,6 +24405,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -24390,6 +24504,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25DeZdpgZm6iBed8QOoYiftqZJbblhzqbgx-VxNanheEc=
     LSCA: 256
     LSCB: 64
     LSPA: 4
@@ -24480,7 +24595,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24507,6 +24621,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -24605,6 +24720,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32GmdH5LvrrbHvNOrNoeQDOxlh3sgjem4oNy3TKLyfVCc=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -24695,7 +24811,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24722,6 +24837,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -24820,6 +24936,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96JlZvkjLHCBkaKD13vuW06IDfax2B_TDFMNjhiwClwZ0=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -24910,7 +25027,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24937,6 +25053,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -25035,6 +25152,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT1254cUG0_pA0WGBomif4jDN5Kx1lg0xLaViqT5kLFVty4=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -25125,7 +25243,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25152,6 +25269,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -25250,6 +25368,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT167t_QtWT16WsxzTWOudr2lOM6E7OdughNe3QDJzKZbmU=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -25340,7 +25459,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25367,6 +25485,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -25465,6 +25584,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19OODOlDVWn1Nixa_HElxMwwL0SAq1iAiTIMkPHEc_sP4=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -25555,7 +25675,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25582,6 +25701,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -25680,6 +25800,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22R0ju2h_NMDcWc8aVuSyQDfyhFM-GszQPqpOTnyqjoLU=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -25770,7 +25891,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25797,6 +25917,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -25895,6 +26016,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25IwtYEnf_Ph2hxxlA1-ITR9WHgl5t5wOLvmqKU_SzcAQ=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -25985,7 +26107,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26012,6 +26133,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -26110,6 +26232,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT641hULDTcFBnIXD40fi7KGkhuSeh3r66-ZG9f3Y9pqtaA=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -26200,7 +26323,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26227,6 +26349,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -26325,6 +26448,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Mtz9w3tpkOvn5fQte0H-5wlZuzw0s3cIv8ha5BK_DOg=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -26415,7 +26539,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26442,6 +26565,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -26540,6 +26664,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19_1Y2muyP2v0NS9Ieal1gI3o8zQhbtVWHze9TP4OIaVs=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -26630,7 +26755,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26657,6 +26781,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -26755,6 +26880,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25B1knPGDweTGXCPEEFuAooTgBTXHxfTLeUVsTgz68Ctg=
     LSCA: 256
     LSCB: 64
     LSPA: 4
@@ -26845,7 +26971,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26872,6 +26997,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -26970,6 +27096,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32t_CyCGyzSXxbCXuGZskXsItDm77jonvk9UiSVVeMTQ8=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -27060,7 +27187,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27087,6 +27213,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -27185,6 +27312,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64f4QiqysEfhzC0m8KYqwHNSpM2t4EwsOb0RR11yZAGAg=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -27275,7 +27403,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27302,6 +27429,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -27400,6 +27528,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96-ooUCpCRuFI6b75gMYU9OMhNURipal89XRB-vqsGhqg=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -27490,7 +27619,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27517,6 +27645,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -27615,6 +27744,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12jTxIW_Vo3bX-DFn2qh7UG_zYDCZoH8lfpV8KrY2CsWk=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -27705,7 +27835,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27732,6 +27861,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -27830,6 +27960,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16qY7QAK6mFKeecFl5qWjY3FIuWjZnGbGslMXjG33fvdM=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -27920,7 +28051,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27947,6 +28077,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -28045,6 +28176,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19AKCT1w9TZoQMhqw5fNaAY_pbCiltZSJ89N4HPu4v4T8=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -28135,7 +28267,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28162,6 +28293,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -28260,6 +28392,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT227TrgtfbuND6Nz8NH2202j0GsUV04QkdxlpYcQJc-eVw=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -28350,7 +28483,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28377,6 +28509,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -28475,6 +28608,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25kCYRh44WZsvZvUOzvV9LDWunFWrw9rM8h2JONoO59rM=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -28565,7 +28699,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28592,6 +28725,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -28690,6 +28824,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT641ict5_xyFEmb-q0YNNB7T6gfVsIJVJlG3yS5LlFrxFY=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -28780,7 +28915,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28807,6 +28941,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -28905,6 +29040,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12n2ncs7-d7QGeUzd0ltCRKVnFIJh5Wzm8SMlkuDSI7lg=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -28995,7 +29131,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29022,6 +29157,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -29120,6 +29256,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19yQDRLX-j2uNX1xhAcb1mVrSQWQoZ-jmH4zNaunxlEVk=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -29210,7 +29347,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29237,6 +29373,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -29335,6 +29472,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25hBbZToTnGi2i9MaYJfL9c_eV6KLotxmuJ1lQR8xS7Xk=
     LSCA: 256
     LSCB: 64
     LSPA: 4
@@ -29425,7 +29563,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29452,6 +29589,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -29550,6 +29688,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32RwCForOEcmxY9wfbeDPXJ81rpXQ5bjBjResHF2-UymQ=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -29640,7 +29779,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29667,6 +29805,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -29765,6 +29904,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT484oZ3wpcNj0O-XgEz8VkeBoYjKHcSedCi9AHpF2pQiSg=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -29855,7 +29995,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29882,6 +30021,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -29980,6 +30120,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64YXCx6_c7dhUpFX21HrDhSJK-nsuhsFYGeetE-R1BzSc=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -30070,7 +30211,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30097,6 +30237,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -30195,6 +30336,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT80qYWYfi1c_MZyukgemxxdYMh351LUCLxN0sG2gpGKzsI=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -30285,7 +30427,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30312,6 +30453,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -30410,6 +30552,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96O4YdLm6zmccsnpignBTd9330vUE5lRB0D0dC2igMPzY=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -30500,7 +30643,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30527,6 +30669,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -30625,6 +30768,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT11p_ew7UXa7SKnWc7IFT7KHTXT865NIL8sLtCyUwuTqjc=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -30715,7 +30859,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30742,6 +30885,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -30840,6 +30984,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12rzEMRV2z6_946ca5b9KH2iLsKohL61HUTnTnbG8HAzw=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -30930,7 +31075,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30957,6 +31101,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -31055,6 +31200,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT14ZPLGsPtGWwz420KDJrE7uwIMRSSrh1Ze8Z2c1epUyU4=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -31145,7 +31291,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31172,6 +31317,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -31270,6 +31416,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16OC8vzCFUKpE-vE-kTm37LblBpuD5J9lFVkwR-kGBT1w=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -31360,7 +31507,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31387,6 +31533,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -31485,6 +31632,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT17nD0FQPUesjdwTKtHiwNf5tgI4RAK2r5FQToolnMStWw=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -31575,7 +31723,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31602,6 +31749,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -31700,6 +31848,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19FQBsBRARzjU0cu2ujdk-AVcNrR1yEJ-i5rYwe9o9aok=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -31790,7 +31939,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31817,6 +31965,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -31915,6 +32064,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22KY9Y8ain4nYyTTDrjrH0nAAApnlmph7JjK7hLkCtbRY=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -32005,7 +32155,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32032,6 +32181,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -32130,6 +32280,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25z6opgZALNx7zvXiZbSAiFog-FW97PDnGv9EqHRyrsLg=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -32220,7 +32371,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32247,6 +32397,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -32345,6 +32496,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64QFf602GyZTSWNCXoVM8P0y37JI33KcJAB3qo12J7LWw=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -32435,7 +32587,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32462,6 +32613,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -32560,6 +32712,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12c0oV_hgYOKfXaH6oBnUXGE9pg1X8cjOtBfZkW5SUxJY=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -32650,7 +32803,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32677,6 +32829,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -32775,6 +32928,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19i55jAogtYJ4WrvH3miaBXppMSpt_DFr8lQamIDAebJE=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -32865,7 +33019,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32892,6 +33045,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -32990,6 +33144,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT321Jxig-ojYPgHaFr6HEvSxiOULput4-KK6C6n7yWyPcQ=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -33080,7 +33235,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33107,6 +33261,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -33205,6 +33360,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64be2yJDdHU_dDJhhsh3KUaKSq4L4ohFCSrJpajMnA_xo=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -33295,7 +33451,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33322,6 +33477,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -33420,6 +33576,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96Kw_spJW1oGIemQdNgQzCFIIbIrSkKslk1zYDE4v7X9c=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -33510,7 +33667,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33537,6 +33693,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -33635,6 +33792,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12kiWYfaU67nQQNucyGLJWsw2VV3Q4uys3QC1-c4L5r3Q=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -33725,7 +33883,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33752,6 +33909,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -33850,6 +34008,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16eFElQnjiFCbJhdPSryej_LIOdzjCjAWGdWbUGqvlbe4=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -33940,7 +34099,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33967,6 +34125,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -34065,6 +34224,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19alGCXm9sI9jdgc2l_M5C22pfPFMEXq1oKv5e89-ak88=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -34155,7 +34315,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34182,6 +34341,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -34280,6 +34440,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22wKlu0FZO0-UkMPaJ4G2jy996Ds4I4bqFZOPiiIfHw88=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -34370,7 +34531,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34397,6 +34557,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -34495,6 +34656,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25COIljBas3KscQ8_WNWB_QnecGlR9Ko24aeU27JHLj3M=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -34585,7 +34747,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34612,6 +34773,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -34710,6 +34872,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64s6SHgyiP1lfbhKSxEHPbSJW8dzQ3qjmY1w1ihZxXrE4=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -34800,7 +34963,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34827,6 +34989,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -34925,6 +35088,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12ZyOUjuBQpW3_cUC7m-Y9BgpwzhnjYmdLv0dRb0SdJ3A=
     LSCA: 128
     LSCB: 64
     LSPA: 8
@@ -35015,7 +35179,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35042,6 +35205,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -35140,6 +35304,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19HrBE8upkCoQoBsyztP2IhRMa4se21LLAvbYxhGe4-Vc=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -35230,7 +35395,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35257,6 +35421,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -35355,6 +35520,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT16qmDfKpd0GaAxFAYKegSrJFA-6Ge_ZW1eFMvpPmfAuMc=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -35445,7 +35611,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35472,6 +35637,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -35570,6 +35736,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT48rgQDyYywWkMoJ0MSJIEa6ibrniNataDRXHgI4uqSESQ=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -35660,7 +35827,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35687,6 +35853,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -35785,6 +35952,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64S5WUr59sX-4vxRjN9HVWWq48yqUIE_g7mVwvxmW3JIk=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -35875,7 +36043,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35902,6 +36069,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -36000,6 +36168,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT80Da6Nn01y2AzvSbedEUvDGebvMrVHLNIg7CpVu3BA-38=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -36090,7 +36259,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36117,6 +36285,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -36215,6 +36384,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT96hc_nU-vVNdt3If_yS-iNfE3qHvS0sDpyYvX2KOzEg8Q=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -36305,7 +36475,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36332,6 +36501,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -36430,6 +36600,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT11QXn0bf5b0eXQVYwVf74K6y9h-GrlZw-VlBaweXaTx4I=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -36520,7 +36691,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36547,6 +36717,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -36645,6 +36816,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT128ERrEU2ciNebY0lR1XM9mnjoC6hUGHW3LXIuX_u80e0=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -36735,7 +36907,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36762,6 +36933,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -36860,6 +37032,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT14reZPx6E7MpparbW0ns-dh20Sm2g_Ctehipv5gVAXF78=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -36950,7 +37123,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36977,6 +37149,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -37075,6 +37248,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT161-XCZllsUKZl3neAhjOqwZLHDbpMAYbHZlw2kBCvB_c=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -37165,7 +37339,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37192,6 +37365,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -37290,6 +37464,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT176RG3bRQDHOALJ-IsUuFrGWy1JSAen3OUfaaHLGPEVZw=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -37380,7 +37555,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37407,6 +37581,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -37505,6 +37680,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT19zT33bjEoHokud0jZncwo0rtoYUHq9bqDoF_J33byp-g=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -37595,7 +37771,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37622,6 +37797,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -37720,6 +37896,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT22eFiNEy727av0GxMGqMFQ8B_7c04Syc5d83UugE-ZgBA=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -37810,7 +37987,6 @@
       DataType: 4
       DestDataType: 4
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37837,6 +38013,7 @@
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -37936,6 +38113,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12Ww3qlulRHMpTu5eeRag1BrnCdbjE9Jg_F7DdFYXJbZo=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -38179,6 +38357,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12p9RwyZ-tqm7rD_uGfS5iP7ISrr1QWyYp1g0eaz0NylQ=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -38422,6 +38601,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12w44y5jAeKlaYRNDIL4nI0XrGXVqxQl1VHBVaxfdjrqI=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -38665,6 +38845,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12NEJfawZDGi8xskOPhnUp-m1566sR7YIixCnXXU9M-Ro=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -38817,7 +38998,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -39237,3 +39418,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

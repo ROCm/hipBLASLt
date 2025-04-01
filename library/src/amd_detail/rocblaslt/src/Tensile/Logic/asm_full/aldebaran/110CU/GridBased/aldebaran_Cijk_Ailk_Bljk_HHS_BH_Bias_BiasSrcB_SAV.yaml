@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -99,6 +100,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_BiasSrcB_SAV_UserArgs28GPR2VFqQgfSZrZ9s3J7QQs7GJgT4oI6WK3idm6bsU=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -320,6 +322,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_BiasSrcB_SAV_UserArgsQFsQ-wSqHQQgv7IY2YmaW9J5V0RbucFVWaTtbm67zjM=
     LSCA: 128
     LSCB: 16
     LSPA: 16
@@ -541,6 +544,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_BiasSrcB_SAV_UserArgsYrLUVdJpiYXVXdDaMZDzZkmKYCzS27zwc9yukOP7COA=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -736,3 +740,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

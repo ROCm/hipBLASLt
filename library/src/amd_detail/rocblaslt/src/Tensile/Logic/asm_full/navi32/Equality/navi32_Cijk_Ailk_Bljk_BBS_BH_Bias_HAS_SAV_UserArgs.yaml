@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - navi32
 - gfx1101
@@ -126,7 +127,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_HAS_SAV_UserArgs_MT16x64x32_MI16x16x1_SN_LDSB0_CLR0_EPS0_GRVWA2_GRVWB8_IU1_K1_LBSPPA512_LBSPPB128_MIWT1_1_NLCA1_PGR1_PLR0_SIA3_SS0_TLDS1_WG16_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_HAS_SAV_UserArgs_MT165GhOFvtZYcdBaLEBMqhU8j9-jJkynvb2hD80fER86zw=
     LSCA: 16
     LSCB: 32
     LSPA: 16
@@ -404,7 +405,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_HAS_SAV_UserArgs_MT128x80x32_MI16x16x1_SN_LDSB0_CLR0_EPS0_GRVWA8_GRVWB4_IU1_K1_LBSPPA4096_LBSPPB128_MIWT2_5_NLCA1_PGR1_PLR0_SIA1_SS1_TLDS1_WG64_2_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_HAS_SAV_UserArgs_MT12bSBe7teSqQO1R1XQ5coIr-12kRc2TMmqGlbzirOToVQ=
     LSCA: 128
     LSCB: 32
     LSPA: 8
@@ -641,3 +642,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

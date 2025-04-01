@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - arcturus
 - gfx908
@@ -71,7 +72,7 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -117,7 +118,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgs_MT64x16x32_MI16x16x1_SN_CLR0_LBSPPA512_LPB4_LRVW4_MIWT1_1_PGR2
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgskaxFqIqYUtRgIjOOP9rQyLj0wwEsJLqf4nW63Pe44uc=
     LSCA: 64
     LSCB: 32
     LSPA: 4
@@ -278,7 +279,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -378,7 +379,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgs_MT64x16x64_MI16x16x1_SN_CLR1_LBSPPA1024_LPB16_LRVW8_MIWT1_1_PGR2
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgsxdvrnM_fmBG-r3mmOUPg_aZu2rzxdkWnA2eVbvsruiY=
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -539,7 +540,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -605,3 +606,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

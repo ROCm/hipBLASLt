@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -67,7 +68,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 0
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -106,6 +107,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_I8II_BH_UserArgs_MT64x64x64_MI32xd5jHa1t1AWCyeJ4Cjk4cRCs_P3xjqgNHKW-08fAB0tE=
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -258,7 +260,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -350,6 +352,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_I8II_BH_UserArgs_MT64x64x64_MI32x52ABtLDciWvvrWwDo8JQtSrTbg4B2Uk87GuR6_h4gC8=
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -502,7 +505,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -594,6 +597,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_I8II_BH_UserArgs_MT128x128x64_MI3E1h7EQv1wIOpg1XbuYuKmOmz8UhyldaQEGR-7z0VjkQ=
     LSCA: 128
     LSCB: 64
     LSPA: 4
@@ -746,7 +750,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -838,6 +842,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_I8II_BH_UserArgs_MT128x128x64_MI3i7V5UV6OOKsEtmp8_7Ns1dyUuUAGinEpRnEsuTTSci8=
     LSCA: 128
     LSCB: 64
     LSPA: 2
@@ -990,7 +995,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -1058,3 +1063,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

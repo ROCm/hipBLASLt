@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
 - gfx90a
@@ -68,7 +69,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 0
 - - 1LDSBuffer: 0
     ActivationAlt: false
@@ -107,6 +108,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x16_MI16x16x1_jtQHkOxJMoKsCPfZb36XdZu_GNJmhkuRgF5IyU0Egbg=
     LSCA: 16
     LSCB: 16
     LSPA: 8
@@ -259,7 +261,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -351,6 +353,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_DB_UserArgs_MT16x16x8_MI16x16x1_SL4VEsygzV0mhliJ9tFbAVhmylyOzCH6u9kW-fagm1zk=
     LSCA: 16
     LSCB: 8
     LSPA: 8
@@ -503,7 +506,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 0
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -567,3 +570,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

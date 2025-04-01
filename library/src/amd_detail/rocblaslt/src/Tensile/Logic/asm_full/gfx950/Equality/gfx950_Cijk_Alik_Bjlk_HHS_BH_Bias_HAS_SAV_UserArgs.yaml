@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - gfx950
 - gfx950
@@ -108,7 +109,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_HHS_Bias_HAS_SAV_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
+    KernelNameMin: Cijk_Alik_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT323c_CLsD63jhEyNei4WFnBZd0zofcPYvbtqjcWQOXBkw=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -306,3 +307,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...
