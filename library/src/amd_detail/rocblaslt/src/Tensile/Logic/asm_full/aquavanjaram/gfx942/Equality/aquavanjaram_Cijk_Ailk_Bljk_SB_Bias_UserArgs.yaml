@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -93,7 +94,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -128,7 +129,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA1024_LBSPPB128_LPA0_MIWT4_1_NLCA1_SVW4_VWA4_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x32_MI16xLXwAgFZ6nfLASnhlEFo1CqtllqCvb2witc4x0_d7bX0=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -377,7 +378,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -412,7 +413,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMB_K1_LBSPPA1024_LBSPPB256_LPA0_MIWT2_1_NLCA1_SVW2_VWA2_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16x_BQlGSpB6uqqHdQhlunFGa_jv3mnj7iGdryH59L2JjU=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -660,7 +661,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -695,7 +696,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMB_K1_LBSPPA1024_LBSPPB256_LPA0_MIWT2_1_NLCA1_SVW2_VWA2_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16x_BQlGSpB6uqqHdQhlunFGa_jv3mnj7iGdryH59L2JjU=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -943,7 +944,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -978,7 +979,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA1024_LBSPPB256_LPA0_MIWT2_1_NLCA1_SVW2_VWA2_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x32x64_MI16xqsGrPihN9PHga_n4KUAZhgn1DT12X9cnkliuuqU1MB0=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1227,7 +1228,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1262,7 +1263,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x64_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA1024_LBSPPB256_LPA0_MIWT4_1_NLCA1_SVW4_VWA4_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x64_MI16xKZx6PBbSe4i7HVoSk0XaJWFkYSCqBQQmBnTT7Ljz_cM=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1511,7 +1512,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1546,7 +1547,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x16x64_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA1024_LBSPPB256_LPA16_MIWT1_1_NLCA1_SVW1_VWA1_VWB1_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x16x64_MI16xDv_m57aV5V0U4Nuot85RQvQnMB7I1spzj6udZL5lQXY=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1795,7 +1796,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -1830,7 +1831,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x32_MI16x16x1_SN_LDSB1_GRVWA4_GRVWB4_GSUAMBSK_K1_LBSPPA1024_LBSPPB128_LPA0_MIWT4_1_SVW4_VWA4_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_UserArgs_MT64x64x32_MI16xLXwAgFZ6nfLASnhlEFo1CqtllqCvb2witc4x0_d7bX0=
     LSCA: 64
     LSCB: 32
     LSPA: 16
@@ -2083,3 +2084,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 80}
@@ -112,7 +113,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_MT16x256x32_MI16x16x1_SN_LDSB1_GRVWB8_LBSPPB2048_LWPM0p40_MIWT1_4_NTB0_SU0_SUM0_SUS0_SPO0_VWB4
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT16x256x32_MI16xE-vAxMV6Cw27Hl0Ewcl_mwsmGng_Xj3ozUR45jnkYkI=
     LSCA: 16
     LSCB: 256
     LSPA: 4
@@ -367,7 +368,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_MT16x128x32_MI16x16x1_SN_LDSB0_GRVWB8_LBSPPB1024_LWPMn1_MIWT1_2_NTB1_SU0_SUM0_SUS0_SPO1_VWB2
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT16x128x32_MI16xlbPfHOyNw8i3Bznh_3cFdr2onIxZReyv5PV5i0hCDlA=
     LSCA: 16
     LSCB: 128
     LSPA: 4
@@ -622,7 +623,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_MT16x64x64_MI16x16x1_SN_LDSB0_GRVWB8_LBSPPB512_LWPM0p40_MIWT1_1_NTB1_SU0_SUM0_SUS0_SPO1_VWB1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT16x64x64_MI16x1B9Fpd9StmCRq_1A1vJM407CLCFd3VI_sWJgAVAkrkns=
     LSCA: 16
     LSCB: 64
     LSPA: 4
@@ -880,7 +881,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_SVW2_VWA2_VWB1_WSGRA1_WSGRB0_WG64_4_1_WGMXCC4
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32NQFxQQVsni-OJUVQq0wMLXXbiPE3e1weskcH13qQeqA=
     LSCA: 256
     LSCB: 64
     LSPA: 2
@@ -1140,7 +1141,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_SVW2_VWA2_VWB1_WSGRA1_WSGRB0_WG64_4_1_WGMXCC4
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32NQFxQQVsni-OJUVQq0wMLXXbiPE3e1weskcH13qQeqA=
     LSCA: 256
     LSCB: 64
     LSPA: 2
@@ -1400,7 +1401,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_3_NLCA1_NLCB3_SVW2_VWA2_VWB1_WSGRA0_WSGRB0_WG64_4_1_WGMXCC1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x192x64_MI32p8Gr586qettqtN0vaPdrvwVvDb2Ukz8cKWrCQJ44XPg=
     LSCA: 256
     LSCB: 64
     LSPA: 8
@@ -1660,7 +1661,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_4_NLCA1_NLCB1_SVW2_VWA2_VWB4_WSGRA0_WSGRB0_WG64_4_1_WGMXCC1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x256x64_MI32-1qMBcxI7NI9zeuQN-pOoqOnlC3dCyjdql-tfVNphSQ=
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -1920,7 +1921,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_LPB0_MIWT4_4_NLCA1_NLCB1_SVW2_VWA2_VWB4_WSGRA1_WSGRB1_WG64_4_1_WGMXCC4
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x256x64_MI32JPIdHBst7na47zqWcsAAts871eURcNDszShURSnbXnY=
     LSCA: 256
     LSCB: 256
     LSPA: 2
@@ -2180,7 +2181,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT128x256x32_MI32x32x1_SN_LBSPPA0_LBSPPB0_LPA0_MIAV0_MIWT2_4_NTB0_NTC3_NTD3_SPO0_SVW2_VWA2_VWB4_WSGRA0_WG64_4_1_WGMXCC1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT128x256x32_MI32jFXnyuSAOfgqgxuEZg_I6KTXgbIs3C0RJkfvPLO3ka4=
     LSCA: 128
     LSCB: 256
     LSPA: 16
@@ -2448,7 +2449,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT80x160x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA640_LBSPPB1280_LPA16_LPB16_MIWT5_5_NLCA5_NLCB5_SVW1_VWA1_VWB1_WG16_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT80x160x64_MI16xUfBKADDlQzhu6Z6dTioPMPQabWveOJzq-f4OB__ym_s=
     LSCA: 16
     LSCB: 32
     LSPA: 64
@@ -2728,7 +2729,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT16x256x64_MI16x16x1_SN_GRVWA4_GRVWB8_K1_LBSPPA128_LBSPPB2048_LPA16_LPB0_MIWT1_4_NLCA1_NLCB1_SVW1_VWA1_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT16x256x64_MI16xp3jWELrtcs6zo3OUetiOMA3XfYlmsb8lNuSd0ekHstw=
     LSCA: 16
     LSCB: 256
     LSPA: 64
@@ -3008,7 +3009,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT128x192x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA1024_LBSPPB1536_LPA0_LPB32_MIWT4_6_NLCA1_NLCB3_SVW4_VWA4_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT128x192x64_MI1624WxdvkaMQFquyE6Ibgj8z9vRx2sclRwqoks7BoIG7Q=
     LSCA: 128
     LSCB: 64
     LSPA: 16
@@ -3288,7 +3289,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT256x32x32_MI16x16x1_SN_GRVWA8_GRVWB4_K1_LBSPPA2048_LBSPPB256_LPA0_LPB16_MIWT8_1_NLCA1_NLCB1_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT256x32x32_MI16xcjdPlot5PbUtY_YOLPn7mUVE2r8YFOvi7O2GEvzKgjM=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -3568,7 +3569,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT32x64x32_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA256_LBSPPB512_LPA32_LPB0_MIWT2_4_NLCA1_NLCB1_SVW2_VWA2_VWB4_WG16_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT32x64x32_MI16x1COMI15srmyHErpqcnMsXnWD6Xv-2umPknzOIA570zPg=
     LSCA: 32
     LSCB: 64
     LSPA: 16
@@ -3848,7 +3849,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT160x128x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA1280_LBSPPB1024_LPA16_LPB0_MIWT5_4_NLCA5_NLCB1_SVW1_VWA1_VWB4_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT160x128x64_MI16ZIBZ7jNWjDxuGA9v1f_KbqZ0U48rrdM3ZJ2a9SiFaH8=
     LSCA: 32
     LSCB: 128
     LSPA: 64
@@ -4128,7 +4129,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT64x32x32_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA512_LBSPPB256_LPA0_LPB32_MIWT4_2_NLCA1_NLCB1_SVW4_VWA4_VWB2_WG16_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT64x32x32_MI16x1DWGt7DfD4St4BakKZR-244DvPaIbYBMBpSGnktnazIA=
     LSCA: 64
     LSCB: 32
     LSPA: 8
@@ -4408,7 +4409,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT192x192x32_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA1536_LBSPPB1536_LPA32_LPB32_MIWT6_6_NLCA3_NLCB3_SVW2_VWA2_VWB2_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT192x192x32_MI166wSHyMuaMi_2LcsdsYC7fka2nQTbk4IKwEvYaUJqo4E=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -4688,7 +4689,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT128x32x32_MI16x16x1_SN_GRVWA8_GRVWB4_K1_LBSPPA1024_LBSPPB256_LPA0_LPB16_MIWT4_1_NLCA1_NLCB1_SVW4_VWA4_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT128x32x32_MI16x4k71T-0lKnEuz24yNOAOQCaWT2wRyFMAKFIEZ5f7iAU=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -4968,7 +4969,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT32x256x64_MI16x16x1_SN_GRVWA8_GRVWB8_K1_LBSPPA256_LBSPPB2048_LPA32_LPB0_MIWT2_4_NLCA1_NLCB1_SVW2_VWA2_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT32x256x64_MI16xnCkXxgMoicSZmX95xZRHKFGlTyvTaXZpfC1kVRN7huc=
     LSCA: 32
     LSCB: 256
     LSPA: 64
@@ -5248,7 +5249,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_HAS_UserArgs_MT32x64x32_MI16x16x1_SN_GRVWA4_GRVWB8_K1_LBSPPA256_LBSPPB512_LPA32_LPB16_MIWT2_1_NLCA1_NLCB1_SVW2_VWA2_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT32x64x32_MI16x1P-7RD_vA55cbBkZSXgri4EUzx30BrU4g_kwrtuxV1t8=
     LSCA: 32
     LSCB: 64
     LSPA: 32
@@ -5521,7 +5522,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32x64x128_MI16x16x1_SN_LDSB0_CLR1_LBSPPA256_LBSPPB512_LPA32_LPB32_MIAV1_MIWT2_2_NLCA1_NLCB1_PLR1_SVW2_VWA2_VWB2_WG16_8_2
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT32x64x128_MI16xxtIgaBoQr2m-Ns-AkJAawbwz10ZDmOE9qDXaTpSTTBc=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -5782,7 +5783,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT64x32x128_MI16x16x1_SN_LDSB0_CLR1_LBSPPA512_LBSPPB256_LPA32_LPB32_MIAV1_MIWT2_2_NLCA1_NLCB1_PLR1_SVW2_VWA2_VWB2_WG32_4_2
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT64x32x128_MI16xFMLi7LnB5To7CdVlM9EuFa7Hg7uHfqcIQznYEhw8acg=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -6043,7 +6044,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT32x16x256_MI16x16x1_SN_LDSB0_CLR1_LBSPPA256_LBSPPB128_LPA32_LPB16_MIWT2_1_NLCA1_PLR1_SVW2_VWA2_VWB1_WG16_4_4
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_UserArgs_MT32x16x256_MI16xdId0RX5x6yOaNG169JYS4Gar_baQXDG7bNIZThobwN4=
     LSCA: 32
     LSCB: 16
     LSPA: 64
@@ -6312,3 +6313,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

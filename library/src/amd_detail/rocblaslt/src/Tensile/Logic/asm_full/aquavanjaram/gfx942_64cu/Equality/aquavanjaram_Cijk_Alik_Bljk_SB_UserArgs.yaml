@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 64}
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x32x64_MI16x16x1_SN_GRVWA4_GRVWB4_LBSPPA256_LBSPPB256_LPA8_LPB8_LRVW4_MIWT1_1_SVW1_VWA1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT32x32x64_MI16x16x1_-qne5UC_VV08mnssUlJwLiH8-rK-D5OXB7IWYy30_6Q=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -370,7 +371,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT128x128x32_MI16x16x1_SN_GRVWA4_GRVWB4_LBSPPA512_LBSPPB128_LPA8_LPB8_LRVW4_MIWT4_4_SVW4_VWA4_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT128x128x32_MI16x16xi_SEGXeeYqVm5gA701SntFgJi4d_FhxliejUeSYZNs4=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -627,7 +628,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT128x256x32_MI16x16x1_SN_GRVWA4_GRVWB4_LBSPPA512_LBSPPB128_LPA8_LPB8_LRVW4_MIWT4_8_SVW4_VWA4_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT128x256x32_MI16x16xaJSXIRaFi1_p_G6ZeG1bFl3X2bUWAWzna8Jh2KVO9M8=
     LSCA: 32
     LSCB: 32
     LSPA: 32
@@ -884,7 +885,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT64x64x64_MI16x16x1_SN_GRVWA4_GRVWB4_LBSPPA512_LBSPPB256_LPA8_LPB8_LRVW4_MIWT2_2_SVW2_VWA2_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_SB_UserArgs_MT64x64x64_MI16x16x1_03jVcBw_KcmYt87ap0Cq0qLOKPHJy1iUM5AB0vfCpxQ=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -1190,3 +1191,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

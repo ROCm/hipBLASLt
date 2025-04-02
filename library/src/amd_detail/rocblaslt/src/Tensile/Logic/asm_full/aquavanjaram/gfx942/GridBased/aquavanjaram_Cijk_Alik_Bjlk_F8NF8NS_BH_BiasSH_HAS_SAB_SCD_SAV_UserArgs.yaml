@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS0_PLR1_SPO0
+    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAVhZbcFVdoS_-rfuzaFfH7JF_shyMO-VJXG2IkXOp_tlI=
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -370,7 +371,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS0_PLR1_SPO1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAVANFWklpyyNoavohHhd905VJlPbut2PDqMQXjY_UPzKc=
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -627,7 +628,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS2_PLR1_SPO0
+    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAV4uEZ-K0i9rshCuSPUMopy8t9Y4t6qUyHBdjF-0LN1g8=
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -887,7 +888,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_MIWT1_1_NEPBS0_PLR0_SPO0
+    KernelNameMin: Cijk_Alik_Bjlk_F8NF8NS_BH_BiasSH_HAS_SAB_SCD_SAVKUL-D6mdU9F8d1-rR3-KNF_GOi7S6DRnW0QnqgaAyf0=
     LSCA: 32
     LSCB: 16
     LSPA: 2
@@ -1128,3 +1129,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

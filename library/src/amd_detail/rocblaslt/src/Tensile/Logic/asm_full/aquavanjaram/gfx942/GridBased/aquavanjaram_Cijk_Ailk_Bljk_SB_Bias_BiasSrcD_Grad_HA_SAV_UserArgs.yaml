@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -67,7 +68,7 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
 - - 1LDSBuffer: 1
     ActivationAlt: false
@@ -106,6 +107,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_SB_Bias_BiasSrcD_GradS_HAS_SAV_Us4MYQPtO5eNRwo2yoHi6Z7hfF3jBaCHJ4HEx1nd0vvro=
     LSCA: 128
     LSCB: 16
     LSPA: 2
@@ -259,7 +261,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
@@ -321,3 +323,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_B8F8NHS_BH_BiasSH_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWA16_MIWT1_1_NEPBS2_PLR1_SPO1
+    KernelNameMin: Cijk_Ailk_Bljk_B8F8NHS_BH_Bias_HAS_SAB_SAV_UserA3IFHWox00TzTq4IyFHProkLwYrOOdgPygakdVkD-GiY=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -273,7 +274,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -343,3 +344,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

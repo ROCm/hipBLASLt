@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_B8NSS_BH_BiasSB_BiasSrcB_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWA8_GRVWB8_MIWT1_1_NEPBS2_PLR0_SPO0_WG16_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_B8NSS_BH_BiasSB_BiasSrcB_SAB_SAV_0gPXrWzbHI6hWB80cs9EkMJpjfmfYFrVjmizjrJsJoo=
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -273,7 +274,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -370,7 +371,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_B8NSS_BH_BiasSB_BiasSrcB_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWA8_GRVWB8_MIWT1_1_NEPBS2_PLR0_SPO1_WG16_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_B8NSS_BH_BiasSB_BiasSrcB_SAB_SAV_LA6AeQvqcUq2Qs31ge0GqOm2IkUXIOojYFS2MGtQsoY=
     LSCA: 16
     LSCB: 16
     LSPA: 32
@@ -530,7 +531,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -598,3 +599,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

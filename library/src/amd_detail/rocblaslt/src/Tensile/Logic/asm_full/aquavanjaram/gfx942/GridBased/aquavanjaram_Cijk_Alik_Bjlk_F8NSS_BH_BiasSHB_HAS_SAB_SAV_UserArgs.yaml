@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSB_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS0_PLR1_SPO1_WG16_4_1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSHB_HAS_SAB_SAV_Userj3S7jm0AM2IzS9DzpvzVlKgT_n0XJY-Qn9IQsDL-Q6o=
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -370,7 +371,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSB_HAS_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWB8_MIWT1_1_NEPBS2_PLR0_SPO1_WG16_4_1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSHB_HAS_SAB_SAV_UsercSbcb6Ny3MwPhN4jjgSlEF9y9yLZAaAkMmYWohnGbPQ=
     LSCA: 32
     LSCB: 16
     LSPA: 16
@@ -627,7 +628,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSB_HAS_SAB_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_GRVWB16_MIWT1_1_NEPBS2_PLR1_SPO1_WG16_4_1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSHB_HAS_SAB_SAV_UserPXF6ZQIrM2QPfDQe0a9SAwtln46mwrwrb8hM2O1o4a0=
     LSCA: 64
     LSCB: 16
     LSPA: 8
@@ -887,7 +888,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSHB_HAS_SAB_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_MIWT1_1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NSS_BH_BiasSHB_HAS_SAB_SAV_UserNnMMNSxxcdXySUFI37nUofiuNXBLVk9DtYBI-p4U_Yg=
     LSCA: 32
     LSCB: 16
     LSPA: 16
@@ -1123,3 +1124,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

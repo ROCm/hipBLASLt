@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -113,7 +114,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWA8_MIWT1_1_NEPBS0_PLR0_SPO0
+    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_WsU5gEVIFL6YM3pOBsEfnS77UVJxuHw6HsK2lMjV8HY=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -370,7 +371,7 @@
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true,
       UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_GRVWA8_MIWT1_1_NEPBS2_PLR0_SPO0
+    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_36d-ub92yIfPs7jGympoEN3TNmEvndk5Am0CGHZppj0=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -630,7 +631,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_SAV_UserArgs_MT16x16x64_MI16x16x1_SN_CLR1_MIWT1_1_NEPBS2_PLR1_SPO1
+    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_8AONuYHhr28UQ78lT43zHAuTZHunp86CE5_-5xXLR4s=
     LSCA: 16
     LSCB: 64
     LSPA: 4
@@ -897,7 +898,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_SAV_UserArgs_MT16x16x32_MI16x16x1_SN_CLR0_MIWT1_1_NEPBS0_PLR0_SPO1
+    KernelNameMin: Cijk_Ailk_Bljk_B8F8NB8NS_BH_BiasSHB_HAS_SAB_SCD_CBtg4GFZtQCPQfZD5Q0jhkH63fbrLHGc14k56ZMwSKA=
     LSCA: 16
     LSCB: 32
     LSPA: 4
@@ -1138,3 +1139,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

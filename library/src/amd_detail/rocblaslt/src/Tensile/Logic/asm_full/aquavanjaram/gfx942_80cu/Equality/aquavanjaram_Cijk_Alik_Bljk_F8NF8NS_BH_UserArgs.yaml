@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 80}
@@ -117,7 +118,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI16x16x1_SN_LBSPPA512_LBSPPB512_LPA8_LPB8_LRVW8_MIWT8_8_SVW8_VWA8_VWB8_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_B4ZH_wXXHcPvp8Xftxt-odHK-BXeTHfVndicJ-nYFOU=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -381,7 +382,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW16_MIWT4_4_SVW4_VWA4_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_Xe4j5bdKKiV9iFQ-XYirSTBKXwm3Jz8VIr0A3XGtJd4=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -645,7 +646,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_MI32x32x1_SN_LBSPPA256_LBSPPB256_LPA16_LPB16_LRVW16_MIWT4_4_SVW4_VWA4_VWB4_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x256x64_Xe4j5bdKKiV9iFQ-XYirSTBKXwm3Jz8VIr0A3XGtJd4=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -909,7 +910,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LBSPPA1024_LBSPPB128_LPA8_LPB8_LRVW8_MIWT8_7_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128dr3s1DXG4DPlrXkoMgbFLNWEUjcbA-DTtMHJ90vvEEI=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -1173,7 +1174,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LBSPPA1024_LBSPPB128_LPA8_LPB8_LRVW8_MIWT8_7_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128dr3s1DXG4DPlrXkoMgbFLNWEUjcbA-DTtMHJ90vvEEI=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -1437,7 +1438,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LBSPPA1024_LBSPPB128_LPA8_LPB8_LRVW8_MIWT8_7_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128dr3s1DXG4DPlrXkoMgbFLNWEUjcbA-DTtMHJ90vvEEI=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -1701,7 +1702,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128_MI16x16x1_SN_LBSPPA1024_LBSPPB128_LPA8_LPB8_LRVW8_MIWT8_7_SVW8_VWA8_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x224x128dr3s1DXG4DPlrXkoMgbFLNWEUjcbA-DTtMHJ90vvEEI=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -1965,7 +1966,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x192x128_MI32x32x1_SN_LBSPPA512_LBSPPB128_LPA16_LPB16_LRVW16_MIWT4_3_SVW4_VWA4_VWB1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NF8NS_BH_UserArgs_MT256x192x128lT__i8E4F0V-nTsbhfs5I_2s7wO8cEnS20U0b4832JQ=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -2257,3 +2258,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

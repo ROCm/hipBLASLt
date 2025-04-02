@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -98,6 +99,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgse2icwHihrEsy-JtjH5_R7sTmM4CnlykLTNQAeC2UrS8=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -320,6 +322,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgsTmJvdNG8nh2B8nrMqcDYL-d9RJSZ93irXcPy1fzdOek=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -542,6 +545,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AuxH_HAS_SAV_UserArgsTmJvdNG8nh2B8nrMqcDYL-d9RJSZ93irXcPy1fzdOek=
     LSCA: 128
     LSCB: 32
     LSPA: 16
@@ -740,3 +744,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

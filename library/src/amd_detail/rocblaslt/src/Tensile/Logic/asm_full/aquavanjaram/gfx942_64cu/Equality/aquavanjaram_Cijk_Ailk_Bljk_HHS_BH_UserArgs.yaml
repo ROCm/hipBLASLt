@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 64}
@@ -103,7 +104,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT16x128x128_MI16x16x1_SN_GRVWB8_K1_LBSPPB512_MIWT1_2_ULSGRO0_VWB2_WSGRB0
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT16x128x128_MI16amLcS_bQMvN258zHUsiwTmVIpAxYjfR-cZPQPvcdke4=
     LSCA: 16
     LSCB: 128
     LSPA: 128
@@ -379,7 +380,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT64x192x32_MI16x16x1_SN_LDSB1_GRVWB2_K1_LBSPPA512_LBSPPB128_LPA0_LPB4_LRVW4_MIWT4_3_NLCA1_SVW4_VWA4_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT64x192x32_MI16xp-MQ79XexYmeORjBxSgDNX10S-j4uziSruJAocWlcHE=
     LSCA: 64
     LSCB: 32
     LSPA: 32
@@ -645,6 +646,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT64x48x64_MI16x1UsA9EUhSsgxj8t_kvIi1layw5QCgxIAa3N_QRdtXB9M=
     LSCA: 64
     LSCB: 64
     LSPA: 16
@@ -889,7 +891,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT192x256x64_MI16x16x1_SN_GRVWB8_K1_LBSPPA3072_LBSPPB512_LPA0_LPB16_LRVW8_MIWT12_4_NLCA3_SVW4_VWA4_VWB4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT192x256x64_MI16khykMeJpJ97v2acifRAZHcYGjvnY9wtfhHkg__gTep4=
     LSCA: 64
     LSCB: 64
     LSPA: 32
@@ -1153,6 +1155,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT256x128x32_MI32pwzTPqMQvYA61JlTnJB6yl6s4Q0RAdm9daENcJATokY=
     LSCA: 256
     LSCB: 32
     LSPA: 8
@@ -1368,7 +1371,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_MT256x256x32_MI32x32x1_SN_LBSPPB256_MIWT2_8_VWA2_VWB4_WSGRA1_WSGRB1_WG128_2_1_WGM8
+    KernelNameMin: Cijk_Ailk_Bljk_HHS_BH_UserArgs_MT256x256x32_MI32g7UneAE6XyTzIYzvVqqLf6C9f7-80mMYqQ0vDlOsX7Y=
     LSCA: 256
     LSCB: 32
     LSPA: 2
@@ -1605,3 +1608,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

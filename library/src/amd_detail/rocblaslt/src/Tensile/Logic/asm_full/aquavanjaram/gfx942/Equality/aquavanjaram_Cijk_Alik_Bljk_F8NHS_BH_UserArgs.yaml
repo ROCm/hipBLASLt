@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -117,7 +118,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT256x112x128_MI16x16x1_SN_GRVWA4_GRVWB4_LBSPPA512_LBSPPB128_LPA32_LPB32_LRVW16_MIAV0_MIWT4_7_SVW4_VWA4_VWB1_WG64_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT256x112x128_MA8lVlCUUSgDm3tVli-WDNu0Zb0ifULn1RIqn9ecFJJI=
     LSCA: 128
     LSCB: 128
     LSPA: 8
@@ -381,7 +382,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_MIWT1_1_NTA0_NLCA1_NLCB1_SVW1_VWA1_WG32_4_2
+    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT32x16x256_MI1427KIb8mp-ukOCPsD2O4aYZNc8MgYfE4I0MZjVTonO8=
     LSCA: 256
     LSCB: 256
     LSPA: 16
@@ -645,7 +646,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT192x224x64_MI16x16x1_SN_CLR1_GRVWA16_GRVWB4_LBSPPA128_LBSPPB128_LPA16_LPB8_LRVW8_MIWT6_7_PLR1_SVW2_VWA2_VWB1_WG32_8_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT192x224x64_MI1I1-AZo0V8nwAYlxnbiGDJBR2bla_oHAIYJTL1pc1Tg=
     LSCA: 64
     LSCB: 64
     LSPA: 64
@@ -909,7 +910,7 @@
     InternalSupportParams: {KernArgsVersion: 1, SupportCustomStaggerU: true, SupportCustomWGM: true,
       SupportUserGSU: true, UseUniversalArgs: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT32x16x256_MI16x16x1_SN_CLR1_GRVWA16_GRVWB16_LBSPPA256_LBSPPB256_LPA32_LPB32_LRVW16_MIWT1_1_NTA4_NLCA1_NLCB1_PLR1_SVW1_VWA1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bljk_F8NHS_BH_UserArgs_MT32x16x256_MI175tc6HdfvBCCbJRU7LyQe9YmVEVWhwxLTLWU-rH4Fv4=
     LSCA: 256
     LSCB: 256
     LSPA: 8
@@ -1142,4 +1143,5 @@
 - null
 - null
 - DeviceEfficiency
-- Equality 
+- Equality
+...

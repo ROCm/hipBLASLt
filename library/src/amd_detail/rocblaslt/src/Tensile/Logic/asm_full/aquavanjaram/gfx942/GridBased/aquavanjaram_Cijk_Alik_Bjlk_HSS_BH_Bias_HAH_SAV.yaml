@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -91,6 +92,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
+    KernelNameMin: Cijk_Alik_Bjlk_HSS_BH_Bias_HAS_SAV_UserArgs_MT32Y4KxKXkZNFbLXZNfAOEM9MW1oECpm_AXtp7gK8W6p2A=
     LSCA: 32
     LSCB: 32
     LSPA: 8
@@ -274,3 +276,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

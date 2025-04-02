@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -111,7 +112,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16x64x16_MI16x16x4_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16uEAUuetsH6RJflqHAsUsGPf_Q0O6UtobS0DD-_fg_50=
     LSCA: 16
     LSCB: 64
     LSPA: 4
@@ -269,7 +270,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -363,7 +364,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16yzPUuOruD0RggliwlNLrgFaVdJU2YoQfdP6GO2btejE=
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -521,7 +522,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -615,7 +616,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16iQ_h7X118x0F9sAmP5j7eJyvkarXbXglRLKQEALTPgI=
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -773,7 +774,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -867,7 +868,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT1657tyffcHoWgrazs4C3EbBpXeb1TI3OVHAvAsxTiWX58=
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -1025,7 +1026,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1119,7 +1120,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8NH_HSS_BH_Bias_HAS_SAB_SAV_MT16AeirSAzQ989A9cicxbfPvEuQ7StqCOBhScv9Nm3dCso=
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -1277,7 +1278,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1354,3 +1355,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

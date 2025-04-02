@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 228}
@@ -128,7 +129,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT128x32x32_MI16x16x1_SN_LDSB0_DTVA0_GRVWA8_GRVWB4_K1_LBSPPA1024_LBSPPB256_LPA32_MIWT2_2_NLCA1_NLCB1_SVW2_VWA2_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT120pOh_fAmErLmQyRknFx5kpsjvuzmqN4W7KlZjv9wiZc=
     L1CacheSwizzle: false
     LSCA: 128
     LSCB: 32
@@ -411,7 +412,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT256x48x32_MI16x16x1_SN_LDSB1_DTVA0_GRVWA8_GRVWB2_K1_LBSPPA2048_LBSPPB384_LPA0_MIWT4_3_NLCA1_NLCB3_SVW4_VWA4_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT25YwcYheAovFDyEUDmMlr-3HJLlKvaSmzR1zNe6H6D-oU=
     L1CacheSwizzle: false
     LSCA: 256
     LSCB: 16
@@ -694,7 +695,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT512x160x32_MI16x16x1_SN_LDSB1_DTVA0_GRVWA8_GRVWB4_K1_LBSPPA4096_LBSPPB1280_LPA0_MIWT8_10_NLCA1_NLCB5_SVW8_VWA8_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT513_wEVPafWFHqdJeLa5tQY6Lo__hbklojTV4GNzaVy_c=
     L1CacheSwizzle: false
     LSCA: 512
     LSCB: 32
@@ -977,7 +978,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT128x16x32_MI16x16x1_SN_LDSB0_DTVA0_GRVWA8_GRVWB2_K1_LBSPPA1024_LBSPPB128_LPA32_MIWT2_1_NLCA1_NLCB1_SVW2_VWA2_WG64_4_1
+    KernelNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_HAS_SAV_UserArgs_MT12C0xeLaweBoK8vPAJ8z41FRRe7W5PegtHPxr6uHLehig=
     LSCA: 128
     LSCB: 16
     LSPA: 16
@@ -1222,3 +1223,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

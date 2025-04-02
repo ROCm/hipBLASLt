@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - {Architecture: gfx942, CUCount: 20}
@@ -126,7 +127,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT16x64x64_MI16x16x1_SN_CLR1_GRVWA2_GRVWB8_K1_LBSPPA128_LBSPPB128_LPA16_LPB16_LRVW8_MIWT1_1_PLR1_VWB1_WG16_16_1
+    KernelNameMin: Cijk_Alik_Bljk_HHS_BH_UserArgs_MT16x64x64_MI16x1ZSKwdl6QEH-yLZ7QfRgkOK7l9rOWNz8NDSc1jHuPgrY=
     LSCA: 64
     LSCB: 64
     LSPA: 8
@@ -364,3 +365,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...

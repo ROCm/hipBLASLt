@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: "Scalar"
+  UseScaleAB: Scalar
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -111,7 +112,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_UserVnk65Q2dMr0qlqP4i0Ou-o1kQKrBJ_7Dv0mEV2nOAeA=
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -269,7 +270,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -363,7 +364,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_User--81e6o-z-FgfOAhmyiTrglmwenFj4LGsyC7qsJXE08=
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -521,7 +522,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -615,7 +616,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_HF8N_HHS_BH_Bias_HAS_SAB_SAV_UserRA1Uudw7PLxJ9WLljWlXEMtpm49c7lS9kO0iBBlM1Ck=
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -773,7 +774,7 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: "Scalar"
+      UseScaleAB: Scalar
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -846,3 +847,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

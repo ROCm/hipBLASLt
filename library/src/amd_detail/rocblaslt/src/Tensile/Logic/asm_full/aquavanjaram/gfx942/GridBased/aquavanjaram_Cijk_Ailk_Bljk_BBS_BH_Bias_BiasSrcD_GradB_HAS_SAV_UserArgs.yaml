@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -70,7 +71,7 @@
   UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: ""
+  UseScaleAB: ''
   UseScaleAlphaVec: 1
   UseScaleCD: false
 - - 1LDSBuffer: 0
@@ -112,7 +113,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAV_MT16x64x32_MI16x16x1_SN_GRVWA2_GRVWB8_LBSPPA256_MIWT1_1_SS0_SVW4_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAxtdbgzA1pcOcQjPnR-V2RAMW0QYo4gR2ZHJeaz3jwTg=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -272,7 +273,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -367,7 +368,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAV_MT16x64x32_MI16x16x1_SN_GRVWA2_GRVWB8_LBSPPA256_MIWT1_1_SS1_SVW1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAJIeI3Rvz4kDMxY_zvORf8xNkGXBMbpFhkIjcZ9bl9oo=
     LSCA: 16
     LSCB: 32
     LSPA: 32
@@ -527,7 +528,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -622,7 +623,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAV_MT32x32x64_MI16x16x1_SN_GRVWA8_GRVWB8_LBSPPA512_MIWT1_1_SS1_SVW1_WG32_8_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAH3S5QGA6bM2yjE87jHO1ObL5JWlis-xTMaAx6CC3NVw=
     LSCA: 32
     LSCB: 64
     LSPA: 64
@@ -782,7 +783,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -877,7 +878,7 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAV_MT16x64x64_MI16x16x1_SN_GRVWA4_GRVWB8_LBSPPA256_MIWT1_1_SS1_SVW1_WG16_16_1
+    KernelNameMin: Cijk_Ailk_Bljk_BBS_BH_Bias_BiasSrcD_GradB_HAS_SAsaJJY4sdSjSFcJTtqT2XkpfZVE2K5nsTXbN1bXeLpwY=
     LSCA: 16
     LSCB: 64
     LSPA: 64
@@ -1037,7 +1038,7 @@
       UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: ""
+      UseScaleAB: ''
       UseScaleAlphaVec: 1
       UseScaleCD: false
     ScheduleGlobalRead: 1
@@ -1106,3 +1107,4 @@
 - null
 - DeviceEfficiency
 - GridBased
+...

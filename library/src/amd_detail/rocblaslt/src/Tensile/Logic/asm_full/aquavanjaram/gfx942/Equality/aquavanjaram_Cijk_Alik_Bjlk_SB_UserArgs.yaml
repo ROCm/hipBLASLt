@@ -1,3 +1,4 @@
+---
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
 - gfx942
@@ -93,7 +94,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 1
-    CodeObjectVersion: '4'
+    CodeObjectVersion: 4
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
@@ -128,7 +129,7 @@
       SupportUserGSU: true, UseUniversalArgs: true}
     Kernel: true
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_SB_UserArgs_MT32x16x32_MI16x16x1_SN_LDSB0_GRVWA4_GRVWB4_GSUAMB_K1_LBSPPA128_LBSPPB256_LPB16_MIWT1_1_NTA0_NTB0_NLCB1_SVW1_VWA1_VWB1_WG32_4_1
+    KernelNameMin: Cijk_Alik_Bjlk_SB_UserArgs_MT32x16x32_MI16x16x1_KX6Y-RQ8HPWK95PsPV8Zsu-3r2ys0vuWKYHWiittnqQ=
     LSCA: 32
     LSCB: 16
     LSPA: 16
@@ -368,3 +369,4 @@
 - null
 - DeviceEfficiency
 - Equality
+...
