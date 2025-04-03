@@ -70,7 +70,8 @@ def executeStepsInConfig(
         cCompiler: str,
         debugConfig: DebugConfig,
         depthUConfig: DepthUConfig,
-        deviceId: int
+        deviceId: int,
+        procs: int
    ):
     """Conducts the steps in the provided ``config`` according to the Tensile workflow.
 
@@ -110,6 +111,7 @@ def executeStepsInConfig(
             deviceId,
             gfxName,
             isaInfoMap,
+            procs
         )
         print1("")
 
@@ -492,7 +494,7 @@ def Tensile(userArgs):
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
 
-    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, depthUConfig, device_id)
+    executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, depthUConfig, device_id, procs)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

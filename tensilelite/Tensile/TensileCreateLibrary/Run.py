@@ -207,6 +207,7 @@ def writeSolutionsAndKernels(
     cmdlineArchs: List[str],
     kernelSerialNaming,
     kernelMinNaming,
+    procs: int,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -252,7 +253,7 @@ def writeSolutionsAndKernels(
         itertools.repeat(kernelSerialNaming),
         asmKernels
     )
-    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list")
+    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list", procs=procs)
     removeInvalidSolutionsAndKernels(
         asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
     )
@@ -269,6 +270,7 @@ def writeSolutionsAndKernels(
         "Writing assembly kernels",
         return_as="list",
         multiArg=False,
+        procs=procs
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
@@ -307,6 +309,7 @@ def writeSolutionsAndKernelsTCL(
     cmdlineArchs: List[str],
     kernelSerialNaming,
     kernelMinNaming,
+    procs: int,
     compress=True,
     useShortNames=False,
 ):
@@ -360,6 +363,7 @@ def writeSolutionsAndKernelsTCL(
         "Generating assembly kernels",
         multiArg=False,
         return_as="list"
+        procs=procs
     )
     buildAssemblyCodeObjectFiles(
         asmToolchain.linker,
@@ -434,7 +438,7 @@ def generateKernelObjectsFromSolutions(solutions):
 
 
 @timing
-def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInfoMap):
+def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInfoMap, procs: int):
 
     if ";" in args["Architecture"]:
         archs = args["Architecture"].split(";")  # user arg list format
@@ -468,7 +472,7 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
                 yield from libraryIter(lazyLib)
 
     for library in ParallelMap2(
-        LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered"
+        LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered", procs=procs
     ):
         _, architectureName, _, _, _, newLibrary = library
 
@@ -647,6 +651,7 @@ def run():
         archs,
         kernelSerialNaming,
         kernelMinNaming,
+        arguments["CpuThreads"],
         useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )

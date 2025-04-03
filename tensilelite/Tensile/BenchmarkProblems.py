@@ -207,7 +207,8 @@ def writeBenchmarkFiles(
         depthUConfig: DepthUConfig,
         deviceId: int,
         gfxName: str,
-        isaInfoMap: Dict[IsaVersion, IsaInfo]
+        isaInfoMap: Dict[IsaVersion, IsaInfo],
+        procs: int
     ):
     """Write all the files needed for a given benchmarking step"""
 
@@ -260,6 +261,7 @@ def writeBenchmarkFiles(
                             cmdLineArchs,
                             kernelSerialNaming,
                             kernelMinNaming,
+                            procs,
                             errorTolerant=True,
                             generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"], # put in debug config
                             compress=False,
@@ -324,7 +326,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
                          asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
                          buildTmpPath: Path, benchmarkProblemsPath: Path, useShortNames: bool,
                          debugConfig: DebugConfig, depthUConfig: DepthUConfig, deviceId: int,
-                         gfxName: str, isaInfoMap: Dict[str, IsaInfo]
+                         gfxName: str, isaInfoMap: Dict[IsaVersion, IsaInfo], procs: int
     ):
     """Run the benchmarking for a single entry in the BenchmarkProblems of a Tensile config"""
     benchmarkTestFails = 0
@@ -439,7 +441,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs, \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
                     benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
-                    sourcePath, useShortNames, debugConfig, depthUConfig, deviceId, gfxName, isaInfoMap)
+                    sourcePath, useShortNames, debugConfig, depthUConfig, deviceId, gfxName, isaInfoMap, procs)
             # ^ this mutates solutions
 
             # write cache data
@@ -517,7 +519,8 @@ def main(
     depthUConfig: DepthUConfig,
     deviceId: int,
     gfxName: str,
-    isaInfoMap: Dict[str, IsaInfo]
+    isaInfoMap: Dict[str, IsaInfo],
+    procs: int
 ):
     """Entry point for the "BenchmarkProblems" section of a Tensile config yaml"""
     ClientExecutable.getClientExecutable(str(srcToolchain.compiler.path), cCompiler, outputPath)
@@ -572,7 +575,8 @@ def main(
                             depthUConfig,
                             deviceId,
                             gfxName,
-                            isaInfoMap
+                            isaInfoMap,
+                            procs
                         )
                 totalTestFails += benchmarkErrors
 

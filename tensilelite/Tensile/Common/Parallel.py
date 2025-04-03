@@ -30,7 +30,9 @@ import time
 
 from joblib import Parallel, delayed
 
-from .Utilities import tqdm
+from .Utilities import tqdm, print1
+
+DEFAULT_CPU_PROCS: int = 64
 
 
 def joblibParallelSupportsGenerator():
@@ -41,22 +43,16 @@ def joblibParallelSupportsGenerator():
     return Version(joblibVer) >= Version("1.4.0")
 
 
-def CPUThreadCount(enable=True):
-    from .GlobalParameters import globalParameters
-
-    if not enable:
-        return 1
-    else:
-        if os.name == "nt":
-            cpu_count = os.cpu_count()
-        else:
-            cpu_count = len(os.sched_getaffinity(0))
-        cpuThreads = globalParameters["CpuThreads"]
-        if cpuThreads == -1:
-            return min(
-                cpu_count, 64
-            )  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
-        return min(cpu_count, cpuThreads)
+def CPUThreadCount(requestProcs: int):
+    cpuCount = os.cpu_count() if os.name == "nt" else len(os.sched_getaffinity(0))
+    print1("CPU Threads: {}".format(requestProcs))
+    return min(cpuCount, requestProcs)
+    # if cpuThreads == -1:
+    #     return min(
+    #         cpu_count, 64
+    #     )  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
+    # print1("Final CPU Threads: {}".format(cpu_count))
+    # return min(cpu_count, cpuThreads)
 
 
 def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
@@ -100,9 +96,8 @@ def ProcessingPool(enable=True, maxTasksPerChild=None):
     import multiprocessing
     import multiprocessing.dummy
 
-    threadCount = CPUThreadCount()
-
-    if (not enable) or threadCount <= 1:
+    threadCount = CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
+    if threadCount <= 1:
         return multiprocessing.dummy.Pool(1)
 
     if multiprocessing.get_start_method() == "spawn":
@@ -118,7 +113,7 @@ def ProcessingPool(enable=True, maxTasksPerChild=None):
         return multiprocessing.Pool(threadCount, maxtasksperchild=maxTasksPerChild)
 
 
-def ParallelMap(function, objects, message="", enable=True, method=None, maxTasksPerChild=None):
+def ParallelMap(function, objects, message="", enable=True, method=None, maxTasksPerChild=None, procs=None):
     """
     Generally equivalent to list(map(function, objects)), possibly executing in parallel.
 
@@ -130,12 +125,10 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
              - `lambda x: x.imap` - lazy evaluation
              - `lambda x: x.imap_unordered` - lazy evaluation, does not preserve order of return value.
     """
-    from .GlobalParameters import globalParameters
-
-    threadCount = CPUThreadCount(enable)
+    threadCount = CPUThreadCount(procs) if procs else CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
     pool = ProcessingPool(enable, maxTasksPerChild)
 
-    if threadCount <= 1 and globalParameters["ShowProgressBar"]:
+    if threadCount <= 1:
         # Provide a progress bar for single-threaded operation.
         # This works for method=None, and for starmap.
         mapFunc = map
@@ -179,13 +172,11 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
 
 
 def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, multiArg=True):
-    from .GlobalParameters import globalParameters
 
-    threadCount = CPUThreadCount(enable)
+    threadCount = CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
     print("{0}Launching {1} threads...".format(message, threadCount))
 
-    if threadCount <= 1 and globalParameters["ShowProgressBar"]:
-        # Provide a progress bar for single-threaded operation.
+    if threadCount <= 1:
         callFunc = lambda args: function(*args) if multiArg else lambda args: function(args)
         return [callFunc(args) for args in tqdm(objects, message)]
 
@@ -209,14 +200,9 @@ def ParallelMap2(
     if return_as in ("generator", "generator_unordered") and not joblibParallelSupportsGenerator():
         return ParallelMapReturnAsGenerator(function, objects, message, enable, multiArg)
 
-    from .GlobalParameters import globalParameters
+    threadCount = CPUThreadCount(procs) if procs else CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
 
-    threadCount = procs if procs else CPUThreadCount(enable)
-
-    threadCount = CPUThreadCount(enable)
-
-    if threadCount <= 1 and globalParameters["ShowProgressBar"]:
-        # Provide a progress bar for single-threaded operation.
+    if threadCount <= 1:
         return [function(*args) if multiArg else function(args) for args in tqdm(objects, message)]
 
     countMessage = ""
@@ -232,7 +218,7 @@ def ParallelMap2(
     currentTime = time.time()
 
     pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
-    pargs = zip(objects, itertools.repeat(globalParameters))
+    pargs = zip(objects, itertools.repeat({}))
 
     if joblibParallelSupportsGenerator():
         rv = Parallel(n_jobs=threadCount, timeout=99999, return_as=return_as)(
