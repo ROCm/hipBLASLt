@@ -21,12 +21,13 @@
 # SOFTWARE.
 #
 ################################################################################
+import rocisa
 
-from Tensile.Common import CHeader, print1, print2, printExit, globalParameters, \
-                           ParallelMap2, ensurePath, isaToGfx, tqdm, ParallelMapConfig
-from Tensile.TensileInstructions import TensileInstructions
+from Tensile.Common import CHeader, print1, print2, printExit, \
+                           ParallelMap2, ensurePath, tqdm, ParallelMapConfig, getVerbosity
+from Tensile.Common.GlobalParameters import globalParameters
 from Tensile.KernelWriterBase import KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
-from Tensile.SolutionStructs import Solution
+from Tensile.SolutionStructs import Solution, getKernelFileBase, getKeyNoInternalArgs
 from Tensile.Toolchain.Assembly import buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import buildSourceCodeObjectFile
 from .IO import writeAssembly
@@ -35,6 +36,7 @@ from .Run import _processKernelSource
 from functools import partial, reduce
 from itertools import repeat
 from pathlib import Path
+from typing import List
 
 def _writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H):
     kernelSourceFilename = str(Path(outputPath) / KERNEL_HELPER_FILENAME_CPP)
@@ -60,19 +62,25 @@ def _writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERN
         kernelHeaderFile.write(HeaderText)
 
 
-def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, globalParameters):
+def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant, printLevel: bool, splitGSU: bool):
     removeKernels = []
     removeKernelNames = []
     removeSolutions = []
     removeResults = []
 
-    for kernIdx, r in tqdm(enumerate(results)) if globalParameters["PrintLevel"] > 1 else enumerate(results):
+    for kernIdx, r in (
+        tqdm(enumerate(results)) if printLevel > 1 else enumerate(results)
+    ):
         if r.err != 0:
             if not errorTolerant:
-                print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
+                print(
+                    "\nKernel generation failed for kernel: {}".format(
+                        kernels[kernIdx]["SolutionIndex"]
+                    )
+                )
                 print(kernels[kernIdx]["SolutionNameMin"])
             removeKernels.append(kernels[kernIdx])
-            kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
+            kName = getKeyNoInternalArgs(kernels[kernIdx], splitGSU)
             if kName not in removeKernelNames:
                 removeKernelNames.append(kName)
             removeResults.append(results[kernIdx])
@@ -83,10 +91,14 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for kern in removeKernels:
         kernels.remove(kern)
 
-    for solution in tqdm(solutions, "Finding invalid solutions") if globalParameters["PrintLevel"] > 1 else solutions:
+    for solution in (
+        tqdm(solutions, "Finding invalid solutions")
+        if printLevel > 1
+        else solutions
+    ):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
-            kName = Solution.getKeyNoInternalArgs(kernel)
+            kName = getKeyNoInternalArgs(kernel, splitGSU)
             if kName in removeKernelNames:
                 removeSolutions.append(solution)
                 break
@@ -106,9 +118,14 @@ def writeSolutionsAndKernels(
     kernels,
     kernelHelperObjs,
     kernelWriterAssembly,
+    splitGSU: bool,
+    cmdlineArchs: List[str],
+    kernelSerialNaming,
+    kernelMinNaming,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
+    useShortNames=False,
 ):
     codeObjectFiles = []
 
@@ -129,8 +146,11 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = kernelWriterAssembly.getKernelFileBase(k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+        print1(base)
         k.duplicate = True if base in visited else False
+        if not k.duplicate:
+            k["BaseName"] = base
         duplicates += k.duplicate
         print2(f"Duplicate: {base}")
         visited.add(base)
@@ -140,38 +160,53 @@ def writeSolutionsAndKernels(
     numKernels = len(asmKernels)
     assert numKernels == numAsmKernels, "Only assembly kernels are supported in TensileLite"
     asmIter = zip(
-        repeat(kernelWriterAssembly), repeat(TensileInstructions()), asmKernels
+        repeat(kernelWriterAssembly),
+        repeat(rocisa.rocIsa.getInstance().getData()),
+        repeat(useShortNames),
+        repeat(splitGSU),
+        repeat(kernelMinNaming),
+        repeat(kernelSerialNaming),
+        asmKernels
     )
-    asmResults = ParallelMap2(_processKernelSource, 
-                              ParallelMapConfig(message="Generating assembly kernels", return_as="list", multiArg=True), 
-                              asmIter)
+    config = ParallelMapConfig(message="Generating assembly kernels", return_as="list", multiArg=True)
+    asmResults = ParallelMap2(_processKernelSource, config, asmIter)
     removeInvalidSolutionsAndKernels(
-        asmResults, asmKernels, solutions, errorTolerant, globalParameters
+        asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
     )
-
+    print1(f"After removal: {len(asmKernels)}")
     def assemble(ret):
         p, isa, wavefrontsize = ret
-        asmToolchain.assemble(str(p), str(p.with_suffix(".o")), isaToGfx(isa), wavefrontsize)
+        asmToolchain.assembler(rocisa.isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o")))
 
     unaryWriteAssembly = partial(writeAssembly, assemblyTmpPath)
     compose = lambda *F: reduce(lambda f, g: lambda x: f(g(x)), F)
+    config = ParallelMapConfig(message="Writing assembly kernels", return_as="list", multiArg=False)
     ret = ParallelMap2(
         compose(assemble, unaryWriteAssembly),
-        ParallelMapConfig(message="Writing assembly kernels", return_as="list"),
-        asmResults
+        config, 
+        asmResults,
     )
-    
-    sortByEnum = lambda x: ("Enum" in x.getKernelName(), kernelHelperObjs.index(x))
-    khos = sorted(kernelHelperObjs, key=sortByEnum, reverse=True) 
-    _writeHelpers(outputPath, khos, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+
+    _writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
-            asmToolchain, kernelWriterAssembly, destLibPath, assemblyTmpPath, compress, asmKernels
+            asmToolchain.linker,
+            asmToolchain.bundler,
+            globalParameters["ROCmLdPath"],
+            destLibPath,
+            assemblyTmpPath,
+            compress,
+            kernelMinNaming,
+            asmKernels,
         )
         kernelsLib = str(objectTmpPath / "Kernels.so")
-        srcKernelFile = str(Path(outputPath) / "Kernels.cpp")
-        srcToolchain.compile([srcKernelFile], kernelsLib, str(outputPath), [isaToGfx(globalParameters["CurrentISA"])])
-        buildSourceCodeObjectFile(srcToolchain, destLibPath, kernelsLib)
+        kernelsSrc = [str(outputPath / "Kernels.cpp")]
+        srcToolchain.compiler(kernelsSrc, str(kernelsLib), str(outputPath), cmdlineArchs)
+        buildSourceCodeObjectFile(
+            srcToolchain,
+            destLibPath,
+            kernelsLib,
+        )
 
     return codeObjectFiles, numKernels

@@ -22,10 +22,10 @@
 #
 ################################################################################
 
+from rocisa.code import SignatureBase
+from rocisa.enum import SignatureValueKind as SVK
 from ..Component import Signature
-from ..Common import globalParameters, DataDirection
-from ..TensileInstructions import SignatureBase
-from ..TensileInstructions import SignatureValueKind as SVK
+from ..Common import DataDirection
 from ..Activation import ActivationType
 
 from math import ceil
@@ -118,7 +118,7 @@ class SignatureDefault(Signature):
             kernArgReg -= 2 # strides
         kernArgReg += kernel["ProblemType"]["NumIndicesSummation"]
         kernArgReg += kernel["ProblemType"]["NumIndicesC"]
-        if globalParameters["DebugKernel"]:
+        if writer.debugConfig.debugKernel:
             kernArgReg += writer.states.rpga # debug buffer
         # kernArgBytes = kernArgReg * 4 # bytes/reg
 
@@ -129,10 +129,10 @@ class SignatureDefault(Signature):
                                     kernArgsVersion=kernel["InternalSupportParams"]["KernArgsVersion"],
                                     codeObjectVersion=kernel["CodeObjectVersion"],
                                     groupSegmentSize=group_segment_size,
-                                    sgprWorkGroup=[1, 1, sgprWgZ],
+                                    sgprWorkGroup=(1, 1, sgprWgZ),
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["NumThreads"]),
-                                    preloadKernArgs=kernel["PreloadKernArgs"])
+                                    preloadKernArgs=bool(kernel["PreloadKernArgs"]))
 
        # General Argument info
         signature.addArg(   "Gemm info", SVK.SIG_VALUE, "u32")
@@ -142,7 +142,6 @@ class SignatureDefault(Signature):
         # When modify the size, please also update TENSILE_COMMON_KERNEL_ARGS_SIZE in ContractionSolution.hpp
         userArgumentsInfo.commonArgsNum += 4
         userArgumentsInfo.commonArgsSize = userArgumentsInfo.commonArgsNum * writer.states.bpr
-
 
         srcValueTypeA = getSrcValueType(kernel, True)
         srcValueTypeB = getSrcValueType(kernel, False)
@@ -159,7 +158,7 @@ class SignatureDefault(Signature):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
             userArgumentsInfo.gemmArgumentSize += 4
 
-        if globalParameters["DebugKernel"]:
+        if writer.debugConfig.debugKernel:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
         signature.addArg(    "D", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
         signature.addArg(    "C", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")

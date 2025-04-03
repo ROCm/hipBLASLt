@@ -31,7 +31,7 @@ import time
 from joblib import Parallel, delayed
 from typing import NamedTuple
 
-from .Utilities import tqdm
+from .Utilities import tqdm, printExit
 
 
 def joblibParallelSupportsGenerator():
@@ -60,13 +60,11 @@ def CPUThreadCount(enable=True):
         return min(cpu_count, cpuThreads)
 
 
-def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
-    OverwriteGlobalParameters(newGlobalParameters)
+def pcallWithGlobalParamsMultiArg(f, args):
     return f(*args)
 
 
-def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
-    OverwriteGlobalParameters(newGlobalParameters)
+def pcallWithGlobalParamsSingleArg(f, arg):
     return f(arg)
 
 
@@ -240,15 +238,14 @@ def ParallelMap2(
     currentTime = time.time()
 
     pcall = pcallWithGlobalParamsMultiArg if config.multiArg else pcallWithGlobalParamsSingleArg
-    pargs = zip(objects, itertools.repeat(globalParameters))
 
     if joblibParallelSupportsGenerator():
         rv = Parallel(n_jobs=threadCount, timeout=99999, return_as=config.return_as)(
-            delayed(pcall)(function, a, params) for a, params in pargs
+            delayed(pcall)(function, a) for a in objects
         )
     else:
         rv = Parallel(n_jobs=threadCount, timeout=99999)(
-            delayed(pcall)(function, a, params) for a, params in pargs
+            delayed(pcall)(function, a) for a in objects
         )
 
     totalTime = time.time() - currentTime

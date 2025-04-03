@@ -23,13 +23,15 @@
 ################################################################################
 
 import itertools
+from typing import Dict
 
 from . import Properties
 from . import Hardware
-from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from .Common import state
+from Tensile.Common import state, IsaInfo, DepthUConfig
+from Tensile.Common.Architectures import gfxToIsa
+from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -173,33 +175,27 @@ class FreeSizeLibrary:
     def __init__(self, table):
         self.table = table
 
-class DecisionTreeLibrary:
-    Tag = "DecisionTree"
-    StateKeys = [("type", "tag"), "features", "trees", "nullValue"]
+class MLPClassificationLibrary:
+    Tag = "MLPClassification"
+    StateKeys = [("type", "tag"), "table", "mlp", "problemFeatures"]
 
     @classmethod
     def FromOriginalState(cls, d, solutions):
-        features = d["features"]
-        origTrees = d["trees"]
+        origTable = d["table"]
+        table = []
 
-        trees = []
+        try:
+            indexStart  = origTable[0]
+            indexOffset = origTable[1]
+            for index in range(indexStart, indexStart + indexOffset):
+                value = IndexSolutionLibrary(solutions[index])
+                table.append(value)
+        except KeyError:
+            pass
 
-        if "fallback" in d:
-            fallbackIndex = d["fallback"]
-            nullValue = SingleSolutionLibrary(solutions[fallbackIndex])
-        else:
-            raise RuntimeError(
-                "DecisionTree has no fallback; likely a legacy model which is not supported."
-            )
-
-        for tree in origTrees:
-            index = tree["solution"]
-            value = SingleSolutionLibrary(solutions[index])
-
-            entry = {"tree": tree["tree"], "value": value}
-            trees.append(entry)
-
-        return cls(features, trees, nullValue)
+        mlp = d["mlp"]
+        problem_features = d["problemFeatures"]
+        return cls(table, mlp, problem_features)
 
     @property
     def tag(self):
@@ -207,16 +203,16 @@ class DecisionTreeLibrary:
 
     def merge(self, other):
         raise RuntimeError(
-            "DecisionTreeLibrary does not support merging; ensure each library row has a unique predicate"
+            "MLPClassificationLibrary does not support merging."
         )
 
     def remapSolutionIndices(self, indexMap):
         pass
 
-    def __init__(self, features, trees, nullValue):
-        self.features = features
-        self.trees = trees
-        self.nullValue = nullValue
+    def __init__(self, table, mlp, problem_features):
+        self.table = table
+        self.mlp = mlp
+        self.problemFeatures = problem_features
 
 
 class ProblemMapLibrary:
@@ -300,7 +296,13 @@ class MasterSolutionLibrary:
     def FromOriginalState(cls,
                           origData,
                           origSolutions,
-                          cxxCompiler,
+                          splitGSU: bool,
+                          printSolutionRejectionReason: bool,
+                          printIndexAssignmentInfo: bool,
+                          depthUConfig: DepthUConfig,
+                          assembler,
+                          isaInfoMap: Dict[str, IsaInfo],
+                          lazyLibraryLoading: bool,
                           solutionClass=Contractions.Solution,
                           libraryOrder=None,
                           placeholderName='TensileLibrary'):
@@ -314,7 +316,7 @@ class MasterSolutionLibrary:
             if devicePart == "fallback":
                 pred = Hardware.HardwarePredicate("TruePred")
             else:
-                pred = Hardware.HardwarePredicate.FromHardware(Common.gfxToIsa(devicePart), cuCount)
+                pred = Hardware.HardwarePredicate.FromHardware(gfxToIsa(devicePart), cuCount)
 
             newLib.rows.append({"predicate": pred, "library": library})
 
@@ -381,23 +383,16 @@ class MasterSolutionLibrary:
                 freesizeLib = FreeSizeLibrary.FromOriginalState(d["Library"], solutions)
                 library = PredicateLibrary(tag="Problem")
                 library.rows.append({"predicate": predicate, "library": freesizeLib})
-            elif d["LibraryType"] == "DecisionTree":
+            elif d["LibraryType"] == "MLPClassification":
+                predicate = Properties.Predicate(tag="TruePred")
+
+                regressionLib = MLPClassificationLibrary.FromOriginalState(d["Library"], solutions)
                 library = PredicateLibrary(tag="Problem")
-                for lib in d["Library"]:
-                    preds = lib["region"]
-                    predObjs = [Properties.Predicate.FromOriginalState(p) for p in preds]
-
-                    if len(predObjs) == 1:
-                        predicate = predObjs[0]
-                    else:
-                        predicate = Properties.Predicate.And(predObjs)
-
-                    treeLib = DecisionTreeLibrary.FromOriginalState(lib, solutions)
-                    library.rows.append({"predicate": predicate, "library": treeLib})
+                library.rows.append({"predicate": predicate, "library": regressionLib})
             else:
                 assert 0 and "Unrecognized LibraryType."
 
-            if Common.globalParameters["LazyLibraryLoading"]:
+            if lazyLibraryLoading:
                 placeholderName += '_' + str(problemType.aType) + str(problemType.bType)
                 placeholderName += '_' + str(problemType.cType) + str(problemType.computeInputType)
                 if problemType.activationType != 'none':
@@ -442,7 +437,7 @@ class MasterSolutionLibrary:
         # end library creation functions
 
         if libraryOrder is None:
-            if Common.globalParameters["LazyLibraryLoading"]:
+            if lazyLibraryLoading:
                 libraryOrder = [
                     hardware, operationIdentifier, performanceMetric, predicates,
                     placeholder, selection
@@ -460,7 +455,13 @@ class MasterSolutionLibrary:
             lazyLibrary, placeholderName = \
                 MasterSolutionLibrary.FromOriginalState(origData,
                                                         origSolutions,
-                                                        cxxCompiler,
+                                                        splitGSU,
+                                                        printSolutionRejectionReason,
+                                                        printIndexAssignmentInfo,
+                                                        depthUConfig,
+                                                        assembler,
+                                                        isaInfoMap,
+                                                        lazyLibraryLoading,
                                                         solutionClass,
                                                         libraryOrder[placeholderIndex:],
                                                         placeholderName)
@@ -468,7 +469,15 @@ class MasterSolutionLibrary:
             origSolutions = []
 
         problemType = Contractions.ProblemType.FromOriginalState(origData["ProblemType"])
-        allSolutions = [solutionClass.FromSolutionStruct(s, cxxCompiler) for s in origSolutions]
+        allSolutions = [solutionClass.FromSolutionStruct(
+                            s,
+                            splitGSU,
+                            printSolutionRejectionReason,
+                            printIndexAssignmentInfo,
+                            depthUConfig,
+                            assembler,
+                            isaInfoMap
+                        ) for s in origSolutions]
         cls.FixSolutionIndices(allSolutions)
 
         # library is constructed in reverse order i.e. bottom-up
@@ -489,8 +498,25 @@ class MasterSolutionLibrary:
         return rv, placeholderName
 
     @classmethod
-    def BenchmarkingLibrary(cls, solutions, cxxCompiler):
-        solutionObjs = list([Contractions.Solution.FromOriginalState(s._state, cxxCompiler) for s in solutions])
+    def BenchmarkingLibrary(
+        cls,
+        solutions,
+        assembler,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        depthUConfig: DepthUConfig,
+        isaInfoMap
+    ):
+        solutionObjs = list([Contractions.Solution.FromOriginalState(
+                                 s._state,
+                                 splitGSU,
+                                 printSolutionRejectionReason,
+                                 printIndexAssignmentInfo,
+                                 depthUConfig,
+                                 assembler,
+                                 isaInfoMap)
+                            for s in solutions])
         cls.FixSolutionIndices(solutionObjs)
 
         predRows = list([{
@@ -519,14 +545,14 @@ class MasterSolutionLibrary:
             rv["version"] = self.version
         return rv
 
-    def applyNaming(self, naming=None):
+    def applyNaming(self, splitGSU: bool, naming=None):
         if naming is None:
             kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
-            naming = OriginalSolution.getMinNaming(kernels)
+            naming = getMinNaming(kernels)
 
         for s in list(self.solutions.values()):
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming)
-            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+            s.name = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU)
+            s.kernelName = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

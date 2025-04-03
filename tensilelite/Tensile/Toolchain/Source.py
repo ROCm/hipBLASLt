@@ -24,109 +24,115 @@
 
 import os
 import re
-import shlex
 import shutil
-import subprocess
 
 from pathlib import Path
 from timeit import default_timer as timer
-from typing import List, Union
+from typing import List, Union, NamedTuple
 
-from ..Common import globalParameters, print2
+from ..Common import print1, ensurePath
 
-class SourceToolchain:
-    def __init__(self, compiler: str, objDump: str, objLs: str, buildIdKind: str, asanBuild: bool=False, saveTemps: bool=False):
-        self.compiler = compiler
-        self.objLs = objLs
-        self.objDump = objDump
-        self.buildIdKind = buildIdKind
-        self.asanBuild = asanBuild
-        self.saveTemps = saveTemps
+from .Component import Compiler, Bundler, RocObjLs, RocObjExtract
 
-    def invoke(self, args: List[str], desc: str="", workingDir=None):
-      """Invokes a subprocess with the provided arguments.
-
-      Args:
-          args: A list of arguments to pass to the subprocess.
-          desc: A description of the subprocess invocation.
-
-      Raises:
-          RuntimeError: If the subprocess invocation fails.
-      """
-      print2(f"{desc}: {' '.join(args)}")
-      try:
-          if workingDir:
-            out = subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=workingDir)
-          else:
-             out = subprocess.check_output(args, stderr=subprocess.STDOUT)
-      except subprocess.CalledProcessError as err:
-          raise RuntimeError(
-              f"Error with {desc}: {err.output}\n"
-              f"Failed command: {' '.join(args)}"
-          )
-      print2(f"Output: {out}")
-      return out
-
-    def compile(self, srcPaths: List[str], destPath: str, includePath: str, gfxs: List[str]):
-        launcher = shlex.split(os.environ.get("Tensile_CXX_COMPILER_LAUNCHER", ""))
-
-        hipFlags = [
-            "-shared",
-            "-fPIC",
-            "-fgpu-rdc",
-            "-Xoffload-linker",
-            "--lto-partitions=16",
-            "-D__HIP_HCC_COMPAT_MODE__=1",
-            #"--offload-device-only",
-            "-x", "hip", "-O3",
-            "-I", includePath,
-            "-std=c++17",
-            "-parallel-jobs=64"
-        ]
-
-        if self.asanBuild:
-            hipFlags.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
-        if self.saveTemps:
-            hipFlags.append("--save-temps")
-        if os.name == "nt":
-            hipFlags.extend(["-fms-extensions", "-fms-compatibility", "-fPIC", "-Wno-deprecated-declarations"])
-
-        archFlags = [f"--offload-arch={gfx}" for gfx in gfxs]
-
-        args = [*launcher, self.compiler, *hipFlags, *archFlags]
-        args += srcPaths
-        args +=["-o", destPath]
-
-        return self.invoke(args, f"Compiling HIP source kernels into objects (.cpp -> .o)")
+class SourceToolchain(NamedTuple):
+   compiler: Compiler
+   bundler: Bundler
+   rocObjLs: RocObjLs
+   rocObjExtract: RocObjExtract
 
 
-    def list(self, sharedObjFile: str):
-        """Lists the code objects in shared object.
-
-        Args:
-            sharedObjFile: Name of object file to list.
-
-        Returns:
-            List of objects embedded in shared object file.
-        """
-        args = [self.objLs, sharedObjFile]
-        return [e.strip().split()[1:] for e in self.invoke(args, f"Listing code objects in shared object", Path(sharedObjFile).parent).decode().split("\n") if e.strip().split()[1:]]
+def makeSourceToolchain(compiler_path, bundler_path, ls_path, extract_path, cpu_threads, asan_build=False, build_id_kind="sha1", save_temps=False):
+   compiler = Compiler(compiler_path, build_id_kind, cpu_threads, asan_build, save_temps)
+   bundler = Bundler(bundler_path)
+   ls = RocObjLs(ls_path)
+   extract = RocObjExtract(extract_path)
+   return SourceToolchain(compiler, bundler, ls, extract)
 
 
-    def extract(self, filename: str):
-        """Extracts code objects from a shared object.
+def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
+    """Generates a code object file path using the target, base, and build path.
 
-        Args:
-            objFile: Name pf object file to extract.
+    Args:
+        target: The target triple.
+        base: The base name for the output file (name without extension).
+        buildPath: The build directory path.
 
-        Returns:
-            List of target triples in the object file.
-        """
-        args = [self.objDump, filename]
-        return self.invoke(args, f"Extracting code object.", Path(filename.replace("file:","")).parent)
+    Returns:
+        Path to the code object file.
+    """
+    coPath = None
+    buildPath = Path(buildPath)
+    if "TensileLibrary" in base and "fallback" in base:
+        coPath = buildPath / "{0}_{1}.hsaco.raw".format(base, arch)
+    elif "TensileLibrary" in base:
+        variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
+        baseVariant = base + "-" + variant if variant else base
+        if arch in baseVariant:
+            coPath = buildPath / (baseVariant + ".hsaco.raw")
+    else:
+        coPath= buildPath / "{0}.so-000-{1}.hsaco.raw".format(base, arch)
+
+    return coPath
 
 
-def buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, str], sharedObjPath: Union[Path, str], ) -> List[str]:
+def buildSourceCodeObjectFiles(
+        compiler: Compiler,
+        bundler: Bundler,
+        destDir: Union[Path, str],
+        tmpObjDir: Union[Path, str],
+        includeDir: Union[Path, str],
+        kernelPath: Union[Path, str],
+        cmdlineArchs: List[str]
+    ) -> List[str]:
+    """Compiles a HIP source code file into a code object file.
+
+    Args:
+        toolchain: The source toolchain.
+        destDir: The destination directory where HSA code object files are placed.
+        tmpObjDir: The directory where HIP source object files are created.
+        includeDir: The include directory path.
+        kernelPath: The path to the kernel source file.
+
+    Returns:
+        List of paths to the created code objects.
+    """
+    start = timer()
+
+    tmpObjDir = Path(ensurePath(tmpObjDir))
+    destDir = Path(ensurePath(destDir))
+    kernelPath = Path(kernelPath)
+
+    objFilename = kernelPath.stem + '.o'
+    coPathsRaw = []
+    coPaths= []
+
+    objPath = str(tmpObjDir / objFilename)
+    compiler([str(kernelPath)], objPath, str(includeDir), cmdlineArchs)
+    for target in bundler.targets(objPath):
+      match = re.search("gfx.*$", target)
+      if match:
+        arch = re.sub(":", "-", match.group())
+        coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, tmpObjDir, arch)
+        if not coPathRaw: continue
+        buildSourceCodeObjectFile()
+        #bundler(target, objPath, str(coPathRaw))
+        assert False
+        coPath = str(destDir / coPathRaw.stem)
+        coPathsRaw.append(coPathRaw)
+        coPaths.append(coPath)
+
+    for src, dst in zip(coPathsRaw, coPaths):
+        shutil.move(src, dst)
+
+    stop = timer()
+    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
+
+    return coPaths
+
+
+def buildSourceCodeObjectFile(toolchain: SourceToolchain, 
+                              destPath: Union[Path, str], 
+                              sharedObjPath: Union[Path, str], ) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -140,14 +146,12 @@ def buildSourceCodeObjectFile(toolchain: SourceToolchain, destPath: Union[Path, 
         List of paths to the created code objects.
     """
 
-    if "CmakeCxxCompiler" in globalParameters and globalParameters["CmakeCxxCompiler"] is not None:
-      os.environ["CMAKE_CXX_COMPILER"] = globalParameters["CmakeCxxCompiler"]
-
-    for target, filename in toolchain.list(sharedObjPath):
+    for target, filename in toolchain.rocObjLs(sharedObjPath):
       match = re.search("gfx.*$", target)
       if match:
+        print(f"Generating Kernels.co for {target.split('-')[-1]}")
         arch = re.sub(":", "-", match.group())
-        toolchain.extract(filename)
+        toolchain.rocObjExtract(filename)
         src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
         dst = str(destPath / f"Kernels.so-000-{arch}.hsaco")
         shutil.move(src, dst)

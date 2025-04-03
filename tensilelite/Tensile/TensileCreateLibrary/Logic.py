@@ -93,7 +93,7 @@ def getCoFileNames(logicFile):
 
 def schedule(logicFiles: list, numberOfTasks: int, procs: int):
     problemMap = {}
-    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheudling work.", procs=procs), logicFiles)
+    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheduling work. ", procs=procs), logicFiles)
     for codeObjectFile, logicFile in cofiles:
         if codeObjectFile in problemMap:
             problemMap[codeObjectFile].append(logicFile)

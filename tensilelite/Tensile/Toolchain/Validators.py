@@ -37,7 +37,8 @@ osSelect = lambda linux, windows: linux if os.name != "nt" else windows
 
 
 def _windowsLatestRocmBin(path: Union[Path, str]) -> Path:
-    """Get the path to the latest ROCm bin directory, on Windows.
+    """
+    Get the path to the latest ROCm bin directory, on Windows.
 
     This function assumes that ROCm versions are differentiated with the form ``X.Y``.
 
@@ -104,12 +105,19 @@ def _posixSearchPaths() -> List[Path]:
     return searchPaths
 
 
+def isRhel8():
+    import platform  # import here b/c it's only needed in this context
+    osRelease = platform.freedesktop_os_release()
+    return ("8.8" == osRelease["VERSION_ID"] and "rhel" == osRelease["ID"])
+
+
 class ToolchainDefaults(NamedTuple):
     CXX_COMPILER= osSelect(linux="amdclang++", windows="clang++.exe")
     C_COMPILER= osSelect(linux="amdclang", windows="clang.exe")
     OFFLOAD_BUNDLER= osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
     ROC_OBJ_EXTRACT= osSelect(linux="roc-obj-extract", windows="roc-obj-extract.exe")
     ROC_OBJ_LS= osSelect(linux="roc-obj-ls", windows="roc-obj-ls.exe")
+    DEVICE_ENUMERATOR = osSelect(linux="rocm_agent_enumerator" if isRhel8() else "amdgpu-arch", windows="hipinfo")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
     HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
 
@@ -121,8 +129,21 @@ def _supportedComponent(component: str, targets: List[str]) -> bool:
     return isSupported
 
 
+def supportedBundler(bundler: str) -> bool:
+    """Determine if an offload bundler is supported by Tensile.
+
+    Args:
+        bundler: The name of an roc-obj-extract to test for support.
+
+    Return:
+        If supported True; otherwise, False.
+    """
+    return _supportedComponent(bundler, ["clang-offload-bundler"])
+
+
 def supportedCCompiler(compiler: str) -> bool:
-    """Determine if a C compiler/assembler is supported by Tensile.
+    """
+    Determine if a C compiler/assembler is supported by Tensile.
 
     Args:
         compiler: The name of a compiler to test for support.
@@ -134,7 +155,8 @@ def supportedCCompiler(compiler: str) -> bool:
 
 
 def supportedCxxCompiler(compiler: str) -> bool:
-    """Determine if a C++/HIP compiler/assembler is supported by Tensile.
+    """
+    Determine if a C++/HIP compiler/assembler is supported by Tensile.
 
     Args:
         compiler: The name of a compiler to test for support.
@@ -169,8 +191,9 @@ def supportedLs(ls: str) -> bool:
     return _supportedComponent(ls, [ToolchainDefaults.ROC_OBJ_LS])
 
 
-def supportedBundler(bundler: str) -> bool:
-    """Determine if an offload bundler is supported by Tensile.
+def supportedOffloadBundler(bundler: str) -> bool:
+    """
+    Determine if an offload bundler is supported by Tensile.
 
     Args:
         bundler: The name of an roc-obj-extract to test for support.
@@ -182,7 +205,8 @@ def supportedBundler(bundler: str) -> bool:
 
 
 def supportedHip(hip: str) -> bool:
-    """Determine if a hip callable binary is supported by Tensile.
+    """
+    Determine if a hip callable binary is supported by Tensile.
 
     Args:
         hip: The name of an offload bundler to test for support.
@@ -194,7 +218,8 @@ def supportedHip(hip: str) -> bool:
 
 
 def supportedDeviceEnumerator(enumerator: str) -> bool:
-    """Determine if a device enumerator is supported by Tensile.
+    """
+    Determine if a device enumerator is supported by Tensile.
 
     Args:
         enumerator: The name of a device enumerator to test for support.
@@ -208,7 +233,8 @@ def supportedDeviceEnumerator(enumerator: str) -> bool:
 
 
 def _exeExists(file: Path) -> bool:
-    """Check if a file exists and is executable.
+    """
+    Check if a file exists and is executable.
 
     Args:
         file: The file to check.
@@ -220,7 +246,8 @@ def _exeExists(file: Path) -> bool:
 
 
 def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
-    """Validate that the given toolchain component is in the PATH and executable.
+    """
+    Validate that the given toolchain component is in the PATH and executable.
 
     Args:
         file: The executable to validate.
@@ -238,7 +265,7 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
         supportedLs(file), 
         supportedHip(file)
     )):
-        raise ValueError(f"{file} is not a supported toolchain component for OS: {os.name}")
+        raise ValueError(f"`{file}` is not a supported toolchain component on {'Windows' if os.name == 'nt' else 'Linux'}")
 
     # Check if the file is an absolute path and executable
     if _exeExists(Path(file)):
@@ -254,8 +281,10 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
     raise FileNotFoundError(f"`{file}` either not found or not executable in any search path: {':'.join(map(str, searchPaths))}")
 
 
-def validateToolchain(*args: str):
-    """Validate that the given toolchain components are in the PATH and executable.
+def validateToolchain(*args: str) :
+    """
+    Validate that the given toolchain components are in the PATH and executable,
+    returning the absolute path to each.
 
     Args:
         args: List of executable toolchain components to validate.
@@ -273,21 +302,5 @@ def validateToolchain(*args: str):
     searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
 
     out = (_validateExecutable(x, searchPaths) for x in args)
+    
     return next(out) if len(args) == 1 else tuple(out)
-
-
-def getVersion(executable: str, versionFlag: str="--version", regex: str=r"version\s+([\d.]+)") -> str:
-    """Print the version of a toolchain component.
-
-    Args:
-        executable: The toolchain component to check the version of.
-        versionFlag: The flag to pass to the executable to get the version.
-    """
-    args = f'"{executable}" "{versionFlag}"'
-    try:
-        output = run(args, stdout=PIPE, shell=True).stdout.decode().strip()
-        match = re.search(regex, output, re.IGNORECASE)
-        return match.group(1) if match else "<unknown>"
-    except Exception as e:
-        pass
-        raise RuntimeError(f"Failed to get version when calling {args}: {e}")

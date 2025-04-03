@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,18 @@ class ComputeStoreVgprsVALU(ComputeStoreVgprs):
             tmpS0 = tmpSgprInfo.idx
             tmpS1 = tmpS0+1
             wgMT1 = tmpS0+2
-            module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpS0))
+            tmpVgpr = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr")
+            tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+            # dot2: consecutive NumWaveSplitK threads compute the same element, divide it first before computing tile indices
+            if kernel["NumWaveSplitK"] > 1:
+                newSerial = writer.vgprPool.checkOut(1, "newSerial")
+                module.add(vectorStaticDivide(newSerial, "Serial", kernel["NumWaveSplitK"], tmpVgprRes, comment="Divided by NumWaveSplitK"))
+                module.add(vectorStaticDivideAndRemainder(tid1, tid0, newSerial, divisor, tmpVgprRes))
+                writer.vgprPool.checkIn(newSerial)
+            else:
+                module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpVgprRes))
+
+            writer.vgprPool.checkIn(tmpVgpr)
             module.add(staticMultiply(vgpr(tid0), vgpr(tid0), tid0Scale, sgpr(tmpS1)))
             if tid1Scale != 1:
                 module.add(staticMultiply(vgpr(tid1), vgpr(tid1), tid1Scale, sgpr(tmpS1)))

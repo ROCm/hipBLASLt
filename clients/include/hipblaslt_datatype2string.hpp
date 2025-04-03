@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@ enum class hipblaslt_initialization
     hpl        = 333,
     special    = 444,
     zero       = 555,
+    norm_dist  = 666,
 };
 
 typedef enum class _hipblaslt_activation_type
@@ -60,6 +61,7 @@ typedef enum class _hipblaslt_scaling_format
     none   = 0,
     Scalar = 1,
     Vector = 2,
+    Block  = 3,
 } hipblaslt_scaling_format;
 
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
@@ -114,6 +116,8 @@ constexpr auto hipblaslt_initialization2string(hipblaslt_initialization init)
         return "special";
     case hipblaslt_initialization::zero:
         return "zero";
+    case hipblaslt_initialization::norm_dist:
+        return "norm_dist";
     }
     return "invalid";
 }
@@ -133,16 +137,17 @@ inline hipblaslt_initialization string2hipblaslt_initialization(const std::strin
         value == "hpl"        ? hipblaslt_initialization::hpl        :
         value == "special"    ? hipblaslt_initialization::special    :
         value == "zero"       ? hipblaslt_initialization::zero       :
+        value == "norm_dist"  ? hipblaslt_initialization::norm_dist  :
         static_cast<hipblaslt_initialization>(0);
 }
 // clang-format on
 inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const std::string& value)
 {
-    return value == "none"   ? hipblaslt_activation_type::none
-           : value == "gelu" ? hipblaslt_activation_type::gelu
-           : value == "relu" ? hipblaslt_activation_type::relu
+    return value == "none"    ? hipblaslt_activation_type::none
+           : value == "gelu"  ? hipblaslt_activation_type::gelu
+           : value == "relu"  ? hipblaslt_activation_type::relu
            : value == "swish" ? hipblaslt_activation_type::swish
-                             : static_cast<hipblaslt_activation_type>(-1);
+                              : static_cast<hipblaslt_activation_type>(-1);
 }
 
 inline const hipblaslt_bias_source string_to_hipblaslt_bias_source(const std::string& value)

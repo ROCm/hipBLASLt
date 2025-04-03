@@ -22,10 +22,14 @@
 #
 ################################################################################
 
+from rocisa.code import Module
+from rocisa.container import DSModifiers, vgpr, sgpr, SDWAModifiers, VOP3PModifiers
+from rocisa.enum import SelectBit
+from rocisa.instruction import SMovB32, SWaitCnt, VOrB32, VPermB32, VLShiftLeftOrB32, \
+                            VMovB32, VLShiftRightB32, VCvtPkFP8toF32, VCvtF32toF16, VCvtFP8toF32,VCvtFP8toF16,VCvtPkFP8toF16
+
 from ..Component import LocalRead
-from ..TensileInstructions import Module, DSModifiers, vgpr, sgpr, \
-                            SMovB32, SWaitCnt, VOrB32, VPermB32, VLShiftLeftOrB32, \
-                            VMovB32, VLShiftRightB32, VCvtPkFP8toF32, VCvtF32toF16, VCvtFP8toF32,VCvtFP8toF16,VCvtPkFP8toF16, SDWAModifiers, VOP3PModifiers, SelectBit
+                            
 from math import ceil
 
 class LocalReadVALU(LocalRead):
@@ -54,8 +58,15 @@ class LocalReadVALU(LocalRead):
         blockWidth        = instruction.blockWidth
         offsetMultiplier  = 1 # instruction.offsetMultiplier
         valuIdx           = 0
-        numVectorsPerTile = (kernel["ThreadTile%u"%tile01]//kernel["VectorWidthA"])
-        numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
+        # dot2: currently only support unroll major LDS
+        if kernel["UseDotInstruction"]:
+            numVectorsPerTile = kernel["ThreadTile%u"%tile01]
+            numReadsPerVector = (writer.states.lrvwUnrollA * tP["bpe"]) // (blockWidth*4) # bytes/register
+            LdsPad            = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
+            tileStride        = kernel["_DepthU%s"%tc] + LdsPad if kernel["UnrollMajorLDS%s" % tP["tensorChar"]] else 1
+        else:
+            numVectorsPerTile = (kernel["ThreadTile%u"%tile01]//kernel["VectorWidthA"])
+            numReadsPerVector = (kernel["VectorWidthA"] * tP["bpe"]) // (blockWidth*4) # bytes/register
 
         for vIdx in range(0, numVectorsPerTile):
             for rIdx in range(0, int(numReadsPerVector)):
@@ -67,8 +78,13 @@ class LocalReadVALU(LocalRead):
                 # paramList.append(vgpr("LocalReadAddr%s"%tc))
 
                 for oIdx in range(0, numOffsets):
-                    paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx)*kernel["VectorWidthA"] \
-                      + tP["localReadOffset"]) * tP["bpe"] + tP["localReadSwapByteOffset"]) // offsetMultiplier)
+                    # dot2
+                    if kernel["UseDotInstruction"]:
+                        paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx) * tileStride \
+                            + tP["localReadOffset"]) * tP["bpe"] + tP["localReadSwapByteOffset"]) // offsetMultiplier)
+                    else:
+                        paramList.append(((rIdx*blockWidth + kernel["SubGroup%u"%tile01] * (vIdx*numOffsets+oIdx)*kernel["VectorWidthA"] \
+                            + tP["localReadOffset"]) * tP["bpe"] + tP["localReadSwapByteOffset"]) // offsetMultiplier)
                     # print("Debug: Matrix{}, rIdx offset {}, vIdx offset {}, bpe {}, net offset {}".format( \
                     #     tP["tensorChar"], \
                     #     rIdx * blockWidth, \
@@ -101,7 +117,7 @@ class LocalReadVALU(LocalRead):
                         # localReadCode.addInst("s_waitcnt lgkmcnt(0)", "CheckValue1 wait for LDS read")
                         localReadCode.add(SWaitCnt(lgkmcnt=0, comment="CheckValue1 wait for lds read"))
                         if writer.archCaps["SeparateVscnt"]:
-                            # localReadCode.addInst( "s_waitcnt_vscnt", "null", "0", "")
+                            # localReadCode.addInst( "s_waitcnt_vscnt", -2, "0", "")
                             localReadCode.add(SWaitCnt(vmcnt=0, vscnt=0))
 
                         if kernel["ProblemType"]["DataType"].isHalf():
@@ -609,5 +625,23 @@ class LocalReadMFMA(LocalRead):
         # DTV case, do not return local read code. Return pack code only.
         if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
           imod = Module("LocalReadDo%s_I%s (Empty)" % (tP["tensorChar"],iui))
+        
+        if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"] and tP["isA"] and tc == "A":
+            tf32mod = Module()
+            tf32mod.add(TextBlock("/*TF32 Emulation read lds*/\n"))
+            tf32mod.add(LocalReadX(dst=vgpr("Cvt+0"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=0)))
+            tf32mod.add(LocalReadX(dst=vgpr("Cvt+1"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=256)))
+            tf32mod.add(LocalReadX(dst=vgpr("Cvt+2"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=512)))
+            tf32mod.add(LocalReadX(dst=vgpr("Cvt+3"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=768)))
+            tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+0"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+1"), src=vgpr("Cvt+2"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+2"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+3"), src=vgpr("Cvt+2"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+0"), src=vgpr("Cvt+1"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+1"), src=vgpr("Cvt+3"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+2"), src=vgpr("Cvt+1"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
+            tf32mod.add(VMovB32(dst=vgpr("ValuA_X0_I0+3"), src=vgpr("Cvt+3"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
+            localReadCode.add(tf32mod)
 
         return imod, pack

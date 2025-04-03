@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from Tensile.Common import CHeader, printExit, state
+from Tensile.Common import CHeader, printExit, state, DepthUConfig
 from Tensile.LibraryIO import parseLibraryLogicFile, write
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
@@ -32,12 +32,12 @@ from pathlib import Path
 from typing import Dict, Union
 
 
-def generateSolutionsAndLibraries(archs, cxxCompiler, logicFiles):
+def generateSolutionsAndLibraries(assembler, isaInfoMap, lazy, logicFiles):
     solutions = []
     libraries = []
     for logicFileGroup in logicFiles:
         for logicFile in logicFileGroup[1]:
-            libraryLogic = parseLibraryLogicFile(logicFile, cxxCompiler, archs)
+            libraryLogic = parseLibraryLogicFile(logicFile, assembler, False, False, False, DepthUConfig(), isaInfoMap, lazy)
             solutions.extend(libraryLogic.solutions)
             libraries.append((libraryLogic.architecture, libraryLogic.library))
     return solutions, libraries
@@ -100,7 +100,7 @@ def genLazyMasterSolutionLibrary(libraryPath, libraryFormat, masterLib):
     # Can we do this asynchronously before the call to writeSolutionsAndKernels?
     for name, lib in list(masterLib.lazyLibraries.items()):
         catalogPath = libraryPath / name
-        lib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+        lib.applyNaming(False, getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
         write(str(catalogPath), state(lib), libraryFormat)
 
 
@@ -108,5 +108,5 @@ def generateParentLibrary(libraryFormat: str, libraryPath: Union[Path, str], mas
     base = "TensileLibrary_lazy_" if lazyLibraryLoading else "TensileLibrary_"
     for arch, masterLib in masterLibs.items():
         name = base + arch
-        masterLib.applyNaming(getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
+        masterLib.applyNaming(False, getRequiredParametersMin())  # <-- This should be able to be replaced directly with `name`?
         write(str(libraryPath / name), state(masterLib), libraryFormat)

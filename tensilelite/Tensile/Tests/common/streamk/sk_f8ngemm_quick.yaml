@@ -5,14 +5,11 @@ GlobalParameters:
   NumElementsToValidate: -1
   BoundsCheck: False
   KernelTime: False
-  # DataInitTypeA: 12
-  # DataInitTypeB: 13
   DataInitTypeA: 21
   DataInitTypeB: 21
   DataInitTypeC: 21
   DataInitTypeAlpha: 1
   DataInitTypeBeta: 1
-  # DataInitTypeBeta: 0
   DataInitTypeBias: 21
   DataInitTypeScaleA: 2
   DataInitTypeScaleB: 2
@@ -20,10 +17,6 @@ GlobalParameters:
   DataInitTypeScaleD: 2
   DataInitTypeScaleAlphaVec: 21
   MaxWorkspaceSize: 134217728
-  # NumWarmups: 20
-  # EnqueuesPerSync: 50
-  PrintSolutionRejectionReason: True
-  KeepBuildTmp: True
 
 BenchmarkProblems:
   - # F8NSS NN
