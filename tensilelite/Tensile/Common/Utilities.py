@@ -46,14 +46,14 @@ def setVerbosity(v: int):
 def getVerbosity():
     return _verbosity
 
-_showProgressBar = True
+_showProgressBar = False
 
 def setProgressBar(v: bool):
-    global _showProgress
-    _showProgress = v
+    global _showProgressBar
+    _showProgressBar = v
 
 def getProgressBar():
-    return _showProgress
+    return _showProgressBar
 
 ################################################################################
 # Printing

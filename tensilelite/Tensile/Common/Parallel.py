@@ -48,16 +48,6 @@ def CPUThreadCount(requestProcs: int):
     return min(cpuCount, requestProcs)
 
 
-def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
-    OverwriteGlobalParameters(newGlobalParameters)
-    return f(*args)
-
-
-def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
-    OverwriteGlobalParameters(newGlobalParameters)
-    return f(arg)
-
-
 def apply_print_exception(item, *args):
     # print(item, args)
     try:
@@ -78,13 +68,6 @@ def apply_print_exception(item, *args):
         sys.stderr.flush()
 
 
-def OverwriteGlobalParameters(newGlobalParameters):
-    from . import GlobalParameters
-
-    GlobalParameters.globalParameters.clear()
-    GlobalParameters.globalParameters.update(newGlobalParameters)
-
-
 def ProcessingPool(enable=True, maxTasksPerChild=None):
     import multiprocessing
     import multiprocessing.dummy
@@ -94,13 +77,10 @@ def ProcessingPool(enable=True, maxTasksPerChild=None):
         return multiprocessing.dummy.Pool(1)
 
     if multiprocessing.get_start_method() == "spawn":
-        from . import GlobalParameters
 
         return multiprocessing.Pool(
             threadCount,
-            initializer=OverwriteGlobalParameters,
             maxtasksperchild=maxTasksPerChild,
-            initargs=(GlobalParameters.globalParameters,),
         )
     else:
         return multiprocessing.Pool(threadCount, maxtasksperchild=maxTasksPerChild)
@@ -215,7 +195,6 @@ def ParallelMap2(
             delayed(function)(*o) if multiArg else delayed(function)(o) for o in objects
         )
     else:
-        assert False, "IS THIS EVER HIT?"
         rv = Parallel(n_jobs=threadCount, timeout=99999)(
             delayed(function)(*o) if multiArg else delayed(function)(o) for o in objects
         )

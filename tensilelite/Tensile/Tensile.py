@@ -37,7 +37,7 @@ from typing import Dict
 
 from Tensile import __version__
 from Tensile.Common import print1, printExit, printWarning, ensurePath, HR, isRhel8, \
-                           LIBRARY_LOGIC_DIR, setVerbosity, IsaInfo, makeDebugConfig, \
+                           LIBRARY_LOGIC_DIR, setVerbosity, setProgressBar, IsaInfo, makeDebugConfig, \
                            makeDepthUConfig, DebugConfig, DepthUConfig, IsaVersion, coVersionMap
 from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx
 from Tensile.Common.Capabilities import makeIsaInfoMap
@@ -190,6 +190,8 @@ def addCommonArguments(argParser):
         choices=["4", "5", "V4", "V5", "default"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
+    argParser.add_argument("--show-progress", dest="ShowProgressBar", action="store_true", default=False, \
+        help="Show progress bars.")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
@@ -208,6 +210,7 @@ def addCommonArguments(argParser):
         action="store", default="yaml", help="select which logic format to use")
     argParser.add_argument("--library-format", dest="LibraryFormat", choices=["yaml", "msgpack"], \
         action="store", default="yaml", help="select which library format to use")
+    argParser.add_argument("--jobs", "-j", dest="CpuThreads", type=int, help="Number of parallel jobs to launch")
     argParser.add_argument("--client-lock", default=None)
     argParser.add_argument("--prebuilt-client", default=None)
 
@@ -378,9 +381,11 @@ def Tensile(userArgs):
     altFormat = args.AlternateFormat
     useCache = args.useCache
     outputPath = Path(ensurePath(os.path.abspath(args.OutputPath)))
+    procs = args.CpuThreads
     print1(f"#  OutputPath: {str(outputPath)}")
 
     setVerbosity(2 if (args.debug or args.verbose) else 1)
+    setProgressBar(args.ShowProgressBar)
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
@@ -493,8 +498,8 @@ def Tensile(userArgs):
 
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
-    procs = config["CpuThreads"]
-    assert procs > 0, f"CpuThreads must be > 0, found {procs}"
+    if "CpuThreads" in globalParameters or "CpuThreads" in config:
+        printWarning("CpuThreads is no longer configurable from within Tensile configs, it must be set with `--jobs`")
 
     executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, depthUConfig, device_id, procs)
 
