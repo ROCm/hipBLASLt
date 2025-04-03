@@ -28,11 +28,12 @@ import shutil
 import subprocess
 
 from pathlib import Path
+from timeit import default_timer as timer
 from typing import List, Union, NamedTuple
 
-from Tensile.Common import print2
+from Tensile.Common import print1, print2
 from Tensile.Common.Architectures import isaToGfx
-from ..SolutionStructs import Solution
+from Tensile.SolutionStructs import Solution
 
 from .Component import Assembler, Linker, Bundler
 
@@ -92,6 +93,8 @@ def buildAssemblyCodeObjectFiles(
         asmDir: The directory containing the assembly files.
         compress: Whether to compress the code object files.
     """
+    start = timer()
+    print1("Building assembly code object files...")
 
     extObj = ".o"
     extCo = ".co"
@@ -127,4 +130,6 @@ def buildAssemblyCodeObjectFiles(
           shutil.move(coFileRaw, coFile)
         coFiles.append(coFile)
 
+    stop = timer()
+    print1(f"Done. ({(stop-start):3.2f} secs elapsed)")
     return coFiles

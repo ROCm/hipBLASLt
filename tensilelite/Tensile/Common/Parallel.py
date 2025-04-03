@@ -135,7 +135,7 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
                 mapFunc = None
 
         if mapFunc is not None:
-            return list(mapFunc(function, tqdm(objects, message)))
+            return list(mapFunc(function, showProgress(objects, desc=message)))
 
     mapFunc = pool.map
     if method:
@@ -171,7 +171,7 @@ def ParallelMapReturnAsGenerator(function, objects, message="", enable=True, mul
 
     if threadCount <= 1:
         callFunc = lambda args: function(*args) if multiArg else lambda args: function(args)
-        return [callFunc(args) for args in tqdm(objects, message)]
+        return [callFunc(args) for args in showProgress(objects, desc=message)]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=threadCount) as executor:
         resultFutures = (executor.submit(function, *arg if multiArg else arg) for arg in objects)
@@ -196,7 +196,7 @@ def ParallelMap2(
     threadCount = CPUThreadCount(procs) if procs else CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
 
     if threadCount <= 1:
-        return [function(*args) if multiArg else function(args) for args in showProgress(objects, message)]
+        return [function(*args) if multiArg else function(args) for args in showProgress(objects, desc=message)]
 
     countMessage = ""
     try:
@@ -206,7 +206,7 @@ def ParallelMap2(
 
     if message != "":
         message += ": "
-    print("{0}Launching {1} threads{2}...".format(message, threadCount, countMessage))
+    print("# {0}Launching {1} processes{2}...".format(message, threadCount, countMessage))
     sys.stdout.flush()
     currentTime = time.time()
 
@@ -221,6 +221,6 @@ def ParallelMap2(
         )
 
     totalTime = time.time() - currentTime
-    print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
+    print("# {0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
     sys.stdout.flush()
     return rv

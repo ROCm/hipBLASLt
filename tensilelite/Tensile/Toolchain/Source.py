@@ -30,7 +30,7 @@ from pathlib import Path
 from timeit import default_timer as timer
 from typing import List, Union, NamedTuple
 
-from ..Common import print1, ensurePath
+from Tensile.Common import print1, ensurePath
 
 from .Component import Compiler, Bundler
 
@@ -93,6 +93,7 @@ def buildSourceCodeObjectFiles(
         List of paths to the created code objects.
     """
     start = timer()
+    print1("Building source code object files...")
 
     tmpObjDir = Path(ensurePath(tmpObjDir))
     destDir = Path(ensurePath(destDir))
@@ -121,6 +122,5 @@ def buildSourceCodeObjectFiles(
         shutil.move(src, dst)
 
     stop = timer()
-    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
-
+    print1(f"Done. ({(stop-start):3.2f} secs elapsed)")
     return coPaths

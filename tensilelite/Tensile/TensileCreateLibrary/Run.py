@@ -49,6 +49,7 @@ from Tensile.Common import (
     printWarning,
     state,
     showProgress,
+    setProgressBar,
     setVerbosity,
     getVerbosity
 )
@@ -111,9 +112,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     removeSolutions = []
     removeResults = []
 
-    for kernIdx, r in (
-        showProgress(enumerate(results)) if printLevel > 1 else enumerate(results)
-    ):
+    for kernIdx, r in enumerate(results):
         if r.err != 0:
             if not errorTolerant:
                 print(
@@ -134,11 +133,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     for kern in removeKernels:
         kernels.remove(kern)
 
-    for solution in (
-        showProgress(solutions, "Finding invalid solutions")
-        if printLevel > 1
-        else solutions
-    ):
+    for solution in showProgress(solutions, desc="Finding invalid solutions"):
         solutionKernels = solution.getKernels()
         for kernel in solutionKernels:
             kName = getKeyNoInternalArgs(kernel, splitGSU)
@@ -253,7 +248,13 @@ def writeSolutionsAndKernels(
         itertools.repeat(kernelSerialNaming),
         asmKernels
     )
-    asmResults = ParallelMap2(processKernelSource, showProgress(asmIter), "Generating assembly kernels", return_as="list", procs=procs)
+    asmResults = ParallelMap2(
+        processKernelSource,
+        showProgress(asmIter),
+        "Generating assembly kernels",
+        return_as="list",
+        procs=procs
+    )
     removeInvalidSolutionsAndKernels(
         asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
     )
@@ -471,10 +472,13 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
             for _, lazyLib in lib.lazyLibraries.items():
                 yield from libraryIter(lazyLib)
 
-    res = ParallelMap2(
-        LibraryIO.parseLibraryLogicFile, showProgress(fIter), "Loading Logics...", return_as="generator_unordered", procs=procs
-    )
-    for library in res:
+    for library in  ParallelMap2(
+        LibraryIO.parseLibraryLogicFile,
+        showProgress(fIter, total=len(logicFiles)),
+        "Loading logic files",
+        return_as="generator_unordered",
+        procs=procs
+    ):
         _, architectureName, _, _, _, newLibrary = library
 
         if architectureName == "":
@@ -550,6 +554,7 @@ def run():
 
     arguments = parseArguments()
     setVerbosity(arguments["PrintLevel"])
+    setProgressBar(arguments["ShowProgressBar"])
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
     cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
         arguments["CxxCompiler"],

@@ -38,7 +38,6 @@ from typing import List
 from Tensile import __version__
 
 _verbosity = 1
-_showProgress = True
 
 def setVerbosity(v: int):
     global _verbosity
@@ -46,6 +45,15 @@ def setVerbosity(v: int):
 
 def getVerbosity():
     return _verbosity
+
+_showProgressBar = True
+
+def setProgressBar(v: bool):
+    global _showProgress
+    _showProgress = v
+
+def getProgressBar():
+    return _showProgress
 
 ################################################################################
 # Printing
@@ -168,7 +176,7 @@ class ProgressBar:
         createTime: The timestamp when the progress bar was created.
         message: The message displayed alongside the progress bar.
     """
-    def __init__(self, maxValue: int, desc: str, width=40):
+    def __init__(self, maxValue: int, desc: str, width=40, showTime=False):
         self.char: str = '.'
         self.maxValue: int = maxValue
         self.width: int = width
@@ -178,8 +186,9 @@ class ProgressBar:
         self.fraction: float = 0
         self.numTicks: int = 0
         self.createTime: float = time.time()
+        self.showTime: bool = showTime
 
-        self.message: str = "# " + desc
+        self.message: str = desc
 
     def increment(self, value=1):
         """Increments the progress bar by a given value and updates the display."""
@@ -209,8 +218,9 @@ class ProgressBar:
     def finish(self):
         """Marks the operation as done, cleans up the display, and prints the completion time."""
         stopTime = time.time()
-
-        sys.stdout.write(f" (took {stopTime - self.createTime:.1f} secs)\n")
+        if self.showTime:
+            sys.stdout.write(f" (took {stopTime - self.createTime:.1f} secs)")
+        sys.stdout.write('\n')
         sys.stdout.flush()
 
 
@@ -261,18 +271,21 @@ class SpinnyThing:
         sys.stdout.flush()
 
 
-def showProgress(obj, *args, **kwargs):
-    if 'desc' not in kwargs:
-        printWarning("No message provided for TQDM progress bar/spinner")
-        kwargs['desc'] = 'Processing unknown function'
-    if 'total' in kwargs:
-        progress = ProgressBar(kwargs['total'], kwargs['desc'])
-    else:
-        try:
-            progress =  ProgressBar(len(obj), kwargs['desc'])
-        except TypeError:
-            progress = SpinnyThing(kwargs['desc'])
-    for o in obj:
+def showProgress(objs, *args, **kwargs):
+    if not getProgressBar():
+        yield from objs
+        return
+
+    desc = kwargs.get('desc', '#')
+    total = kwargs.get('total', None)
+    progress = None
+
+    try:
+        progress = ProgressBar(total or len(objs), desc)
+    except TypeError:
+        progress = SpinnyThing(desc)
+
+    for o in objs:
         yield o
         progress.increment()
     progress.finish()

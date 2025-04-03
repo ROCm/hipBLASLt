@@ -138,6 +138,13 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
         help="Set printout verbosity level.",
     )
     argParser.add_argument(
+        "--show-progress",
+        dest="ShowProgressBar",
+        action="store_true",
+        default=False,
+        help="Show progress bars.",
+    )
+    argParser.add_argument(
         "--no-lazy-library-loading",
         dest="LazyLibraryLoading",
         action="store_false",
@@ -205,6 +212,7 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
     arguments["LibraryFormat"] = args.LibraryFormat
     arguments["CpuThreads"] = args.CpuThreads
     arguments["PrintLevel"] = args.PrintLevel
+    arguments["ShowProgressBar"] = args.ShowProgressBar
     arguments["AsmDebug"] = args.AsmDebug
     arguments["BuildIdKind"] = args.BuildIdKind
     arguments["KeepBuildTmp"] = args.KeepBuildTmp

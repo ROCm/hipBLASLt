@@ -110,10 +110,6 @@ globalParameters["ForceRedoLibraryLogic"] = (
 globalParameters["ForceRedoLibraryClient"] = (
     True  # if False and library client already built, then building library client will be skipped when tensile is re-run
 )
-
-globalParameters["ShowProgressBar"] = (
-    True  # if False and library client already built, then building library client will be skipped when tensile is re-run
-)
 globalParameters["SolutionSelectionAlg"] = (
     1  # algorithm to determine which solutions to keep. 0=removeLeastImportantSolutions, 1=keepWinnerSolutions (faster)
 )
@@ -609,6 +605,8 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         "OutputPath",
         "Experimental",
         "GenSolTable",
+        "CpuThreads",
+        "ShowProgressBar",
     ]
     for key in config:
         if key in ignoreKeys:
