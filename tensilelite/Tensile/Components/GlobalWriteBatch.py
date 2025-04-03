@@ -620,20 +620,6 @@ class GlobalWriteBatchWriter:
 
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
       module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
-      # module.addComment("calculate the starting WG index of GSU WGs")
-      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr("NumWorkGroups1"), src1=sgpr("WorkGroup0"), comment="NumWorkGroups1*wg0"))
-      # module.add(SAndB32(dst=sgpr(self.tmpS01+1), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-      # module.add(SAddU32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr("WorkGroup1"), comment="NumWorkGroups1*wg0+wg1"))
-      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr(self.tmpS01+1), comment="(NumWorkGroups1*wg0+wg1)*GSU"))
-      # module.add(SMovB32(dst=sgpr("GSUStartWGIdx"), src=sgpr(self.tmpS01), comment="starting WG index of each GSU WGs"))
-      # module.add(SAddU32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=sgpr("GSUSumIdx"), comment="(NumWorkGroups0*wg1+wg0)*GSU+GSUSumIdx"))
-      # # adding offset to workspace buffer
-      # reductionOffset = self.kernel["MacroTile0"]*self.kernel["MacroTile1"]*self.parentWriter.states.bpeCinternal
-      # module.add(SMulHIU32(dst=sgpr(self.tmpS01+1), src0=sgpr(self.tmpS01), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
-      # module.add(SMulI32(dst=sgpr(self.tmpS01), src0=sgpr(self.tmpS01), src1=hex(reductionOffset), comment="(MT0*MT1*bpeC)*WGIdx"))
-      # module.add(SAddU32(dst=sgpr("SrdD+0"), src0=sgpr("AddressD+0"), src1=sgpr(self.tmpS01), comment="add lo to SRD"))
-      # module.add(SAddCU32(dst=sgpr("SrdD+1"), src0=sgpr("AddressD+1"), src1=sgpr(self.tmpS01+1), comment="add hi to SRD"))
-      # module.addSpaceLine()
 
     storeCodeGSUSK = Module("GroupLoadStore")
     if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":#GSUGSU
