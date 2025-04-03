@@ -31,6 +31,7 @@ from pathlib import Path
 from . import SOURCE_PATH
 from Tensile.Common import print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
 from Tensile.Common.GlobalParameters import globalParameters
+from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
 
 def cmake_path(os_path):
     return (os_path.replace("\\", "/") if (os.name == "nt") else os_path)
@@ -62,9 +63,6 @@ class CMakeEnvironment:
 
     @staticmethod
     def getBuildProgramPath() -> str:
-        if globalParameters.get("MakeProgram", None):
-            return globalParameters["MakeProgram"]
-
         if os.name == "nt":
             return os.environ.get("NINJA_PATH")
         else:
@@ -83,8 +81,8 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
                'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
                'Tensile_ENABLE_MARKER' : globalParameters["EnableMarker"],
-               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cxxCompiler),
-               'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cCompiler)}
+               'CMAKE_CXX_COMPILER': validateToolchain(ToolchainDefaults.CXX_COMPILER),
+               'CMAKE_C_COMPILER': validateToolchain(ToolchainDefaults.C_COMPILER)}
 
     if "CCACHE_BASEDIR" in os.environ:
         options.update({'CMAKE_C_COMPILER_LAUNCHER': 'ccache', 'CMAKE_CXX_COMPILER_LAUNCHER': 'ccache'})

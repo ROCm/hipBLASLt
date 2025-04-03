@@ -262,14 +262,14 @@ class Bundler(Component):
         Raises:
             RuntimeError: If compressing the code object file fails.
         """
-        input = "/dev/null" if os_name != "nt" else "NUL"
+        devnull = "/dev/null" if os_name != "nt" else "NUL"
         args = [
             self._component_path,
             "--compress",
             "--type=o",
             "--bundle-align=4096",
             f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown-{target}",
-            f"--input={input}",
+            f"--input={devnull}",
             f"--input={srcPath}",
             f"--output={destPath}",
         ]

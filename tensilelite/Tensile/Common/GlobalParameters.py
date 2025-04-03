@@ -40,6 +40,7 @@ from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      getVerbosity
 from .ValidParameters import validParameters
+from ..Toolchain.Validators import ToolchainDefaults, _windowsSearchPaths, _posixSearchPaths, _validateExecutable
 
 startTime = time.time()
 
@@ -288,7 +289,6 @@ globalParameters["AsmDebug"] = (
 )
 
 globalParameters["UseEffLike"] = True  # Set to False to use winnerGFlops as the performance metric
-globalParameters["MakeProgram"] = None
 
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 # we should do this here...
@@ -536,30 +536,16 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         else:
             print2(" %24s: %8s (unspecified)" % (key, defaultValue))
 
-    globalParameters["ROCmPath"] = "/opt/rocm"
-    if "ROCM_PATH" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
-    if "TENSILE_ROCM_PATH" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
-    if os.name == "nt":
-        possibleHipPaths = ('HIP_DIR', 'HIP_PATH',)
-
-        for p in possibleHipPaths:
-            if p in os.environ:
-                globalParameters["ROCmPath"] = os.environ.get(p) # windows has no ROCM
-                break # use the first non-null one
     globalParameters["CmakeCxxCompiler"] = None
     if "CMAKE_CXX_COMPILER" in os.environ:
         globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
     if "CMAKE_C_COMPILER" in os.environ:
         globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
-    globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
+    searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
     if os.name != "nt":
-        globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
-    globalParameters["ROCmLdPath"] = locateExe(
-        os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
-    )
+        globalParameters["ROCmSMIPath"] = locateExe(searchPaths, "rocm-smi")
+    globalParameters["ROCmLdPath"] = locateExe(searchPaths, "ld.lld")
 
     if "AsanBuild" in config:
         globalParameters["AsanBuild"] = config["AsanBuild"]
@@ -589,7 +575,7 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     try:
         if os.name == "nt":
             os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
-            compiler = os.environ.get("HIP_PATH") + '/bin/hipcc'
+            compiler = _validateExecutable("hipcc", searchPaths)
             compileArgs = ['perl'] + [compiler] + ['--version']
             output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
         else:
