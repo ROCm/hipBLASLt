@@ -48,7 +48,7 @@ from Tensile.Common import (
     printExit,
     printWarning,
     state,
-    tqdm,
+    showProgress,
     setVerbosity,
     getVerbosity
 )
@@ -112,7 +112,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
     removeResults = []
 
     for kernIdx, r in (
-        tqdm(enumerate(results)) if printLevel > 1 else enumerate(results)
+        showProgress(enumerate(results)) if printLevel > 1 else enumerate(results)
     ):
         if r.err != 0:
             if not errorTolerant:
@@ -135,7 +135,7 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
         kernels.remove(kern)
 
     for solution in (
-        tqdm(solutions, "Finding invalid solutions")
+        showProgress(solutions, "Finding invalid solutions")
         if printLevel > 1
         else solutions
     ):
@@ -253,7 +253,7 @@ def writeSolutionsAndKernels(
         itertools.repeat(kernelSerialNaming),
         asmKernels
     )
-    asmResults = ParallelMap2(processKernelSource, asmIter, "Generating assembly kernels", return_as="list", procs=procs)
+    asmResults = ParallelMap2(processKernelSource, showProgress(asmIter), "Generating assembly kernels", return_as="list", procs=procs)
     removeInvalidSolutionsAndKernels(
         asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
     )
@@ -266,7 +266,7 @@ def writeSolutionsAndKernels(
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
     ret = ParallelMap2(
         compose(assemble, unaryWriteAssembly),
-        asmResults,
+        showProgress(asmResults),
         "Writing assembly kernels",
         return_as="list",
         multiArg=False,
@@ -359,10 +359,10 @@ def writeSolutionsAndKernelsTCL(
     compose = lambda *F: functools.reduce(lambda f, g: lambda x: f(g(x)), F)
     ret = ParallelMap2(
         compose(assemble, unaryWriteAssembly, unaryProcessKernelSource),
-        uniqueAsmKernels,
+        showProgress(uniqueAsmKernels),
         "Generating assembly kernels",
         multiArg=False,
-        return_as="list"
+        return_as="list",
         procs=procs
     )
     buildAssemblyCodeObjectFiles(
@@ -471,9 +471,10 @@ def generateLogicDataAndSolutions(logicFiles, args, assembler: Assembler, isaInf
             for _, lazyLib in lib.lazyLibraries.items():
                 yield from libraryIter(lazyLib)
 
-    for library in ParallelMap2(
-        LibraryIO.parseLibraryLogicFile, fIter, "Loading Logics...", return_as="generator_unordered", procs=procs
-    ):
+    res = ParallelMap2(
+        LibraryIO.parseLibraryLogicFile, showProgress(fIter), "Loading Logics...", return_as="generator_unordered", procs=procs
+    )
+    for library in res:
         _, architectureName, _, _, _, newLibrary = library
 
         if architectureName == "":
@@ -626,7 +627,7 @@ def run():
         print2("#   %s" % logicFile)
 
     solutions, masterLibraries = generateLogicDataAndSolutions(
-        logicFiles, arguments, asmToolchain.assembler, isaInfoMap
+        logicFiles, arguments, asmToolchain.assembler, isaInfoMap, arguments["CpuThreads"]
     )
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)

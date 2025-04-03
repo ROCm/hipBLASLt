@@ -30,7 +30,7 @@ import time
 
 from joblib import Parallel, delayed
 
-from .Utilities import tqdm, print1
+from .Utilities import showProgress, print1
 
 DEFAULT_CPU_PROCS: int = 64
 
@@ -45,14 +45,7 @@ def joblibParallelSupportsGenerator():
 
 def CPUThreadCount(requestProcs: int):
     cpuCount = os.cpu_count() if os.name == "nt" else len(os.sched_getaffinity(0))
-    print1("CPU Threads: {}".format(requestProcs))
     return min(cpuCount, requestProcs)
-    # if cpuThreads == -1:
-    #     return min(
-    #         cpu_count, 64
-    #     )  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
-    # print1("Final CPU Threads: {}".format(cpu_count))
-    # return min(cpu_count, cpuThreads)
 
 
 def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
@@ -203,7 +196,7 @@ def ParallelMap2(
     threadCount = CPUThreadCount(procs) if procs else CPUThreadCount(DEFAULT_CPU_PROCS) if enable else 1
 
     if threadCount <= 1:
-        return [function(*args) if multiArg else function(args) for args in tqdm(objects, message)]
+        return [function(*args) if multiArg else function(args) for args in showProgress(objects, message)]
 
     countMessage = ""
     try:
@@ -217,16 +210,14 @@ def ParallelMap2(
     sys.stdout.flush()
     currentTime = time.time()
 
-    pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
-    pargs = zip(objects, itertools.repeat({}))
-
     if joblibParallelSupportsGenerator():
         rv = Parallel(n_jobs=threadCount, timeout=99999, return_as=return_as)(
-            delayed(pcall)(function, a, params) for a, params in pargs
+            delayed(function)(*o) if multiArg else delayed(function)(o) for o in objects
         )
     else:
+        assert False, "IS THIS EVER HIT?"
         rv = Parallel(n_jobs=threadCount, timeout=99999)(
-            delayed(pcall)(function, a, params) for a, params in pargs
+            delayed(function)(*o) if multiArg else delayed(function)(o) for o in objects
         )
 
     totalTime = time.time() - currentTime

@@ -127,7 +127,6 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
         "-j",
         dest="CpuThreads",
         type=int,
-        default=-1,
         help="Number of parallel jobs to launch.",
     )
     argParser.add_argument(
@@ -180,7 +179,7 @@ def parseArguments(input: Optional[List[str]] = None) -> Dict[str, Any]:
         action="store_true",
         default=False,
         help="Do not remove the temporary build directory (may required hundreds of GBs of space)",
-    ),
+    )
     argParser.add_argument(
         "--logic-filter",
         dest="LogicFilter",

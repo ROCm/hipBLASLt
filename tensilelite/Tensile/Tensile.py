@@ -493,6 +493,8 @@ def Tensile(userArgs):
 
     if "MaxFileName" in globalParameters or "MaxFileName" in config:
         printWarning("MaxFileName is no longer configurable, it will be automatically set to 64")
+    procs = config["CpuThreads"]
+    assert procs > 0, f"CpuThreads must be > 0, found {procs}"
 
     executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, depthUConfig, device_id, procs)
 
