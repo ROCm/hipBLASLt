@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.25.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22...3.25.2 FATAL_ERROR)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation" OFF)
@@ -117,6 +117,8 @@ option(Tensile_NO_LAZY_LIBRARY_LOADING "Diasble loading kernels on demand?" OFF)
 # For roctx
 include(CMakeDependentOption)
 cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
+# For rocRoller
+option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -162,7 +164,7 @@ else()
     if (NOT BUILD_ADDRESS_SANITIZER)
       #Set the AMDGPU_TARGETS with backward compatiblity
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx950;gfx1100;gfx1101;;gfx1200;gfx1201"
+          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx950;gfx1100;gfx1101;gfx1103;gfx1150;gfx1151;gfx1200;gfx1201"
       )
     else()
       #build xnack-supported targets only
@@ -187,6 +189,9 @@ else()
     if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
+
+    # Add rocisa
+    add_subdirectory(tensilelite/rocisa)
 
     option( Tensile_SKIP_BUILD "Skip building Tensile" OFF )
 
@@ -254,6 +259,12 @@ else()
     endif()
 endif()
 
+find_package(Boost REQUIRED)
+if(Boost_VERSION VERSION_LESS "1.74.0")
+    message(WARNING "Boost version ${Boost_VERSION} too old, not building RocRoller")
+    set(USE_ROCROLLER OFF)
+endif()
+
 if( LEGACY_HIPBLAS_DIRECT )
   find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 else()
@@ -270,9 +281,9 @@ if(HIPBLASLT_ENABLE_MARKER)
 endif()
 
 # Setup version
-set(VERSION_STRING "0.13.0")
+set(VERSION_STRING "0.15.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(hipblaslt_SOVERSION 0.13)
+set(hipblaslt_SOVERSION 0.15)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
