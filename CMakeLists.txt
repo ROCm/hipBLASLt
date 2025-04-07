@@ -131,7 +131,7 @@ else()
 endif()
 
 # For rocRoller
-option(USE_ROCROLLER "Build with the rocRoller library" OFF)
+option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
