@@ -114,10 +114,13 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       ../common/hipblaslt_init_device.cpp
       ${BLIS_CPP}
     )
-    
+
   # RocRoller integration
   include(FetchContent)
+  include(../cmake/Utilities.cmake)
   if(USE_ROCROLLER)
+      _save_var(INSTALL_GTEST)
+      set(INSTALL_GTEST OFF)
       add_definitions(-DUSE_ROCROLLER)
 
       FetchContent_Declare(
@@ -134,6 +137,7 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
       list(APPEND hipblaslt_test_bench_common
        ../common/mxDataGen.cpp
        )
+      _restore_var(INSTALL_GTEST)
   endif()
 
   if( BUILD_CLIENTS_BENCHMARKS )

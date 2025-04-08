@@ -174,8 +174,8 @@ endif()
 include(FetchContent)
 if(USE_ROCROLLER)
   _save_var(BUILD_TESTING)
-  set(BUILD_CLIENTS OFF)
   _save_var(BUILD_CLIENTS)
+  set(BUILD_CLIENTS OFF)
   set(BUILD_TESTING OFF)
 
   FetchContent_Declare(
