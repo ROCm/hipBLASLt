@@ -51,13 +51,20 @@ namespace
 {
     std::string transformCodeObjectPath()
     {
+#ifdef WIN32
+        constexpr char DEFAULT_CO_PATH[]
+        = "C:\\opt\\rocm\\bin\\hipblaslt\\library\\hipblasltTransform.hsaco";
+#else
         constexpr char DEFAULT_CO_PATH[]
             = "/opt/rocm/lib/hipblaslt/library/hipblasltTransform.hsaco";
+#endif
         auto        soPath = rocblaslt_internal_get_so_path("hipblaslt");
         std::string libPath(dirname(&soPath[0]));
 
         if(rocblaslt_internal_test_path(libPath + "/../Tensile/library"))
             libPath += "/../Tensile/library";
+        if(rocblaslt_internal_test_path(libPath + "/../../Tensile/library"))
+            libPath += "/../../Tensile/library";
         else if(rocblaslt_internal_test_path(libPath + "library"))
             libPath += "/library";
         else
@@ -67,6 +74,9 @@ namespace
 
         if(rocblaslt_internal_test_path(libPath))
         {
+#ifdef WIN32
+            std::replace(libPath.begin(), libPath.end(), '/', '\\');
+#endif
             return libPath;
         }
 

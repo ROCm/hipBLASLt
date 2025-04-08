@@ -137,8 +137,13 @@ hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
 
 namespace
 {
+#ifdef WIN32
+    constexpr char DEFAULT_EXT_OP_LIBRARY_PATH[]
+        = "C:\\opt\\rocm\\bin\\hipblaslt\\library\\hipblasltExtOpLibrary.dat";
+#else
     constexpr char DEFAULT_EXT_OP_LIBRARY_PATH[]
         = "/opt/rocm/lib/hipblaslt/library/hipblasltExtOpLibrary.dat";
+#endif
     constexpr uint32_t SUPPORTED_MAX_N = 256;
     constexpr uint32_t WORKGROUP_SIZE  = 256;
 
@@ -166,6 +171,8 @@ namespace
 
         if(rocblaslt_internal_test_path(libPath + "/../Tensile/library"))
             libPath += "/../Tensile/library";
+        if(rocblaslt_internal_test_path(libPath + "/../../Tensile/library"))
+            libPath += "/../../Tensile/library";
         else if(rocblaslt_internal_test_path(libPath + "library"))
             libPath += "/library";
         else
@@ -175,6 +182,9 @@ namespace
 
         if(rocblaslt_internal_test_path(libPath))
         {
+#ifdef WIN32
+            std::replace(libPath.begin(), libPath.end(), '/', '\\');
+#endif
             return libPath;
         }
 

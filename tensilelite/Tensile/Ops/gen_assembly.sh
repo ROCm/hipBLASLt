@@ -27,15 +27,9 @@ archStr=$1
 dst=$2
 venv=$3
 build_id_kind=$4
+toolchain=$5
 
-rocm_path=/opt/rocm
-if ! [ -z ${ROCM_PATH+x} ]; then
-    rocm_path=${ROCM_PATH}
-fi
-
-toolchain=${rocm_path}/bin/amdclang++
-
-. ${venv}/bin/activate
+. ${venv}/activate
 
 IFS=';' read -r -a archs <<< "$archStr"
 

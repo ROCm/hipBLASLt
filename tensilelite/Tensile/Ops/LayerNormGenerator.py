@@ -31,6 +31,15 @@ import json
 import subprocess
 import collections
 from contextlib import contextmanager
+
+try:
+    from Tensile import Tensile
+except ImportError:
+    import os.path
+    import sys
+    parentdir = os.path.normpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", ".."))
+    sys.path.append(parentdir)
+
 import Tensile.TensileInstructions as ti
 from Tensile.Common.Architectures import detectGlobalCurrentISA, isaToGfx, gfxToIsa
 from Tensile.Common.GlobalParameters import assignGlobalParameters, restoreDefaultGlobalParameters
