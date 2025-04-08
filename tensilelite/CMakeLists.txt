@@ -78,12 +78,6 @@ else()
     message(FATAL_ERROR "TENSILE_BIN is not defined. Please set it to one of the valid options: ${VALID_BINS}")
 endif()
 
-if("$ENV{Python_ROOT}" STREQUAL "" AND NOT Python_ROOT)
-    message(STATUS "Python_ROOT is unset. Setting Python_ROOT to /usr.")
-    message(STATUS "Configure Python_ROOT variable if a different installation is preferred.")
-    set(Python_ROOT /usr)
-endif()
-
 # Find Python interpreter
 find_package(Python COMPONENTS Interpreter REQUIRED)
 
