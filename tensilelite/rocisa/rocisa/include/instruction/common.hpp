@@ -1892,24 +1892,24 @@ namespace rocisa
 
             std::string result;
             if(va_vdst != -1)
-                result += "depctr_va_vdst(" + std::to_string(va_vdst) + ")";
+                result += " depctr_va_vdst(" + std::to_string(va_vdst) + ")";
             if(va_sdst != -1)
-                result += "depctr_va_sdst(" + std::to_string(va_sdst) + ")";
+                result += " depctr_va_sdst(" + std::to_string(va_sdst) + ")";
             if(va_ssrc != -1)
-                result += "depctr_va_ssrc(" + std::to_string(va_ssrc) + ")";
+                result += " depctr_va_ssrc(" + std::to_string(va_ssrc) + ")";
             if(hold_cnt != -1)
-                result += "depctr_hold_cnt(" + std::to_string(hold_cnt) + ")";
+                result += " depctr_hold_cnt(" + std::to_string(hold_cnt) + ")";
             if(vm_vsrc != -1)
-                result += "depctr_vm_vsrc(" + std::to_string(vm_vsrc) + ")";
+                result += " depctr_vm_vsrc(" + std::to_string(vm_vsrc) + ")";
             if(va_vcc != -1)
-                result += "depctr_va_vcc(" + std::to_string(va_vcc) + ")";
+                result += " depctr_va_vcc(" + std::to_string(va_vcc) + ")";
             if(sa_sdst != -1)
-                result += "depctr_sa_sdst(" + std::to_string(sa_sdst) + ")";
+                result += " depctr_sa_sdst(" + std::to_string(sa_sdst) + ")";
 
             if(result.empty())
                 return "";
 
-            return formatWithComment(instStr + " " + result);
+            return formatWithComment(instStr + result);
         }
 
     private:
