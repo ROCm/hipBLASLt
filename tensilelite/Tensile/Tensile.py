@@ -190,8 +190,8 @@ def addCommonArguments(argParser):
         choices=["4", "5", "V4", "V5", "default"], action="store", default="4", help="HSA code-object version")
     argParser.add_argument("-v", "--verbose", action="store_true", \
         help="set PrintLevel=2")
-    argParser.add_argument("--show-progress", dest="ShowProgressBar", action="store_true", default=False, \
-        help="Show progress bars.")
+    argParser.add_argument("--hide-progress", dest="ShowProgressBar", action="store_false", default=True, \
+        help="Hide progress bars (shown by default).")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
         help="set PrintLevel=2 and CMakeBuildType=Debug")
     argParser.add_argument("--short-names", dest="shortNames", action="store_true", \

@@ -26,7 +26,7 @@ from pathlib import Path
 from typing import Dict
 from . import LibraryIO
 from . import SolutionSelectionLibrary
-from Tensile.Common import print1, print2, HR, printExit, \
+from Tensile.Common import print1, print2, HR, printExit, showProgress, \
   assignParameterWithDefault, ProgressBar, printWarning, ensurePath, \
   LIBRARY_LOGIC_DIR, BENCHMARK_DATA_DIR, getVerbosity, IsaInfo, DepthUConfig
 from Tensile.Common.GlobalParameters import defaultAnalysisParameters, globalParameters, startTime
@@ -276,8 +276,7 @@ class LogicAnalyzer:
     for solutionGroupIdx in range(0, len(solutionsList)):
       solutionGroup = solutionsList[solutionGroupIdx]
       totalSolutions += len(solutionGroup)
-    progressBar = ProgressBar(totalSolutions)
-    for solutionGroupIdx in range(0, len(solutionsList)):
+    for solutionGroupIdx in showProgress(range(0, len(solutionsList)):
       solutionGroup = solutionsList[solutionGroupIdx]
       self.numSolutionsPerGroup.append(len(solutionGroup))
       self.solutionGroupMap.append({})
@@ -291,7 +290,6 @@ class LogicAnalyzer:
           sIdx = solutionsHash[solution]
 
         self.solutionGroupMap[solutionGroupIdx][solutionIdx] = sIdx
-        progressBar.increment()
     self.numSolutions = len(self.solutions)
     self.solutionMinNaming = getMinNaming(self.solutions)
     self.solutionNames = []
