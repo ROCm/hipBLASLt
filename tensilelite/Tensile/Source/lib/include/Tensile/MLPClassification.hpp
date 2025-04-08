@@ -29,6 +29,7 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <functional>
 
 #include "DataTypes_Half.hpp"
 

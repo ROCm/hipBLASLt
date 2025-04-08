@@ -126,12 +126,12 @@ option(Tensile_NO_LAZY_LIBRARY_LOADING "Diasble loading kernels on demand?" OFF)
 include(CMakeDependentOption)
 if(WIN32)
   cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Disable roctx marker in hipBLASLt - roctracer does not support on Windows" OFF "BUILD_SHARED_LIBS" OFF)
+  option(USE_ROCROLLER "Build with the rocRoller library" OFF)
 else()
   cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
+  # For rocRoller
+  option(USE_ROCROLLER "Build with the rocRoller library" ON)
 endif()
-
-# For rocRoller
-option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
