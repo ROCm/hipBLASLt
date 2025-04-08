@@ -26,6 +26,7 @@ if(TENSILE_USE_LLVM)
     set(SOLUTION_LIBRARY_FILES_
         ${SOLUTION_LIBRARY_FILES_}
         "${CMAKE_CURRENT_SOURCE_DIR}/SolutionLibraries/Kernels.yaml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/SolutionLibraries/Mlp_Kernels.yaml"
         )
 endif()
 
@@ -33,6 +34,7 @@ if(TENSILE_USE_MSGPACK)
     set(SOLUTION_LIBRARY_FILES_
         ${SOLUTION_LIBRARY_FILES_}
         "${CMAKE_CURRENT_SOURCE_DIR}/SolutionLibraries/Kernels.dat"
+        "${CMAKE_CURRENT_SOURCE_DIR}/SolutionLibraries/Mlp_Kernels.dat"
         )
 endif()
 

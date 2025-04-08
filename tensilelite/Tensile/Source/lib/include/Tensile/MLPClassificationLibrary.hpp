@@ -33,6 +33,7 @@
 #include <Tensile/Debug.hpp>
 #include <Tensile/MLFeatures.hpp>
 #include <Tensile/MLPClassification.hpp>
+#include <Tensile/PerformanceMetricTypes.hpp>
 #include <Tensile/ProblemKey.hpp>
 #include <Tensile/SolutionLibrary.hpp>
 #include <Tensile/Utils.hpp>
@@ -109,7 +110,8 @@ namespace TensileLite
                              = SolutionLibrarySearchType::DEFAULT) const override
         {
             const bool experimental = Debug::Instance().useExperimentalSelection();
-            if(!experimental)
+            if(!experimental
+               && !(problem.performanceMetric() == PerformanceMetric::ExperimentalMLP))
             {
                 // Skip the search for solutions if the environment variable
                 // that enables the experimental method is not set

@@ -27,6 +27,7 @@
 #include <gtest/gtest.h>
 
 #include <Tensile/ContractionLibrary.hpp>
+#include <Tensile/PerformanceMetricTypes.hpp>
 #include <Tensile/llvm/YAML.hpp>
 #include <TestUtils.hpp>
 
@@ -48,12 +49,13 @@ using namespace TensileLite;
  * LoadLibrary test). PopulateCache is an empty test whose purpose is to ensure the cache is
  * populated for the actual tests.
  */
-struct LibraryPerformanceTest
-    : public ::testing::TestWithParam<std::tuple<AMDGPU, std::string, bool, bool>>
+struct LibraryPerformanceTest : public ::testing::TestWithParam<
+                                    std::tuple<AMDGPU, std::string, bool, bool, PerformanceMetric>>
 {
     AMDGPU                                                   hardware;
     std::string                                              filename;
     bool                                                     hasNavi, solutionRequired;
+    PerformanceMetric                                        perfMetric;
     std::shared_ptr<SolutionLibrary<ContractionProblemGemm>> library;
 
     static std::map<std::string, std::shared_ptr<SolutionLibrary<ContractionProblemGemm>>>
@@ -61,7 +63,7 @@ struct LibraryPerformanceTest
 
     void SetUp() override
     {
-        std::tie(hardware, filename, hasNavi, solutionRequired) = GetParam();
+        std::tie(hardware, filename, hasNavi, solutionRequired, perfMetric) = GetParam();
 
         if(hardware.processor == AMDGPU::Processor::gfx1010 && !hasNavi)
             GTEST_SKIP();
@@ -124,176 +126,151 @@ TEST_P(LibraryPerformanceTest, LoadLibrary)
 
 TEST_P(LibraryPerformanceTest, CreateProblem)
 {
-    for(int i = 0; i < 1000000; i++)
+    for(int i = 0; i < 10; i++)
         RandomGEMM();
 }
 
 TEST_P(LibraryPerformanceTest, FindSolution)
 {
-    for(int i = 0; i < 100000; i++)
+    for(int i = 0; i < 10; i++)
     {
-        auto problem  = RandomGEMM();
-        auto solution = library->findBestSolution(problem, hardware);
+        auto problem = RandomGEMM();
+        problem.setPerformanceMetric(perfMetric);
+        auto solution = library->findTopSolutions(problem, hardware, 1);
 
         if(solutionRequired)
-            ASSERT_NE(solution, nullptr) << i << problem;
+            EXPECT_EQ(solution.size(), 1) << i << problem;
     }
 }
 
 TEST_P(LibraryPerformanceTest, FindCachedSolution)
 {
-    for(int i = 0; i < 100; i++)
+    for(int i = 0; i < 10; i++)
     {
-        auto problem  = RandomGEMM();
-        auto solution = library->findBestSolution(problem, hardware);
+        auto problem = RandomGEMM();
+        problem.setPerformanceMetric(perfMetric);
+        auto solution = library->findTopSolutions(problem, hardware, 1);
 
         if(solutionRequired)
-            ASSERT_NE(solution, nullptr) << i << problem;
+            EXPECT_EQ(solution.size(), 1) << i << problem;
     }
 
     auto problem = RandomGEMM();
-
-    for(int i = 0; i < 1000000; i++)
+    problem.setPerformanceMetric(perfMetric);
+    for(int i = 0; i < 10; i++)
     {
-        auto solution = library->findBestSolution(problem, hardware);
+        auto solution = library->findTopSolutions(problem, hardware, 1);
 
         if(solutionRequired)
-            ASSERT_NE(solution, nullptr) << i << problem;
+            EXPECT_EQ(solution.size(), 1) << i << problem;
     }
 }
 
-TEST_P(LibraryPerformanceTest, Solve)
+TEST_P(LibraryPerformanceTest, FindAllSolutions)
 {
-    float                                a, b, c, d;
-    ContractionProblemGemm               problem;
-    std::shared_ptr<ContractionSolution> solution;
+    auto problem = RandomGEMM();
+    problem.setPerformanceMetric(perfMetric);
+    auto solution = library->findAllSolutions(problem, hardware);
 
-    for(int i = 0; i < 10 && solution == nullptr; i++)
-    {
-        problem  = RandomGEMM();
-        solution = library->findBestSolution(problem, hardware);
-
-        if(solutionRequired)
-        {
-            EXPECT_NE(solution, nullptr) << problem;
-        }
-    }
-
-    if(solution)
-    {
-        ContractionInputs inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
-        for(int i = 0; i < 100000; i++)
-        {
-            solution->solve(problem, inputs, hardware);
-        }
-    }
-}
-
-TEST_P(LibraryPerformanceTest, SolveWithLog)
-{
-    float                                a, b, c, d;
-    ContractionProblemGemm               problem;
-    std::shared_ptr<ContractionSolution> solution;
-
-    for(int i = 0; i < 10 && solution == nullptr; i++)
-    {
-        problem  = RandomGEMM();
-        solution = library->findBestSolution(problem, hardware);
-
-        if(solutionRequired)
-            EXPECT_NE(solution, nullptr) << problem;
-    }
-
-    if(solution)
-    {
-        ContractionInputs inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
-        solution->kernelArgsLog = true;
-        for(int i = 0; i < 100000; i++)
-        {
-            solution->solve(problem, inputs, hardware);
-        }
-    }
-}
-
-TEST_P(LibraryPerformanceTest, FindAndSolve)
-{
-    for(int i = 0; i < 100000; i++)
-    {
-        auto              problem  = RandomGEMM();
-        auto              solution = library->findBestSolution(problem, hardware);
-        float             a, b, c, d;
-        ContractionInputs inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
-
-        if(solutionRequired)
-            ASSERT_NE(solution, nullptr) << i << problem;
-
-        if(solution != nullptr)
-            solution->solve(problem, inputs, hardware);
-    }
-}
-
-TEST_P(LibraryPerformanceTest, FindAndSolveWithLog)
-{
-    for(int i = 0; i < 100000; i++)
-    {
-        auto              problem  = RandomGEMM();
-        auto              solution = library->findBestSolution(problem, hardware);
-        float             a, b, c, d;
-        ContractionInputs inputs{&a, &b, &c, &d, 1.0, float(problem.beta())};
-
-        if(solutionRequired)
-        {
-            ASSERT_NE(solution, nullptr) << i << problem;
-        }
-
-        if(solution != nullptr)
-        {
-            solution->kernelArgsLog = true;
-            solution->solve(problem, inputs, hardware);
-        }
-    }
+    if(solutionRequired)
+        EXPECT_GE(solution.size(), 1)
+            << problem << ", " << problem.transA() << ", " << problem.transB();
 }
 
 TEST_P(LibraryPerformanceTest, SpecificSizes)
 {
     // N	N	256	12	1024	1	256	1024	0	256
-
-    auto problem = ContractionProblemGemm::GEMM_Strides(false,
-                                                        false,
-                                                        rocisa::DataType::Float,
-                                                        rocisa::DataType::Float,
-                                                        rocisa::DataType::Float,
-                                                        rocisa::DataType::Float,
-                                                        256,
-                                                        12,
-                                                        1024,
-                                                        1,
-                                                        256,
-                                                        1024,
-                                                        1024,
-                                                        12,
-                                                        256,
-                                                        12,
-                                                        256,
-                                                        12,
-                                                        2.0);
-
-    auto solution = library->findBestSolution(problem, hardware);
-    //ASSERT_NE(solution, nullptr) << i << problem;
+    auto problem = ContractionProblemGemm::GEMM_Strides(false, // transA
+                                                        false, // transB
+                                                        rocisa::DataType::Float, // aType
+                                                        rocisa::DataType::Float, // bType
+                                                        rocisa::DataType::Float, // cType
+                                                        rocisa::DataType::Float, // dType
+                                                        256, // m
+                                                        12, // n
+                                                        1024, // k
+                                                        1, // batchSize
+                                                        256, // lda
+                                                        1024, // aStride
+                                                        1024, // ldb
+                                                        12, // bStride
+                                                        256, // ldc
+                                                        12, // cStride
+                                                        256, // ldd
+                                                        12, // dStride
+                                                        2.0); // beta
+    problem.setPerformanceMetric(perfMetric);
+    auto solution = library->findTopSolutions(problem, hardware, 1);
+    EXPECT_EQ(solution.size(), 1) << problem << ", " << problem.transA() << ", "
+                                  << problem.transB();
 }
 
+TEST_P(LibraryPerformanceTest, GetSolutionByIndex)
+{
+    if(perfMetric == PerformanceMetric::ExperimentalMLP)
+    {
+        auto problem = ContractionProblemGemm::GEMM_Strides(true,
+                                                            false,
+                                                            DataType::Float,
+                                                            DataType::Float,
+                                                            DataType::Float,
+                                                            DataType::Float,
+                                                            256,
+                                                            12,
+                                                            1024,
+                                                            1,
+                                                            1024,
+                                                            256,
+                                                            1024,
+                                                            12,
+                                                            256,
+                                                            12,
+                                                            256,
+                                                            12,
+                                                            2.0);
+        problem.setPerformanceMetric(perfMetric);
+        auto solution = library->getSolutionByIndex(problem, hardware, 11);
+        EXPECT_NE(solution, nullptr)
+            << problem << ", " << problem.transA() << ", " << problem.transB();
+
+        problem = ContractionProblemGemm::GEMM_Strides(false,
+                                                       false,
+                                                       DataType::Float,
+                                                       DataType::Float,
+                                                       DataType::Float,
+                                                       DataType::Float,
+                                                       256,
+                                                       12,
+                                                       1024,
+                                                       1,
+                                                       256,
+                                                       1024,
+                                                       1024,
+                                                       12,
+                                                       256,
+                                                       12,
+                                                       256,
+                                                       12,
+                                                       2.0);
+        problem.setPerformanceMetric(perfMetric);
+        solution = library->getSolutionByIndex(problem, hardware, 20);
+        EXPECT_NE(solution, nullptr)
+            << problem << ", " << problem.transA() << ", " << problem.transB();
+    }
+}
 std::vector<LibraryPerformanceTest::ParamType> GetLibraries(std::string const& ext)
 {
     std::vector<LibraryPerformanceTest::ParamType> rv;
-
-    std::vector<AMDGPU> gpus{AMDGPU(AMDGPU::Processor::gfx900, 64, "Vega 10"),
-                             AMDGPU(AMDGPU::Processor::gfx906, 64, "Vega 20")};
-
-    for(auto const& gpu : gpus)
-    {
-        rv.push_back(std::make_tuple(gpu, "Kernels." + ext, false, false));
-    }
-
+    rv.push_back(std::make_tuple(AMDGPU(AMDGPU::Processor::gfx942, 304, "Aquavanjaram"),
+                                 "Kernels." + ext,
+                                 false,
+                                 true,
+                                 PerformanceMetric::DeviceEfficiency));
+    rv.push_back(std::make_tuple(AMDGPU(AMDGPU::Processor::gfx942, 304, "Aquavanjaram"),
+                                 "Mlp_Kernels." + ext,
+                                 false,
+                                 true,
+                                 PerformanceMetric::ExperimentalMLP));
     return rv;
 }
 

@@ -110,6 +110,7 @@ set(test_sources ${test_sources}
     ContractionSelectionLibrary_test.cpp
     DataTypes_test.cpp
     Predicates_test.cpp
+    MLPNet_test.cpp
 )
 
 if(TENSILE_USE_LLVM)

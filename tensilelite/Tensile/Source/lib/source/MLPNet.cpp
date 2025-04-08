@@ -252,12 +252,20 @@ namespace TensileLite
                 }
                 is_valid = false;
             }
-            if(scaler.mean.size()
-               != (res_blocks.empty() ? dense.size_in : res_blocks[0].linear1.size_in))
+            if(scaler.mean.size() != MLPNet::n_features)
             {
                 if(verbose)
                 {
-                    std::cerr << "StandardScaler size does not match MLPNet network input size."
+                    std::cerr << "StandardScaler size does not match number of features."
+                              << std::endl;
+                }
+                is_valid = false;
+            }
+            if((res_blocks.empty() ? dense.size_in : res_blocks[0].linear1.size_in) != MLPNet::n_features)
+            {
+                if(verbose)
+                {
+                    std::cerr << "MLPNet first layer does not match number of features."
                               << std::endl;
                 }
                 is_valid = false;

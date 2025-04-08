@@ -39,6 +39,7 @@ namespace TensileLite
     ContractionProblem::ContractionProblem(size_t size, size_t workspaceSize)
         : m_workspaceSize(workspaceSize)
         , m_f32XdlMathOp(rocisa::DataType::Float)
+        , m_computeInputType(rocisa::DataType::Float)
     {
         m_tensors.resize(size);
         m_names.resize(size);

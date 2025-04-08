@@ -108,6 +108,7 @@ namespace TensileLite
                 return "MLPNet";
             }
 
+            static constexpr std::size_t n_features = 12;
             std::vector<ResBlock> res_blocks;
             DenseLayer            dense;
             StandardScaler        scaler;
