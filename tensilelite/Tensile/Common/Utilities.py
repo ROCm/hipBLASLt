@@ -239,12 +239,13 @@ class SpinnyThing:
         count: A counter to control the update frequency of the spinner.
         createTime: The timestamp when the spinner was created.
     """
-    def __init__(self, desc: str):
+    def __init__(self, desc: str, showTime=False):
         self.message: str = "# " + desc
         self.chars: List[str] = ['|', '/', '-', '\\']
         self.index: int = 0
         self.count: int = 0
         self.createTime: float = time.time()
+        self.showTime: bool = showTime
 
     def increment(self):
         """Increments the spinner's position and updates the display if necessary."""
@@ -265,9 +266,9 @@ class SpinnyThing:
         sys.stdout.flush()
 
         stopTime = time.time()
-        elapsedTime = stopTime - self.createTime
-
-        sys.stdout.write('\r' + self.message + f'... Done in {elapsedTime:.1f} secs\n')
+        if self.showTime:
+            sys.stdout.write(f" (took {stopTime - self.createTime:.1f} secs)")
+        sys.stdout.write('\n')
         sys.stdout.flush()
 
 

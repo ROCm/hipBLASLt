@@ -276,7 +276,7 @@ class LogicAnalyzer:
     for solutionGroupIdx in range(0, len(solutionsList)):
       solutionGroup = solutionsList[solutionGroupIdx]
       totalSolutions += len(solutionGroup)
-    for solutionGroupIdx in showProgress(range(0, len(solutionsList)):
+    for solutionGroupIdx in showProgress(range(0, len(solutionsList))):
       solutionGroup = solutionsList[solutionGroupIdx]
       self.numSolutionsPerGroup.append(len(solutionGroup))
       self.solutionGroupMap.append({})

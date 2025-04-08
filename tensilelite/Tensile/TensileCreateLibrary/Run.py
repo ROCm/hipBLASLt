@@ -250,7 +250,7 @@ def writeSolutionsAndKernels(
     )
     asmResults = ParallelMap2(
         processKernelSource,
-        showProgress(asmIter),
+        showProgress(asmIter, total=len(asmKernels)),
         "Generating assembly kernels",
         return_as="list",
         procs=procs
