@@ -23,6 +23,30 @@
 #pragma once
 #include <string>
 
+enum class DataType : int
+{
+    Float,
+    Double,
+    ComplexFloat,
+    ComplexDouble,
+    Half,
+    Int8x4,
+    Int32,
+    BFloat16,
+    Int8,
+    Float8,
+    BFloat8,
+    Float8_fnuz,
+    BFloat8_fnuz,
+    XFloat32,
+    Float8BFloat8,
+    BFloat8Float8,
+    Float8BFloat8_fnuz,
+    BFloat8Float8_fnuz,
+    Count,
+    None = Count
+};
+
 enum class SignatureValueKind : int
 {
     SIG_VALUE        = 1,
@@ -125,6 +149,52 @@ enum class RoundType : int
     ROUND_UP              = 0,
     ROUND_TO_NEAREST_EVEN = 1
 };
+
+inline std::string toString(DataType type)
+{
+    switch(type)
+    {
+    case DataType::Float:
+        return "Float";
+    case DataType::Double:
+        return "Double";
+    case DataType::ComplexFloat:
+        return "ComplexFloat";
+    case DataType::ComplexDouble:
+        return "ComplexDouble";
+    case DataType::Half:
+        return "Half";
+    case DataType::Int8x4:
+        return "Int8x4";
+    case DataType::Int32:
+        return "Int32";
+    case DataType::BFloat16:
+        return "BFloat16";
+    case DataType::Int8:
+        return "Int8";
+    case DataType::Float8:
+        return "Float8";
+    case DataType::BFloat8:
+        return "BFloat8";
+    case DataType::Float8_fnuz:
+        return "Float8_fnuz";
+    case DataType::BFloat8_fnuz:
+        return "BFloat8_fnuz";
+    case DataType::XFloat32:
+        return "XFloat32";
+    case DataType::Float8BFloat8:
+        return "Float8BFloat8";
+    case DataType::BFloat8Float8:
+        return "BFloat8Float8";
+    case DataType::Float8BFloat8_fnuz:
+        return "Float8BFloat8_fnuz";
+    case DataType::BFloat8Float8_fnuz:
+        return "BFloat8Float8_fnuz";
+    default:
+        return "Invalid";
+    }
+    return "Invalid";
+}
 
 inline std::string toString(SelectBit bit)
 {
