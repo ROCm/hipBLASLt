@@ -1474,10 +1474,7 @@ class Solution(collections.abc.Mapping):
 
     # DepthU == -1?
     if state["DepthU"] == -1:
-      if state["ProblemType"]["ComputeDataType"].numBytes() < 4:
-        depthuList = [256, 128, 64, 32]
-      else:
-        depthuList = [128, 64, 32, 16]
+      depthuList = [1024,512,256,128,64,32,16]
     else:
       depthuList = [state["DepthU"]]
     index = [0]
@@ -2649,9 +2646,9 @@ class Solution(collections.abc.Mapping):
     state["LdsOffsetB_Blk"]=0
     # todo, can the alignment be a power of 2?
     state["LdsOffsetA"] = 0
+    state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
+    state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
     if state["PrefetchGlobalRead"]:
-      state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
-      state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
       state["LdsNumElementsAlignedMetadata"] = ldsNumBytesAlignedMetadata
       state["LdsOffsetMetadata"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + state["LdsNumElementsAlignedMetadata"]
