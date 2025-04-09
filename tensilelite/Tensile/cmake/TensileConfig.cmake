@@ -280,7 +280,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_BIN_DIR}" "${Tensile_BUILD_ID}" "${toolchain}"
+    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_BIN_DIR}" "${Tensile_BUILD_ID}" "${toolchain}" "${VIRTUALENV_PYTHON_EXENAME}"
     COMMAND bash -c "cp ${build_tmp_dir}/extop_*.co ${OutputFolder}"
     COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${OutputFolder}
   )

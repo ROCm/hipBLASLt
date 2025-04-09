@@ -574,10 +574,9 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     # TODO: hipcc is deprecated, this block should be removed.
     try:
         if os.name == "nt":
-            os.environ['HIP_USE_PERL_SCRIPTS'] = '1'
             compiler = _validateExecutable("hipcc", searchPaths)
-            compileArgs = ['perl'] + [compiler] + ['--version']
-            output = subprocess.run(compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
+            compileArgs = ['--version']
+            output = subprocess.run([compiler] + compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
         else:
             compiler = "hipcc"
             output = subprocess.run(
