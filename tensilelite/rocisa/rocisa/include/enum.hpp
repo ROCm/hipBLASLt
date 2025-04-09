@@ -34,15 +34,16 @@ enum class DataType : int
     Int32,
     BFloat16,
     Int8,
-    Float8,
-    BFloat8,
+    Int64,
+    XFloat32,
     Float8_fnuz,
     BFloat8_fnuz,
-    XFloat32,
-    Float8BFloat8,
-    BFloat8Float8,
     Float8BFloat8_fnuz,
     BFloat8Float8_fnuz,
+    Float8,
+    BFloat8,
+    Float8BFloat8,
+    BFloat8Float8,
     Count,
     None = Count
 };
@@ -172,24 +173,26 @@ inline std::string toString(DataType type)
         return "BFloat16";
     case DataType::Int8:
         return "Int8";
-    case DataType::Float8:
-        return "Float8";
-    case DataType::BFloat8:
-        return "BFloat8";
+    case DataType::Int64:
+        return "Int64";
+    case DataType::XFloat32:
+        return "XFloat32";
     case DataType::Float8_fnuz:
         return "Float8_fnuz";
     case DataType::BFloat8_fnuz:
         return "BFloat8_fnuz";
-    case DataType::XFloat32:
-        return "XFloat32";
-    case DataType::Float8BFloat8:
-        return "Float8BFloat8";
-    case DataType::BFloat8Float8:
-        return "BFloat8Float8";
     case DataType::Float8BFloat8_fnuz:
         return "Float8BFloat8_fnuz";
     case DataType::BFloat8Float8_fnuz:
         return "BFloat8Float8_fnuz";
+    case DataType::Float8:
+        return "Float8";
+    case DataType::BFloat8:
+        return "BFloat8";
+    case DataType::Float8BFloat8:
+        return "Float8BFloat8";
+    case DataType::BFloat8Float8:
+        return "BFloat8Float8";
     default:
         return "Invalid";
     }
