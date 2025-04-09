@@ -1932,8 +1932,12 @@ namespace
             const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
             if(env)
             {
-                std::cout << "rocblaslt info: Using HIPBLASLT_TENSILE_LIBPATH=" << env
-                          << std::endl;
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "Using HIPBLASLT_TENSILE_LIBPATH=" << env << std::endl;
+                    log_info(__func__, msg.str());
+                }
                 path = env;
             }
             else
@@ -1961,8 +1965,12 @@ namespace
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
 
-                std::cout << "rocblaslt info: HIPBLASLT_TENSILE_LIBPATH not set: Using " << path 
-                          << std::endl;
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "HIPBLASLT_TENSILE_LIBPATH not set: Using " << path << std::endl;
+                    log_info(__func__, msg.str());
+                }
             }
 
             // only load modules for the current architecture
@@ -2445,6 +2453,42 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
+
+        if(getenv("HIPBLASLT_BENCH_PERF") != nullptr
+           || getenv("HIPBLASLT_BENCH_PERF_ALL") != nullptr)
+        {
+            auto Granularity = solution->computeGranularities(
+                *hardware,
+                data->problem.c().sizes()[0],
+                data->problem.c().sizes()[1],
+                data->problem.a().sizes()[data->problem.boundIndices()[0].a],
+                data->problem.batchSize(0));
+
+            hipblasltClientPerformanceArgs::totalGranularity = Granularity.totalGranularity;
+            hipblasltClientPerformanceArgs::tilesPerCu       = Granularity.tilesPerCu;
+            hipblasltClientPerformanceArgs::tile0Granularity
+                = Granularity.tile0Granularity; // loss due to tile0
+            hipblasltClientPerformanceArgs::tile1Granularity = Granularity.tile1Granularity;
+            hipblasltClientPerformanceArgs::cuGranularity    = Granularity.cuGranularity;
+            hipblasltClientPerformanceArgs::waveGranularity  = Granularity.waveGranularity;
+            hipblasltClientPerformanceArgs::CUs              = Granularity.CUs;
+
+            auto staticPerformanceModel = solution->staticPerformanceModel(
+                data->problem.c().sizes()[0],
+                data->problem.c().sizes()[1],
+                data->problem.a().sizes()[data->problem.boundIndices()[0].a],
+                data->problem.batchSize(0),
+                Granularity.MT0,
+                Granularity.MT1,
+                Granularity.CUs,
+                Granularity.totalGranularity,
+                solution->sizeMapping.globalSplitU);
+
+            hipblasltClientPerformanceArgs::memWriteBytesD
+                = staticPerformanceModel.memWriteBytesD; //! Estimated memory writes D
+            hipblasltClientPerformanceArgs::memReadBytes = staticPerformanceModel.memReadBytes;
+        }
+
         if(!solution)
         {
 #if 0

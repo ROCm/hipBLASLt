@@ -27,21 +27,23 @@ from rocisa.code import KernelBody, Label, Macro, Module, RegSet, SrdUpperValue,
                         StructuredModule, TextBlock, ValueEndif, ValueIf, ValueSet, SignatureBase
 from rocisa.container import DSModifiers, SDWAModifiers, VOP3PModifiers, \
                       MUBUFModifiers, SMEMModifiers, EXEC, VCC, RegisterContainer, \
-                      DPPModifiers, Holder, vgpr, sgpr, accvgpr, mgpr, HWRegContainer
+                      DPPModifiers, Holder, vgpr, sgpr, accvgpr, mgpr, HWRegContainer, \
+                      ContinuousRegister
+from rocisa.instruction import SGetPositivePCOffset, SLongBranchPositive, SCLongBranchScc0, SCLongBranchScc1
 from rocisa.enum import InstType
 from rocisa.label import LabelManager
+from rocisa.macro import MacroVMagicDiv, PseudoRandomGenerator
 from . import CUSTOM_KERNEL_PATH
-from .TensileInstructions import SelectBit, SGetPositivePCOffset, \
-                          SLongBranchPositive, SCLongBranchScc0, SCLongBranchScc1, \
+from .TensileInstructions import SelectBit, \
                           SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
                           vectorStaticDivide, vectorStaticRemainder, scalarStaticRemainder, \
                           scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, vectorUInt32CeilDivideAndRemainder, \
                           scalarStaticDivideAndRemainder, scalarStaticCeilDivide, sMagicDiv, staticMultiply, staticMultiplyAdd, \
-                          scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
-                          RegisterPool, allocTmpGpr, allocTmpGprList, RegisterPoolResource, \
+                          scalarStaticMultiply, \
+                          RegisterPool, allocTmpGpr, allocTmpGprList, \
                           log2, ceilDivide, DataType, \
-                          dataTypeToMfmaInstTypePair, dataTypeNameAbbrevToInstType, PseudoRandomGenerator, \
+                          dataTypeToMfmaInstTypePair, dataTypeNameAbbrevToInstType, \
                           Assert
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
@@ -1206,8 +1208,6 @@ class KernelWriterAssembly(KernelWriter):
             comment="offset *= bytes/element"))
       module.add(macro)
 
-    module.add(MacroVDynamicScalarDiv(kernel["WavefrontSize"]))
-
     if kernel["ProblemType"]["StochasticRounding"] and not self.states.asmCaps["v_prng_b32"] :
       module.add(PseudoRandomGenerator())
 
@@ -1296,7 +1296,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # code phrase for load batched address from array of buffer pointer
   ##############################################################################
-  def loadBatchedAddress(self, kernel, Batch, tmpSgprResource: RegisterPoolResource):
+  def loadBatchedAddress(self, kernel, Batch, tmpSgprResource: ContinuousRegister):
     tmpSgpr = tmpSgprResource.idx
     laneSC = tmpSgprResource.size
     module = Module("loadBatchedAddress %s" % Batch)
@@ -1442,7 +1442,7 @@ class KernelWriterAssembly(KernelWriter):
 
       module.addComment0("only remap WGs in the range")
       tmpVgpr     = self.vgprPool.checkOut(2)
-      tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
+      tmpVgprRes  = ContinuousRegister(tmpVgpr, 2)
       module.add(SLShiftRightB32(dst=sgpr(tmpSgpr0), shiftHex=sgpr(WGMXCCSgpr), src=sgpr(tmpSgprNumWorkGroups)))
       module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), shiftHex=sgpr(WGMXCCSgpr), src=sgpr(tmpSgpr0)))
       module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
@@ -1498,7 +1498,7 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment1("remap wg from 1D(idxWG012) to 3D(wg2,wg1,wg0)")
         module.addComment0("wg2 = idxWG012 * smallMagicNumber(1/(numWG0*numWG1))")
         tmpVgpr     = self.vgprPool.checkOut(2)
-        tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
+        tmpVgprRes  = ContinuousRegister(tmpVgpr, 2)
         module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1")))
         if kernel["GlobalSplitU"] > 0:
           module.add(SAndB32(dst=sgpr(tmpSgpr.idx+1), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
@@ -1875,7 +1875,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_Loop_gemm_count)
         module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
-        regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
+        regStateRes = ContinuousRegister(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
         # accumulate tiles of each gemm
@@ -1917,7 +1917,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_noLoadLoop)
         module.add(SWaitCnt(lgkmcnt=0, kmcnt=0))
         # calculate numTiles
-        regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
+        regStateRes = ContinuousRegister(idx=tmpSgpr0, size=2)
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
         module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
         # accumulate tiles of each gemm
@@ -2086,7 +2086,7 @@ class KernelWriterAssembly(KernelWriter):
       # nwg0 FIXME use NumWorkGroups0
       nwg0 = self.vgprPool.checkOut(1)
       tmpVgpr = self.vgprPool.checkOutAligned(2, 2)
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+      tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
       module.addComment("nwg0 = (size%s + MT%s - 1) / MT%s;" \
           % (self.states.tileChar0, self.states.tileChar0, self.states.tileChar0))
       module.add(VMovB32(dst=vgpr(tmpVgpr), src=hex(kernel["MacroTile0"]-1), comment="MT0-1"))
@@ -2119,7 +2119,7 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(nwg0)
 
     if self.db["InitLds"]:
-      tmp = RegisterPoolResource(idx=self.vgprPool.checkOut(2), size=2)
+      tmp = ContinuousRegister(idx=self.vgprPool.checkOut(2), size=2)
       module.add(DSInit(tmp, kernel["NumThreads"], kernel["LdsNumBytes"], self.consts.initLdsValue))
       self.vgprPool.checkIn(tmp.idx)
 
@@ -2203,7 +2203,7 @@ class KernelWriterAssembly(KernelWriter):
       wgmDivisorMagicNumber = tmpSgprInfoList[0].idx + 1
 
       tmpVgpr = self.vgprPool.checkOut(2, "div")
-      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+      tmpVgprRes = ContinuousRegister(idx=tmpVgpr, size=2)
 
       # TODO: Unify this when sgpr is enough
       for wgmType in [True, False]: # Negative/Positive
@@ -2268,7 +2268,7 @@ class KernelWriterAssembly(KernelWriter):
       tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpVgpr")
       dummy   = self.vgprPool.checkOut(1,"dummy")
 
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+      tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
 
       # get constant parameter
 
@@ -2761,7 +2761,7 @@ class KernelWriterAssembly(KernelWriter):
     tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpVgpr")
     dummy   = self.vgprPool.checkOut(1,"dummy")
 
-    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+    tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
 
     # get constant parameter
     tc               = tP["tensorChar"]
@@ -3608,7 +3608,7 @@ class KernelWriterAssembly(KernelWriter):
         % (vgpr(uReg), tc, uOpStr, divisorName) )
 
     tmpVgpr = self.vgprPool.checkOutAligned(2, 2, 'lwaTA vgpr', self.states.preventVgprOverflowDuringNewTile)
-    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+    tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
 
     dividendReg = "Serial" # local serial
 
@@ -3783,7 +3783,7 @@ class KernelWriterAssembly(KernelWriter):
     # LdsBlockSizePerPad: add padding
     if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] != 0:
       tmpVgpr = self.vgprPool.checkOut(1)
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+      tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
       module.add(vectorStaticDivide(tmpVgpr, destVgpr, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
         "padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -3925,7 +3925,7 @@ class KernelWriterAssembly(KernelWriter):
       wave_id    = self.vgprPool.checkOut(1) # quotient
       rReg       = self.vgprPool.checkOut(1) # remainder, unused here
       tmpVgpr    = self.vgprPool.checkOutAligned(2, 2,"tmpVgpr")
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+      tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
 
       # constant
       tc          = tP["tensorChar"]
@@ -4788,11 +4788,11 @@ class KernelWriterAssembly(KernelWriter):
       imod.add(SSubU32(dst=sgpr(tmpSgprA1), src0=sgpr("SizeI"), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgprA, tmpSgprA, tmpSgprA1, \
                                               kernel["MacroTile0"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       if (kernel["WaveSeparateGlobalReadA"] > 0):
         imod.add(scalarStaticDivideAndRemainder(tmpSgprQregA, tmpSgprQregA, tmpSgprA, \
                                                 (nlpA * lspA), \
-                                                RegisterPoolResource(tmpSgpr, 2), 1))
+                                                ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SLShiftRightB32(dst=sgpr(tmpSgprQregA), shiftHex=hex(log2(lspA)), \
                                src=sgpr(tmpSgprQregA), comment="divide lsp"))
       imod.add(SMulI32(dst=sgpr(tmpSgprQregA), src0=sgpr(tmpSgprQregA), src1=nlcA, comment=""))
@@ -4800,7 +4800,7 @@ class KernelWriterAssembly(KernelWriter):
                                src=sgpr("LoopCounterL"), comment=""))
       imod.add(SAddI32(dst=sgpr(tmpSgprQregA), src0=sgpr(tmpSgprQregA), src1=sgpr(tmpSgpr), comment=""))
       imod.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgprA1, "SizesSum+%u"%loopIdx, \
-                                              kernel["DepthU"], RegisterPoolResource(tmpSgpr, 2), 2))
+                                              kernel["DepthU"], ContinuousRegister(tmpSgpr, 2), 2))
     # for B
     if doB:
       if (kernel["WaveSeparateGlobalReadB"] == 0):
@@ -4810,11 +4810,11 @@ class KernelWriterAssembly(KernelWriter):
       imod.add(SSubU32(dst=sgpr(tmpSgprB1), src0=sgpr("SizeJ"), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgprB, tmpSgprB, tmpSgprB1, \
                                               kernel["MacroTile1"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       if (kernel["WaveSeparateGlobalReadB"] > 0):
         imod.add(scalarStaticDivideAndRemainder(tmpSgprQregB, tmpSgprQregB, tmpSgprB, \
                                                (nlpB * lspB), \
-                                               RegisterPoolResource(tmpSgpr, 2), 1))
+                                               ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SLShiftRightB32(dst=sgpr(tmpSgprQregB), shiftHex=hex(log2(lspB)), \
                                src=sgpr(tmpSgprQregB), comment="divide lsp"))
       imod.add(SMulI32(dst=sgpr(tmpSgprQregB), src0=sgpr(tmpSgprQregB), src1=nlcB, comment=""))
@@ -4822,7 +4822,7 @@ class KernelWriterAssembly(KernelWriter):
                                src=sgpr("LoopCounterL"), comment=""))
       imod.add(SAddI32(dst=sgpr(tmpSgprQregB), src0=sgpr(tmpSgprQregB), src1=sgpr(tmpSgpr), comment=""))
       imod.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgprB1, "SizesSum+%u"%loopIdx, \
-                                              kernel["DepthU"], RegisterPoolResource(tmpSgpr, 2), 2))
+                                              kernel["DepthU"], ContinuousRegister(tmpSgpr, 2), 2))
     # A
     if doA:
       imod.add(SAndB32(dst=sgpr(tmpSgprA1), src0=sgpr(tmpSgprA1), src1=(tPA["glvw"] - 1), \
@@ -4917,11 +4917,11 @@ class KernelWriterAssembly(KernelWriter):
       imod.add(SSubI32(dst=sgpr(tmpSgprQregA), src0=sgpr(tmpSgprQregA), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgprA2, tmpSgprA2, "SizesSum+%u"%loopIdx, \
                                               kernel["DepthU"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SSubU32(dst=sgpr(tmpSgprB2), src0=sgpr("SizeI"), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgpr1, tmpSgpr1, tmpSgprB2, \
                                               kernel["MacroTile0"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SMulI32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgprA2), src1=sgpr(tmpSgpr1)))
       numThreadsCoalA = lscA // tPA["glvw"]
       numThreadsPerpA = kernel["NumThreads"] // numThreadsCoalA
@@ -4990,11 +4990,11 @@ class KernelWriterAssembly(KernelWriter):
       imod.add(SSubI32(dst=sgpr(tmpSgprQregB), src0=sgpr(tmpSgprQregB), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgprA2, tmpSgprA2, "SizesSum+%u"%loopIdx, \
                                               kernel["DepthU"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SSubU32(dst=sgpr(tmpSgprB2), src0=sgpr("SizeJ"), src1=1))
       imod.add(scalarStaticDivideAndRemainder(tmpSgpr1, tmpSgpr1, tmpSgprB2, \
                                               kernel["MacroTile1"], \
-                                              RegisterPoolResource(tmpSgpr, 2), 1))
+                                              ContinuousRegister(tmpSgpr, 2), 1))
       imod.add(SMulI32(dst=sgpr(tmpSgprB2), src0=sgpr(tmpSgprA2), src1=sgpr(tmpSgpr1)))
       numThreadsCoalB = lscB // tPB["glvw"]
       numThreadsPerpB = kernel["NumThreads"] // numThreadsCoalB
@@ -5105,7 +5105,7 @@ class KernelWriterAssembly(KernelWriter):
   # Output: SGPR(destName) contains the number of unroll iterations for
   # this workgroup.
   ##############################################################################
-  def calculateLoopNumIterGsu(self, kernel, destName, tmpSgprRes: RegisterPoolResource):
+  def calculateLoopNumIterGsu(self, kernel, destName, tmpSgprRes: ContinuousRegister):
     module = Module("calculateLoopNumIterGsu")
 
     loopCounter = sgpr(destName)
@@ -5114,7 +5114,7 @@ class KernelWriterAssembly(KernelWriter):
     dividend = destName
 
     tmpVgpr = self.vgprPool.checkOut(2,"tmp")
-    tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+    tmpVgprRes = ContinuousRegister(idx=tmpVgpr, size=2)
     module.add(SAndB32(dst=sgpr(remainder), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
     module.add(scalarUInt32DivideAndRemainder(quotient, dividend, remainder, remainder, tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
     self.vgprPool.checkIn(tmpVgpr)
@@ -5126,7 +5126,7 @@ class KernelWriterAssembly(KernelWriter):
 
     return module
 
-  def calculateLoopNumIterOffsetGsu(self, kernel, destName, tmpSgprRes: RegisterPoolResource):
+  def calculateLoopNumIterOffsetGsu(self, kernel, destName, tmpSgprRes: ContinuousRegister):
     module = Module("calculateLoopNumIterOffsetGsu")
 
     loopCounter = sgpr(destName)
@@ -5135,7 +5135,7 @@ class KernelWriterAssembly(KernelWriter):
     dividend = destName
 
     tmpVgpr = self.vgprPool.checkOut(2,"tmp")
-    tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+    tmpVgprRes = ContinuousRegister(idx=tmpVgpr, size=2)
     module.add(SAndB32(dst=sgpr(remainder), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
     module.add(scalarUInt32DivideAndRemainder(quotient, dividend, remainder, remainder, tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
     self.vgprPool.checkIn(tmpVgpr)
@@ -5198,7 +5198,7 @@ class KernelWriterAssembly(KernelWriter):
 
         # size % DepthU
         module.add(scalarStaticDivideAndRemainder(tmpSgpr, loopCounterName, \
-          "SizesSum+%u"%loopIdx, kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
+          "SizesSum+%u"%loopIdx, kernel["DepthU"], ContinuousRegister(tmpSgpr+2, 2), 2))
         loopCounter = sgpr(loopCounterName)
 
         if kernel["LocalSplitU"] > 1:
@@ -5211,7 +5211,7 @@ class KernelWriterAssembly(KernelWriter):
 
           dividend               = tmpSgpr+2
           tmpVgpr    = self.vgprPool.checkOutAligned(2, 2,"tmpVgpr")
-          tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+          tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
           wave_id    = self.vgprPool.checkOut(1)
           numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
 
@@ -6919,7 +6919,7 @@ class KernelWriterAssembly(KernelWriter):
             loopChar = self.states.indexChars[ \
                 kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx]]
             module.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgpr+1, "SizesSum+%u"%self.states.unrollIdx, \
-                      kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
+                      kernel["DepthU"], ContinuousRegister(tmpSgpr+2, 2), 2))
             module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=0, comment="numIter%s == 0"%loopChar ))
             if placeHolder == None:
               if isLongBranch:
@@ -8991,7 +8991,7 @@ class KernelWriterAssembly(KernelWriter):
                     else:
                       vTemp0 = vgprTmp+2
                       vTemp1 = vgprTmp+3
-                      localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp), vTemp0, vTemp1]))
+                      localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp, vTemp0, vTemp1]))
 
                     if (toF8):
                       localWriteCVTCode.add(VCvtSRF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
@@ -9035,20 +9035,20 @@ class KernelWriterAssembly(KernelWriter):
                         else:
                           vTemp0 = vgprTmp+3
                           vTemp1 = vgprTmp+4
-                          localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp), vTemp0, vTemp1]))
+                          localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp, vTemp0, vTemp1]))
                         if (toF8):
                           localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to FP8"))
                           if self.states.asmCaps["v_prng_b32"]:
                             localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=vgpr(vgprTmp2),comment="Psudo Random Number Generator"))
                           else:
-                            localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp2), vTemp0, vTemp1]))
+                            localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp2, vTemp0, vTemp1]))
                           localWriteCVTCode.add(VCvtSRF32toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(vgprTmp2), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to FP8"))
                         else:
                           localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="Convert to BF8"))
                           if self.states.asmCaps["v_prng_b32"]:
                             localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=vgpr(vgprTmp2),comment="Psudo Random Number Generator"))
                           else:
-                            localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgpr(vgprTmp2), vTemp0, vTemp1]))
+                            localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp2, vTemp0, vTemp1]))
                           localWriteCVTCode.add(VCvtSRF32toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(vgprTmp2), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,1,sel]), comment="Convert to BF8"))
                       else:
                         # ScaleA/B, sgpr upper is dummy.
@@ -9737,7 +9737,7 @@ class KernelWriterAssembly(KernelWriter):
     strideD1 = "StrideD%s" % (self.states.indexChars[packedC1[0]])
     wave_id = self.vgprPool.checkOut(1, "tmpWaveID")
     tmpVgpr1 = self.vgprPool.checkOutAligned(2,2,"tmpVgpr1")
-    tmpVgpr1Res = RegisterPoolResource(tmpVgpr1, 2)
+    tmpVgpr1Res = ContinuousRegister(tmpVgpr1, 2)
     module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"], tmpVgpr1Res))
     numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
     module.add(vectorStaticDivide(wave_id, wave_id, numWaves, tmpVgpr1Res))
@@ -10267,7 +10267,7 @@ class KernelWriterAssembly(KernelWriter):
 
       #calculate local write Address: v[vgprLocalWriteAddrC]
       module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", self.states.kernel["WavefrontSize"]*kernel["MIWaveGroup"][0], \
-        RegisterPoolResource(tmpV0, 2)))
+        ContinuousRegister(tmpV0, 2)))
 
       module.add(VMulLOU32(dst=vgpr(waveCoord1),
                 src0=hex(kernel["MatrixInstN"]), src1=vgpr(tid1), comment="coord1 offset of LDS for each Wave"))
@@ -10279,7 +10279,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(VMulLOU32(dst=vgpr(tmpV0), src0=vgpr(tid1), src1=vgpr(ldsStride), \
                 comment="lds coord1 offset = Col-id* lds stride"))
 
-      module.add(vectorStaticDivideAndRemainder(waveCoord0, tid0, tid0, self.states.kernel["WavefrontSize"], RegisterPoolResource(tmpV0, 2)))
+      module.add(vectorStaticDivideAndRemainder(waveCoord0, tid0, tid0, self.states.kernel["WavefrontSize"], ContinuousRegister(tmpV0, 2)))
       module.add(VLShiftRightB32(dst=vgpr(coord0),
                 shiftHex=hex(log2(kernel["MatrixInstN"])), src=vgpr(tid0), \
                 comment="tid / matrixInstN"))
@@ -10304,7 +10304,7 @@ class KernelWriterAssembly(KernelWriter):
       module.addComment0("Store Remap Local Read address")
 
       module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", self.states.kernel["WavefrontSize"], \
-        RegisterPoolResource(tmpV0, 2)))
+        ContinuousRegister(tmpV0, 2)))
       module.add(VMulLOU32(dst=vgpr(waveCoord1),
                 src0=hex(kernel["MatrixInstN"]//kernel["MIWaveGroup"][0]), src1=vgpr(tid1), comment="coord1 offset of LDS for each Wave"))
 
@@ -10336,7 +10336,7 @@ class KernelWriterAssembly(KernelWriter):
       # calculate global write coord0 and coord1
       module.addComment0("Store Remap global write coord0 and coord1")
       module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", self.states.kernel["WavefrontSize"]*kernel["MIWaveGroup"][0], \
-        RegisterPoolResource(tmpV0, 2)))
+        ContinuousRegister(tmpV0, 2)))
 
       ColsPerBlockShape = kernel["MatrixInstN"] * kernel["MatrixInstBN"]
 
@@ -10344,7 +10344,7 @@ class KernelWriterAssembly(KernelWriter):
                 comment="coord1 offset of global memory for each Wave"))
 
       module.add(vectorStaticDivideAndRemainder(tid1, tid0, tid0, self.states.kernel["WavefrontSize"], \
-        RegisterPoolResource(tmpV0, 2)))
+        ContinuousRegister(tmpV0, 2)))
       module.add(VMadU32U24(dst=vgpr(waveCoord1), src0=(kernel["MatrixInstN"]//kernel["MIWaveGroup"][0]), src1=vgpr(tid1), src2=vgpr(waveCoord1), \
                 comment="waveCoord1 += waveCoord0 * MiN / WaveGroupM"))
 
@@ -10507,7 +10507,7 @@ class KernelWriterAssembly(KernelWriter):
         else self.sizeRef(kernel["ProblemType"]["Index1"])
 
     module.add(scalarStaticDivideAndRemainder(tmpS1, tmpS0, sizeBoundary[0], kernel["MacroTile0"], \
-      RegisterPoolResource(tmpS23, 2), 2))
+      ContinuousRegister(tmpS23, 2), 2))
     # s23 = nwg0-1
     module.add(SAddU32(dst=sgpr(tmpS1), src0=hex(-1), src1=sgpr("NumWorkGroups0")))
     module.add(SCmpGeU32(src0=sgpr(wg0), src1=sgpr(tmpS1), comment="wg0 >= nwg0-1 ?"))
@@ -10537,7 +10537,7 @@ class KernelWriterAssembly(KernelWriter):
 
     # s23 = rMT1 = Size1 % MT1
     module.add(scalarStaticDivideAndRemainder(tmpS1, tmpS0, sizeBoundary[1], kernel["MacroTile1"], \
-      RegisterPoolResource(tmpS23, 2), 2))
+      ContinuousRegister(tmpS23, 2), 2))
     # s01 now = myMT1 = wg1 < nwg1-1 ? MT1 : rMT1
 
     # s23 = nwg1-1
@@ -10815,7 +10815,7 @@ class KernelWriterAssembly(KernelWriter):
           vectorDataTypes.bias(d).dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
           totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDims[d])
           tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
-          tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
+          tmpVgprRes   = ContinuousRegister(idx=tmpVgpr, size=4)
 
           if d == 1:
             module.add(factorDim1Label)
@@ -10859,7 +10859,7 @@ class KernelWriterAssembly(KernelWriter):
           biasMaxVgpr = kernel["VectorWidthA"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * maxKId
           maxAlign    = max(1, (kernel["VectorWidthA"] + 1) // 2 * 2)
           tmpVgpr     = self.vgprPool.checkOutAligned(biasMaxVgpr, maxAlign, "store tmps")
-          tmpVgprRes  = RegisterPoolResource(idx=tmpVgpr, size=biasMaxVgpr)
+          tmpVgprRes  = ContinuousRegister(idx=tmpVgpr, size=biasMaxVgpr)
 
           # Skip bias store
           skipGlobalStoreLabel = Label(self.labels.getNameInc("SkipBiasStore"), comment="")
@@ -10924,7 +10924,7 @@ class KernelWriterAssembly(KernelWriter):
         for d in range(len(factorDims)):
           totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDims[d])
           tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
-          tmpVgprRes   = RegisterPoolResource(idx=tmpVgpr, size=4)
+          tmpVgprRes   = ContinuousRegister(idx=tmpVgpr, size=4)
           offsetVgpr  = self.vgprPool.checkOut(1, 1)
           with self.allocTmpSgpr(3, 1) as tmpSgprRes:
             if d == 1:
@@ -11143,7 +11143,7 @@ class KernelWriterAssembly(KernelWriter):
           gwvwVgpr += actPCMaxTempVgpr + actPCGwvwVgpr
         numTmpVgpr = max(numTmpVgpr, gwvwVgpr)
       tmpVgpr = self.vgprPool.checkOutAligned(numTmpVgpr, maxAlign, "store tmps")
-      tmpVgpr = RegisterPoolResource(idx=tmpVgpr, size=numTmpVgpr)
+      tmpVgpr = ContinuousRegister(idx=tmpVgpr, size=numTmpVgpr)
 
       cvtVgprStruct  = None
       cvtVgpr        = None
@@ -11403,7 +11403,7 @@ class KernelWriterAssembly(KernelWriter):
       tmpVgprDynamicSize  = vgprMbsk
       tmpVgprDynamicAlign = 4
     if tmpVgprDynamicSize > 0:
-      tmpVgprDynamic = RegisterPoolResource(idx=self.vgprPool.checkOutAligned(tmpVgprDynamicSize, tmpVgprDynamicAlign), size=tmpVgprDynamicSize)
+      tmpVgprDynamic = ContinuousRegister(idx=self.vgprPool.checkOutAligned(tmpVgprDynamicSize, tmpVgprDynamicAlign), size=tmpVgprDynamicSize)
 
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
@@ -12228,7 +12228,7 @@ class KernelWriterAssembly(KernelWriter):
     turn    = ceil(kernel["MacroTile%d"%dim] / (divisor * gwvw))
     return turn, divisor
 
-  def addVectorGlobalLoad(self, kernel, srdName: str, offsetVgpr, shiftOffset, dataType, bpe, gwvw, tmpVgpr1Res: RegisterPoolResource, dstOffset, dim):
+  def addVectorGlobalLoad(self, kernel, srdName: str, offsetVgpr, shiftOffset, dataType, bpe, gwvw, tmpVgpr1Res: ContinuousRegister, dstOffset, dim):
     module        = Module("")
     tmpVgpr1      = tmpVgpr1Res.idx + dstOffset
     turn, divisor = self.getTurn(kernel, gwvw, dim)
@@ -12244,7 +12244,7 @@ class KernelWriterAssembly(KernelWriter):
       tmpVgpr1 += 1
     return module
 
-  def addVectorLocalStore(self, kernel, addressStr: str, offsetVgpr, shiftOffset, dataType, gwvw, tmpVgpr1Res: RegisterPoolResource, srcOffset, subGroupOffset, dim, setToOne=False, comment=""):
+  def addVectorLocalStore(self, kernel, addressStr: str, offsetVgpr, shiftOffset, dataType, gwvw, tmpVgpr1Res: ContinuousRegister, srcOffset, subGroupOffset, dim, setToOne=False, comment=""):
     module        = Module("")
     tmpVgpr1      = tmpVgpr1Res.idx + srcOffset
     turn, divisor = self.getTurn(kernel, gwvw, dim)
@@ -12355,7 +12355,7 @@ class KernelWriterAssembly(KernelWriter):
         tmpVgprNum = tmpVgprNum + 1
     return totalReg + tmpVgprNum
 
-  def readVectorToLDS(self, vectorDataTypes: VectorDataTypes, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource, dim):
+  def readVectorToLDS(self, vectorDataTypes: VectorDataTypes, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: ContinuousRegister, dim):
     assert gwvw == 1
     # Params
     biasDataType         = vectorDataTypes.bias(dim).dataType
@@ -12554,7 +12554,7 @@ class KernelWriterAssembly(KernelWriter):
   Wider DS load is always enabled.
   Wider global store only enables when freeElementMultiple % gwvw == 0 since each thread only stores 1, 2 elements.
   '''
-  def writeBiasToGlobal(self, biasDataType, kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgpr1Res: RegisterPoolResource):
+  def writeBiasToGlobal(self, biasDataType, kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgpr1Res: ContinuousRegister):
     tile01 = tP["tile01Idx"]
     mt     = kernel["MacroTile%u" % tile01]
     maxKId = self.states.lraTileProperties[tile01].maxKId
@@ -12628,7 +12628,7 @@ class KernelWriterAssembly(KernelWriter):
       assert tmpSgprRes.size >= 5 # For ShiftPtr
       assert tP["glvw"] % gwvw == 0 # Make sure the magic trick works (serial = serial * gwvw)
       tmpSgpr = tmpSgprRes.idx
-      tmpSgprShift = RegisterPoolResource(idx=tmpSgprRes.idx+2, size=3)
+      tmpSgprShift = ContinuousRegister(idx=tmpSgprRes.idx+2, size=3)
       margin = tP["glvw"] if tP["rtv"] else 1
       module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tP["wg"]), src1=kernel[tP["mt"]], comment="WorkGroup[01] * MT"))
       module.add(SSubU32(dst=sgpr(tmpSgpr), src0=self.sizeRef(tP["idx"]), src1=sgpr(tmpSgpr), \
@@ -13373,7 +13373,7 @@ class KernelWriterAssembly(KernelWriter):
   # Conditional branch to label when SCC == 0
   # Use when erroring out "invalid operand due to label > SIMM16"
   ##############################################################################
-  def longBranchScc0(self, label: Label, posNeg: int=0, tmpSgprInfo: Optional[RegisterPoolResource]=None, comment=""):
+  def longBranchScc0(self, label: Label, posNeg: int=0, tmpSgprInfo: Optional[ContinuousRegister]=None, comment=""):
     if tmpSgprInfo:
       return SCLongBranchScc0(label, tmpSgprInfo, \
         self.labels.getUniqueNamePrefix("NoBranch"), \
@@ -13391,7 +13391,7 @@ class KernelWriterAssembly(KernelWriter):
   # Conditional branch to label when SCC == 1
   # Use when erroring out "invalid operand due to label > SIMM16"
   ##############################################################################
-  def longBranchScc1(self, label: Label, posNeg: int=0, tmpSgprInfo: Optional[RegisterPoolResource]=None, comment=""):
+  def longBranchScc1(self, label: Label, posNeg: int=0, tmpSgprInfo: Optional[ContinuousRegister]=None, comment=""):
     if tmpSgprInfo:
       return SCLongBranchScc1(label, tmpSgprInfo, \
         self.labels.getUniqueNamePrefix("NoBranch"), \
@@ -13502,13 +13502,13 @@ class KernelWriterAssembly(KernelWriter):
     return self.dumpData.dumpVgpr(vgprStore, self.labels.getUniqueName())
 
   def dumpSgpr(self, sgprStore):
-    tmp = RegisterPoolResource(idx=self.vgprPool.checkOut(1,"tmp"), size=1)
+    tmp = ContinuousRegister(idx=self.vgprPool.checkOut(1,"tmp"), size=1)
     module = self.dumpData.dumpSgpr(sgprStore, tmp, self.labels.getUniqueName())
     self.vgprPool.checkIn(tmp.idx)
     return module
 
   def dumpLDS(self, kernel, startU, numU):
-    tmp = RegisterPoolResource(idx=self.vgprPool.checkOut(2), size=2)
+    tmp = ContinuousRegister(idx=self.vgprPool.checkOut(2), size=2)
     module = self.dumpData.dumpLds(startU, numU, tmp, self.states.bpeAB, kernel["NumThreads"], \
       self.labels.getUniqueName())
     self.vgprPool.checkIn(tmp.idx)
