@@ -27,60 +27,16 @@ from typing import List
 
 from Tensile.Common.Constants import MAX_FILENAME_LENGTH
 from Tensile.Common.ValidParameters import validParameters
+from Tensile.Common.RequiredParameters import getRequiredParametersMin
 
 from .Problem import ProblemType
 
-########################################
-# create a dictionary with booleans on whether to include parameter in name
+
 def getMinNaming(objs: list):
   nonCKObjs = [obj for obj in objs if not ("CustomKernelName" in obj and obj["CustomKernelName"])]
-  # early return
   if len(nonCKObjs) == 0:
     return {}
-  # determine keys
-  requiredParameters = {}
-  if hasattr(nonCKObjs[0], "_state"):
-    keys = list(nonCKObjs[0]._state.keys())
-  else:
-    keys = list(nonCKObjs[0].keys())
-  # only 1, rather than name being nothing, it'll be everything
-  if len(nonCKObjs) == 1:
-    for key in keys:
-      if key in list(validParameters.keys()):
-        requiredParameters[key] = False
-  else:
-    for key in keys:
-      required = False
-      if key in list(validParameters.keys()):
-        for i in range(1, len(nonCKObjs)):
-          if nonCKObjs[0][key] != nonCKObjs[i][key]:
-            required = True
-            break
-      if required:
-        requiredParameters[key] = True
-      else:
-        requiredParameters[key] = False
-  requiredParameters["GlobalSplitU"] = True
-  requiredParameters["WorkGroupMapping"] = True
-  if "MatrixInstM" in nonCKObjs[0]._state:
-    # Use MIWaveGroup and MIWaveTile instead of WG and MT
-    requiredParameters["MIWaveTile"]  = True
-    requiredParameters["ThreadTile"]  = False
-  requiredParameters["ProblemType"]       = False # always prepended
-  requiredParameters["MacroTile0"]        = False # always prepended
-  requiredParameters["MacroTile1"]        = False # always prepended
-  requiredParameters["DepthU"]            = False # always prepended
-  requiredParameters["MatrixInstruction"] = False # always prepended
-  requiredParameters["MatrixInstM"]       = False # always prepended
-  requiredParameters["MatrixInstN"]       = False # always prepended
-  requiredParameters["MatrixInstK"]       = False # always prepended
-  requiredParameters["MatrixInstB"]       = False # always prepended
-  requiredParameters["MatrixInstBM"]      = False # always prepended
-  requiredParameters["MatrixInstBN"]      = False # always prepended
-  requiredParameters["CustomKernelName"]  = False # Will not affect naming
-  requiredParameters["Kernel"]            = True  # distinguish kernels from solutions
-                                                  # for single-source compilation
-  return requiredParameters
+  return getRequiredParametersMin()
 
 
 def getKeyNoInternalArgs(state, splitGSU: bool):
@@ -102,14 +58,15 @@ def getKeyNoInternalArgs(state, splitGSU: bool):
 
 
 def getNameFull(state, splitGSU: bool):
-  requiredParameters = {}
-  for key in state:
-    if key in list(validParameters.keys()):
-      requiredParameters[key] = True
-  if "MatrixInstM" in state:
-    # Use MIWaveGroup and MIWaveTile instead of WG and MT
-    requiredParameters["MIWaveTile"]  = True
-    requiredParameters["ThreadTile"]  = False
+  # requiredParameters = set()
+  # for key in state:
+  #   if key in list(validParameters.keys()):
+  #     requiredParameters[key] = True
+  # if "MatrixInstM" in state:
+  #   # Use MIWaveGroup and MIWaveTile instead of WG and MT
+  #   requiredParameters["MIWaveTile"]  = True
+  #   requiredParameters["ThreadTile"]  = False
+  requiredParameters = getRequiredParametersMin()
   return getNameMin(state, requiredParameters, splitGSU)
 
 
@@ -180,39 +137,45 @@ def getNameMin(state, requiredParameters, splitGSU: bool, ignoreInternalArgs = F
     if splitGSU:
       state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
     elif state["GlobalSplitU"] > 0:
-      requiredParameters["GlobalSplitU"] = False
-    requiredParameters["WorkGroupMapping"] = False
-    requiredParameters["WorkGroupMappingXCC"] = False
-    requiredParameters["WorkGroupMappingXCCGroup"] = False
-    requiredParameters["StaggerU"] = False
-    requiredParameters["StaggerUStride"] = False
-    requiredParameters["StaggerUMapping"] = False
-    requiredParameters["GlobalSplitUCoalesced"] = False
-    requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
-  useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
+      requiredParameters.discard("GlobalSplitU")
+    requiredParameters.discard("WorkGroupMapping")
+    requiredParameters.discard("WorkGroupMappingXCC")
+    requiredParameters.discard("WorkGroupMappingXCCGroup")
+    requiredParameters.discard("StaggerU")
+    requiredParameters.discard("StaggerUStride")
+    requiredParameters.discard("StaggerUMapping")
+    requiredParameters.discard("GlobalSplitUCoalesced")
+    requiredParameters.discard("GlobalSplitUWorkGroupMappingRoundRobin")
+  useWaveTile, useThreadTile = "MIWaveTile" in requiredParameters, "ThreadTile" in requiredParameters
   if 'MatrixInstM' in state:
-    requiredParameters["MIWaveTile"] = True
-    requiredParameters["ThreadTile"] = False
+    requiredParameters.add("MIWaveTile")
+    requiredParameters.discard("ThreadTile")
   else:
-    requiredParameters["MIWaveTile"] = False
-    requiredParameters["ThreadTile"] = True
+    requiredParameters.discard("MIWaveTile")
+    requiredParameters.add("ThreadTile")
   components.append('SN')
   for key in sorted(state.keys()):
     if key in requiredParameters and key[0] != '_':
-      if requiredParameters[key] and key != "CustomKernelName":
+      if key != "CustomKernelName":
         components.append(f'{getParameterNameAbbreviation(key)}{getParameterValueAbbreviation(key, state[key])}')
   state["GlobalSplitU"] = backup
-  requiredParameters["GlobalSplitU"] = True
-  requiredParameters["WorkGroupMapping"] = True
-  requiredParameters["WorkGroupMappingXCC"] = True
-  requiredParameters["WorkGroupMappingXCCGroup"] = True
-  requiredParameters["StaggerU"] = True
-  requiredParameters["StaggerUStride"] = True
-  requiredParameters["StaggerUMapping"] = True
-  requiredParameters["GlobalSplitUCoalesced"] = True
-  requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
-  requiredParameters["MIWaveTile"] = useWaveTile
-  requiredParameters["ThreadTile"] = useThreadTile
+  requiredParameters.add("GlobalSplitU")
+  requiredParameters.add("WorkGroupMapping")
+  requiredParameters.add("WorkGroupMappingXCC")
+  requiredParameters.add("WorkGroupMappingXCCGroup")
+  requiredParameters.add("StaggerU")
+  requiredParameters.add("StaggerUStride")
+  requiredParameters.add("StaggerUMapping")
+  requiredParameters.add("GlobalSplitUCoalesced")
+  requiredParameters.add("GlobalSplitUWorkGroupMappingRoundRobin")
+  if useWaveTile:
+    requiredParameters.add("MIWaveTile")
+  else:
+    requiredParameters.discard("MIWaveTile")
+  if useThreadTile:
+    requiredParameters.add("ThreadTile")
+  else:
+    requiredParameters.discard("ThreadTile")
   return '_'.join(components)
 
 
