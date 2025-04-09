@@ -40,7 +40,7 @@ from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      getVerbosity
 from .ValidParameters import validParameters
-from ..Toolchain.Validators import ToolchainDefaults, _windowsSearchPaths, _posixSearchPaths, _validateExecutable
+from ..Toolchain.Validators import ToolchainDefaults, _windowsSearchPaths, _posixSearchPaths, _validateExecutable, osSelect
 
 startTime = time.time()
 
@@ -545,7 +545,7 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
     if os.name != "nt":
         globalParameters["ROCmSMIPath"] = locateExe(searchPaths, "rocm-smi")
-    globalParameters["ROCmLdPath"] = locateExe(searchPaths, "ld.lld")
+    globalParameters["ROCmLdPath"] = locateExe(searchPaths, osSelect(linux="ld.lld", windows="ld.lld.exe"))
 
     if "AsanBuild" in config:
         globalParameters["AsanBuild"] = config["AsanBuild"]
