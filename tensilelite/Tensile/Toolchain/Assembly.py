@@ -119,7 +119,7 @@ def buildAssemblyCodeObjectFiles(
           for kernel in archKernels:
             coName = kernel.get("codeObjectFile", None)
             if coName:
-              coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (basename(kernel) + extObj)))
+              coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (baseName(kernel) + extObj)))
 
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)

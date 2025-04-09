@@ -286,9 +286,9 @@ def run():
       offloadBundler,
       ls,
       extract,
+      arguments["CpuThreads"],
       arguments["AsanBuild"],
       arguments["BuildIdKind"],
-      arguments["CpuThreads"],
       save_temps=False
   )
 
@@ -300,9 +300,10 @@ def run():
   logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"], arguments["CpuThreads"])))
 
   # Phase1: Build assembly and master solution libraries
+  kernelMinNaming = getRequiredParametersMin()
   writerAsm = KernelWriterAssembly(
-      getRequiredParametersMin(), 
-      getRequiredParametersMin(),
+      kernelMinNaming,
+      kernelMinNaming,
       asmToolchain.assembler,
       DebugConfig(),
   )
@@ -328,7 +329,7 @@ def run():
                                            asmToolchain.assembler, 
                                            writerAsm, 
                                            rocisa.rocIsa.getInstance().getData(), 
-                                           getRequiredParametersMin(), 
+                                           kernelMinNaming, 
                                            not arguments["KeepBuildTmp"])
   unaryBuildCOFile = functools.partial(buildAssemblyCodeObjectFiles, 
                                        asmToolchain.linker, 
@@ -336,7 +337,8 @@ def run():
                                        globalParameters["ROCmLdPath"],
                                        libraryPath, 
                                        assemblyPath, 
-                                       arguments["UseCompression"])
+                                       arguments["UseCompression"],
+                                       kernelMinNaming)
   def buildCoAndHelpers(input):
      uniqueAsmKernels, libraries = input
      unaryBuildCOFile(uniqueAsmKernels)
@@ -365,8 +367,8 @@ def run():
                           ParallelMapConfig(message="Generating Kernels code", return_as="list"), 
                           generateKernelHelperObjects(kernels, isaInfoMap))
   kernelsLib = str(srcCodeObjectPath / "Kernels.so")
-  #srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), archs)
-  #buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
+  srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), archs)
+  buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
 
   if not arguments["KeepBuildTmp"]:
     if buildTmp.exists() and buildTmp.is_dir():
