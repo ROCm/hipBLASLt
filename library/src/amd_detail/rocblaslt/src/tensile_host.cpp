@@ -1929,8 +1929,12 @@ namespace
             const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
             if(env)
             {
-                std::cout << "rocblaslt info: Using HIPBLASLT_TENSILE_LIBPATH=" << env
-                          << std::endl;
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "Using HIPBLASLT_TENSILE_LIBPATH=" << env << std::endl;
+                    log_info(__func__, msg.str());
+                }
                 path = env;
             }
             else
@@ -1974,8 +1978,12 @@ namespace
                 if(TestPath(path + "/" + processor))
                     path += "/" + processor;
 
-                std::cout << "rocblaslt info: HIPBLASLT_TENSILE_LIBPATH not set: Using " << path 
-                          << std::endl;
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "HIPBLASLT_TENSILE_LIBPATH not set: Using " << path << std::endl;
+                    log_info(__func__, msg.str());
+                }
             }
 
             // only load modules for the current architecture
