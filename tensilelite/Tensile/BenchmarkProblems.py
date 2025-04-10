@@ -53,6 +53,7 @@ from Tensile.Common import HR, print1, print2, IsaInfo, IsaVersion, \
         BENCHMARK_PROBLEMS_DIR, BENCHMARK_DATA_DIR, DepthUConfig
 from Tensile.Common.Architectures import isaToGfx, gfxToVariants
 from Tensile.Common.GlobalParameters import globalParameters, startTime
+from Tensile.Common.RequiredParameters import getRequiredParametersMin
 
 
 
@@ -266,6 +267,10 @@ def writeBenchmarkFiles(
                             useShortNames=useShortNames
                         )
     # ^ this is where solutions is mutated
+    solutionMinNaming = getRequiredParametersMin()
+    for s in solutions:
+        s["SolutionNameMin"] = getNameMin(solution, solutionMinNaming, debugConfig.splitGSU)
+        s["KernelNameMin"]   = getNameMin(solution, solutionMinNaming, debugConfig.splitGSU, True)
 
     newLibraryDir = ensurePath(sourcePath / 'library')
     newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary")

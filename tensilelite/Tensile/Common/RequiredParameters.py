@@ -22,10 +22,16 @@
 ################################################################################
 
 from functools import lru_cache
+from .ValidParameters import validParameters
+
+@lru_cache
+def getRequiredParametersFull() -> set:
+    return frozenset(validParameters.keys())
+
 
 @lru_cache
 def getRequiredParametersMin() -> set:
-    return {
+    return frozenset({
         '1LDSBuffer',
         'ActivationFuncCall',
         'AssertFree0ElementMultiple',
@@ -40,10 +46,7 @@ def getRequiredParametersMin() -> set:
         'GlobalReadPerMfma',
         'GlobalReadVectorWidthA',
         'GlobalReadVectorWidthB',
-        'GlobalSplitU',
         'GlobalSplitUAlgorithm',
-        'GlobalSplitUCoalesced',
-        'GlobalSplitUWorkGroupMappingRoundRobin',
         'GroupLoadStore',
         'ISA',
         'InnerUnroll',
@@ -57,7 +60,6 @@ def getRequiredParametersMin() -> set:
         'LocalReadVectorWidth',
         'LocalWritePerMfma',
         'MIArchVgpr',
-        'MIWaveTile',
         'MaxOccupancy',
         'NonTemporal',
         'NonTemporalA',
@@ -74,9 +76,6 @@ def getRequiredParametersMin() -> set:
         'PreloadKernArgs',
         'ScheduleIterAlg',
         'SourceSwap',
-        'StaggerU',
-        'StaggerUMapping',
-        'StaggerUStride',
         'StorePriorityOpt',
         'StoreRemapVectorWidth',
         'StoreSyncOpt',
@@ -95,7 +94,4 @@ def getRequiredParametersMin() -> set:
         'WaveSeparateGlobalReadB',
         'WavefrontSize',
         'WorkGroup',
-        'WorkGroupMapping',
-        'WorkGroupMappingXCC',
-        'WorkGroupMappingXCCGroup'
-    }
+    })
