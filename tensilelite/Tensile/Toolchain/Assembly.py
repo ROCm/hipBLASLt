@@ -99,7 +99,7 @@ def buildAssemblyCodeObjectFiles(
 
     archKernelMap = collections.defaultdict(list)
     for k in kernels:
-      archKernelMap[tuple(k['ISA'])].add(k)
+      archKernelMap[tuple(k['ISA'])].append(k)
 
     coFiles = []
     for arch, archKernels in archKernelMap.items():
