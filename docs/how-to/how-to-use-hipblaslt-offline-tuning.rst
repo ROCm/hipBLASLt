@@ -48,7 +48,7 @@ To find and use the best GEMM kernel for a problem, follow these steps:
 
       export HIPBLASLT_TUNING_FILE=tuning.txt
    
-   Additionally, you can set the environment variable to specify that the solution found in the tuning stage is under the constraint of max workspace size setting:
+   Additionally, you can set the environment variable to specify that the solution found in the tuning stage is under the constraint of the max workspace size setting:
 
    .. code-block:: bash
 
