@@ -55,7 +55,7 @@ from Tensile.Common import (
 from Tensile.Common.Architectures import gfxToIsa, isaToGfx, SUPPORTED_GFX
 from Tensile.Common.Capabilities import makeIsaInfoMap
 from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
-from Tensile.SolutionStructs.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
+from Tensile.SolutionStructs.Naming import getKernelFileBase, getKeyNoInternalArgs, getSerialNaming, getKernelNameMin
 
 from Tensile.CustomYamlLoader import load_logic_gfx_arch
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
@@ -88,14 +88,14 @@ class KernelCodeGenResult(NamedTuple):
     wavefrontSize: int
 
 
-def processKernelSource(kernelWriterAssembly, data, useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel) -> KernelCodeGenResult:
+def processKernelSource(kernelWriterAssembly, data, useShortNames, splitGSU, kernelSerialNaming, kernel) -> KernelCodeGenResult:
     """
     Generate source for a single kernel.
     Returns (error, source, header, kernelName).
     """
     kernelWriter = kernelWriterAssembly
     kernelWriter.setTensileInstructions(data)
-    asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel)
+    asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelSerialNaming, kernel)
     err, src = kernelWriter.getSourceFileString(kernel, useShortNames)
     header = kernelWriter.getHeaderFileString(kernel)
     objFilename = kernel._state.get("codeObjectFile", None)
@@ -206,7 +206,6 @@ def writeSolutionsAndKernels(
     splitGSU: bool,
     cmdlineArchs: List[str],
     kernelSerialNaming,
-    kernelMinNaming,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -231,7 +230,7 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelSerialNaming, k)
         k.duplicate = True if base in visited else False
         if not k.duplicate:
             k["BaseName"] = base
@@ -248,7 +247,6 @@ def writeSolutionsAndKernels(
         itertools.repeat(rocisa.rocIsa.getInstance().getData()),
         itertools.repeat(useShortNames),
         itertools.repeat(splitGSU),
-        itertools.repeat(kernelMinNaming),
         itertools.repeat(kernelSerialNaming),
         asmKernels
     )
@@ -306,7 +304,6 @@ def writeSolutionsAndKernelsTCL(
     kernelWriterAssembly,
     cmdlineArchs: List[str],
     kernelSerialNaming,
-    kernelMinNaming,
     compress=True,
     useShortNames=False,
 ):
@@ -328,10 +325,12 @@ def writeSolutionsAndKernelsTCL(
     duplicates = 0
     splitGSU = False
     for k in asmKernels:
-        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelSerialNaming, k)
         k["BaseName"] = base
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
+        if not k.duplicate:
+            print(getKernelNameMin(k, False))
         print2(f"Duplicate: {base}")
         visited.add(base)
     print1(f"Number of duplicate kernels: {duplicates}")
@@ -348,7 +347,6 @@ def writeSolutionsAndKernelsTCL(
         rocisa.rocIsa.getInstance().getData(),
         useShortNames,
         splitGSU,
-        kernelMinNaming,
         kernelSerialNaming
     )
 
@@ -627,9 +625,7 @@ def run():
 
     kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
     kernelSerialNaming = getSerialNaming(kernels)
-    kernelMinNaming = getMinNaming(kernels)
     kernelWriterAssembly = KernelWriterAssembly(
-        kernelMinNaming,
         kernelSerialNaming,
         asmToolchain.assembler,
         DebugConfig(),
@@ -646,7 +642,6 @@ def run():
         kernelWriterAssembly,
         archs,
         kernelSerialNaming,
-        kernelMinNaming,
         useShortNames=arguments["ShortNames"],
         compress=arguments["UseCompression"],
     )
@@ -664,11 +659,11 @@ def run():
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_" + archName)
             else:
                 masterFile = os.path.join(newLibraryDir, "TensileLibrary_" + archName)
-            newMasterLibrary.applyNaming(splitGSU, kernelMinNaming)
+            newMasterLibrary.applyNaming(splitGSU)
             LibraryIO.write(masterFile, state(newMasterLibrary), arguments["LibraryFormat"])
             for name, lib in newMasterLibrary.lazyLibraries.items():
                 filename = os.path.join(newLibraryDir, name)
-                lib.applyNaming(splitGSU, kernelMinNaming)
+                lib.applyNaming(splitGSU)
                 LibraryIO.write(filename, state(lib), arguments["LibraryFormat"])
 
     if not arguments["KeepBuildTmp"]:

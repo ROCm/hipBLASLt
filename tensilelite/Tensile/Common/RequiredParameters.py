@@ -24,6 +24,7 @@
 from functools import lru_cache
 from .ValidParameters import validParameters
 
+
 @lru_cache
 def getRequiredParametersFull() -> set:
     return frozenset(validParameters.keys())

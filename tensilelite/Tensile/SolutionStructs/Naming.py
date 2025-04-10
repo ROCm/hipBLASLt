@@ -32,64 +32,6 @@ from Tensile.Common.RequiredParameters import getRequiredParametersMin, getRequi
 from .Problem import ProblemType
 
 
-def getMinNaming(objs: list):
-  nonCKObjs = [obj for obj in objs if not ("CustomKernelName" in obj and obj["CustomKernelName"])]
-  if len(nonCKObjs) == 0:
-    return {}
-  return getRequiredParametersMin()
-
-
-#def getMinNaming(objs: list):
-#  nonCKObjs = [obj for obj in objs if not ("CustomKernelName" in obj and obj["CustomKernelName"])]
-#  # early return
-#  if len(nonCKObjs) == 0:
-#    return {}
-#  # determine keys
-#  requiredParameters = {}
-#  if hasattr(nonCKObjs[0], "_state"):
-#    keys = list(nonCKObjs[0]._state.keys())
-#  else:
-#    keys = list(nonCKObjs[0].keys())
-#  # only 1, rather than name being nothing, it'll be everything
-#  if len(nonCKObjs) == 1:
-#    for key in keys:
-#      if key in list(validParameters.keys()):
-#        requiredParameters[key] = False
-#  else:
-#    for key in keys:
-#      required = False
-#      if key in list(validParameters.keys()):
-#        for i in range(1, len(nonCKObjs)):
-#          if nonCKObjs[0][key] != nonCKObjs[i][key]:
-#            required = True
-#            break
-#      if required:
-#        requiredParameters[key] = True
-#      else:
-#        requiredParameters[key] = False
-#  requiredParameters["GlobalSplitU"] = True
-#  requiredParameters["WorkGroupMapping"] = True
-#  if "MatrixInstM" in nonCKObjs[0]._state:
-#    # Use MIWaveGroup and MIWaveTile instead of WG and MT
-#    requiredParameters["MIWaveTile"]  = True
-#    requiredParameters["ThreadTile"]  = False
-#  requiredParameters["ProblemType"]       = False # always prepended
-#  requiredParameters["MacroTile0"]        = False # always prepended
-#  requiredParameters["MacroTile1"]        = False # always prepended
-#  requiredParameters["DepthU"]            = False # always prepended
-#  requiredParameters["MatrixInstruction"] = False # always prepended
-#  requiredParameters["MatrixInstM"]       = False # always prepended
-#  requiredParameters["MatrixInstN"]       = False # always prepended
-#  requiredParameters["MatrixInstK"]       = False # always prepended
-#  requiredParameters["MatrixInstB"]       = False # always prepended
-#  requiredParameters["MatrixInstBM"]      = False # always prepended
-#  requiredParameters["MatrixInstBN"]      = False # always prepended
-#  requiredParameters["CustomKernelName"]  = False # Will not affect naming
-#  requiredParameters["Kernel"]            = True  # distinguish kernels from solutions
-#                                                  # for single-source compilation
-#  return requiredParameters
-
-
 def getKeyNoInternalArgs(state, splitGSU: bool):
   state_copy = deepcopy(state)
   state_copy["ProblemType"]["GroupedGemm"] = False
@@ -106,21 +48,6 @@ def getKeyNoInternalArgs(state, splitGSU: bool):
   state_copy["GlobalSplitUCoalesced"] = "M"
   state_copy["GlobalSplitUWorkGroupMappingRoundRobin"] = "M"
   return state_copy
-
-#def getNameFull(state, splitGSU: bool):
-#  requiredParameters = {}
-#  for key in state:
-#    if key in list(validParameters.keys()):
-#      requiredParameters[key] = True
-#  if "MatrixInstM" in state:
-#    # Use MIWaveGroup and MIWaveTile instead of WG and MT
-#    requiredParameters["MIWaveTile"]  = True
-#    requiredParameters["ThreadTile"]  = False
-#  return getNameMin(state, requiredParameters, splitGSU)
-
-
-def getNameFull(state, splitGSU: bool):
-  return getNameMin(state, getRequiredParametersFull(), splitGSU)
 
 
 @lru_cache(maxsize=None)
@@ -167,78 +94,24 @@ def getParameterValueAbbreviation(key, value):
     raise Exception(f"Parameter {key}={value} is new object type ({type(value)})")
 
 
+def _getName(state, requiredParameters: frozenset, splitGSU: bool, ignoreInternalArgs):
 
-# def getNameMin(state, requiredParameters, splitGSU: bool, ignoreInternalArgs = False):
-#   if "CustomKernelName" in state and state["CustomKernelName"]:
-#     return state["CustomKernelName"]
-
-#   components = []
-#   backup = state["ProblemType"]["GroupedGemm"]
-#   if ignoreInternalArgs:
-#     state["ProblemType"]["GroupedGemm"] = False
-#   if "ProblemType" in state:
-#     components.append(f'{str(state["ProblemType"])}')
-#     # name += str(state["ProblemType"]) + "_"
-#   if ignoreInternalArgs:
-#     state["ProblemType"]["GroupedGemm"] = backup
-#   if "MacroTile0" in state \
-#       and "MacroTile1" in state \
-#       and "DepthU" in state:
-#     components.append(f'{getParameterNameAbbreviation("MacroTile")}{state["MacroTile0"]}x{state["MacroTile1"]}x{state["DepthU"]}')
-#   if "MatrixInstM" in state:
-#     components.append(f'{getParameterNameAbbreviation("MatrixInstruction")}{state["MatrixInstM"]}x{state["MatrixInstN"]}x{state["MatrixInstB"]}')
-#   backup = state["GlobalSplitU"]
-#   if ignoreInternalArgs:
-#     if splitGSU:
-#       state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
-#     elif state["GlobalSplitU"] > 0:
-#       requiredParameters["GlobalSplitU"] = False
-#     requiredParameters["WorkGroupMapping"] = False
-#     requiredParameters["WorkGroupMappingXCC"] = False
-#     requiredParameters["WorkGroupMappingXCCGroup"] = False
-#     requiredParameters["StaggerU"] = False
-#     requiredParameters["StaggerUStride"] = False
-#     requiredParameters["StaggerUMapping"] = False
-#     requiredParameters["GlobalSplitUCoalesced"] = False
-#     requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = False
-#   useWaveTile, useThreadTile = requiredParameters.get("MIWaveTile", False), requiredParameters.get("ThreadTile", False)
-#   if 'MatrixInstM' in state:
-#     requiredParameters["MIWaveTile"] = True
-#     requiredParameters["ThreadTile"] = False
-#   else:
-#     requiredParameters["MIWaveTile"] = False
-#     requiredParameters["ThreadTile"] = True
-#   components.append('SN')
-#   for key in sorted(state.keys()):
-#     if key in requiredParameters and key[0] != '_':
-#       if requiredParameters[key] and key != "CustomKernelName":
-#         components.append(f'{getParameterNameAbbreviation(key)}{getParameterValueAbbreviation(key, state[key])}')
-#   state["GlobalSplitU"] = backup
-#   requiredParameters["GlobalSplitU"] = True
-#   requiredParameters["WorkGroupMapping"] = True
-#   requiredParameters["WorkGroupMappingXCC"] = True
-#   requiredParameters["WorkGroupMappingXCCGroup"] = True
-#   requiredParameters["StaggerU"] = True
-#   requiredParameters["StaggerUStride"] = True
-#   requiredParameters["StaggerUMapping"] = True
-#   requiredParameters["GlobalSplitUCoalesced"] = True
-#   requiredParameters["GlobalSplitUWorkGroupMappingRoundRobin"] = True
-#   requiredParameters["MIWaveTile"] = useWaveTile
-#   requiredParameters["ThreadTile"] = useThreadTile
-#   return '_'.join(components)
-
-
-def getNameMin(state, requiredParameters: frozenset, splitGSU: bool, ignoreInternalArgs = False):
   if "CustomKernelName" in state and state["CustomKernelName"]:
     return state["CustomKernelName"]
-  problem = deepcopy(state["ProblemType"])
-  requiredParametersTemp = set(requiredParameters.union(["GlobalSplitU"]))
-  gsu = state["GlobalSplitU"]
+
+  gsuBackup = state["GlobalSplitU"]
+  ggBackup = state["ProblemType"]["GroupedGemm"]
+
   if ignoreInternalArgs:
-    problem["GroupedGemm"] = False
+    state["ProblemType"]["GroupedGemm"] = False
     if splitGSU:
       state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
-    elif state["GlobalSplitU"] > 0:
+
+
+  requiredParametersTemp = set(requiredParameters.union(["GlobalSplitU"]))
+
+  if ignoreInternalArgs:
+    if state["GlobalSplitU"] > 0:
       requiredParametersTemp.discard("GlobalSplitU")
   else:
     requiredParametersTemp = requiredParametersTemp.union(["WorkGroupMapping",
@@ -249,11 +122,8 @@ def getNameMin(state, requiredParameters: frozenset, splitGSU: bool, ignoreInter
                                                            "StaggerUMapping",
                                                            "GlobalSplitUCoalesced",
                                                            "GlobalSplitUWorkGroupMappingRoundRobin"])
-  components = []
-  if "ProblemType" in state:
-    components.append(f'{str(problem)}')
+  components = [f'{str(state["ProblemType"])}']
 
-    
   if "MacroTile0" in state \
       and "MacroTile1" in state \
       and "DepthU" in state:
@@ -267,10 +137,11 @@ def getNameMin(state, requiredParameters: frozenset, splitGSU: bool, ignoreInter
 
   components.append('SN')
   for key in sorted(state.keys()):
-    if key in requiredParametersTemp and key[0] != '_':
-      if key != "CustomKernelName":
+    if key[0] != '_' and key != "CustomKernelName" and key in requiredParametersTemp:
         components.append(f'{getParameterNameAbbreviation(key)}{getParameterValueAbbreviation(key, state[key])}')
-  state["GlobalSplitU"] = gsu
+
+  state["GlobalSplitU"] = gsuBackup
+  state["ProblemType"]["GroupedGemm"] = ggBackup
 
   return '_'.join(components)
 
@@ -314,8 +185,8 @@ def getNameSerial(state, serialNaming):
   return name
 
 
-def shortenFileBase(kernelMinNaming, splitGSU, kernel):
-  base = getKernelName(kernelMinNaming, splitGSU, kernel)
+def shortenFileBase(splitGSU, kernel):
+  base = getKernelNameMin(kernel, splitGSU)
   if len(base) <= MAX_FILENAME_LENGTH:
     return base
   import hashlib
@@ -328,16 +199,24 @@ def shortenFileBase(kernelMinNaming, splitGSU, kernel):
   return firstPart + secondPart
 
 
-def getKernelFileBase(useShortNames: bool, splitGSU: bool, kernelMinNaming, kernelSerialNaming, kernel):
+def getKernelFileBase(useShortNames: bool, splitGSU: bool, kernelSerialNaming, kernel):
   if "CustomKernelName" in kernel and kernel["CustomKernelName"]:
     fileBase = kernel["CustomKernelName"]
   elif useShortNames:
     fileBase = getNameSerial(kernel, kernelSerialNaming)
   else:
-    fileBase = shortenFileBase(kernelMinNaming, splitGSU, kernel)
+    fileBase = shortenFileBase(splitGSU, kernel)
   return fileBase
 
 
-def getKernelName(kernelMinNaming, splitGSU, kernel):
-  kernelName = getNameMin(kernel, kernelMinNaming, splitGSU, True)
-  return kernelName
+def getKernelNameMin(kernel, splitGSU: bool):
+  return _getName(kernel, getRequiredParametersMin(), splitGSU, True)
+
+
+def getSolutionNameMin(solution, splitGSU: bool):
+  return _getName(solution, getRequiredParametersMin(), splitGSU, False)
+
+
+def getSolutionNameFull(state, splitGSU: bool):
+  return _getName(state, getRequiredParametersFull(), splitGSU, False)
+
