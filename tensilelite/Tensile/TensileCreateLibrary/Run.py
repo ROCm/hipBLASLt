@@ -350,8 +350,6 @@ def writeSolutionsAndKernelsTCL(
         k["BaseName"] = base
         k.duplicate = True if base in visited else False
         duplicates += k.duplicate
-        if not k.duplicate:
-            print(getKernelNameMin(k, False))
         print2(f"Duplicate: {base}")
         visited.add(base)
     print1(f"Number of duplicate kernels: {duplicates}")
