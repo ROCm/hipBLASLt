@@ -369,11 +369,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def __init__(
       self,
-      kernelSerialNaming,
       assembler: Assembler,
       debugConfig: DebugConfig,
     ):
-    self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.debugConfig = debugConfig
 
