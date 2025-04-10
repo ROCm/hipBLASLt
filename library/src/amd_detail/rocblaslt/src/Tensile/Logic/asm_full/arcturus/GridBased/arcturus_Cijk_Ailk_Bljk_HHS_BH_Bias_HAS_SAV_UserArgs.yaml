@@ -90,7 +90,7 @@
     CodeObjectVersion: default
     ConvertAfterDS: false
     CustomKernelName: ''
-    DepthU: 32
+    DepthU: 64
     DirectToLds: false
     DirectToLdsA: false
     DirectToLdsB: false
