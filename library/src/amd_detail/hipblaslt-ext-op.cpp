@@ -173,7 +173,7 @@ namespace
             libPath += "/../Tensile/library";
         if(rocblaslt_internal_test_path(libPath + "/../../Tensile/library"))
             libPath += "/../../Tensile/library";
-        else if(rocblaslt_internal_test_path(libPath + "library"))
+        else if(rocblaslt_internal_test_path(libPath + "/library"))
             libPath += "/library";
         else
             libPath += "/hipblaslt/library";
