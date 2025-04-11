@@ -294,7 +294,7 @@ class LogicAnalyzer:
     self.solutionNames = []
     self.solutionTiles = []
     for solution in self.solutions:
-      self.solutionNames.append(getSolutionNameMin(solution, self.self.splitGSU))
+      self.solutionNames.append(getSolutionNameMin(solution, self.splitGSU))
       self.solutionTiles.append("%ux%u"%(solution["MacroTile0"], solution["MacroTile1"]))
     self.flopsPerMac = self.problemType["DataType"].flopsPerMac()
 
