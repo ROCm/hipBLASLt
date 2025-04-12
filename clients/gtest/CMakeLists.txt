@@ -62,10 +62,10 @@ target_include_directories( hipblaslt-test
     $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
     $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # may be blank if not used
-    $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
 )
 message("BLIS_INCLUDE_DIR=" ${BLIS_INCLUDE_DIR})
-target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRARIES} roc::hipblaslt )
+target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} 
+  GTest::gtest GTest::gtest_main roc::hipblaslt )
 
 if( NOT BUILD_CUDA )
   target_link_libraries( hipblaslt-test PRIVATE hip::host hip::device )
