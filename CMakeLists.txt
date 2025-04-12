@@ -259,10 +259,14 @@ else()
     endif()
 endif()
 
-find_package(Boost REQUIRED)
-if(Boost_VERSION VERSION_LESS "1.74.0")
-    message(WARNING "Boost version ${Boost_VERSION} too old, not building RocRoller")
+cmake_host_system_information(RESULT OS_PLATFORM QUERY DISTRIB_ID)
+cmake_host_system_information(RESULT OS_INFO QUERY DISTRIB_INFO)
+
+if( ${OS_PLATFORM} STREQUAL "rhel")
+  if( ${OS_INFO_VERSION_ID} VERSION_LESS "9.5")
+    message(WARNING "RHEL version ${OS_INFO_VERSION_ID} too old, not building RocRoller")
     set(USE_ROCROLLER OFF)
+  endif()
 endif()
 
 if( LEGACY_HIPBLAS_DIRECT )

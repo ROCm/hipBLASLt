@@ -27,6 +27,7 @@ import math
 import shutil
 import subprocess
 from functools import partial
+from os import getpid
 
 from pathlib import Path
 from typing import List, Union, NamedTuple
@@ -82,7 +83,6 @@ def buildAssemblyCodeObjectFiles(
       destDir: Union[Path, str],
       asmDir: Union[Path, str],
       compress: bool,
-      kernelMinNaming: dict,
       kernels: List[Solution],
     ):
     """Builds code object files from assembly files
@@ -110,16 +110,17 @@ def buildAssemblyCodeObjectFiles(
         continue
 
       gfx = isaToGfx(arch)
-      baseName = partial(getKernelFileBase, False, False, kernelMinNaming, kernelMinNaming)
-      objectFiles = [str(asmDir / (baseName(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k or k['codeObjectFile'] == "TensileLibrary"]
-      coFileMap = collections.defaultdict(list)
+      pid = str(getpid())
+      baseName = partial(getKernelFileBase, False, False, None)
+      objectFiles = [str(asmDir / pid / (baseName(k) + extObj)) for k in archKernels if 'codeObjectFile' not in k or k['codeObjectFile'] == "TensileLibrary"]
+      coFileMap = collections.defaultdict(set)
       if len(objectFiles):
         coFileMap[asmDir / ("TensileLibrary_"+ gfx + extCoRaw)] = objectFiles
       else:
           for kernel in archKernels:
             coName = kernel.get("codeObjectFile", None)
             if coName:
-              coFileMap[asmDir / (coName + extCoRaw)].append(str(asmDir / (baseName(kernel) + extObj)))
+              coFileMap[asmDir / (coName + extCoRaw)].add(str(asmDir / pid / (baseName(kernel) + extObj)))
 
       for coFileRaw, objFiles in coFileMap.items():
         objFiles = _batchObjectFiles(ldPath, objFiles, coFileRaw)

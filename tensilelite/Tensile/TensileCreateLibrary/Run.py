@@ -25,47 +25,27 @@
 import rocisa
 
 import functools
-import os
 import shutil
 from pathlib import Path
+from os import path, getpid
 from timeit import default_timer as timer
-from typing import Dict, List, NamedTuple, Optional, Union
+from typing import Dict, List, NamedTuple, Optional
 
 from Tensile import SOURCE_PATH
-from Tensile.Common import (
-    DebugConfig,
-    DepthUConfig,
-    ensurePath,
-    HR,
-    IsaVersion,
-    ParallelMap2,
-    ParallelMapConfig,
-    print1,
-    print2,
-    printWarning,
-    printWarning,
-    setVerbosity,
-)
+from Tensile.Common import DebugConfig, HR, IsaVersion, ParallelMap2, ParallelMapConfig, setVerbosity
 from Tensile.Common.Architectures import gfxToIsa, isaToGfx, SUPPORTED_GFX
 from Tensile.Common.Capabilities import makeIsaInfoMap
 from Tensile.Common.GlobalParameters import assignGlobalParameters, globalParameters
-from Tensile.SolutionStructs.Naming import getKernelFileBase, getKeyNoInternalArgs, getMinNaming, getSerialNaming
-
-from Tensile.CustomYamlLoader import load_logic_gfx_arch
+from Tensile.SolutionStructs.Naming import getKernelFileBase, getKernelNameMin
 from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import kernelObjectNames
-from Tensile.SolutionStructs import Solution
 from Tensile.Toolchain.Assembly import makeAssemblyToolchain, buildAssemblyCodeObjectFiles
 from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFile
-from Tensile.Toolchain.Validators import (
-    ToolchainDefaults,
-    validateToolchain,
-)
+from Tensile.Toolchain.Validators import validateToolchain
 from Tensile.Toolchain.Component import Assembler
 from Tensile.Utilities.Decorators.Profile import profile
 from Tensile.Utilities.Decorators.Timing import timing
-from Tensile.Utilities.RequiredParameters import getRequiredParametersMin
 
 from .IO import generateSolutionsAndLibraries, genLazyMasterSolutionLibrary, \
                 generateParentLibrary, writeAssembly, writeHelper
@@ -88,7 +68,7 @@ def copyStaticFiles(outputPath=None):
 
   for fileName in libraryStaticFiles:
     # copy file
-    shutil.copy( os.path.join(SOURCE_PATH, fileName), outputPath)
+    shutil.copy( path.join(SOURCE_PATH, fileName), outputPath)
 
   return libraryStaticFiles
 
@@ -100,13 +80,15 @@ class KernelCodeGenResult(NamedTuple):
     targetObjFilename: str
     isa: IsaVersion
     wavefrontSize: int
+    cuoccupancy: int
+    pgr: int
+    mathclk: int
 
 
 def _processKernelSource(kernelWriterAssembly, 
                          data, 
                          useShortNames, 
                          splitGSU, 
-                         kernelMinNaming, 
                          kernelSerialNaming, 
                          kernel) -> KernelCodeGenResult:
     """
@@ -115,26 +97,45 @@ def _processKernelSource(kernelWriterAssembly,
     """
     kernelWriter = kernelWriterAssembly
     kernelWriter.setTensileInstructions(data)
-    asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, kernel)
+    asmFilename = getKernelFileBase(useShortNames, splitGSU, kernelSerialNaming, kernel)
     err, src = kernelWriter.getSourceFileString(kernel, useShortNames)
     header = kernelWriter.getHeaderFileString(kernel)
     objFilename = kernel._state.get("codeObjectFile", None)
-
-    return KernelCodeGenResult(err, src, header, asmFilename, objFilename, tuple(kernel["ISA"]), kernel["WavefrontSize"])
+    return KernelCodeGenResult(err,
+                               src,
+                               header,
+                               asmFilename,
+                               objFilename,
+                               tuple(kernel["ISA"]),
+                               kernel["WavefrontSize"],
+                               kernel["CUOccupancy"],
+                               int(kernel["PrefetchGlobalRead"]),
+                               kernel["MathClocksUnrolledLoop"])
 
 @timing
 def buildAssemblyKernels(asmPath: Path,
                          assembler: Assembler,
                          kernelWriterAssembly: KernelWriterAssembly,
                          data,
-                         kernelMinNaming,
                          removeTemporaries: bool,
                          solnLibs: List[tuple]):
   kernels = [s.getKernels()[0] for s in solnLibs[0]]
-  uniqueAsmKernels = [k for k in kernels if "BuildKernel" in k]
-  pksResults = [_processKernelSource(kernelWriterAssembly, data, False, False, kernelMinNaming, kernelMinNaming, k) for k in uniqueAsmKernels]
-  for p, isa, wavefrontsize in set([writeAssembly(asmPath, k) for k in pksResults]):
-    #Cijk_Ailk_Bljk_BSS_BH_UserArgs_MT128x256x64_MI16Vcp76y7W1sPIjpGVm_aV-u3wID5BM2LfzmbkyHs7rjQ=.s
+  #uniqueAsmKernels = [k for k in kernels if "BuildKernel" in k]
+
+  visited = set()
+  duplicates = 0
+  for k in kernels:
+    base = getKernelNameMin(k, False)
+    k.duplicate = True if base in visited else False
+    duplicates += k.duplicate
+    visited.add(base)
+
+  uniqueAsmKernels = [k for k in kernels if not k.duplicate]
+
+  pksResults = [_processKernelSource(kernelWriterAssembly, data, False, False, None, k) for k in uniqueAsmKernels]
+  asmPidPath = asmPath / str(getpid())
+  asmPidPath.mkdir(exist_ok=True)
+  for p, isa, wavefrontsize in set([writeAssembly(asmPidPath, k) for k in pksResults]):
     assembler(isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o"))) # TODO: arguments
     #if removeTemporaries:
     #  p.unlink()
@@ -228,7 +229,6 @@ def makeDirectories(outputPath):
 
 
 def extractBuildResults(result):
-    print1(type(result))
     masterLibs = {}
     nextIdx = 0
     flattenedList = []
@@ -246,18 +246,15 @@ def extractBuildResults(result):
 @profile
 def run():
   start = timer()
-  print1("")
-  print1(HR)
-  print1("# Tensile Create Library")
-  print2(HR)
-  print2("")
+  print("")
+  print(HR)
+  print("# Tensile Create Library")
 
   arguments = parseArguments()
   arguments["OutputPath"] = Path(arguments["OutputPath"]).resolve()
   outputPath, buildTmp, assemblyPath, srcCodeObjectPath, libraryPath = makeDirectories(arguments["OutputPath"])
 
   setVerbosity(arguments["PrintLevel"])
-  outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
   cxxCompiler, offloadBundler, ls, extract = validateToolchain(
       arguments["CxxCompiler"],
       arguments["OffloadBundler"],
@@ -292,22 +289,15 @@ def run():
       save_temps=False
   )
 
-  print1(asmToolchain.assembler)
-  print1(asmToolchain.bundler)
+  print(asmToolchain.assembler)
+  print(asmToolchain.bundler)
 
   # List logic files
   unsortedLogic = logicFileList(archs, Path(arguments["LogicPath"]), arguments["LogicFilter"], arguments["Experimental"])
   logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"], arguments["CpuThreads"])))
 
   # Phase1: Build assembly and master solution libraries
-  kernelMinNaming = getRequiredParametersMin()
-  writerAsm = KernelWriterAssembly(
-      kernelMinNaming,
-      kernelMinNaming,
-      asmToolchain.assembler,
-      DebugConfig(),
-  )
-
+  writerAsm = KernelWriterAssembly(None, asmToolchain.assembler, DebugConfig())
   unaryGenSolutions = functools.partial(generateSolutionsAndLibraries, 
                                         asmToolchain.assembler, 
                                         isaInfoMap, 
@@ -315,21 +305,30 @@ def run():
 
   #result = ParallelMap2(unaryGenSolutions, ParallelMapConfig(message="blah"), logicFiles)
   #d = {}
-  #l_path = Path(arguments["LogicPath"])
-  #for s, _, l in result:
-  #  logic_file = Path(l).relative_to(l_path)
-  #  d[str(logic_file)] = s[0]["codeObjectFile"]
+  #for ss, _ in result:
+  #  for s in ss:
+  #    name = getKernelNameMin(s, False)
+  #    if name in d:
+  #       d[name].add(s["codeObjectFile"])
+  #    else:
+  #       d[name] = set()
+  #       d[name].add(s["codeObjectFile"])
   #import pprint
   #pprint.pprint(d, indent=2)
-  #printExit("done")
-  
+  #count = 0
+  #for k, v in d.items():
+  #   if len(v) > 1:
+  #      print(k,v)
+  #      count += 1
+  #print(count)
+  #assert False
+
   unaryProcessMsl = functools.partial(processMsl, libraryPath, arguments["LibraryFormat"])
   unaryBuildAsmKernels = functools.partial(buildAssemblyKernels, 
                                            assemblyPath, 
                                            asmToolchain.assembler, 
                                            writerAsm, 
                                            rocisa.rocIsa.getInstance().getData(), 
-                                           kernelMinNaming, 
                                            not arguments["KeepBuildTmp"])
   unaryBuildCOFile = functools.partial(buildAssemblyCodeObjectFiles, 
                                        asmToolchain.linker, 
@@ -337,8 +336,7 @@ def run():
                                        globalParameters["ROCmLdPath"],
                                        libraryPath, 
                                        assemblyPath, 
-                                       arguments["UseCompression"],
-                                       kernelMinNaming)
+                                       arguments["UseCompression"])
   def buildCoAndHelpers(input):
      uniqueAsmKernels, libraries = input
      unaryBuildCOFile(uniqueAsmKernels)
@@ -374,177 +372,18 @@ def run():
     if buildTmp.exists() and buildTmp.is_dir():
       shutil.rmtree(buildTmp)
     else:
-      printWarning(f"Cannot remove build_tmp")
+      print(f"Warning: Cannot remove build_tmp")
 
-  print1("# Tensile Library Writer DONE")
-  print1(HR)
-  print1("")
+  print("# Tensile Library Writer DONE")
+  print(HR)
+  print("")
 
   stop = timer()
-  print1(f"Total time (s): {(stop-start):3.2f}")
+  print(f"Total time (s): {(stop-start):3.2f}")
   numKernels = len(kernels)
-  print1(f"Total kernels: {numKernels}")
-  #print1(f"Total kernels processed: {numUniqueKernels}")
-  #print1(f"Duplicate kernels removed: {numDuplicateKernels}")
-  print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
-  #print1(f"Total solutions processed: {numSoln}")
-  #print1(f"Duplicate solutions: {numDuplicateSoln}")
-
-
-
-
-
-    # start = timer()
-    # print1("")
-    # print1(HR)
-    # print1("# Tensile Create Library")
-    # print2(HR)
-    # print2("")
-
-    # arguments = parseArguments()
-    # setVerbosity(arguments["PrintLevel"])
-    # outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
-    # cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
-    #     arguments["CxxCompiler"],
-    #     arguments["CCompiler"],
-    #     arguments["OffloadBundler"],
-    #     arguments["Assembler"],
-    #     ToolchainDefaults.HIP_CONFIG,
-    # )
-
-    # if ";" in arguments["Architecture"]:
-    #     archs = arguments["Architecture"].split(";")
-    # else:
-    #     archs = arguments["Architecture"].split("_")
-    # archs = SUPPORTED_GFX if "all" in archs else archs
-
-    # targetIsas = [gfxToIsa(a) for a in archs]
-    # isaInfoMap = makeIsaInfoMap(targetIsas, cxxCompiler)
-    # assignGlobalParameters(arguments, isaInfoMap)
-
-    # asmToolchain = makeAssemblyToolchain(
-    #     cxxCompiler,
-    #     offloadBundler,
-    #     arguments["CodeObjectVersion"],
-    #     arguments["BuildIdKind"]
-    # )
-    # srcToolchain = makeSourceToolchain(
-    #     cxxCompiler,
-    #     offloadBundler,
-    #     arguments["AsanBuild"],
-    #     arguments["BuildIdKind"],
-    #     save_temps=False
-    # )
-
-    # print1(asmToolchain.assembler)
-    # print1(asmToolchain.bundler)
-
-    # if not os.path.exists(arguments["LogicPath"]):
-    #     printExit(f"LogicPath {arguments['LogicPath']} doesn't exist")
-
-    # logicExtFormat = ".yaml"
-    # if arguments["LogicFormat"] == "yaml":
-    #     pass
-    # elif arguments["LogicFormat"] == "json":
-    #     logicExtFormat = ".json"
-    # else:
-    #     printExit(f"Unrecognized LogicFormat: {arguments['LogicFormat']}")
-
-    # def archMatch(arch: str, archs: List[str]):
-    #     return (arch in archs) or any(a.startswith(arch) for a in archs)
-
-    # def validLogicFile(p: Path):
-    #     return p.suffix == logicExtFormat and (
-    #         "all" in archs or archMatch(load_logic_gfx_arch(p), archs)
-    #     )
-
-    # globPattern = os.path.join(
-    #     arguments["LogicPath"], f"**/{arguments['LogicFilter']}{logicExtFormat}"
-    # )
-    # print1(f"# LogicFilter:       {globPattern}")
-    # logicFiles = (
-    #     os.path.join(arguments["LogicPath"], file)
-    #     for file in glob.iglob(globPattern, recursive=True)
-    # )
-    # logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
-
-    # print1(f"# Experimental:      {arguments['Experimental']}")
-    # if not arguments["Experimental"]:
-    #     logicFiles = [
-    #         file for file in logicFiles if "experimental" not in map(str.lower, Path(file).parts)
-    #     ]
-
-    # print2(f"# LibraryLogicFiles: {len(logicFiles)}")
-
-    # for logicFile in logicFiles:
-    #     print2("#   %s" % logicFile)
-
-    # solutions, masterLibraries = generateLogicDataAndSolutions(
-    #     logicFiles, arguments, asmToolchain.assembler, isaInfoMap
-    # )
-
-    # kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
-    # kernelSerialNaming = getSerialNaming(kernels)
-    # kernelMinNaming = getMinNaming(kernels)
-    # kernelWriterAssembly = KernelWriterAssembly(
-    #     kernelMinNaming,
-    #     kernelSerialNaming,
-    #     asmToolchain.assembler,
-    #     DebugConfig(),
-    # )
-
-    # copyStaticFiles(outputPath)
-
-    # numKernels = writeSolutionsAndKernelsTCL(
-    #     outputPath,
-    #     asmToolchain,
-    #     srcToolchain,
-    #     kernels,
-    #     kernelHelperObjs,
-    #     kernelWriterAssembly,
-    #     archs,
-    #     kernelSerialNaming,
-    #     kernelMinNaming,
-    #     useShortNames=arguments["ShortNames"],
-    #     compress=arguments["UseCompression"],
-    # )
-
-    # archs = [ # is this really different than the other archs above?
-    #     isaToGfx(arch)
-    #     for arch in targetIsas
-    #     if isaInfoMap[arch].asmCaps["SupportedISA"]
-    # ]
-    # newLibraryDir = ensurePath(os.path.join(outputPath, "library"))
-    # splitGSU = False
-    # for archName, newMasterLibrary in masterLibraries.items():
-    #     if archName in archs:
-    #         if arguments["LazyLibraryLoading"]:
-    #             masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_" + archName)
-    #         else:
-    #             masterFile = os.path.join(newLibraryDir, "TensileLibrary_" + archName)
-    #         newMasterLibrary.applyNaming(splitGSU, kernelMinNaming)
-    #         LibraryIO.write(masterFile, state(newMasterLibrary), arguments["LibraryFormat"])
-    #         for name, lib in newMasterLibrary.lazyLibraries.items():
-    #             filename = os.path.join(newLibraryDir, name)
-    #             lib.applyNaming(splitGSU, kernelMinNaming)
-    #             LibraryIO.write(filename, state(lib), arguments["LibraryFormat"])
-
-    # if not arguments["KeepBuildTmp"]:
-    #     buildTmp = Path(arguments["OutputPath"]).parent / "library" / "build_tmp"
-    #     if buildTmp.exists() and buildTmp.is_dir():
-    #         shutil.rmtree(buildTmp)
-    #     buildTmp = Path(arguments["OutputPath"]) / "build_tmp"
-    #     if buildTmp.exists() and buildTmp.is_dir():
-    #         shutil.rmtree(buildTmp)
-    #     else:
-    #         printWarning(f"Cannot remove build_tmp")
-
-    # print1("# Tensile Library Writer DONE")
-    # print1(HR)
-    # print1("")
-
-    # stop = timer()
-
-    # print1(f"Total time (s): {(stop-start):3.2f}")
-    # print1(f"Total kernels processed: {numKernels}")
-    # print1(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
+  print(f"Total kernels: {numKernels}")
+  #print(f"Total kernels processed: {numUniqueKernels}")
+  #print(f"Duplicate kernels removed: {numDuplicateKernels}")
+  print(f"Kernels processed per second: {(numKernels/(stop-start)):3.2f}")
+  #print(f"Total solutions processed: {numSoln}")
+  #print(f"Duplicate solutions: {numDuplicateSoln}")

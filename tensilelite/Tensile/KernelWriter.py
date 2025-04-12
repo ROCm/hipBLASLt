@@ -34,7 +34,7 @@ from .TensileInstructions import replaceHolder, \
                           SBranch, SCBranchSCC0, SCBranchSCC1
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
-from .TensilePass import TensilePass, TensilePassOptions
+from .TensilePass import TensilePass, TensilePassOptions, TensilePassGetCycles
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
 from .SolutionStructs import Solution, isPackedIndex
@@ -42,7 +42,7 @@ from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
   INDEX_CHARS, IsaVersion
-from Tensile.SolutionStructs.Naming import getKernelName
+from Tensile.SolutionStructs.Naming import getKernelNameMin
 from Tensile.Toolchain.Component import Assembler
 
 import abc
@@ -369,13 +369,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def __init__(
       self,
-      kernelMinNaming,
       kernelSerialNaming,
       assembler: Assembler,
       debugConfig: DebugConfig,
     ):
-    self.kernelMinNaming = kernelMinNaming
-    #self.kernelSerialNaming = kernelSerialNaming
+    self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.debugConfig = debugConfig
 
@@ -3237,8 +3235,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # Tensile pass
     tpo = TensilePassOptions()
-    tpo.removeDupActFunc = kernel["ActivationFuncCall"]
+    tpo.removeDupActFunc    = kernel["ActivationFuncCall"]
+    tpo.calculateMathClocks = True
+    numWaves                = kernel["NumThreads"] // kernel["WavefrontSize"]
     TensilePass(module, tpo)
+    kernel["MathClocksUnrolledLoop"] = TensilePassGetCycles(module, tpo, numWaves)
     # Add a label at the end of the asm for indexing.
     module.add(Label("ASM_End", "The end of the kernel"))
 
@@ -3270,7 +3271,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     ti.setKernel(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
-    self.states = StateValues(version=version, kernel=kernel, kernelName=getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel))
+    self.states = StateValues(version=version, kernel=kernel, kernelName=getKernelNameMin(kernel, self.debugConfig.splitGSU))
     self.vgprs  = StateVgprs()
     self.sgprs  = collections.OrderedDict()
     self.codes  = CodeModules()
@@ -5436,7 +5437,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     pass
 
   def getHeaderFileString(self, kernel):
-    kernelName = getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel)
+    kernelName = getKernelNameMin(kernel, self.debugConfig.splitGSU)
     fileString = "" # CHeader
     fileString += "extern const unsigned char %s_coba[]; // code object byte array\n" % kernelName
 

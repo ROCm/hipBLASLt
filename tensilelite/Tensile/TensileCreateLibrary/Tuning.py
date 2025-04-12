@@ -110,6 +110,21 @@ def removeInvalidSolutionsAndKernels(results, kernels, solutions, errorTolerant,
         results.remove(rel)
 
 
+def passPostKernelInfoToSolution(results, kernels, solutions, splitGSU: bool):
+    resultDict = {}
+    for kernIdx, r in enumerate(results):
+        kName = getKeyNoInternalArgs(kernels[kernIdx], splitGSU)
+        resultDict["%s"%kName] = r
+    for solution in solutions:
+        solutionKernels = solution.getKernels()
+        for kernel in solutionKernels:
+            kName = getKeyNoInternalArgs(kernel, splitGSU)
+            result = resultDict["%s"%kName]
+            solution._state["CUOccupancy"] = result.cuoccupancy
+            solution._state["PrefetchGlobalRead"] = result.pgr
+            solution._state["MathClocksUnrolledLoop"] = result.mathclk
+
+
 def writeSolutionsAndKernels(
     outputPath,
     asmToolchain,
@@ -121,7 +136,6 @@ def writeSolutionsAndKernels(
     splitGSU: bool,
     cmdlineArchs: List[str],
     kernelSerialNaming,
-    kernelMinNaming,
     errorTolerant=False,
     generateSourcesAndExit=False,
     compress=True,
@@ -146,7 +160,7 @@ def writeSolutionsAndKernels(
     visited = set()
     duplicates = 0
     for k in asmKernels:
-        base = getKernelFileBase(useShortNames, splitGSU, kernelMinNaming, kernelSerialNaming, k)
+        base = getKernelFileBase(useShortNames, splitGSU, kernelSerialNaming, k)
         print1(base)
         k.duplicate = True if base in visited else False
         if not k.duplicate:
@@ -164,7 +178,6 @@ def writeSolutionsAndKernels(
         repeat(rocisa.rocIsa.getInstance().getData()),
         repeat(useShortNames),
         repeat(splitGSU),
-        repeat(kernelMinNaming),
         repeat(kernelSerialNaming),
         asmKernels
     )
@@ -172,6 +185,9 @@ def writeSolutionsAndKernels(
     asmResults = ParallelMap2(_processKernelSource, config, asmIter)
     removeInvalidSolutionsAndKernels(
         asmResults, asmKernels, solutions, errorTolerant, getVerbosity(), splitGSU
+    )
+    passPostKernelInfoToSolution(
+        asmResults, asmKernels, solutions, splitGSU
     )
     print1(f"After removal: {len(asmKernels)}")
     def assemble(ret):
@@ -197,7 +213,6 @@ def writeSolutionsAndKernels(
             destLibPath,
             assemblyTmpPath,
             compress,
-            kernelMinNaming,
             asmKernels,
         )
         kernelsLib = str(objectTmpPath / "Kernels.so")
