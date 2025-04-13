@@ -1000,10 +1000,13 @@ class ProblemType(Mapping):
       name.append("STB")
 
     # Other
-    if self["UseBeta"]: name.append("B")
-    if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name[-1]+= ("H")
-    if self["UseInitialStridesAB"]: name[-1] += "I"
-    if self["UseInitialStridesCD"]: name[-1] += "Ic"
+    other = ""
+    if self["UseBeta"]: other += "B"
+    if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: other += "H"
+    if self["UseInitialStridesAB"]: other += "I"
+    if self["UseInitialStridesCD"]: other += "Ic"
+    if other: name.append(other)
+    
     if self["UseBias"]:
       name.append("Bias")
       if self["BiasDataTypeList"] != getBiasDataTypeListDefault(self):
