@@ -22,12 +22,13 @@
 #
 ################################################################################
 
-from Tensile.Common import print1, print2, ParallelMap2, ParallelMapConfig
+from Tensile.Common import print2
 from Tensile.LibraryIO import DataIndex
 from Tensile.CustomYamlLoader import load_logic_gfx_arch, load_yaml_sequence_item
 from Tensile.CodeObjectName import codeObjectFileBaseName
 
 from glob import iglob
+from os.path import getsize
 from pathlib import Path
 from typing import List
 from subprocess import PIPE, run
@@ -47,8 +48,8 @@ def logicFileList(archs, logicPath: Path, logicFilter: str, experimental: bool):
 
     logicFiles = [file for file in logicFiles if validLogicFile(Path(file))]
 
-    print1(f"# LogicFilter:         {globPattern}")
-    print1(f"# Experimental:        {experimental}")
+    print(f"# LogicFilter:         {globPattern}")
+    print(f"# Experimental:        {experimental}")
     print2(f"# LibraryLogicFiles: {len(logicFiles)}")
     for logicFile in logicFiles:
         print2("#   %s" % logicFile)
@@ -68,11 +69,6 @@ def distribute(lst, n):
     return sorted(list_of_lists, key=lambda x: sum(first for first, _ in x), reverse=True)
 
 
-def numberOfBuildKernerls(logicFile):
-    result = run(['/bin/grep', "BuildKernel", logicFile], stderr=PIPE, stdout=PIPE, check=False)
-    return int(str(result.stdout).count("BuildKernel"))
-
-
 def getCoFileNames(logicFile):
     from yaml import Loader
     data = {}
@@ -86,22 +82,19 @@ def getCoFileNames(logicFile):
         data["CUCount"] = None
     data["PerfMetric"] = load_yaml_sequence_item(logicFile, Loader, DataIndex.PERF_METRIC.value)
     return codeObjectFileBaseName(data), logicFile
-    #coBasename = load_yaml_sequence_item(logicFile, Loader, DataIndex.CODE_OBJECT_NAME)
-    #coBasename = load_yaml_sequence_item(logicFile, Loader, 0)
-    #return coBasename["codeObjectFile"], logicFile
 
 
-def schedule(logicFiles: list, numberOfTasks: int, procs: int):
+def schedule(cofiles: list, numberOfTasks: int, procs: int):
     problemMap = {}
-    cofiles = ParallelMap2(getCoFileNames, ParallelMapConfig(message="Scheduling work. ", procs=procs), logicFiles)
     for codeObjectFile, logicFile in cofiles:
         if codeObjectFile in problemMap:
             problemMap[codeObjectFile].append(logicFile)
         else:
             problemMap[codeObjectFile] = [logicFile]
+
     result = []
     for codeObjectFile, logicFiles in problemMap.items():
-        count = sum(numberOfBuildKernerls(logicFile) for logicFile in logicFiles)
+        count = sum(getsize(logicFile) for logicFile in logicFiles)
         result.append((count, logicFiles))
 
-    return distribute(result, numberOfTasks) # need to convert list of list of tuples to list of list of strings
+    return list(filter(lambda x: x != [], distribute(result, numberOfTasks))) # need to convert list of list of tuples to list of list of strings

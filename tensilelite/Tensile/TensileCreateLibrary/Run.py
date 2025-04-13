@@ -49,7 +49,7 @@ from Tensile.Utilities.Decorators.Timing import timing
 
 from .IO import generateSolutionsAndLibraries, genLazyMasterSolutionLibrary, \
                 generateParentLibrary, writeAssembly, writeHelper
-from .Logic import logicFileList, schedule
+from .Logic import logicFileList, schedule, getCoFileNames
 from .ParseArguments import parseArguments
 
 
@@ -120,7 +120,6 @@ def buildAssemblyKernels(asmPath: Path,
                          removeTemporaries: bool,
                          solnLibs: List[tuple]):
   kernels = [s.getKernels()[0] for s in solnLibs[0]]
-  #uniqueAsmKernels = [k for k in kernels if "BuildKernel" in k]
 
   visited = set()
   duplicates = 0
@@ -129,16 +128,16 @@ def buildAssemblyKernels(asmPath: Path,
     k.duplicate = True if base in visited else False
     duplicates += k.duplicate
     visited.add(base)
-
   uniqueAsmKernels = [k for k in kernels if not k.duplicate]
+  #uniqueAsmKernels = [k for k in kernels if "BuildKernels" in k]
 
   pksResults = [_processKernelSource(kernelWriterAssembly, data, False, False, None, k) for k in uniqueAsmKernels]
   asmPidPath = asmPath / str(getpid())
   asmPidPath.mkdir(exist_ok=True)
   for p, isa, wavefrontsize in set([writeAssembly(asmPidPath, k) for k in pksResults]):
     assembler(isaToGfx(isa), wavefrontsize, str(p), str(p.with_suffix(".o"))) # TODO: arguments
-    #if removeTemporaries:
-    #  p.unlink()
+    if removeTemporaries:
+      p.unlink()
   return uniqueAsmKernels, solnLibs[1]
 
 
@@ -293,8 +292,15 @@ def run():
   print(asmToolchain.bundler)
 
   # List logic files
-  unsortedLogic = logicFileList(archs, Path(arguments["LogicPath"]), arguments["LogicFilter"], arguments["Experimental"])
-  logicFiles = list(filter(lambda x: x != [], schedule(unsortedLogic, 2*arguments["CpuThreads"], arguments["CpuThreads"])))
+  unsortedLogic = logicFileList(archs,
+                                Path(arguments["LogicPath"]),
+                                arguments["LogicFilter"],
+                                arguments["Experimental"])
+  cofiles = ParallelMap2(getCoFileNames,
+                         ParallelMapConfig(message="Scheduling work. ",
+                                           procs=arguments["CpuThreads"]),
+                         unsortedLogic)
+  logicFiles = schedule(cofiles, 2*arguments["CpuThreads"], arguments["CpuThreads"])
 
   # Phase1: Build assembly and master solution libraries
   writerAsm = KernelWriterAssembly(None, asmToolchain.assembler, DebugConfig())
@@ -366,7 +372,7 @@ def run():
                           generateKernelHelperObjects(kernels, isaInfoMap))
   kernelsLib = str(srcCodeObjectPath / "Kernels.so")
   srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), archs)
-  buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
+  #buildSourceCodeObjectFile(srcToolchain, libraryPath, kernelsLib)
 
   if not arguments["KeepBuildTmp"]:
     if buildTmp.exists() and buildTmp.is_dir():
