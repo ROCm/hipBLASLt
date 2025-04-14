@@ -1108,6 +1108,7 @@ class Solution(collections.abc.Mapping):
         if state["LocalSplitU"] > 1:
           reject(state, printRejectionReason, "Atomic Stream-K not working with LocalSplitU")
       if not state["Valid"]:
+        print2("in assignDerivedParameters, state['Valid'] = False")
         return
     else:
       # If not using StreamK, clear other stream-k settings to avoid duplicate kernels

@@ -1887,7 +1887,7 @@ class KernelWriterAssembly(KernelWriter):
         label_FOUND = Label("FOUND", "")
         module.add(SCBranchSCC1(labelName=label_FOUND.getLabelName()))
 
-        if ((kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+        if kernel["GlobalSplitU"] > 0 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
           extReadEpilogueLabeltmp    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
           module.addComment0("Check if custom structure pointer is null")
           if kernel["ProblemType"]["SupportUserArgs"]:
@@ -3452,30 +3452,8 @@ class KernelWriterAssembly(KernelWriter):
 
     assert(self.states.unrollIdx == kernel["ProblemType"]["NumIndicesSummation"]-1)
     if loopIdx==self.states.unrollIdx:
-      if self.states.globalReadIncsUseVgpr:
-        with self.allocTmpSgpr(3) as tmpSgprInfo:
-          tmpSgpr = tmpSgprInfo.idx
-          gsuSgpr = tmpSgpr + 2
-          module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(tmpSgpr), src1="DepthU*%d"%(tP["bpeGR"]), comment="GSU*DepthU*Bpe"))
-          module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
-          module.add(SCMovB32(dst=sgpr(gsuSgpr), src="DepthU*%d"%(tP["bpeGR"]), comment="DepthU*Bpe if GSUC = 1"))
-          module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=sgpr(gsuSgpr), src1=stride, \
-              comment="incr%s%s = %s*DepthU*bpeGR (unrollIdx)"%(tc, loopChar, stride) ))
-          # TODO - this should be mul-H??
-          module.add(SMovB32(
-              dst=sgpr(tmpSgpr+1), \
-              src=hex(0), \
-              comment="(carry)"))
-          module.add(VMovB32(
-              dst=vgpr("GlobalReadIncs%s+%u+0"%(tc, 2*loopIdx)), \
-              src=sgpr(tmpSgpr+0)))
-          module.add(VMovB32(
-              dst=vgpr("GlobalReadIncs%s+%u+1"%(tc, 2*loopIdx)), \
-              src=sgpr(tmpSgpr+1)))
-      else: # not globalReadIncsUseVgpr, ie use SGPR
-        gsuComponent = Component.GSU.find(self)
-        module.add(gsuComponent.graIncrements(self, kernel, loopIdx, tP))
+      gsuComponent = Component.GSU.find(self)
+      module.add(gsuComponent.graIncrements(self, kernel, loopIdx, tP))
     else:
       # other summation
       if self.states.globalReadIncsUseVgpr:
@@ -3516,12 +3494,13 @@ class KernelWriterAssembly(KernelWriter):
                 gsuComponent = Component.GSU.find(self)
                 module.add(gsuComponent.calculateLoopNumIterGsu(self, kernel, loopCounterName, tmpSgprInfo))
 
-              with self.allocTmpSgpr(1) as tmpSgprInfo:
-                gsuSgpr = tmpSgprInfo.idx
-                module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-                module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1=kernel["DepthU"]))
-                module.add(SMulI32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), \
-                                   src1=sgpr(gsuSgpr), comment="=loopCounterName*DepthU"))
+              if kernel["GlobalSplitU"] > 0:
+                with self.allocTmpSgpr(1) as tmpSgprInfo:
+                  gsuSgpr = tmpSgprInfo.idx
+                  module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+                  module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1=kernel["DepthU"]))
+                  module.add(SMulI32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), \
+                                    src1=sgpr(gsuSgpr), comment="=loopCounterName*DepthU"))
             module.add(SMulI32(dst=sgpr(graInc), src0=stridePrev, src1=sgpr(loopCounterName), \
                   comment="tmp <- stride%s%s * myWgUnrollIters" %(tc, loopCharPrev)))
           else:
@@ -5275,12 +5254,8 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def calculateIncrementMetadata(self, kernel, sgprOut):
     module = Module("calculateIncrementMetadata")
-    with self.allocTmpSgpr(1) as tmpSgprGSU:
-      module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-      module.add(SMulI32(dst=sgpr(sgprOut), src0=kernel["DepthU"], src1=sgpr(tmpSgprGSU.idx), comment="IncsMetadata = GSU*DepthU"))
-      module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
-    module.add(SCMovB32(dst=sgpr(sgprOut), src=kernel["DepthU"], comment="IncsMetadata = DepthU if GSUC == 1"))
-    module.add(SLShiftRightB32(dst=sgpr(sgprOut), shiftHex=hex(log2(8)), src=sgpr(sgprOut)))
+    gsuComponent = Component.GSU.find(self)
+    module.add(gsuComponent.calculateIncrementMetadata(self, kernel, sgprOut))
     return module
 
   ##############################################################################
@@ -12481,7 +12456,7 @@ class KernelWriterAssembly(KernelWriter):
     module.addComment2("Write Bias to Global")
     module.add(SBarrier(comment="wait for bias lds store."))
     # Recalculate bias length
-    if kernel["GlobalSplitU"] != 1 and not (kernel["GlobalSplitUAlgorithm"] == "SingleBuffer" and kernel["ProblemType"]["ComputeDataType"] == biasDataType):
+    if kernel["GlobalSplitU"] > 1 and not (kernel["GlobalSplitUAlgorithm"] == "SingleBuffer" and kernel["ProblemType"]["ComputeDataType"] == biasDataType):
       '''
       We use num_records to save the bias data, so we have to shift the global pointer.
       final offset = d_size * gsu + sizeI/J * gsuIdx

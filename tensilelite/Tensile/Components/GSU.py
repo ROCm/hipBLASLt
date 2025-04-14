@@ -21,9 +21,9 @@
 ################################################################################
 
 from ..TensileInstructions import Module, Label, RegisterPoolResource, SAddU32, SAddCU32, SCmpEQU32, SCBranchSCC1, \
-    scalarUInt32DivideAndRemainder, SMovB32, SMulI32, SBranch, SMovB64, SLShiftRightB32, sgpr, log2, \
+    scalarUInt32DivideAndRemainder, SMovB32, SMulI32, SBranch, SMovB64, SLShiftRightB32, sgpr, vgpr, log2, \
     SCmpLtU32, SCMovB32, SSubU32, SLShiftLeftB64, SCBranchSCC0, fastdeepcopy, Instruction, SCmpLgU32, \
-    SCSelectB32, SAndB32
+    SCSelectB32, SAndB32, VMovB32
 from ..Component import Component
 import abc
 
@@ -59,6 +59,10 @@ class GSU(Component):
 
     @abc.abstractmethod
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, tmpSgprInfo):
+        pass
+
+    @abc.abstractmethod
+    def calculateIncrementMetadata(self, writer, kernel, sgprOut):
         pass
 
     @abc.abstractmethod
@@ -112,6 +116,7 @@ class GSUOff(GSU):
         tc = tP["tensorChar"]
         tcGR = tc if tc == "Metadata" else (tc + "GR")
         dimIdx = kernel["ProblemType"]["IndicesSummation"][loopIdx] # dimension index
+        loopChar = writer.states.indexChars[dimIdx]
         stride = writer.strideRef(tc, dimIdx)
         isMirrorIdx = dimIdx in kernel["ProblemType"]["MirrorDims%s"%tc]
 
@@ -119,12 +124,29 @@ class GSUOff(GSU):
         if isMirrorIdx:
           m = "-%s"%(m)
 
-        module.add(self.graIncrementsCommon(writer, loopIdx, tc, stride, m))
+        if writer.states.globalReadIncsUseVgpr:
+            with self.allocTmpSgpr(2) as tmpSgprInfo:
+                tmpSgpr = tmpSgprInfo.idx
+                module.add(SMovB32(dst=sgpr(tmpSgpr+0), src="DepthU*%d"%(tP["bpeGR"]), comment="DepthU*Bpe"))
+                module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=sgpr(tmpSgpr+0), src1=stride, \
+                    comment="incr%s%s = %s*DepthU*bpeGR (unrollIdx)"%(tc, loopChar, stride) ))
+                # TODO - this should be mul-H??
+                module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0), comment="(carry)"))
+                module.add(VMovB32(dst=vgpr("GlobalReadIncs%s+%u+0"%(tc, 2*loopIdx)), src=sgpr(tmpSgpr+0)))
+                module.add(VMovB32(dst=vgpr("GlobalReadIncs%s+%u+1"%(tc, 2*loopIdx)), src=sgpr(tmpSgpr+1)))
+        else:
+            module.add(self.graIncrementsCommon(writer, loopIdx, tc, stride, m))
 
         return module
 
     def calculateLoopNumIter(self, writer, kernel, loopCounterName, tmpSgprInfo):
         module = Module("GSU Off calculateLoopNumIter")
+        return module
+
+    def calculateIncrementMetadata(self, writer, kernel, sgprOut):
+        module = Module("GSU Off calculateLoopNumIter")
+        module.add(SMovB32(dst=sgpr(sgprOut), src=kernel["DepthU"], comment="IncsMetadata = DepthU if GSUC == 1"))
+        module.add(SLShiftRightB32(dst=sgpr(sgprOut), shiftHex=hex(log2(8)), src=sgpr(sgprOut)))
         return module
 
     def computeStoreSrdStart(self, writer, kernel):
@@ -266,45 +288,68 @@ class GSUOn(GSU):
 
         tc = tP["tensorChar"]
         dimIdx = kernel["ProblemType"]["IndicesSummation"][loopIdx] # dimension index
+        loopChar = writer.states.indexChars[dimIdx]
         stride = writer.strideRef(tc, dimIdx)
         isMirrorIdx = dimIdx in kernel["ProblemType"]["MirrorDims%s"%tc]
 
-        with writer.allocTmpSgpr(2) as tmpSgprInfo:
-            tmpSgpr = tmpSgprInfo.idx
-            gsuSgpr = tmpSgpr + 1
+        if writer.states.globalReadIncsUseVgpr:
+            with self.allocTmpSgpr(3) as tmpSgprInfo:
+                tmpSgpr = tmpSgprInfo.idx
+                gsuSgpr = tmpSgpr + 2
+                module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+                module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(tmpSgpr), src1="DepthU*%d"%(tP["bpeGR"]), comment="GSU*DepthU*Bpe"))
+                module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
+                module.add(SCMovB32(dst=sgpr(gsuSgpr), src="DepthU*%d"%(tP["bpeGR"]), comment="DepthU*Bpe if GSUC = 1"))
+                module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=sgpr(gsuSgpr), src1=stride, \
+                    comment="incr%s%s = %s*DepthU*bpeGR (unrollIdx)"%(tc, loopChar, stride) ))
+                # TODO - this should be mul-H??
+                module.add(SMovB32(
+                    dst=sgpr(tmpSgpr+1), \
+                    src=hex(0), \
+                    comment="(carry)"))
+                module.add(VMovB32(
+                    dst=vgpr("GlobalReadIncs%s+%u+0"%(tc, 2*loopIdx)), \
+                    src=sgpr(tmpSgpr+0)))
+                module.add(VMovB32(
+                    dst=vgpr("GlobalReadIncs%s+%u+1"%(tc, 2*loopIdx)), \
+                    src=sgpr(tmpSgpr+1)))
+        else:
+            with writer.allocTmpSgpr(2) as tmpSgprInfo:
+                tmpSgpr = tmpSgprInfo.idx
+                gsuSgpr = tmpSgpr + 1
 
-            tcGR = tc if tc == "Metadata" else (tc + "GR")
+                tcGR = tc if tc == "Metadata" else (tc + "GR")
 
-            # swizzle
-            mult_MI_Dim = ""
-            if tc == "A" and kernel["ProblemType"]["SwizzleTensorA"]:
-                mult_MI_Dim = "*MI_M"
-            elif tc == "B" and kernel["ProblemType"]["SwizzleTensorB"]:
-                mult_MI_Dim = "*MI_N"
+                # swizzle
+                mult_MI_Dim = ""
+                if tc == "A" and kernel["ProblemType"]["SwizzleTensorA"]:
+                    mult_MI_Dim = "*MI_M"
+                elif tc == "B" and kernel["ProblemType"]["SwizzleTensorB"]:
+                    mult_MI_Dim = "*MI_N"
 
-            module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-            module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim), comment="GSU*DepthU*Bpe%s"%(mult_MI_Dim)))
-            module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
+                module.add(SAndB32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+                module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr(gsuSgpr), src1="DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim), comment="GSU*DepthU*Bpe%s"%(mult_MI_Dim)))
+                module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
 
-            m = sgpr(gsuSgpr)
+                m = sgpr(gsuSgpr)
 
-            if isMirrorIdx:
-                m.setMinus(True)
+                if isMirrorIdx:
+                    m.setMinus(True)
 
-            incr = sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx))
-            duBpe = "DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim)
-            # multiply by stride, optimizing if unit stride
-            if writer.isConstUnitStride(stride):
-                module.add(SCSelectB32(dst=incr, src0=duBpe, src1=m, comment="incr%s (unrollIdx)"%(tc)))
-            else:
-                module.add(SCMovB32(dst=m, src=duBpe, comment="DepthU*Bpe if GSUC = 1"))
-                module.add(SMulI32(dst=incr, src0=m, src1=stride, comment="incr%s unrollIdx)"%(tc) ))
+                incr = sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx))
+                duBpe = "DepthU*Bpe%s%s"%(tcGR, mult_MI_Dim)
+                # multiply by stride, optimizing if unit stride
+                if writer.isConstUnitStride(stride):
+                    module.add(SCSelectB32(dst=incr, src0=duBpe, src1=m, comment="incr%s (unrollIdx)"%(tc)))
+                else:
+                    module.add(SCMovB32(dst=m, src=duBpe, comment="DepthU*Bpe if GSUC = 1"))
+                    module.add(SMulI32(dst=incr, src0=m, src1=stride, comment="incr%s unrollIdx)"%(tc) ))
 
-            if kernel["ProblemType"]["Sparse"]:
-                if tP["is_sparse"]:
-                    module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(2)), src=incr))
-                elif tP["isM"]:
-                    module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(8)), src=incr))
+                if kernel["ProblemType"]["Sparse"]:
+                    if tP["is_sparse"]:
+                        module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(2)), src=incr))
+                    elif tP["isM"]:
+                        module.add(SLShiftRightB32(dst=incr, shiftHex=hex(log2(8)), src=incr))
 
         return module
 
@@ -355,6 +400,16 @@ class GSUOn(GSU):
             comment="gsuSumIdx < numIterPerWgRemainder" ))
         module.add(SCMovB32(dst=loopCounter, src=sgpr(tmpSgprRes.idx), comment="numIterMyWg++ if needed"))
 
+        return module
+
+    def calculateIncrementMetadata(self, writer, kernel, sgprOut):
+        module = Module("GSU On calculateLoopNumIter")
+        with writer.allocTmpSgpr(1) as tmpSgprGSU:
+            module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+            module.add(SMulI32(dst=sgpr(sgprOut), src0=kernel["DepthU"], src1=sgpr(tmpSgprGSU.idx), comment="IncsMetadata = GSU*DepthU"))
+            module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x8000), comment="SCC = (GSUC == 1) ?"))
+        module.add(SCMovB32(dst=sgpr(sgprOut), src=kernel["DepthU"], comment="IncsMetadata = DepthU if GSUC == 1"))
+        module.add(SLShiftRightB32(dst=sgpr(sgprOut), shiftHex=hex(log2(8)), src=sgpr(sgprOut)))
         return module
 
     def computeStoreSrdStart(self, writer, kernel):
