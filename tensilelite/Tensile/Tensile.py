@@ -471,16 +471,16 @@ def Tensile(userArgs):
     )
 
     if "ISA" in args.global_parameters:
-        isa = args.global_parameters["ISA"]
-        isa = IsaVersion(isa[0], isa[1], isa[2])
+        isaList = [IsaVersion(isa[0], isa[1], isa[2]) for isa in args.global_parameters["ISA"]]
+        
     else:
-        isa = detectGlobalCurrentISA(device_id, enumerator)
+        isaList = [detectGlobalCurrentISA(device_id, enumerator)]
 
-    if isa == IsaVersion(9,5,0):
+    if IsaVersion(9,5,0) in isaList:
         printWarning("HardwareMonitor currently disabled for gfx950")
         globalParameters["HardwareMonitor"] = False
 
-    isaInfoMap = makeIsaInfoMap([isa], cxxCompiler)
+    isaInfoMap = makeIsaInfoMap(isaList, cxxCompiler)
     assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
 
     overrideParameters = argUpdatedGlobalParameters(args)
