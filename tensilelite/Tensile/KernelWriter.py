@@ -2703,7 +2703,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
             module.add(self.initSumUnroll(kernel))
         module.add(self.closeShadowInit(kernel))
 
-      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "8wait for global read"))
+      # Wait for PGR code in setupNewTile
+      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
       # These cases loop back and run the prefetch loop again
       # we need an extra barrier to ensure that the ds_reads (either for SR or MFMA) from previous iteration
       # have finished before we generate the prefetch for the next summation index.
@@ -2810,6 +2811,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if loopCopies == 1 and needSecondLoop:
       # force to generate 2 loop bodies
       loopCopies = 2
+
+    if kernel["PrefetchGlobalRead"] == 2:
+      # Wait for second set of PGR before loop begins
+      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
+      module.add(SBarrier())
 
     # open unrolled summation loop
     module.addComment2("Unrolled Loop(s) - Begin")
