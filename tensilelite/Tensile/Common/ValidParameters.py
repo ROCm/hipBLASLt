@@ -65,7 +65,6 @@ validMacroTileSides = [
 validMacroTiles = []
 validISA = [(0, 0, 0)]
 validISA.extend(SUPPORTED_ISA)
-depthUs = list(range(2, 1024 + 1, 1))
 for i in validMacroTileSides:
     for j in validMacroTileSides:
         validMacroTiles.append([i, j])
@@ -112,7 +111,7 @@ def makeValidMFMA():
         [16, 16, 16, 1],
         [4, 4, 4, 16],
     ] + [[32, 32, 16, 1], [16, 16, 32, 1]]
-    validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1]]
+    validMFMA["X"] = [[32, 32, 4, 1], [16, 16, 8, 1], [16, 16, 16, 1]]
     validMFMA["F8"] = [[32, 32, 16, 1], [16, 16, 32, 1], [32, 32, 64, 1], [16, 16, 128, 1]]
     validMFMA["B8"] = validMFMA["F8"]
     validMFMA["F8B8"] = validMFMA["F8"]
@@ -717,7 +716,7 @@ validParameters = { # we need to make sure this matches develop
     # -1 : Only allow GLVW=1
     # -2 : Only allow max(GLVWA,GLVWB) < VW ?
     # -3 : Only allow min(GLVWA,GLVWB) < VW ?
-    "DepthU": depthUs,
+    "DepthU": [-1] + list(range(2, 1024 + 1, 1)),
     # integer amount of padding to put into LDS, in 2016 this didn't seem to help performance, profilers were showing that channel conflicts weren't really hurting
     # performance so this has been deprecated and probably doesn't work
     # -1 means use same padding as the VectorWidth if TLU=0 else 0.  (Padding only helps when transpose is required)
@@ -815,6 +814,7 @@ validParameters = { # we need to make sure this matches develop
 
 newMIValidParameters = {
     "EnableF32XdlMathOp": [False, True],
+    "UseF32XEmulation": [False, True],
     'EnableMatrixInstruction': [False, True],
     'ISA': -1,
     'MFMA_BF16_1K': [False, True],

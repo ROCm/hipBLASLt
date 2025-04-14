@@ -21,19 +21,15 @@
 ################################################################################
 
 from rocisa.enum import InstType
-from rocisa.container import vgpr, sgpr, accvgpr, mgpr, Holder
+from rocisa.code import Module
+from rocisa.container import HolderContainer, RegisterContainer, RegName
 from rocisa.instruction import Instruction, SWaitCnt
 
-from .Code import Module
-from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
-from .Formatting import printAssert, printExit
 
 from functools import lru_cache
 from math import log
 from typing import Tuple
-import random
-import string
 
 ########################################
 # mfma

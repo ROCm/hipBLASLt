@@ -22,7 +22,6 @@
 
 from rocisa.container import SMEMModifiers, VOP3PModifiers, MUBUFModifiers
 from rocisa.enum import CvtType, RoundType
-
 from ..Common import DataDirection, SemanticVersion
 from ..Component import GlobalWriteComponents
 from ..SolutionStructs import Solution
@@ -33,7 +32,7 @@ from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, Selec
                             DataType
 from ..TensileInstructions.Instructions import *
 from ..AsmAddressCalculation import AddrCalculation
-from ..Components.PackData import formatting, PackData_F16, PackData_BF16
+from ..Components.PackData import formatting, PackData_F16, PackData_BF16, PackData_FLOAT8, PackData_FLOAT8_fnuz
 
 from math import ceil
 from ..TensileInstructions import log2
@@ -404,7 +403,7 @@ class GlobalWriteBatchWriter:
     addr1 = sgpr(tmpS06, 4)
     addr0 = vgpr(vgproffset)
     bps = self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.gwvw
-    
+
     if not self.kernel["MbskPrefetchOpt"]:
       for elementIdx in range(0, len(self.batchElements)):
         mask     = self.ss.elementMask[elementIdx]
@@ -584,7 +583,7 @@ class GlobalWriteBatchWriter:
 
         module.add(SynchronizerAddSkiplabel)
         module.addComment("buffer add end2\n")
-        
+
     else:
       tmpWSD = self.parentWriter.sgprPool.checkOutAligned(4, 4, preventOverflow=False)
       GSUtotal = self.parentWriter.getMBSKGSUTotal(self.kernel)-1
@@ -596,34 +595,34 @@ class GlobalWriteBatchWriter:
         for j in range(0, len(self.batchElements)):
           tmpVAdd[i][j] = tmpVidx
           tmpVidx += loadWidth
-      
+
       SynchronizerAddEndlabel = [""] * (unrolledWGs+1)
 
       for idx in range(0, unrolledWGs+1):
         SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)
         SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
         SynchronizerAddEndlabel[idx] = Label(self.parentWriter.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
-      
+
       # set buffer load address for WG0
       module.add(SMovB64(sgpr(tmpWSD+0, 2), sgpr("WSDstart+0", 2), "Move workspace start"))
       module.add(SMovB64(sgpr(tmpWSD+2, 2), sgpr("SrdD+2", 2), ""))
-      
+
       # Insert check synchronizer done code here for better scheduling
       module.add(checkSyncCode)
-      
+
       # set buffer load address for WG1
       module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpS04+0), comment="" ))
       module.add(SAddCU32(dst=sgpr("WSDstart+1"), src0=sgpr("WSDstart+1"), src1=sgpr(tmpS04+1), comment="" ))
       module.add(SMovB64(sgpr(tmpS06+0, 2), sgpr("WSDstart+0", 2), "Move workspace start"))
       module.add(SMovB64(sgpr(tmpS06+2, 2), sgpr("SrdD+2", 2), ""))
-      
+
       ReductionStartlabel = Label(self.parentWriter.labels.getNameInc("Reduction_Start"), "Reduction Start")
       ReductionEndlabel   = Label(self.parentWriter.labels.getNameInc("Reduction_End"), "Reduction End")
       module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-      
+
       # pre-load
       SyncloadedData = 0
-      
+
       # first 2 WGs: read same element first for earlier reduction
       for elementIdx in range(0, len(self.batchElements)):
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -642,16 +641,16 @@ class GlobalWriteBatchWriter:
           module.add(self.parentWriter.chooseGlobalRead(True, bps, data, \
                           addr0, sgpr(tmpAddr1, 4), soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="load GSU WG %d element %d " % (uidx, elementIdx)))
-          
+
           SyncloadedData += 1
-      
-      module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=2)) 
+
+      module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=2))
       module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="GSUSync <= 0?"))
       module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[1].getLabelName(), comment=""))
       module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpS04+0), comment="" ))
       module.add(SAddCU32(dst=sgpr("WSDstart+1"), src0=sgpr("WSDstart+1"), src1=sgpr(tmpS04+1), comment="" ))
       module.add(SMovB64(sgpr(tmpS06+0, 2), sgpr("WSDstart+0", 2), "Move workspace start"))
-      
+
       # other WGs: read all elements together
       for uidx in range(2, unrolledWGs+1):
         for elementIdx in range(0, len(self.batchElements)):
@@ -666,23 +665,23 @@ class GlobalWriteBatchWriter:
                           addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="load GSU WG %d element %d " % (uidx, elementIdx)))
           SyncloadedData += 1
-        
-        module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1)) 
+
+        module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
         module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="GSUSync <= 0?"))
         module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[uidx].getLabelName(), comment=""))
         module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpS04+0), comment="" ))
         module.add(SAddCU32(dst=sgpr("WSDstart+1"), src0=sgpr("WSDstart+1"), src1=sgpr(tmpS04+1), comment="" ))
         module.add(SMovB64(sgpr(tmpS06+0, 2), sgpr("WSDstart+0", 2), "Move workspace start"))
-      
+
       module.addComment("buffer load end\n")
 
       ##################################### reduction start #####################################
       module.addComment("buffer add start")
-      
+
       vscnt = 0
       lgkmcnt = -1
       vmcnt = SyncloadedData
-      
+
       # reduce first 2 WGs
       for elementIdx in range(0, len(self.batchElements)):
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -690,7 +689,7 @@ class GlobalWriteBatchWriter:
         data = tmpVAdd[-1][elementIdx]
         vgprstart   = self.ss.elementSumIdx[elementIdx]
         vmcnt       = vmcnt - 2 if vmcnt > 0 else 0
-      
+
         module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
         if ((self.gwvw % 2) == 1):
           for j in range(0, int(self.gwvw)):
@@ -699,9 +698,9 @@ class GlobalWriteBatchWriter:
         else:
           for j in range(0, int(self.gwvw/2)):
             module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
-                              src1=vgpr(data+j*2, 2), comment="buffer pk"))  
+                              src1=vgpr(data+j*2, 2), comment="buffer pk"))
 
-        # prefetch 
+        # prefetch
         if self.ss.optSrdIncForRow and addrCalc.rowInc:
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
 
@@ -709,8 +708,8 @@ class GlobalWriteBatchWriter:
                         addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                         comment="prefetch element %d " % (elementIdx)))
         vmcnt += 1
-      
-      module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1)) 
+
+      module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
       module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-unrolledWGs, comment=""))
       module.add(SCBranchSCC1(labelName=ReductionEndlabel.getLabelName(), comment="Reduction finished"))
       module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpS04+0), comment="" ))
@@ -719,7 +718,7 @@ class GlobalWriteBatchWriter:
       module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="disable buffer load if GSUSync <= 0"))
       module.add(SCSelectB32(sgpr(tmpS06+2), 0, sgpr(tmpS06+2), ""))
       module.add(ReductionStartlabel)
-      
+
       for uidx in range(0, unrolledWGs):
         for elementIdx in range(0, len(self.batchElements)):
           addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -727,7 +726,7 @@ class GlobalWriteBatchWriter:
           data     = tmpVAdd[uidx][elementIdx]
           vgprstart   = self.ss.elementSumIdx[elementIdx]
           vmcnt       = vmcnt -1 if vmcnt > 0 else 0
-        
+
           module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
           if ((self.gwvw % 2) == 1):
             for j in range(0, int(self.gwvw)):
@@ -736,9 +735,9 @@ class GlobalWriteBatchWriter:
           else:
             for j in range(0, int(self.gwvw/2)):
               module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
-                                src1=vgpr(data+j*2, 2), comment="buffer pk"))  
+                                src1=vgpr(data+j*2, 2), comment="buffer pk"))
 
-          # prefetch 
+          # prefetch
           if self.ss.optSrdIncForRow and addrCalc.rowInc:
             module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, tmpS05, dst=tmpS06))
 
@@ -746,8 +745,8 @@ class GlobalWriteBatchWriter:
                           addr0, addr1, soffset=0, offset=addrCalc.globalOffset, glc=True, slc=True,\
                           comment="prefetch element %d " % (elementIdx)))
           vmcnt += 1
-          
-        module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1)) 
+
+        module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
         module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-unrolledWGs, comment=""))
         module.add(SCBranchSCC1(labelName=ReductionEndlabel.getLabelName(), comment="Reduction finished"))
         module.add(SAddU32(dst=sgpr("WSDstart+0"), src0=sgpr("WSDstart+0"), src1=sgpr(tmpS04+0), comment="" ))
@@ -755,21 +754,21 @@ class GlobalWriteBatchWriter:
         module.add(SMovB64(sgpr(tmpS06+0, 2), sgpr("WSDstart+0", 2), "Move workspace start"))
         module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="disable buffer load if GSUSync <= 0"))
         module.add(SCSelectB32(sgpr(tmpS06+2), 0, sgpr(tmpS06+2), ""))
-      
+
       module.add(SBranch(labelName=ReductionStartlabel.getLabelName(), comment=""))
-      
+
       for k in range(unrolledWGs, 0, -1):
         module.addSpaceLine()
         module.add(SynchronizerAddEndlabel[k])
         vmcnt = (k+1) * len(self.batchElements)
-        
+
         # reduce first 2 WGs
         module.addSpaceLine()
         for elementIdx in range(0, len(self.batchElements)):
           vmcnt = vmcnt-2 if vmcnt > 0 else 0
           vgprstart   = self.ss.elementSumIdx[elementIdx]
           data  = tmpVAdd[-1][elementIdx]
-          
+
           module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
           if ((self.gwvw % 2) == 1):
@@ -780,14 +779,14 @@ class GlobalWriteBatchWriter:
             for j in range(0, int(self.gwvw/2)):
               module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
                                 src1=vgpr(data+j*2, 2), comment="buffer pk"))
-        
+
         for i in range(1, k):
           module.addSpaceLine()
           for elementIdx in range(0, len(self.batchElements)):
             vmcnt = vmcnt-1 if vmcnt > 0 else 0
             vgprstart   = self.ss.elementSumIdx[elementIdx]
             data  = tmpVAdd[i-1][elementIdx]
-            
+
             module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
             if ((self.gwvw % 2) == 1):
@@ -798,9 +797,9 @@ class GlobalWriteBatchWriter:
               for j in range(0, int(self.gwvw/2)):
                 module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
                                   src1=vgpr(data+j*2, 2), comment="buffer pk"))
-                
+
         module.add(SBranch(labelName=ReductionEndlabel.getLabelName(), comment="Reduction End"))
-      
+
       module.addComment("buffer add end\n")
       module.add(ReductionEndlabel)
       module.add(SMovB64(sgpr("WSDstart+0", 2), sgpr(tmpWSD+0, 2), "restore for next batch"))
@@ -1089,7 +1088,7 @@ class GlobalWriteBatchWriter:
             printExit("Use E does not support StoreRemapVectorWidth if GSU == 1.")
             # module.add(addrCalc.incrementToNextRow(self.kernel, "E", self.ss, self.tmpS01, isCompute=True))
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
-          module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
+          module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, comment="set shift rows"))
           module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
 
     module.add(loadInputCode)
@@ -1116,7 +1115,7 @@ class GlobalWriteBatchWriter:
           for vi in range(self.gwvw):
             for rIdx in range(0, regsPerScalar):
               idx = self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.states.c.startVgprValu
-              module.add(VMovB32(vgpr("ValuC+%u"%(idx)), vgpr("ValuC+%u"%(idx + self.ss.lsuStartVgprOffset)), "load from "+str(idx + self.ss.lsuStartVgprOffset)+" to "+str(idx) ))
+              module.add(VMovB32(vgpr("ValuC+%u"%(idx)), vgpr("ValuC+%u"%(idx + self.ss.lsuStartVgprOffset)), comment="load from "+str(idx + self.ss.lsuStartVgprOffset)+" to "+str(idx) ))
       self.ss.lsuStartVgprOffset += len(self.batchElements) * self.gwvw * regsPerScalar
 
       if not self.kernel["MIArchVgpr"]:
@@ -1322,21 +1321,21 @@ class GlobalWriteBatchWriter:
 
     if self.kernel["_GlobalAccumulation"] != 'MultipleBuffer':
       if self.kernel["ProblemType"]["DestDataType"].isBFloat16() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBf16Mask), "0xffff0000", comment="mask for pack two bfloat16 element to 32bit" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp32Nan), "0x7fff0000", comment="fp32 Nan" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBf16Inc), "0x7fff", comment="rounding bias for bfloat16" ))
       elif self.kernel["ProblemType"]["DestDataType"].isFloat8_fnuz() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43700000", comment="Fp8 Max value 240 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3700000", comment="Fp8 Min value -240 as float32" ))
       elif self.kernel["ProblemType"]["DestDataType"].isFloat8() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43E00000", "Fp8 Max value 448 as float32" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3E00000", "Fp8 Min value -448 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Max), "0x43E00000", comment="Fp8 Max value 448 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprFp8Min), "0xc3E00000", comment="Fp8 Min value -448 as float32" ))
       elif self.kernel["ProblemType"]["DestDataType"].isAnyBFloat8() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
-        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8NanInf), "0x207", comment="Nan and +/- inf" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Max), "0x47600000", comment="BF8 Max value 57344 as float32" ))
+        module.add(VMovB32(vgpr(self.cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
     storeCode = Module("GroupLoadStore")
     vmcntTotalIssued = self.loadsBetaIssued + self.loadsEIssued
@@ -1366,7 +1365,7 @@ class GlobalWriteBatchWriter:
             printExit("Use E does not support StoreRemapVectorWidth if GSU == 1.")
             # module.add(addrCalc.incrementToNextRow(self.kernel, "E", self.ss, self.tmpS01, isCompute=True))
           module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
-          module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
+          module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, comment="set shift rows"))
           module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
 
       # apply in-bounds exec mask
@@ -1511,6 +1510,16 @@ class GlobalWriteBatchWriter:
           elif self.kernel["ProblemType"]["DataTypeE"].isSingle():
             if not mergeActFuncCall:
               vgprDst = "ValuC+%d" % vgprDst
+          elif self.kernel["ProblemType"]["DataTypeE"].isFloat8():
+            packdata = PackData_FLOAT8()
+            module.add(packdata(self.gwvw, tmpVgpr, vgprDst, self.cvtVgprStruct, self.tmpS01, self.laneSGPRC,
+                                inputPrefix=prefixStr, prefixOffset=prefixOffset))
+            vgprDst = tmpVgpr
+          elif self.kernel["ProblemType"]["DataTypeE"].isFloat8_fnuz():
+            packdata = PackData_FLOAT8_fnuz()
+            module.add(packdata(self.gwvw, tmpVgpr, vgprDst, self.cvtVgprStruct, self.tmpS01, self.laneSGPRC,
+                                inputPrefix=prefixStr, prefixOffset=prefixOffset))
+            vgprDst = tmpVgpr
           else:
             printExit("Unsupport type for E output. (%s)"%self.kernel["ProblemType"]["DataTypeE"].toEnum())
         else:

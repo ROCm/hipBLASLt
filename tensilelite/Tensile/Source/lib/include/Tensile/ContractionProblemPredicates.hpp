@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1252,7 +1252,7 @@ namespace TensileLite
                 };
                 TypesEqual() = default;
 
-                std::array<DataType, 5> value;
+                std::array<rocisa::DataType, 5> value;
 
                 static std::string Type()
                 {
@@ -1791,40 +1791,6 @@ namespace TensileLite
                 }
             };
 
-            struct ExperimentalDTree
-                : public Predicate_CRTP<ExperimentalDTree, ContractionProblemGemm>
-            {
-                enum
-                {
-                    HasIndex = false,
-                    HasValue = false
-                };
-
-                ExperimentalDTree() = default;
-
-                static std::string Type()
-                {
-                    return "ExperimentalDTree";
-                }
-
-                virtual bool operator()(ContractionProblemGemm const& problem) const override
-                {
-                    return (problem.performanceMetric() == PerformanceMetric::ExperimentalDTree);
-                }
-
-                virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
-                {
-                    return debugEvalCmp(problem,
-                                        stream,
-                                        "prob",
-                                        problem.performanceMetric(),
-                                        "==",
-                                        "sol: PerformanceMetric::ExperimentalDTree",
-                                        PerformanceMetric::ExperimentalDTree);
-                }
-            };
-
             struct ExperimentalStreamK
                 : public Predicate_CRTP<ExperimentalStreamK, ContractionProblemGemm>
             {
@@ -1856,6 +1822,35 @@ namespace TensileLite
                                         "==",
                                         "sol: PerformanceMetric::ExperimentalStreamK",
                                         PerformanceMetric::ExperimentalStreamK);
+                }
+            };
+
+            struct ExperimentalMLP : public Predicate_CRTP<ExperimentalMLP, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+                ExperimentalMLP() = default;
+                static std::string Type()
+                {
+                    return "ExperimentalMLP";
+                }
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return (problem.performanceMetric() == PerformanceMetric::ExperimentalMLP);
+                }
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(problem,
+                                        stream,
+                                        "prob",
+                                        problem.performanceMetric(),
+                                        "==",
+                                        "sol: PerformanceMetric::ExperimentalMLP",
+                                        PerformanceMetric::ExperimentalMLP);
                 }
             };
 
@@ -2058,10 +2053,10 @@ namespace TensileLite
                     HasIndex = false,
                     HasValue = true
                 };
-                DataType value;
+                rocisa::DataType value;
 
                 ActivationComputeTypeEqual() = default;
-                ActivationComputeTypeEqual(DataType value)
+                ActivationComputeTypeEqual(rocisa::DataType value)
                     : value(value)
                 {
                 }
@@ -2196,6 +2191,50 @@ namespace TensileLite
                 }
             };
 
+            struct DataTypeEEqual : public Predicate_CRTP<DataTypeEEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                rocisa::DataType value;
+
+                DataTypeEEqual() = default;
+                DataTypeEEqual(rocisa::DataType value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "DataTypeE";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    if(problem.useE())
+                    {
+                        return problem.e().dataType() == value;
+                    }
+                    return true;
+                }
+
+                virtual std::string toString() const override
+                {
+                    return concatenate(this->type(), "(e:", value);
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    debugEvalCmp(
+                        problem, stream, "prob_e", problem.e().dataType(), "==", "sol_e", value);
+                    return rv;
+                }
+            };
+
             struct UseScaleABCheck : public Predicate_CRTP<UseScaleABCheck, ContractionProblemGemm>
             {
                 enum
@@ -2315,7 +2354,7 @@ namespace TensileLite
                 };
                 BiasDataTypeWhiteList() = default;
 
-                std::vector<DataType> value;
+                std::vector<rocisa::DataType> value;
 
                 static std::string Type()
                 {
@@ -2555,10 +2594,10 @@ namespace TensileLite
                     HasIndex = false,
                     HasValue = true
                 };
-                DataType value;
+                rocisa::DataType value;
 
                 F32XdlMathOpEqual() = default;
-                F32XdlMathOpEqual(DataType value)
+                F32XdlMathOpEqual(rocisa::DataType value)
                     : value(value)
                 {
                 }

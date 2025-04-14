@@ -20,10 +20,12 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..TensileInstructions import Module, Label, SAddU32, RegisterPoolResource, sgpr, scalarStaticDivideAndRemainder, \
+from rocisa.code import Module, Label
+from rocisa.container import sgpr, SMEMModifiers
+from ..TensileInstructions import SAddU32, ContinuousRegister, scalarStaticDivideAndRemainder, \
     SCmpLtU32, SCSelectB32, sMagicDivAlg2, SMulI32, SSubU32, SMinU32, SMovB32, SMovB64, SCBranchSCC1, SCmpLeU32, VMovB32, \
-    vgpr, SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, SMEMModifiers, \
-    log2, SBarrier, SStoreB32, SLongBranchPositive, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
+    vgpr, SAddCU32, SCmpGtU32, SCMovB32, SAddI32, SCmpEQU32, SCBranchSCC0, SLShiftLeftB32, SLoadB32, SWaitCnt, \
+    log2, SBarrier, SStoreB32, SBranch, ceilDivide, replaceHolder, SNop, staticMultiply, SSleep, \
     VAddU32, VAddF32, VAddF64, SAndB32, SLShiftRightB32, VReadfirstlaneB32, SBranchIfNotZero
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
@@ -66,7 +68,7 @@ class XCCMappingOn(XCCMapping):
             divisor = kernel["StreamKXCCMapping"]
             if ((divisor & (divisor - 1)) != 0): # Need temp registers if not power of 2
                 sTmp = writer.sgprPool.checkOutAligned(2, 2, "sTmp", preventOverflow=False)
-                sTmpRes  = RegisterPoolResource(idx=sTmp, size=2)
+                sTmpRes  = ContinuousRegister(idx=sTmp, size=2)
 
             # sGridC = ceil(grid / xccm)
             module.add(SAddU32(dst=sgpr(sGridC), src0=sgpr("skGrid"), src1=hex(kernel["StreamKXCCMapping"] - 1), comment="ceil(grid/xccm)"))
@@ -734,49 +736,25 @@ class StreamK(Component):
         #     vgprBf16Mask = vgprBf16Temp + 1
         #     vgprFp32Nan = vgprBf16Temp + 2
         #     vgprBf16Inc = vgprBf16Temp + 3
-        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" )
-        #     kStr += inst("v_mov_b32", vgpr(vgprFp32Nan), "0x7fff0000", "fp32 Nan" )
-        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Mask), "0xffff0000", comment="mask for pack two bfloat16 element to 32bit" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprFp32Nan), "0x7fff0000", comment="fp32 Nan" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Inc), "0x7fff", comment="rounding bias for bfloat16" )
         if kernel["ProblemType"]["DestDataType"].isBFloat16() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Mask), "0xffff0000", comment="mask for pack two bfloat16 element to 32bit" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp32Nan), "0x7fff0000", comment="fp32 Nan" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", comment="rounding bias for bfloat16" ))
         elif kernel["ProblemType"]["DestDataType"].isFloat8_fnuz() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", comment="Fp8 Max value 240 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", comment="Fp8 Min value -240 as float32" ))
         elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", "Fp8 Max value 448 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", "Fp8 Min value -448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", comment="Fp8 Max value 448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", comment="Fp8 Min value -448 as float32" ))
         elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
-
-        # DestDataType for 8bit Float can only be F8 or B8
-        # if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8(): # F8 is always HPA
-        #     # make vgprF8Temp0 always even to use pk instruction later
-        #     if tmpCVTVgpr % 2 == 0:
-        #         vgprF8Temp0 = tmpCVTVgpr
-        #         vgprF8Max = vgprF8Temp0 + 2
-        #         vgprF8Min = vgprF8Temp0 + 3
-        #     else:
-        #         vgprF8Max = tmpCVTVgpr
-        #         vgprF8Temp0 = vgprF8Max + 1
-        #         vgprF8Min = vgprF8Max + 3
-
-        #     if kernel["ProblemType"]["Fp32toFp8SWClip"]:
-        #         # set flag of f32 NaN and +/- INF for v_cmp_class
-        #         vgprFp32NanInfFlag = vgprF8Min + 1
-        #         kStr += inst("v_mov_b32", vgpr(vgprFp32NanInfFlag), "0x207", "flag for Nan and +/- inf" )
-        #         # set max/min values for clipping
-        #         if kernel["ProblemType"]["DestDataType"].isFloat8():
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x43700000", "save 240.0f as max for clipping" )
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC3700000", "save -240.0f as min for clipping" )
-        #         else: #BFloat8
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x47600000", "save 57344.0f as max for clipping" )
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC7600000", "save -57344`.0f as min for clipping" )
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", comment="BF8 Max value 57344 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
         storeCode = Module("Partials GroupLoadStore")
         for elementIdx in range(len(batchElements)):
@@ -788,7 +766,7 @@ class StreamK(Component):
             storeWidth = kernel["StoreVectorWidth"]
             # storeWidth = 2
             if batchIdx == 0 and elementIdx == 0:
-                tmpSgprRes = RegisterPoolResource(idx=tmpS01, size=1)
+                tmpSgprRes = ContinuousRegister(idx=tmpS01, size=1)
                 module.add(staticMultiply(vgpr(addr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpSgprRes))
                 # kStr += inst("v_mul_lo_u32", , "Partials buffer address")
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
@@ -1235,51 +1213,25 @@ class StreamK(Component):
         #     vgprBf16Mask = vgprBf16Temp + 1
         #     vgprFp32Nan = vgprBf16Temp + 2
         #     vgprBf16Inc = vgprBf16Temp + 3
-        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" )
-        #     kStr += inst("v_mov_b32", vgpr(vgprFp32Nan), "0x7fff0000", "fp32 Nan" )
-        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Mask), "0xffff0000", comment="mask for pack two bfloat16 element to 32bit" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprFp32Nan), "0x7fff0000", comment="fp32 Nan" )
+        #     kStr += inst("v_mov_b32", vgpr(vgprBf16Inc), "0x7fff", comment="rounding bias for bfloat16" )
         if kernel["ProblemType"]["DestDataType"].isBFloat16() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Mask), "0xffff0000", comment="mask for pack two bfloat16 element to 32bit" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp32Nan), "0x7fff0000", comment="fp32 Nan" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBf16Inc), "0x7fff", comment="rounding bias for bfloat16" ))
         elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", "OCP Fp8 Max value 448 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", "OCP Fp8 Min value -448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43E00000", comment="OCP Fp8 Max value 448 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3E00000", comment="OCP Fp8 Min value -448 as float32" ))
         elif kernel["ProblemType"]["DestDataType"].isFloat8_fnuz() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", "Fp8 Max value 240 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", "Fp8 Min value -240 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Max), "0x43700000", comment="Fp8 Max value 240 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprFp8Min), "0xc3700000", comment="Fp8 Min value -240 as float32" ))
         elif kernel["ProblemType"]["DestDataType"].isAnyBFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", "Nan and +/- inf" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", "BF8 Max value 57344 as float32" ))
-            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", "BF8 Min value -57344 as float32" ))
-
-        # DestDataType for 8bit Float can only be F8 or B8
-        # if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8(): # F8 is always HPA
-        #     # make vgprF8Temp0 always even to use pk instruction later
-        #     if tmpCVTVgpr % 2 == 0:
-        #         vgprF8Temp0 = tmpCVTVgpr
-        #         vgprF8Temp1 = vgprF8Temp0 + 1
-        #         vgprF8Max = vgprF8Temp0 + 2
-        #         vgprF8Min = vgprF8Temp0 + 3
-        #     else:
-        #         vgprF8Max = tmpCVTVgpr
-        #         vgprF8Temp0 = vgprF8Max + 1
-        #         vgprF8Temp1 = vgprF8Max + 2
-        #         vgprF8Min = vgprF8Max + 3
-
-        #     if kernel["ProblemType"]["Fp32toFp8SWClip"]:
-        #         # set flag of f32 NaN and +/- INF for v_cmp_class
-        #         vgprFp32NanInfFlag = vgprF8Min + 1
-        #         kStr += inst("v_mov_b32", vgpr(vgprFp32NanInfFlag), "0x207", "flag for Nan and +/- inf" )
-        #         # set max/min values for clipping
-        #         if kernel["ProblemType"]["DestDataType"].isFloat8():
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x43700000", "save 240.0f as max for clipping" )
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC3700000", "save -240.0f as min for clipping" )
-        #         else: #BFloat8
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Max), "0x47600000", "save 57344.0f as max for clipping" )
-        #             kStr += inst("v_mov_b32", vgpr(vgprF8Min), "0xC7600000", "save -57344`.0f as min for clipping" )
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8NanInf), "0x207", comment="Nan and +/- inf" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", comment="BF8 Max value 57344 as float32" ))
+            module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
         for elementIdx in range(0, len(batchElements)):
             element = batchElements[elementIdx]

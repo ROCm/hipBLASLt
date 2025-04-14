@@ -72,10 +72,10 @@ endif()
 add_subdirectory("${Tensile_ROOT}/Source" "Tensile")
 include("${Tensile_ROOT}/Source/TensileCreateLibrary.cmake")
 
-# Output target: ${Tensile_VAR_PREFIX}_LIBRARY_TARGET. Ensures that the libs get built in Tensile_OUTPUT_PATH/library.
 function(TensileCreateLibraryFiles
          Tensile_LOGIC_PATH
          Tensile_OUTPUT_PATH
+         Tensile_LIBRARY_TARGET
          )
 
   # Boolean options
@@ -121,9 +121,9 @@ function(TensileCreateLibraryFiles
 
   # Parse incoming options
   if(Tensile_TENSILE_ROOT)
-    set(Script "${Tensile_TENSILE_ROOT}/bin/TensileCreateLibraryPy")
+    set(Script "${Tensile_TENSILE_ROOT}/bin/TensileCreateLibrary")
   else()
-    set(Script "${Tensile_ROOT}/bin/TensileCreateLibraryPy")
+    set(Script "${Tensile_ROOT}/bin/TensileCreateLibrary")
   endif()
 
   message(STATUS "Tensile script: ${Script}")
@@ -209,21 +209,16 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--build-id=${Tensile_BUILD_ID}")
   endif()
 
-  set(CommandLine PYTHONPATH=$ENV{PYTHONPATH} ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+  set(CommandLine ${CMAKE_COMMAND} -E env PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
   message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
 
   if(Tensile_EMBED_LIBRARY)
       set(Tensile_EMBED_LIBRARY_SOURCE "${Tensile_OUTPUT_PATH}/library/${Tensile_EMBED_LIBRARY}.cpp")
   endif()
 
-  if($ENV{TENSILE_SKIP_LIBRARY})
+  if(Tensile_SKIP_BUILD)
       message(STATUS "Skipping build of ${Tensile_OUTPUT_PATH}")
   else()
-
-      if(NOT Tensile_VAR_PREFIX)
-          set(Tensile_VAR_PREFIX TENSILE)
-      endif()
-
       if($ENV{ENABLE_ADDRESS_SANITIZER})
         # Must populate LD_PRELOAD with ASAN runtime if ASAN is being used.
         # Find the ASAN RT with compiler and update env for Tensile call.
@@ -242,8 +237,8 @@ function(TensileCreateLibraryFiles
       )
 
       add_custom_target(
-        "${Tensile_VAR_PREFIX}_LIBRARY_TARGET" ALL
-        COMMENT "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
+        ${Tensile_LIBRARY_TARGET} ALL
+        COMMENT "${Tensile_LIBRARY_TARGET}"
         DEPENDS ${Tensile_OUTPUT_PATH}/library
       )
 
@@ -258,7 +253,7 @@ function(TensileCreateLibraryFiles
 
 endfunction()
 
-function(TensileCreateExtOpLibraries OutputFolder ArchStr)
+function(TensileCreateExtOpLibraries OutputFolder ArchStr TensileExt_LIBRARY_TARGET)
   string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
   list(REMOVE_DUPLICATES Archs)
   set(build_tmp_dir ${OutputFolder}/../build_tmp/ops)
@@ -275,12 +270,12 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND PYTHONPATH=$ENV{PYTHONPATH} bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
+    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
     COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
   )
 
   add_custom_target(
-    build_ext_op_library ALL
+    ${TensileExt_LIBRARY_TARGET} ALL
     WORKING_DIRECTORY "${cwd}"
     DEPENDS ${OutputFolder}/hipblasltExtOpLibrary.dat)
 

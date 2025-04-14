@@ -114,6 +114,7 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
         env["PYTHONPATH"] = module_path + ":" + env["PYTHONPATH"]
   else:
     env["PYTHONPATH"] = module_path
+
   createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]), useShortNames)
   subprocess.run(shlex.split(createLibraryScript), env=env, cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
@@ -233,7 +234,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, target
   import io
   runScriptFile = io.StringIO()
 
-  callCreateLibraryCmd = ROOT_PATH + "/bin/TensileCreateLibraryPy"
+  callCreateLibraryCmd = ROOT_PATH + "/bin/TensileCreateLibrary"
 
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"

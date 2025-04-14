@@ -377,6 +377,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("UseE", value=self.useE))
+            predicates.append(ProblemPredicate("DataTypeE", value=self.eType))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleAB", value=self.useScaleAB))
@@ -583,7 +584,10 @@ class SizeMapping:
                  'workGroupMappingXCC',
                  'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
-                 'globalSplitUWorkGroupMappingRoundRobin'
+                 'globalSplitUWorkGroupMappingRoundRobin',
+                 'CUOccupancy',
+                 'PrefetchGlobalRead',
+                 'MathClocksUnrolledLoop'
                  ]
 
     @classmethod
@@ -597,6 +601,7 @@ class SizeMapping:
             globalAccum = 3
         if d['_GlobalAccumulation'] == 'PartialsBuffer':
             globalAccum = 4
+        pgr = int(d['PrefetchGlobalRead'])
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
@@ -626,7 +631,10 @@ class SizeMapping:
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
                    workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
-                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
+                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin'],
+                   CUOccupancy              = d['CUOccupancy'],
+                   PrefetchGlobalRead       = pgr,
+                   MathClocksUnrolledLoop   = d['MathClocksUnrolledLoop']
                    )
 
     @classmethod
@@ -687,13 +695,13 @@ class Solution:
         isaInfoMap: Dict[str, IsaInfo]
     ):
         return cls.FromOriginalState(
-                   solution._state, 
-                   splitGSU, 
-                   printSolutionRejectionReason, 
-                   printIndexAssignmentInfo, 
+                   solution._state,
+                   splitGSU,
+                   printSolutionRejectionReason,
+                   printIndexAssignmentInfo,
                    depthUConfig,
-                   assembler, 
-                   isaInfoMap, 
+                   assembler,
+                   isaInfoMap,
                    solution.srcName
                )
 

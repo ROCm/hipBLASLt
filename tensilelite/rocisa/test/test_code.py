@@ -107,38 +107,5 @@ def test_copy():
     valueset = code.ValueSet("Test", 1)
     copyfunc(valueset)
 
-@timeit_decorator
-def test_module_push(n):
-    arr = []
-    for _ in range(n):
-        arr.append(code.Module("module"))
-
-@timeit_decorator
-def test_dummy_push(n):
-    arr = []
-    for _ in range(n):
-        arr.append(base.DummyItem())
-
-@timeit_decorator
-def test_item_deepcopy(n):
-    item = base.Item("Hello")
-    arr = []
-    for _ in range(n):
-        arr.append(deepcopy(item))
-
-@timeit_decorator
-def test_item_fastdeepcopy(n):
-    item = base.Item("Hello")
-    arr = []
-    for _ in range(n):
-        arr.append(fastdeepcopy(item))
-
-def test_time():
-    test_module_push(100000)
-    test_dummy_push(100000)
-    test_item_deepcopy(100000)
-    test_item_fastdeepcopy(100000)
-
 test_code()
 test_copy()
-test_time()

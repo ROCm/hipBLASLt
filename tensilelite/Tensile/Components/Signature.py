@@ -22,10 +22,10 @@
 #
 ################################################################################
 
+from rocisa.code import SignatureBase
 from rocisa.enum import SignatureValueKind as SVK
 from ..Component import Signature
 from ..Common import DataDirection
-from ..TensileInstructions import SignatureBase
 from ..Activation import ActivationType
 
 from math import ceil

@@ -25,21 +25,8 @@ Where *op( )* refers to in-place operations, such as transpose and non-transpose
 The activation function supports GELU, ReLU, and Swish (SiLU). the bias vector matches matrix D rows and
 broadcasts to all D columns.
 
-The following table provides data type support. Note that fp8 and bf8 are only supported on the
-gfx94x platform.
-
-| A | B | C | D | Compute(Scale) |
-| :--- | :--- | :--- | :--- | :--- |
-| fp32  | fp32  | fp32  | fp32  | fp32  |
-| fp16  | fp16  | fp16  | fp16  | fp32  |
-| fp16  | fp16  | fp16  | fp32  | fp32  |
-| bf16  | bf16  | bf16  | bf16  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp32   | fp32  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp16   | fp16  | fp32  |
-| fp8/bf8  | fp8/bf8  | bf16   | bf16  | fp32  |
-| fp8/bf8  | fp8/bf8  | fp8   | fp8  | fp32  |
-| fp8/bf8  | fp8/bf8  | bf8   | bf8  | fp32  |
-| int8  | int8 | int8  | int8  | int32 |
+For the supported data types, see
+[Supported data types](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/data-type-support.html).
 
 ## Documentation
 
@@ -77,8 +64,8 @@ Required software:
 
 * Git
 * CMake 3.16.8 or later
-* python3.7 or later
-* python3.7-venv or later
+* python3.8 or later
+* python3.8-venv or later
 * AMD [ROCm](https://github.com/RadeonOpenCompute/ROCm), version 5.5 or later
 * [hipBLAS-common](https://github.com/ROCm/hipBLAS-common)
 * [roctracer](https://github.com/ROCm/roctracer)
@@ -93,6 +80,9 @@ git clone https://github.com/ROCmSoftwarePlatform/hipBLASLt
 
 # Go to hipBLASLt directory
 cd hipBLASLt
+
+# Run requirements.txt in folder tensilelite
+python3 -m pip install -r tensilelite/requirements.txt
 
 # Run install.sh script
 # Command line options:

@@ -21,67 +21,57 @@
 #
 # ########################################################################
 cmake_minimum_required(VERSION 3.15)
-project(rocisa LANGUAGES CXX)
+project(rocisa LANGUAGES HIP CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# find nanobind
-execute_process(
-    COMMAND python3 -m nanobind --cmake_dir
-    OUTPUT_VARIABLE nanobind_DIR
-    ERROR_VARIABLE error
-    RESULT_VARIABLE result
-)
-if(result)
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -E env python3 -m pip install nanobind
-        ERROR_VARIABLE error
-        RESULT_VARIABLE result
-    )
-    if(result)
-        message(FATAL_ERROR "Failed to install nanobind via pip: ${error}")
-    endif()
-    execute_process(
-        COMMAND python3 -m nanobind --cmake_dir
-        OUTPUT_VARIABLE nanobind_DIR
-        ERROR_VARIABLE error
-        RESULT_VARIABLE result
-    )
+if(DEFINED Python_EXECUTABLE AND Python_EXECUTABLE)
+    message(STATUS "Manually set Python_EXECUTABLE to ${Python_EXECUTABLE}")
 endif()
-message(STATUS "Nanobind path: ${nanobind_DIR}")
-string(REPLACE "\n" "" nanobind_DIR "${nanobind_DIR}")
 
-if(DEFINED PYTHON_VERSION AND PYTHON_VERSION)
-    message(STATUS "Manually set Python version to ${PYTHON_VERSION}")
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+
+if(Python_VERSION VERSION_GREATER_EQUAL "3.8")
+    message(STATUS "Found Python version: ${Python_VERSION}")
 else()
-    set(PYTHON_VERSION 3)
+    message(FATAL_ERROR "Python version 3.8 or higher is required, but found version ${Python_VERSION}")
 endif()
 
-# Use cmake -Dpybind11_DIR=$(python3 -m nanobind --cmakedir) .. to set pybind dir
-# Use cmake -DCMAKE_PREFIX_PATH=$(python3 -m nanobind --cmake_dir) .. to set nanobind
+include(FetchContent)
+FetchContent_Declare(
+  nanobind
+  GIT_REPOSITORY https://github.com/wjakob/nanobind.git
+  GIT_TAG        9b3afa9dbdc23641daf26fadef7743e7127ff92f # v2.6.1
+)
+FetchContent_MakeAvailable(nanobind)
 
-find_package(Python ${PYTHON_VERSION} COMPONENTS Interpreter Development REQUIRED)
-find_package(nanobind CONFIG REQUIRED HINTS ${nanobind_DIR})
+set(ROCISAINST_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/instruction.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/common.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/branch.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/cmp.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/cvt.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/mem.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/mfma.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/extension.cpp)
 
-set(ROCISAINST_SOURCE src/instruction/instruction.cpp
-                      src/instruction/common.cpp
-                      src/instruction/branch.cpp
-                      src/instruction/cmp.cpp
-                      src/instruction/cvt.cpp
-                      src/instruction/mem.cpp
-                      src/instruction/mfma.cpp)
+set(ROCISAPASS_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/pass.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/graph.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/composite.cpp)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-nanobind_add_module(rocisa NOMINSIZE src/main.cpp
-                                     src/base.cpp
-                                     src/code.cpp
-                                     src/container.cpp
-                                     src/count.cpp
-                                     src/enum.cpp
-                                     src/label.cpp
-                                     ${ROCISAINST_SOURCE})
+nanobind_add_module(rocisa NOMINSIZE NB_SUPPRESS_WARNINGS
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/main.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/base.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/code.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/container.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/count.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/enum.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/label.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/macro.cpp
+                        ${ROCISAINST_SOURCE}
+                        ${ROCISAPASS_SOURCE})
+target_include_directories(rocisa PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/include)

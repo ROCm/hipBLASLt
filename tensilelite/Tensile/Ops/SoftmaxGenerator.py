@@ -20,6 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.container import MUBUFModifiers
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from functools import wraps
@@ -273,7 +274,7 @@ class SoftmaxKernelGenerator:
         num_elem_read = 1
         BufferLoadType = self.global_read_inst_type(num_elem_read)
         data_reg_idx = self.vgpr_pool.checkOut(1)
-        module.add(BufferLoadType(ti.vgpr(data_reg_idx), ti.vgpr(byte_offset_reg_idx), ti.sgpr(srd_reg_idx, self.srd_num_reg), ti.sgpr(soffset_reg_idx), ti.MUBUFModifiers(offen=True)))
+        module.add(BufferLoadType(ti.vgpr(data_reg_idx), ti.vgpr(byte_offset_reg_idx), ti.sgpr(srd_reg_idx, self.srd_num_reg), ti.sgpr(soffset_reg_idx), MUBUFModifiers(offen=True)))
         self.vgpr_pool.checkIn(byte_offset_reg_idx)
 
         if sync:
@@ -542,7 +543,7 @@ class SoftmaxKernelGenerator:
             module.add(local_offset_mod)
 
             GlobalWriteInstType = self.global_write_inst_type(1)
-            module.add(GlobalWriteInstType(ti.vgpr(data_reg_idx), ti.vgpr(local_byte_offset_reg_idx), ti.sgpr(srd_reg_idx, self.srd_num_reg), ti.sgpr(wg_byte_offset_reg_idx), ti.MUBUFModifiers(offen=True)))
+            module.add(GlobalWriteInstType(ti.vgpr(data_reg_idx), ti.vgpr(local_byte_offset_reg_idx), ti.sgpr(srd_reg_idx, self.srd_num_reg), ti.sgpr(wg_byte_offset_reg_idx), MUBUFModifiers(offen=True)))
 
             if sync:
                 module.add(ti.SWaitCnt(vmcnt=0))

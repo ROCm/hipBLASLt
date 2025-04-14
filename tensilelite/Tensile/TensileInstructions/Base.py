@@ -32,7 +32,6 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from Tensile.Common import IsaInfo, IsaVersion
-from Tensile.Common.Capabilities import initAsmCaps, initArchCaps, initRegisterCaps, initAsmBugs
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
 from timeit import default_timer as timer 

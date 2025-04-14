@@ -20,8 +20,10 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import DataType, Label, Module, vgpr, sgpr, accvgpr, \
-                                 Holder, SBranchIfNotZero
+from rocisa.code import Label, Module
+from rocisa.container import vgpr, sgpr, accvgpr, Holder
+
+from .TensileInstructions import DataType, SBranchIfNotZero
 from .TensileInstructions.Instructions import *
 
 def allocPostLoopSrdSuppressRaw(ch: str, chAddress: str, labelStr: str, sgprLength) -> Module:

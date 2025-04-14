@@ -29,10 +29,11 @@ from enum import Enum, IntFlag
 from typing import List, Union
 
 from rocisa import rocIsa
-from rocisa.enum import *
+from rocisa.code import Module, TextBlock
+from rocisa.container import VCC, EXEC, vgpr, sgpr, HolderContainer, RegisterContainer, Holder
+from rocisa.enum import InstType
 
-from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, EXEC, vgpr, sgpr, Holder, DataType, SNop
+from .TensileInstructions import DataType
 from .TensileInstructions.Instructions import *
 from Tensile.Common.Utilities import printExit, printWarning
 

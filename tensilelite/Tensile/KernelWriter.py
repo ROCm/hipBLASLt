@@ -24,16 +24,17 @@
 
 from rocisa import rocIsa, countInstruction, countGlobalRead, \
             countLocalRead, countLocalWrite, countDSStoreB256
+from rocisa.code import Module, TextBlock, StructuredModule, KernelBody
 from rocisa.container import RegisterContainer
 from rocisa.label import LabelManager
+from rocisa.asmpass import rocIsaPass, rocIsaPassOption
+from rocisa.instruction import SLongBranchPositive
 from .TensileInstructions import replaceHolder, \
-                          KernelBody, Module, StructuredModule, TextBlock, Dump, \
-                          RegisterPool, Assert, TensileInstructionsPassOptions, \
-                          TensileInstructionsPass, ValueSet, RegSet, \
-                          SLongBranchPositive, SBranch, SCBranchSCC0, SCBranchSCC1
+                          Dump, RegisterPool, Assert, \
+                          SBranch, SCBranchSCC0, SCBranchSCC1
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
-from .TensilePass import TensilePass, TensilePassOptions
+from .TensilePass import TensilePass, TensilePassOptions, TensilePassGetCycles
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
 from .SolutionStructs import Solution, isPackedIndex
@@ -41,7 +42,7 @@ from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
   INDEX_CHARS, IsaVersion
-from Tensile.SolutionStructs.Naming import getKernelName
+from Tensile.SolutionStructs.Naming import getKernelNameMin
 from Tensile.Toolchain.Component import Assembler
 
 import abc
@@ -208,6 +209,7 @@ class StateValues:
   startVgprAddressDbg: int               = -1
   startVgprAlphaTmp: int                 = -1
   startVgprSerial: int                   = -1
+  startVgprCvt: int                      = -1
 
   numSgprSizesSum: int                   = 0
   numSgprSizesFree: int                  = 0
@@ -367,15 +369,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def __init__(
       self,
-      kernelMinNaming,
       kernelSerialNaming,
       assembler: Assembler,
       debugConfig: DebugConfig,
     ):
-    self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
-    self.ti = None
     self.debugConfig = debugConfig
 
     self.do = {}
@@ -399,6 +398,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["EdgeWrite"]   = True
     self.do["KeepDirectToLdsAlloc"] = False  # If true, keep regs used for LDS alloc even if not used
     self.do["OptimizeNumItersPLR0"] = True
+    self.do["AutoSplitDsWrite"] = True
 
     self.do["executeToInitEnd"] = 0
     self.do["executeToPrefetchEnd"] = 0
@@ -3235,8 +3235,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # Tensile pass
     tpo = TensilePassOptions()
-    tpo.removeDupActFunc = kernel["ActivationFuncCall"]
+    tpo.removeDupActFunc    = kernel["ActivationFuncCall"]
+    tpo.calculateMathClocks = True
+    numWaves                = kernel["NumThreads"] // kernel["WavefrontSize"]
     TensilePass(module, tpo)
+    kernel["MathClocksUnrolledLoop"] = TensilePassGetCycles(module, tpo, numWaves)
     # Add a label at the end of the asm for indexing.
     module.add(Label("ASM_End", "The end of the kernel"))
 
@@ -3246,10 +3249,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Tensile instruction pass, temporarily disable due to build time.
     # Kernels with epilog especially with activation is too long (50000~ lines).
     # Need to refactor global write elements.
-    tipo = TensileInstructionsPassOptions()
+    ripo = rocIsaPassOption()
     if kernel["ProblemType"]["ActivationType"] == "all":
-      tipo.removeDupAssign = False
-    TensileInstructionsPass(moduleKernelBody, tipo)
+      ripo.removeDupAssign = False
+    rocIsaPass(moduleKernelBody, ripo)
 
     error = self.states.overflowedResources
     print2(f"  found error code {error} with overflowed resources set to {self.states.overflowedResources}")
@@ -3264,12 +3267,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.language   = "ASM"
     # ISA version, such as 803
     version = tuple(kernel["ISA"])
-    if self.ti == None:
-      self.ti = rocIsa.getInstance()
-    self.ti.setKernel(version, kernel["WavefrontSize"])
+    ti = rocIsa.getInstance()
+    ti.setKernel(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
-    self.states = StateValues(version=version, kernel=kernel, kernelName=getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel))
+    self.states = StateValues(version=version, kernel=kernel, kernelName=getKernelNameMin(kernel, self.debugConfig.splitGSU))
     self.vgprs  = StateVgprs()
     self.sgprs  = collections.OrderedDict()
     self.codes  = CodeModules()
@@ -3286,9 +3288,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.exclasses.activation.setGuard(not kernel["ProblemType"]["ActivationNoGuard"])
     self.exclasses.activation.setAlt(kernel["ActivationAlt"])
 
-    self.states.asmCaps  = self.ti.getAsmCaps()
-    self.states.archCaps = self.ti.getArchCaps()
-    self.states.regCaps  = self.ti.getRegCaps()
+    self.states.asmCaps  = ti.getAsmCaps()
+    self.states.archCaps = ti.getArchCaps()
+    self.states.regCaps  = ti.getRegCaps()
 
     self.asmAssert = Assert(self.states.laneSGPRCount, kernel["WavefrontSize"], self.db["EnableAsserts"])
 
@@ -3612,7 +3614,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         raise RuntimeError("Sparse MatrixInstruction not supported for {0}".format(self.states.version))
 
       if (kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32() and (not self.states.asmCaps["HasMFMA_xf32"])):
-        raise RuntimeError("XF32 MatrixInstruction not supported for {0}".format(self.states.version))
+        if kernel["UseF32XEmulation"]:
+          printWarning("XF32 MatrixInstruction not supported for {0}, using emulation".format(self.states.version))
+        else:
+          raise RuntimeError("XF32 MatrixInstruction not supported for {0}".format(self.states.version))
 
     if not self.states.asmCaps["HasDirectToLds"]:
       kernel["DirectToLdsA"] = False
@@ -3942,19 +3947,19 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.a.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprA"] else 1 * self.states.rpla
     self.states.b.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprB"] else 1 * self.states.rpla
 
-    if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] and not kernel["LocalWriteUseSgprA"] :
-      if kernel["LdsOffsetA_Blk"]>=131072:
+    if self.states.archCaps["HasLDSGT64K"] and not kernel["LocalWriteUseSgprA"] :
+      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:      
         self.states.a.numVgprLocalReadAddr =3* self.states.rpla
         self.states.a.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif kernel["LdsOffsetA_Blk"]>=65536:
+      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"])or kernel["LdsNumElementsAlignedA"]>=65536: 
         self.states.a.numVgprLocalReadAddr =2* self.states.rpla
         self.states.a.numVgprLocalWriteAddr = 2* self.states.rpla
 
-    if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] and not kernel["LocalWriteUseSgprB"] :
-      if kernel["LdsOffsetA_Blk"]>=131072:
+    if self.states.archCaps["HasLDSGT64K"] and not kernel["LocalWriteUseSgprB"] :
+      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
         self.states.b.numVgprLocalReadAddr =3* self.states.rpla
         self.states.b.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif kernel["LdsOffsetA_Blk"]>=65536:
+      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
         self.states.b.numVgprLocalReadAddr =2* self.states.rpla
         self.states.b.numVgprLocalWriteAddr = 2* self.states.rpla
 
@@ -4321,6 +4326,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # code doesn't have to deal with fragmentation
     self.states.startVgprSerial = vgprIdx
     vgprIdx += 1 # for vgpr serial id
+
+    if kernel["UseF32XEmulation"]:
+      #align 64 bit
+      vgprIdx = int((vgprIdx + 1) / 2) * 2
+      self.states.startVgprCvt = vgprIdx
+      vgprIdx += 9 # for vgpr serial id
 
     self.states.totalVgprs = max(vgprIdx, self.states.c.numVgprValu)
     if self.states.totalVgprs < 0 or self.states.totalVgprs > self.states.regCaps["MaxVgpr"]:
@@ -5426,7 +5437,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     pass
 
   def getHeaderFileString(self, kernel):
-    kernelName = getKernelName(self.kernelMinNaming, self.debugConfig.splitGSU, kernel)
+    kernelName = getKernelNameMin(kernel, self.debugConfig.splitGSU)
     fileString = "" # CHeader
     fileString += "extern const unsigned char %s_coba[]; // code object byte array\n" % kernelName
 
@@ -5434,8 +5445,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
 
   def setTensileInstructions(self, data):
-    self.ti = rocIsa.getInstance()
-    self.ti.setData(data)
+    ti = rocIsa.getInstance()
+    ti.setData(data)
 
   def updateBranchPlaceHolder(self, module, placeholders, targets, operations):
     phs = [ ph for ph in placeholders ]

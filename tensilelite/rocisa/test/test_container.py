@@ -23,10 +23,12 @@
 import rocisa
 from copy import deepcopy
 import pickle
+import os
 
 isa = (9, 0, 10)
+rocm_path = os.environ.get("ROCM_PATH", "/opt/rocm")
 global_isa = rocisa.rocIsa.getInstance()
-global_isa.init(isa, "/opt/rocm/bin/amdclang++", False)
+global_isa.init(isa, rocm_path + "/bin/amdclang++", False)
 global_isa.setKernel(isa, 64)
 
 def test_containers():
@@ -36,22 +38,18 @@ def test_containers():
     
     # Test DSModifiers
     ds_modifiers = rocisa.container.DSModifiers(1, 2, gds=True)
-    assert ds_modifiers.toList() == [' offset:2 gds']
     assert str(ds_modifiers) == " offset:2 gds"
     
     # Test FLATModifiers
     flat_modifiers = rocisa.container.FLATModifiers(8, True, False, True, False)
-    assert flat_modifiers.toList() == [' offset:8 glc lds']
     assert str(flat_modifiers) == " offset:8 glc lds"
     
     # Test MUBUFModifiers
     mubuf_modifiers = rocisa.container.MUBUFModifiers(True, 12, True, False, True, False, True)
-    assert mubuf_modifiers.toList() == [' offen offset:12, glc']
     assert str(mubuf_modifiers) == " offen offset:12, glc"
     
     # Test SMEMModifiers
     smem_modifiers = rocisa.container.SMEMModifiers(True, False, 8)
-    assert smem_modifiers.toList() == [' offset:8 glc']
     assert str(smem_modifiers) == " offset:8 glc"
     
     # Test SDWAModifiers
@@ -60,27 +58,22 @@ def test_containers():
         src0_sel=rocisa.enum.SelectBit.WORD_0, 
         src1_sel=rocisa.enum.SelectBit.WORD_1
     )
-    assert sdwa_modifiers.toList() == ["dst_sel:WORD_0", "src0_sel:WORD_0", "src1_sel:WORD_1"]
     assert str(sdwa_modifiers) == " dst_sel:WORD_0 src0_sel:WORD_0 src1_sel:WORD_1"
     
     # Test VOP3PModifiers
     vop3p_modifiers = rocisa.container.VOP3PModifiers([0, 0], [0, 1], [0, 0])
-    assert vop3p_modifiers.toList() == ['op_sel:[0,0]', 'op_sel_hi:[0,1]', 'byte_sel:[0,0]']
     assert str(vop3p_modifiers) == " op_sel:[0,0] op_sel_hi:[0,1] byte_sel:[0,0]"
 
     # Test EXEC
     exec_modifiers = rocisa.container.EXEC(True)
-    assert exec_modifiers.toList() == ['exec']
     assert str(exec_modifiers) == "exec"
     
     # Test VCC
     vcc_modifiers = rocisa.container.VCC(True)
-    assert vcc_modifiers.toList() == ['vcc']
     assert str(vcc_modifiers) == "vcc"
     
     # Test HWRegContainer
     hwreg_container = rocisa.container.HWRegContainer("reg", [1, 1])
-    assert hwreg_container.toList() == ['hwreg(reg,1,1)']
     assert str(hwreg_container) == "hwreg(reg,1,1)"
     
     # Test RegName

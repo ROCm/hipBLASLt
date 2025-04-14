@@ -23,6 +23,7 @@
 import rocisa
 from copy import deepcopy
 import pickle
+import os
 
 isa = (9,0,10)
 
@@ -37,8 +38,9 @@ def getGfxName(isa):
     return rocisa.isaToGfx(isa)
 
 def test_rocisa():
+    rocm_path = os.environ.get("ROCM_PATH", "/opt/rocm")
     global_isa = rocisa.rocIsa.getInstance()
-    global_isa.init(isa, "/opt/rocm/bin/amdclang++", False)
+    global_isa.init(isa, rocm_path + "/bin/amdclang++", False)
     global_isa.setKernel(isa, 64)
 
     ki = global_isa.getKernel()

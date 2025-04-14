@@ -18,12 +18,12 @@ cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=$ROCM_PATH/bin/amdclang++ ..
 ```
 
-If you want to specify the current python version,
+If you want to specify a specifif Python executable,
 
 ```
 mkdir build
 cd build
-cmake -DPYTHON_VERSION=$(python3 --version 2>&1 | cut -d ' ' -f 2) -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=$ROCM_PATH/bin/amdclang++ ..
+cmake -DPython_EXECUTABLE=<path to exe> -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=$ROCM_PATH/bin/amdclang++ ..
 make -j8
 ```
 
