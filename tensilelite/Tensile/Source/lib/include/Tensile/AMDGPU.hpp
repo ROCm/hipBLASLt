@@ -62,6 +62,7 @@ namespace TensileLite
             gfx940  = 940,
             gfx941  = 941,
             gfx942  = 942,
+            gfx950  = 950,
             gfx1010 = 1010,
             gfx1011 = 1011,
             gfx1012 = 1012,
@@ -69,6 +70,9 @@ namespace TensileLite
             gfx1100 = 1100,
             gfx1101 = 1101,
             gfx1102 = 1102,
+            gfx1103 = 1103,
+            gfx1150 = 1150,
+            gfx1151 = 1151,
             gfx1200 = 1200,
             gfx1201 = 1201
         };
@@ -107,6 +111,10 @@ namespace TensileLite
             {
                 return Processor::gfx942;
             }
+            else if(archName.find("gfx950") != std::string::npos)
+            {
+                return Processor::gfx950;
+            }
             else if(archName.find("gfx1010") != std::string::npos)
             {
                 return Processor::gfx1010;
@@ -134,6 +142,18 @@ namespace TensileLite
             else if(archName.find("gfx1102") != std::string::npos)
             {
                 return Processor::gfx1102;
+            }
+            else if(archName.find("gfx1103") != std::string::npos)
+            {
+                return Processor::gfx1103;
+            }
+            else if(archName.find("gfx1150") != std::string::npos)
+            {
+                return Processor::gfx1150;
+            }
+            else if(archName.find("gfx1151") != std::string::npos)
+            {
+                return Processor::gfx1151;
             }
             else if(archName.find("gfx1200") != std::string::npos)
             {
@@ -166,6 +186,8 @@ namespace TensileLite
                 return "gfx941";
             case AMDGPU::Processor::gfx942:
                 return "gfx942";
+            case AMDGPU::Processor::gfx950:
+                return "gfx950";
             case AMDGPU::Processor::gfx1010:
                 return "gfx1010";
             case AMDGPU::Processor::gfx1011:
@@ -180,6 +202,12 @@ namespace TensileLite
                 return "gfx1101";
             case AMDGPU::Processor::gfx1102:
                 return "gfx1102";
+            case AMDGPU::Processor::gfx1103:
+                return "gfx1103";
+            case AMDGPU::Processor::gfx1150:
+                return "gfx1150";
+            case AMDGPU::Processor::gfx1151:
+                return "gfx1151";
             case AMDGPU::Processor::gfx1200:
                 return "gfx1200";
             case AMDGPU::Processor::gfx1201:

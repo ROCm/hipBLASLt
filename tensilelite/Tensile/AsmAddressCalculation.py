@@ -20,7 +20,9 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import Module, EXEC, vgpr, sgpr, log2, Label
+from rocisa.code import Module
+from rocisa.container import EXEC, VCC, vgpr, sgpr
+from .TensileInstructions import log2
 from .TensileInstructions.Instructions import *
 from .Common import INDEX_CHARS, DataDirection
 
@@ -705,6 +707,14 @@ class AddrCalculation:
                 (tc != 'ScaleAlphaVec' and (not (tc == 'Bias' and self.kernelWriter.states.useBias == DataDirection.READ)) and tc != 'ScaleAVec' and tc != 'ScaleBVec'):
                 module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
+            # dot2: for every NumWaveSplitK contiguous threads, only the rightmost (with the largest threadIdx) one need to write value to D matrix.
+            if kernel["NumWaveSplitK"] > 1 and (tc == 'D' or tc == 'TD'):
+                kidx = bufferOOB-1
+                module.add(VAndB32(dst=vgpr(kidx), src0=(kernel["NumWaveSplitK"]-1), src1=vgpr("Serial"), comment="kidx = Serial % NumWaveSplitK"))
+                module.add(VCmpXNeU32(dst=EXEC(), src0=(kernel["NumWaveSplitK"]-1), src1=vgpr(kidx), comment="kidx == NumWaveSplitK-1" ))
+                module.add(VMovB32(dst=vgpr(addrVgpr), src=vgpr(bufferOOB), comment="LD%s clip if kidx != NumWaveSplitK-1." % tc))
+                module.add(SMovB64(dst=EXEC(), src=-1, comment="Reset exec mask"))
+
         else:
             if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and isSingleKernel:
                 module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%u"%dim], src1=sgpr("WorkGroup%u"%dim), comment="wgp%u * MT%u"%(dim, dim)))

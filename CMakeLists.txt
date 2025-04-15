@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.25.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.22...3.25.2 FATAL_ERROR)
 
 # Build documentation
 option(BUILD_DOCS "Build documentation" OFF)
@@ -117,6 +117,8 @@ option(Tensile_NO_LAZY_LIBRARY_LOADING "Diasble loading kernels on demand?" OFF)
 # For roctx
 include(CMakeDependentOption)
 cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
+# For rocRoller
+option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
@@ -162,12 +164,12 @@ else()
     if (NOT BUILD_ADDRESS_SANITIZER)
       #Set the AMDGPU_TARGETS with backward compatiblity
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx1100;gfx1101;;gfx1200;gfx1201"
+          TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx942;gfx950;gfx1100;gfx1101;gfx1103;gfx1150;gfx1151;gfx1200;gfx1201"
       )
     else()
       #build xnack-supported targets only
       rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+"
+          TARGETS "gfx908:xnack+;gfx90a:xnack+;gfx942:xnack+;gfx950:xnack+"
       )
     endif()
 
@@ -188,9 +190,11 @@ else()
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
 
-    option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
+    # Add rocisa
+    add_subdirectory(tensilelite/rocisa)
 
-    if( BUILD_WITH_TENSILE )
+    option( Tensile_SKIP_BUILD "Skip building Tensile" OFF )
+
     # we will have expanded "all" for tensile to ensure consistency as we have local rules
     set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
@@ -241,24 +245,28 @@ else()
     else()
       find_package(Tensile 4.33.0 EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
     endif()
-    endif()
 
     # setup hipblaslt defines used for both the library and clients
-    if( BUILD_WITH_TENSILE )
-        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
-        if(Tensile_SEPARATE_ARCHITECTURES)
-          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=1)
-        else()
-          list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
-        endif()
-        if(Tensile_NO_LAZY_LIBRARY_LOADING)
-          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
-        else()
-          list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
-        endif()
+    if(Tensile_SEPARATE_ARCHITECTURES)
+      list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=1)
     else()
-        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
+      list(APPEND TENSILE_DEFINES ROCBLAS_TENSILE_SEPARATE_ARCH=0)
     endif()
+    if(Tensile_NO_LAZY_LIBRARY_LOADING)
+      list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=0)
+    else()
+      list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
+    endif()
+endif()
+
+cmake_host_system_information(RESULT OS_PLATFORM QUERY DISTRIB_ID)
+cmake_host_system_information(RESULT OS_INFO QUERY DISTRIB_INFO)
+
+if( ${OS_PLATFORM} STREQUAL "rhel")
+  if( ${OS_INFO_VERSION_ID} VERSION_LESS "9.5")
+    message(WARNING "RHEL version ${OS_INFO_VERSION_ID} too old, not building RocRoller")
+    set(USE_ROCROLLER OFF)
+  endif()
 endif()
 
 if( LEGACY_HIPBLAS_DIRECT )
@@ -277,9 +285,9 @@ if(HIPBLASLT_ENABLE_MARKER)
 endif()
 
 # Setup version
-set(VERSION_STRING "0.13.0")
+set(VERSION_STRING "0.15.0")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(hipblaslt_SOVERSION 0.13)
+set(hipblaslt_SOVERSION 0.15)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
@@ -351,8 +359,13 @@ if( NOT BUILD_CUDA )
     rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
   else()
     set(hipblas_common_minimum 1.0.0)
+    if(BUILD_SHARED_LIBS)
     rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-dev >= ${hipblas_common_minimum}")
     rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-devel >= ${hipblas_common_minimum}")
+    else()
+      rocm_package_add_deb_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-dev >= ${hipblas_common_minimum}")
+      rocm_package_add_rpm_dependencies(COMPONENT devel DEPENDS "hipblas-common-static-devel >= ${hipblas_common_minimum}")
+    endif()
   endif()
 endif( )
 
@@ -385,7 +398,7 @@ set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LI
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    DESCRIPTION "HIP library for GEMM operations with extended functionality"
     MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}

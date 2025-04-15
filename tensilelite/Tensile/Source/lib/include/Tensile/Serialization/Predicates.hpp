@@ -214,6 +214,7 @@ namespace TensileLite
                 iot::enumCase(io, value, "gfx940", AMDGPU::Processor::gfx940);
                 iot::enumCase(io, value, "gfx941", AMDGPU::Processor::gfx941);
                 iot::enumCase(io, value, "gfx942", AMDGPU::Processor::gfx942);
+                iot::enumCase(io, value, "gfx950", AMDGPU::Processor::gfx950);
                 iot::enumCase(io, value, "gfx1010", AMDGPU::Processor::gfx1010);
                 iot::enumCase(io, value, "gfx1011", AMDGPU::Processor::gfx1011);
                 iot::enumCase(io, value, "gfx1012", AMDGPU::Processor::gfx1012);
@@ -221,6 +222,9 @@ namespace TensileLite
                 iot::enumCase(io, value, "gfx1100", AMDGPU::Processor::gfx1100);
                 iot::enumCase(io, value, "gfx1101", AMDGPU::Processor::gfx1101);
                 iot::enumCase(io, value, "gfx1102", AMDGPU::Processor::gfx1102);
+                iot::enumCase(io, value, "gfx1103", AMDGPU::Processor::gfx1103);
+                iot::enumCase(io, value, "gfx1150", AMDGPU::Processor::gfx1150);
+                iot::enumCase(io, value, "gfx1151", AMDGPU::Processor::gfx1151);
                 iot::enumCase(io, value, "gfx1200", AMDGPU::Processor::gfx1200);
                 iot::enumCase(io, value, "gfx1201", AMDGPU::Processor::gfx1201);
             }

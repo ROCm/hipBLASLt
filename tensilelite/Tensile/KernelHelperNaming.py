@@ -25,7 +25,7 @@
 from copy import deepcopy
 from enum import IntEnum
 
-from Tensile.Common import internalParameters
+from Tensile.Common.GlobalParameters import internalParameters
 from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
 from Tensile.KernelWriterConversion import KernelWriterConversion
 from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
@@ -116,15 +116,15 @@ def kernelObjectNameCallables():
             (KernelHelperEnum.BetaOnly, betaOnlyKernelObjectsNames)]
 
 
-def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler):
+def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap):
     if kernelHelperType == KernelHelperEnum.BetaOnly:
         return initBetaOnlyKernelObjects(solution)
     if kernelHelperType == KernelHelperEnum.Conversion:
-        return initConversionKernelObjects(solution)
+        return initConversionKernelObjects(solution, isaInfoMap)
     if kernelHelperType == KernelHelperEnum.ActivationEnumHeader:
         return initActivationEnumHeaderObjects(solution)
     if kernelHelperType == KernelHelperEnum.ActivationFunction:
-        return initActivationFunctionObjects(solution, cxxCompiler)
+        return initActivationFunctionObjects(solution, cxxCompiler, isaInfoMap)
     if kernelHelperType == KernelHelperEnum.ActivationOnly:
         return initActivationOnlyKernelObjects(solution)
     if kernelHelperType == KernelHelperEnum.Reduction:
@@ -156,7 +156,7 @@ def initBetaOnlyKernelObjects(solution):
   return betaOnlyKernelObjects
 
 
-def initConversionKernelObjects(solution):
+def initConversionKernelObjects(solution, isaInfoMap):
   conversionKernelObjects = []
   load_vector_width = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
   genPGRPostKernels = True
@@ -183,7 +183,7 @@ def initConversionKernelObjects(solution):
           state["UnrollOnly"] = unrollOnly
           state["_GlobalAccumulation"] = solution["_GlobalAccumulation"]
           state["ActivationFused"] = solution["ActivationFused"]
-          conversionKernelObjects.append(KernelWriterConversion(state, vw))
+          conversionKernelObjects.append(KernelWriterConversion(state, vw, isaInfoMap))
         for btype in typeList:
           state = {}
           state["ProblemType"] = deepcopy(solution["ProblemType"])
@@ -196,7 +196,7 @@ def initConversionKernelObjects(solution):
           state["UnrollOnly"] = unrollOnly
           state["_GlobalAccumulation"] = solution["_GlobalAccumulation"]
           state["ActivationFused"] = solution["ActivationFused"]
-          conversionKernelObjects.append(KernelWriterConversion(state, vw))
+          conversionKernelObjects.append(KernelWriterConversion(state, vw, isaInfoMap))
       else:
         state = {}
         state["ProblemType"] = deepcopy(solution["ProblemType"])
@@ -207,7 +207,7 @@ def initConversionKernelObjects(solution):
         state["UnrollOnly"] = unrollOnly
         state["_GlobalAccumulation"] = solution["_GlobalAccumulation"]
         state["ActivationFused"] = solution["ActivationFused"]
-        conversionKernelObjects.append(KernelWriterConversion(state, vw))
+        conversionKernelObjects.append(KernelWriterConversion(state, vw, isaInfoMap))
   return conversionKernelObjects
 
 
@@ -222,7 +222,7 @@ def initActivationEnumHeaderObjects(solution):
   return activationEnumHeaderObjects
 
 
-def initActivationFunctionObjects(solution, cxxCompiler):
+def initActivationFunctionObjects(solution, cxxCompiler, isaInfoMap):
   activationFunctionObjects = []
   if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
     state = {}
@@ -230,7 +230,7 @@ def initActivationFunctionObjects(solution, cxxCompiler):
     state["ProblemType"]["GroupedGemm"] = False
     state["KernelLanguage"] = "Source"
     state["Kernel"] = {"WavefrontSize": solution["WavefrontSize"], "ISA": tuple(solution["ISA"])}
-    activationFunctionObjects.append(KernelWriterActivationFunction(state, cxxCompiler))
+    activationFunctionObjects.append(KernelWriterActivationFunction(state, cxxCompiler, list(isaInfoMap.keys())))
   return activationFunctionObjects
 
 

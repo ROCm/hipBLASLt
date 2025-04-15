@@ -160,6 +160,10 @@ namespace TensileLite
             {
                 return AMDGPU::Processor::gfx942;
             }
+            else if(deviceString.find("gfx950") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx950;
+            }
             else if(deviceString.find("gfx1010") != std::string::npos)
             {
                 return AMDGPU::Processor::gfx1010;
@@ -187,6 +191,18 @@ namespace TensileLite
             else if(deviceString.find("gfx1102") != std::string::npos)
             {
                 return AMDGPU::Processor::gfx1102;
+            }
+            else if(deviceString.find("gfx1103") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx1103;
+            }
+            else if(deviceString.find("gfx1150") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx1150;
+            }
+            else if(deviceString.find("gfx1151") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx1151;
             }
             else if(deviceString.find("gfx1200") != std::string::npos)
             {

@@ -15,6 +15,9 @@ Datatypes:
         bf8_fnuz_r: 1001
         f8_r: 28
         bf8_r: 29
+        f6_r: 31
+        bf6_r: 32
+        f4_r: 33
         hipblaslt_datatype_invalid: 255
   - hipblasComputeType_t:
       bases: [ c_int ]
@@ -158,7 +161,7 @@ Real precisions 1 byte dst 1 byte: &real_precisions_1b_fnuz_dst_1b_fnuz
   - *bf8_fnuz_precision_dst_bf8_fnuz
   - *f8bf8_fnuz_precision_dst_bf8_fnuz
   - *bf8f8_fnuz_precision_dst_bf8_fnuz
-#F8 NANO end
+#F8 NANOO end
 
 Real precisions 1 bytes: &real_precisions_1b
   - &f8_precision_dst_fp32
@@ -299,7 +302,7 @@ Real precisions gemm only: &real_precisions_gemm_only
   - &double_precision
     { a_type: f64_r, b_type: f64_r, c_type: f64_r, d_type: f64_r, compute_type: c_f64_r , scale_type: f64_r}
 
-Real mix precisions: &real_mix_precisions
+Real mix precisions: &real_mix_precisions_fnuz
   - &fp8fp16_fnuz_precision_dst_fp16
     { a_type: f8_fnuz_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
   - &fp16fp8_fnuz_precision_dst_fp16
@@ -314,6 +317,164 @@ Real mix precisions fp8: &real_mix_precisions_fp8_fnuz
     { a_type: f8_fnuz_r, b_type: f16_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
   - &fp16fp8_fnuz_precision_dst_fp8_fnuz
     { a_type: f16_r, b_type: f8_fnuz_r, c_type: f8_fnuz_r, d_type: f8_fnuz_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+
+# MX Datatypes
+Real precisions 1 bytes: &real_precisions_mx
+  - &mxf8_mxfp8_precision_dst_fp32
+    { a_type: f8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbfp8_precision_dst_fp32
+    { a_type: f8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf6_precision_dst_fp32
+    { a_type: f8_r, b_type: f6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbf6_precision_dst_fp32
+    { a_type: f8_r, b_type: bf6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf4_precision_dst_fp32
+    { a_type: f8_r, b_type: f4_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxfp8_precision_dst_fp32
+    { a_type: bf8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbfp8_precision_dst_fp32
+    { a_type: bf8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf6_precision_dst_fp32
+    { a_type: bf8_r, b_type: f6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbf6_precision_dst_fp32
+    { a_type: bf8_r, b_type: bf6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf4_precision_dst_fp32
+    { a_type: bf8_r, b_type: f4_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxfp8_precision_dst_fp32
+    { a_type: f6_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbfp8_precision_dst_fp32
+    { a_type: f6_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf6_precision_dst_fp32
+    { a_type: f6_r, b_type: f6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbf6_precision_dst_fp32
+    { a_type: f6_r, b_type: bf6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf4_precision_dst_fp32
+    { a_type: f6_r, b_type: f4_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxfp8_precision_dst_fp32
+    { a_type: bf6_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbfp8_precision_dst_fp32
+    { a_type: bf6_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf6_precision_dst_fp32
+    { a_type: bf6_r, b_type: f6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbf6_precision_dst_fp32
+    { a_type: bf6_r, b_type: bf6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf4_precision_dst_fp32
+    { a_type: bf6_r, b_type: f4_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxfp8_precision_dst_fp32
+    { a_type: f4_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbfp8_precision_dst_fp32
+    { a_type: f4_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf6_precision_dst_fp32
+    { a_type: f4_r, b_type: f6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbf6_precision_dst_fp32
+    { a_type: f4_r, b_type: bf6_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf4_precision_dst_fp32
+    { a_type: f4_r, b_type: f4_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxfp8_precision_dst_fp16
+    { a_type: f8_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbfp8_precision_dst_fp16
+    { a_type: f8_r, b_type: bf8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf6_precision_dst_fp16
+    { a_type: f8_r, b_type: f6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbf6_precision_dst_fp16
+    { a_type: f8_r, b_type: bf6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf4_precision_dst_fp16
+    { a_type: f8_r, b_type: f4_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxfp8_precision_dst_fp16
+    { a_type: bf8_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbfp8_precision_dst_fp16
+    { a_type: bf8_r, b_type: bf8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf6_precision_dst_fp16
+    { a_type: bf8_r, b_type: f6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbf6_precision_dst_fp16
+    { a_type: bf8_r, b_type: bf6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf4_precision_dst_fp16
+    { a_type: bf8_r, b_type: f4_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxfp8_precision_dst_fp16
+    { a_type: f6_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbfp8_precision_dst_fp16
+    { a_type: f6_r, b_type: bf8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf6_precision_dst_fp16
+    { a_type: f6_r, b_type: f6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbf6_precision_dst_fp16
+    { a_type: f6_r, b_type: bf6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf4_precision_dst_fp16
+    { a_type: f6_r, b_type: f4_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxfp8_precision_dst_fp16
+    { a_type: bf6_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbfp8_precision_dst_fp16
+    { a_type: bf6_r, b_type: bf8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf6_precision_dst_fp16
+    { a_type: bf6_r, b_type: f6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbf6_precision_dst_fp16
+    { a_type: bf6_r, b_type: bf6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf4_precision_dst_fp16
+    { a_type: bf6_r, b_type: f4_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxfp8_precision_dst_fp16
+    { a_type: f4_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbfp8_precision_dst_fp16
+    { a_type: f4_r, b_type: bf8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf6_precision_dst_fp16
+    { a_type: f4_r, b_type: f6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbf6_precision_dst_fp16
+    { a_type: f4_r, b_type: bf6_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf4_precision_dst_fp16
+    { a_type: f4_r, b_type: f4_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxfp8_precision_dst_bfp16
+    { a_type: f8_r, b_type: f8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbfp8_precision_dst_bfp16
+    { a_type: f8_r, b_type: bf8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf6_precision_dst_bfp16
+    { a_type: f8_r, b_type: f6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxbf6_precision_dst_bfp16
+    { a_type: f8_r, b_type: bf6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf8_mxf4_precision_dst_bfp16
+    { a_type: f8_r, b_type: f4_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxfp8_precision_dst_bfp16
+    { a_type: bf8_r, b_type: f8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbfp8_precision_dst_bfp16
+    { a_type: bf8_r, b_type: bf8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf6_precision_dst_bfp16
+    { a_type: bf8_r, b_type: f6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxbf6_precision_dst_bfp16
+    { a_type: bf8_r, b_type: bf6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf8_mxf4_precision_dst_bfp16
+    { a_type: bf8_r, b_type: f4_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxfp8_precision_dst_bfp16
+    { a_type: f6_r, b_type: f8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbfp8_precision_dst_bfp16
+    { a_type: f6_r, b_type: bf8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf6_precision_dst_bfp16
+    { a_type: f6_r, b_type: f6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxbf6_precision_dst_bfp16
+    { a_type: f6_r, b_type: bf6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf6_mxf4_precision_dst_bfp16
+    { a_type: f6_r, b_type: f4_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxfp8_precision_dst_bfp16
+    { a_type: bf6_r, b_type: f8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbfp8_precision_dst_bfp16
+    { a_type: bf6_r, b_type: bf8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf6_precision_dst_bfp16
+    { a_type: bf6_r, b_type: f6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxbf6_precision_dst_bfp16
+    { a_type: bf6_r, b_type: bf6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxbf6_mxf4_precision_dst_bfp16
+    { a_type: bf6_r, b_type: f4_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxfp8_precision_dst_bfp16
+    { a_type: f4_r, b_type: f8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbfp8_precision_dst_bfp16
+    { a_type: f4_r, b_type: bf8_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf6_precision_dst_bfp16
+    { a_type: f4_r, b_type: f6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxbf6_precision_dst_bfp16
+    { a_type: f4_r, b_type: bf6_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+  - &mxf4_mxf4_precision_dst_bfp16
+    { a_type: f4_r, b_type: f4_r, c_type: bf16_r, d_type: bf16_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r}
+
+# rocRoller predicate
+rocRoller predicate: &rocroller_predicate
+  - &unrollKPredicate
+    { a_type: f8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scaleA: 3, scaleB: 3, scale_type: f32_r, M: 128, N: 128, K: 96}
 
 # The Arguments struct passed directly to C++. See hipblaslt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.
@@ -371,6 +532,7 @@ Arguments:
   - activation_arg1: c_float
   - activation_arg2: c_float
   - bias_type: hipDataType
+  - aux_type: hipDataType
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
   - scaleA: hipblaslt_scaling_format
@@ -388,6 +550,10 @@ Arguments:
   - gradient: c_bool
   - norm_check_assert: c_bool
   - swizzle_a: c_bool
+  - scaleABlockRowSize: c_uint32
+  - scaleABlockColSize: c_uint32
+  - scaleBBlockRowSize: c_uint32
+  - scaleBBlockColSize: c_uint32
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
@@ -401,6 +567,7 @@ Arguments:
   - print_solution_found: c_bool
   - print_kernel_info: c_bool
   - flush: c_bool
+  - tensile_solution_selection_method: c_int32
 
 # These named dictionary lists [ {dict1}, {dict2}, etc. ] supply subsets of
 # test arguments in a structured way. The dictionaries are applied to the test
@@ -473,6 +640,7 @@ Defaults:
   activation_arg1: 0
   activation_arg2: 0
   bias_type: default
+  aux_type: hipblaslt_datatype_invalid
   bias_source: d
   use_e: false
   gradient: false
@@ -489,6 +657,10 @@ Defaults:
   grouped_gemm: 0
   norm_check_assert: true
   swizzle_a: false
+  scaleABlockRowSize: 32
+  scaleABlockColSize: 1
+  scaleBBlockRowSize: 1
+  scaleBBlockColSize: 32
   use_ext: false
   use_ext_setproblem: false
   algo_method: 0
@@ -502,6 +674,7 @@ Defaults:
   print_solution_found: false
   print_kernel_info: false
   flush: false
+  tensile_solution_selection_method: -1
   compute_input_typeA: hipblaslt_datatype_invalid
   compute_input_typeB: hipblaslt_datatype_invalid
   scale_type: hipblaslt_datatype_invalid

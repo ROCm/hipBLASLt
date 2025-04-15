@@ -20,20 +20,21 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
+from rocisa.code import Module
+from rocisa.container import vgpr, sgpr, EXEC, VCC, HWRegContainer, RegisterContainer
+from rocisa.instruction import *
+
 from typing import Optional
-from .Code import Module
-from .Containers import HWRegContainer, RegisterContainer
 from .ExtInstructions import SMulInt64to32
-from .Instructions import *
-from .RegisterPool import RegisterPoolResource
-from .Utils import vgpr, sgpr, log2
+from .RegisterPool import ContinuousRegister
+from .Utils import log2
 
 ########################################
 # Divide & Remainder
 # quotient register, remainder register, dividend register, divisor, tmpVgprx2
 ########################################
 
-def vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolResource], doRemainder=True, comment=""):
+def vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[ContinuousRegister], doRemainder=True, comment=""):
     dComment = "%s = %s / %s"    % (vgpr(qReg), vgpr(dReg), divisor) if (comment=="") else comment
     rComment = "%s = %s %% %s" % (vgpr(rReg), vgpr(dReg), divisor) if (comment=="") else comment
 
@@ -72,11 +73,16 @@ def vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Option
         module.add(VLShiftRightB64(dst=vgpr(tmpVgpr,2), shiftHex=hex(shift), src=vgpr(tmpVgpr,2), comment=dComment))
         module.add(VMovB32(dst=vgpr(qReg), src=vgpr(tmpVgpr), comment=dComment))
         if doRemainder:
-            module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=vgpr(qReg), src1=hex(divisor), comment=rComment))
+            if divisor <= 64 and divisor >= -16:
+                module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=vgpr(qReg), src1=hex(divisor), comment=rComment))
+            else:
+                module.add(VMovB32(dst=vgpr(tmpVgpr+1), src=hex(divisor)))
+                module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=vgpr(qReg), src1=vgpr(tmpVgpr+1), comment=rComment))
             module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(tmpVgpr), comment=rComment))
+            
     return module
 
-def vectorStaticDivide(qReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolResource], comment=""):
+def vectorStaticDivide(qReg, dReg, divisor, tmpVgprRes: Optional[ContinuousRegister], comment=""):
     rReg = -1 # unused
     module = vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes, False, comment)
     module.name = "vectorStaticDivide (reg=-1)"
@@ -121,8 +127,8 @@ def vectorUInt32CeilDivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=Tru
         module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
     return module
 
-def vectorStaticRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolResource], \
-                        tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+def vectorStaticRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[ContinuousRegister], \
+                        tmpSgprRes: Optional[ContinuousRegister], comment=""):
     if comment == "":
         comment = "%s = %s %% %s" % (vgpr(rReg), vgpr(dReg), divisor)
 
@@ -174,7 +180,7 @@ def vectorStaticRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[Regist
 # dreg == dividend
 # tmpSgpr must be 2 SPGRs
 # qReg and dReg can be "sgpr[..]" or names of sgpr (will call sgpr)
-def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource], \
+def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[ContinuousRegister], \
         doRemainder=1):
 
     qRegSgpr = qReg if isinstance(qReg, RegisterContainer) and qReg.regType == 's' else sgpr(qReg)
@@ -211,12 +217,12 @@ def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Option
         magicHi = magic // (2**16)
         magicLo = magic & (2**16-1)
 
-        module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0), comment="STATIC_DIV: divisior=%s"%divisor))
+        module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=0, comment="STATIC_DIV: divisior=%s"%divisor))
         module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=hex(magicHi), src1=dRegSgpr, comment="tmp1 = dividend * magic hi"))
         module.add(SLShiftLeftB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(16), src=sgpr(tmpSgpr,2), comment="left shift 16 bits"))
         module.add(SMulI32(dst=qRegSgpr, src0=dRegSgpr, src1=hex(magicLo), comment="tmp0 = dividend * magic lo"))
         module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=qRegSgpr, src1=sgpr(tmpSgpr+0), comment="add lo"))
-        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=hex(0), comment="add hi"))
+        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=0, comment="add hi"))
         module.add(SLShiftRightB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(shift), src=sgpr(tmpSgpr,2), comment="tmp1 = (dividend * magic) << shift"))
         module.add(SMovB32(dst=qRegSgpr, src=sgpr(tmpSgpr), comment="quotient"))
         if doRemainder:
@@ -224,7 +230,7 @@ def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Option
             module.add(SSubU32(dst=sgpr(rReg), src0=dRegSgpr, src1=sgpr(tmpSgpr), comment="rReg = dividend - quotient*divisor"))
     return module
 
-def scalarStaticCeilDivide(qReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource]):
+def scalarStaticCeilDivide(qReg, dReg, divisor, tmpSgprRes: Optional[ContinuousRegister]):
 
     qRegSgpr = qReg if isinstance(qReg, RegisterContainer) and qReg.regType == 's' else sgpr(qReg)
 
@@ -237,7 +243,7 @@ def scalarStaticCeilDivide(qReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoo
                 comment="%s = %s / %u"%(qRegSgpr, dRegSgpr, divisor)))
         module.add(SAndB32(dst=sgpr(tmpSgprRes.idx), src0=(divisor-1), src1=dRegSgpr, \
                     comment="%s = %s %% %u"%(sgpr(tmpSgprRes.idx), dRegSgpr, divisor)))
-        module.add(SAddCU32(dst=qRegSgpr, src0=qRegSgpr, src1=hex(0)))
+        module.add(SAddCU32(dst=qRegSgpr, src0=qRegSgpr, src1=0))
     else:
         assert tmpSgprRes and tmpSgprRes.size >= 2
         tmpSgpr = tmpSgprRes.idx
@@ -259,19 +265,19 @@ def scalarStaticCeilDivide(qReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoo
         magicHi = magic // (2**16)
         magicLo = magic & (2**16-1)
 
-        module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0), comment="STATIC_DIV: divisior=%s"%divisor))
+        module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=0, comment="STATIC_DIV: divisior=%s"%divisor))
         module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=hex(magicHi), src1=dRegSgpr, comment="tmp1 = dividend * magic hi"))
         module.add(SLShiftLeftB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(16), src=sgpr(tmpSgpr,2), comment="left shift 16 bits"))
         module.add(SMulI32(dst=qRegSgpr, src0=dRegSgpr, src1=hex(magicLo), comment="tmp0 = dividend * magic lo"))
         module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=qRegSgpr, src1=sgpr(tmpSgpr+0), comment="add lo"))
-        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=hex(0), comment="add hi"))
+        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=0, comment="add hi"))
         module.add(SLShiftRightB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(shift), src=sgpr(tmpSgpr,2), comment="tmp0 = quotient"))
         module.add(SMulI32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr), src1=hex(divisor), comment="tmp1 = quotient * divisor"))
         module.add(SCmpLgU32(src0=sgpr(tmpSgpr+1), src1=dRegSgpr, comment="if (quotient * divisor != dividend), result+=1"))
-        module.add(SAddCU32(dst=qRegSgpr, src0=sgpr(tmpSgpr), src1=hex(0), comment="if (quotient * divisor != dividend), result+=1"))
+        module.add(SAddCU32(dst=qRegSgpr, src0=sgpr(tmpSgpr), src1=0, comment="if (quotient * divisor != dividend), result+=1"))
     return module
 
-def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[ContinuousRegister], comment=""):
     if comment == "":
         comment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), divisor)
 
@@ -314,7 +320,7 @@ def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[Regist
         module.add(SSubU32(dst=sgpr(rReg), src0=sgpr(dReg), src1=sgpr(tmpSgpr), comment=comment))
     return module
 
-def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: RegisterPoolResource, tmpVgprRes: RegisterPoolResource, TransOpWait: bool, setReg: bool = True, restoreReg: bool = True, comment=""):
+def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: ContinuousRegister, tmpVgprRes: ContinuousRegister, TransOpWait: bool, setReg: bool = True, restoreReg: bool = True, comment=""):
     dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
 
     assert tmpVgprRes.size >= 2
@@ -340,7 +346,7 @@ def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: RegisterPoolResource, 
     module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
     return module
 
-def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, wavewidth, doRemainder=True, comment=""):
+def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: ContinuousRegister, wavewidth, doRemainder=True, comment=""):
     dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
     if doRemainder:
         rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
@@ -440,7 +446,7 @@ def sMagicDivAlg2(dest, dividend, magicNumber, magicShiftAbit):
 # product register, operand register, multiplier
 ########################################
 
-def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[ContinuousRegister], comment=""):
     if comment == "":
         comment = "%s = %s * %s" % (product, operand, multiplier)
 
@@ -449,7 +455,7 @@ def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[RegisterPo
         module.add(VMovB32(dst=product, src=hex(multiplier), comment=comment))
     elif ((multiplier & (multiplier - 1)) == 0): # pow of 2
         multiplier_log2 = log2(multiplier)
-        if multiplier_log2==0 and product == operand:
+        if multiplier_log2==0 and ((str(product) == operand or product == operand) or product == operand):
             module.addCommentAlign(comment + " (multiplier is 1, do nothing)")
         else:
             module.add(VLShiftLeftB32(dst=product, shiftHex=hex(multiplier_log2), src=operand, comment=comment))
@@ -468,7 +474,7 @@ def staticMultiply(product, operand, multiplier, tmpSgprRes: Optional[RegisterPo
 # product register, operand register, multiplier, accumulator
 ########################################
 
-def staticMultiplyAdd(product, operand, multiplier, accumulator, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+def staticMultiplyAdd(product, operand, multiplier, accumulator, tmpSgprRes: Optional[ContinuousRegister], comment=""):
     if comment == "":
         comment = "%s = %s * %s" % (product, operand, multiplier)
 
@@ -477,7 +483,7 @@ def staticMultiplyAdd(product, operand, multiplier, accumulator, tmpSgprRes: Opt
         module.add(VMovB32(dst=product, src=hex(multiplier), comment=comment))
     elif ((multiplier & (multiplier - 1)) == 0): # pow of 2
         multiplier_log2 = log2(multiplier)
-        if multiplier_log2==0 and product == operand:
+        if multiplier_log2==0 and (str(product) == operand or product == operand):
             module.addCommentAlign(comment + " (multiplier is 1, do nothing)")
         else:
             module.add(VLShiftLeftAddU32(dst=product, shiftHex=hex(multiplier_log2), src0=operand, src1=accumulator, comment=comment))
@@ -509,7 +515,7 @@ def scalarStaticMultiply(product, operand, multiplier, tmpSgpr=None, comment="")
     assert ((multiplier & (multiplier - 1)) == 0) # assert pow of 2
 
     multiplier_log2 = log2(multiplier)
-    if multiplier_log2==0 and product == operand:
+    if multiplier_log2==0 and (str(product) == operand or product == operand):
         module.addCommentAlign(comment + " (multiplier is 1, do nothing)")
     else:
         # notice that the src-order of s_lshl_b64 is different from v_lshlrev_b32.

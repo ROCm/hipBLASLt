@@ -34,11 +34,110 @@
 #include <hip/hip_runtime.h>
 
 #include <algorithm>
+#include <list>
+#include <map>
+#include <tuple>
 
 namespace TensileLite
 {
     namespace Client
     {
+        template <typename K, typename T, std::size_t MaxNumEntries = 128>
+        class LRUCache
+        {
+            using Entries    = std::list<K>;
+            using EntryTrack = std::pair<T, typename Entries::iterator>;
+            using EntryMap   = std::map<K, EntryTrack>;
+
+        public:
+            template <typename... Args>
+            std::pair<typename EntryMap::iterator, bool> emplace(const K& key, Args&&... args)
+            {
+                if(!entryMap.count(key))
+                {
+                    entries.push_back(key);
+                    auto&& ret = entryMap.emplace(
+                        key, std::make_pair(T(std::forward<Args>(args)...), --entries.end()));
+                    while(entries.size() > MaxNumEntries)
+                    {
+                        auto& front = entries.front();
+                        entryMap.erase(front);
+                        entries.pop_front();
+                    }
+                    return ret;
+                }
+                else
+                {
+                    auto& track = entryMap.at(key);
+                    track.first = T(std::forward<Args>(args)...);
+                    entries.splice(entries.end(), entries, track.second);
+                }
+                return {entryMap.find(key), true};
+            }
+
+            size_t count(const K& key) const
+            {
+                return entryMap.count(key);
+            }
+
+            const T& at(const K& key) const
+            {
+                auto& track = entryMap.at(key);
+                entries.splice(entries.end(), entries, track.second);
+                return track.first;
+            }
+
+            T& at(const K& key)
+            {
+                auto& track = entryMap.at(key);
+                entries.splice(entries.end(), entries, track.second);
+                return track.first;
+            }
+
+            const K& back() const
+            {
+                return entries.back();
+            }
+
+        private:
+            EntryMap entryMap;
+            Entries  entries;
+        };
+
+        using BitWidth        = uint8_t;
+        using Size            = uint64_t;
+        using SwizzleCacheKey = std::tuple<BitWidth, Size, Size>;
+        using SwizzleCacheVal = ::Tensor::Manipulation::Tensor;
+        using SwizzleCache    = LRUCache<SwizzleCacheKey, SwizzleCacheVal>;
+        static thread_local SwizzleCache g_swizzleCache;
+
+        BitWidth toBitWidth(rocisa::DataType datatype)
+        {
+            switch(datatype)
+            {
+            case rocisa::DataType::Double:
+                return 64;
+            case rocisa::DataType::XFloat32:
+            case rocisa::DataType::Float:
+                return 32;
+            case rocisa::DataType::Half:
+            case rocisa::DataType::BFloat16:
+                return 16;
+            case rocisa::DataType::Int8:
+            case rocisa::DataType::Float8_fnuz:
+            case rocisa::DataType::BFloat8_fnuz:
+            case rocisa::DataType::Float8BFloat8_fnuz:
+            case rocisa::DataType::BFloat8Float8_fnuz:
+            case rocisa::DataType::Float8:
+            case rocisa::DataType::BFloat8:
+            case rocisa::DataType::Float8BFloat8:
+            case rocisa::DataType::BFloat8Float8:
+                return 8;
+            default:
+                throw std::runtime_error("unsupported datatype");
+            }
+        }
+
         std::string ToString(InitMode mode)
         {
             switch(mode)
@@ -239,36 +338,39 @@ namespace TensileLite
             return stream;
         }
 
-        void calculateKforSwizzling(DataType datatype, size_t& MiK, size_t& MiKv, size_t& PackK)
+        void calculateKforSwizzling(rocisa::DataType datatype,
+                                    size_t&          MiK,
+                                    size_t&          MiKv,
+                                    size_t&          PackK)
         {
             switch(datatype)
             {
-            case DataType::Float:
+            case rocisa::DataType::Float:
                 MiK  = 4;
                 MiKv = 1;
                 break;
-            case DataType::Double:
+            case rocisa::DataType::Double:
                 MiK  = 4;
                 MiKv = 1;
                 break;
-            case DataType::XFloat32:
+            case rocisa::DataType::XFloat32:
                 MiK  = 8;
                 MiKv = 2;
                 break;
-            case DataType::Half:
-            case DataType::BFloat16:
+            case rocisa::DataType::Half:
+            case rocisa::DataType::BFloat16:
                 MiK  = 16;
                 MiKv = 4;
                 break;
-            case DataType::Int8:
-            case DataType::Float8_fnuz:
-            case DataType::BFloat8_fnuz:
-            case DataType::Float8BFloat8_fnuz:
-            case DataType::BFloat8Float8_fnuz:
-            case DataType::Float8:
-            case DataType::BFloat8:
-            case DataType::Float8BFloat8:
-            case DataType::BFloat8Float8:
+            case rocisa::DataType::Int8:
+            case rocisa::DataType::Float8_fnuz:
+            case rocisa::DataType::BFloat8_fnuz:
+            case rocisa::DataType::Float8BFloat8_fnuz:
+            case rocisa::DataType::BFloat8Float8_fnuz:
+            case rocisa::DataType::Float8:
+            case rocisa::DataType::BFloat8:
+            case rocisa::DataType::Float8BFloat8:
+            case rocisa::DataType::BFloat8Float8:
                 MiK  = 32;
                 MiKv = 8;
                 break;
@@ -276,7 +378,7 @@ namespace TensileLite
                 throw std::runtime_error("unsupported datatype for swizzling");
             }
 
-            PackK = 16 / MiKv / GetElementSize(datatype);
+            PackK = 16 / MiKv / rocisa::GetElementSize(datatype);
         }
 
         template <typename T>
@@ -454,7 +556,7 @@ namespace TensileLite
             //alloc compressed sparse buffer
             switch(tensor.dataType())
             {
-            case DataType::Half:
+            case rocisa::DataType::Half:
                 initGPUSparseInputTemplate((Half*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (Half*)srcBuffer,
@@ -463,7 +565,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::BFloat16:
+            case rocisa::DataType::BFloat16:
                 initGPUSparseInputTemplate((BFloat16*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (BFloat16*)srcBuffer,
@@ -472,7 +574,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::Int8:
+            case rocisa::DataType::Int8:
                 initGPUSparseInputTemplate((int8_t*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (int8_t*)srcBuffer,
@@ -481,7 +583,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::Float8:
+            case rocisa::DataType::Float8:
                 initGPUSparseInputTemplate((Float8*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (Float8*)srcBuffer,
@@ -490,7 +592,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::BFloat8:
+            case rocisa::DataType::BFloat8:
                 initGPUSparseInputTemplate((BFloat8*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (BFloat8*)srcBuffer,
@@ -499,7 +601,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::Float8_fnuz:
+            case rocisa::DataType::Float8_fnuz:
                 initGPUSparseInputTemplate((Float8_fnuz*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (Float8_fnuz*)srcBuffer,
@@ -508,7 +610,7 @@ namespace TensileLite
                                            tensorMeta,
                                            dim);
                 break;
-            case DataType::BFloat8_fnuz:
+            case rocisa::DataType::BFloat8_fnuz:
                 initGPUSparseInputTemplate((BFloat8_fnuz*)(dstCompressed),
                                            (unsigned char*)(dstMeta),
                                            (BFloat8_fnuz*)srcBuffer,
@@ -782,7 +884,8 @@ namespace TensileLite
                             calculateKforSwizzling(dataType, MiK, MiKv, PackK);
                             numAllocatedElements = getSwizzledTensorNumAllocatedElements(
                                 problem.tensors()[i], MiM_N, MiK, PackK);
-                            numAllocatedBytes = numAllocatedElements * GetElementSize(dataType);
+                            numAllocatedBytes
+                                = numAllocatedElements * rocisa::GetElementSize(dataType);
                         }
 
                         pristine.maxElements = std::max(pristine.maxElements, numAllocatedElements);
@@ -853,7 +956,8 @@ namespace TensileLite
                         std::vector<size_t> offsets;
                     };
                     std::vector<size_t> vec_rm;
-                    auto gElements = std::vector<std::map<DataType, gElement>>(m_vdata.size());
+                    auto                gElements
+                        = std::vector<std::map<rocisa::DataType, gElement>>(m_vdata.size());
                     for(auto const& problem : problems.gemms)
                     {
                         std::vector<size_t> tmp_rm;
@@ -1030,7 +1134,7 @@ namespace TensileLite
             for(size_t i = 0; i < m_cdata.size(); i++)
             {
                 std::string initName = "init-" + m_cdata[i].name;
-                m_cdata[i].dataType  = DataType::None;
+                m_cdata[i].dataType  = rocisa::DataType::None;
                 // FIXME: Currently hardcoded
                 if(m_cdata[i].name.find("activation") != std::string::npos)
                 {
@@ -1079,7 +1183,8 @@ namespace TensileLite
                     = m_problemDependentData || IsProblemDependent(m_vdata[i].init);
             }
             m_problemDependentData
-                |= (m_sparse | (args["bias-type-args"].as<std::vector<DataType>>().size() > 1));
+                |= (m_sparse
+                    | (args["bias-type-args"].as<std::vector<rocisa::DataType>>().size() > 1));
             allocNewCPUInputs();
             allocNewGPUInputs();
 
@@ -1380,7 +1485,7 @@ namespace TensileLite
                                        .pristine[problem.metadata().dataType()];
                     initGPUSparseInput(pUnit.gpuInput.current.get(),
                                        pUnitM.gpuInput.current.get(),
-                                       (void*)(offset),
+                                       pUnit.cpuInput.current.get(),
                                        problem.sparse() == 2 ? problem.b() : problem.a(),
                                        problem.compressed(),
                                        problem.metadata(),
@@ -1421,7 +1526,7 @@ namespace TensileLite
                                                                     ? problem.gemms[j].b()
                                                                     : problem.gemms[j].a();
                                     int                     tDim;
-                                    DataType                tDataType;
+                                    rocisa::DataType        tDataType;
                                     if(problem.gemms[j].sparse() == 2)
                                     {
                                         tDim      = problem.gemms[j].boundIndices()[0].b;
@@ -1435,47 +1540,48 @@ namespace TensileLite
 
                                     switch(tDataType)
                                     {
-                                    case DataType::Half:
+                                    case rocisa::DataType::Half:
                                         pruneSparseArray((Half*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::BFloat16:
+                                    case rocisa::DataType::BFloat16:
                                         pruneSparseArray((BFloat16*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::Int8:
+                                    case rocisa::DataType::Int8:
                                         pruneSparseArray((int8_t*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::Float8:
+                                    case rocisa::DataType::Float8:
                                         pruneSparseArray((Float8*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::BFloat8:
+                                    case rocisa::DataType::BFloat8:
                                         pruneSparseArray((BFloat8*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::Float8_fnuz:
+                                    case rocisa::DataType::Float8_fnuz:
                                         pruneSparseArray((Float8_fnuz*)p.second.cpuInput.valid.get()
                                                              + gemmInitOffset,
                                                          t,
                                                          tDim);
                                         break;
-                                    case DataType::BFloat8_fnuz:
-                                        pruneSparseArray((BFloat8_fnuz*)p.second.cpuInput.valid.get()
-                                                             + gemmInitOffset,
-                                                         t,
-                                                         tDim);
+                                    case rocisa::DataType::BFloat8_fnuz:
+                                        pruneSparseArray(
+                                            (BFloat8_fnuz*)p.second.cpuInput.valid.get()
+                                                + gemmInitOffset,
+                                            t,
+                                            tDim);
                                         break;
                                     default:
                                         throw std::runtime_error("SparseMatrix doesn't support");
@@ -1513,8 +1619,8 @@ namespace TensileLite
                             {
                                 const TensorDescriptor& t
                                     = problem.sparse() == 2 ? problem.b() : problem.a();
-                                int      tDim;
-                                DataType tDataType;
+                                int              tDim;
+                                rocisa::DataType tDataType;
                                 if(problem.sparse() == 2)
                                 {
                                     tDim      = problem.boundIndices()[0].b;
@@ -1528,30 +1634,30 @@ namespace TensileLite
 
                                 switch(tDataType)
                                 {
-                                case DataType::Half:
+                                case rocisa::DataType::Half:
                                     pruneSparseArray((Half*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::BFloat16:
+                                case rocisa::DataType::BFloat16:
                                     pruneSparseArray(
                                         (BFloat16*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::Int8:
+                                case rocisa::DataType::Int8:
                                     pruneSparseArray(
                                         (int8_t*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::Float8:
+                                case rocisa::DataType::Float8:
                                     pruneSparseArray(
                                         (Float8*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::BFloat8:
+                                case rocisa::DataType::BFloat8:
                                     pruneSparseArray(
                                         (BFloat8*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::Float8_fnuz:
+                                case rocisa::DataType::Float8_fnuz:
                                     pruneSparseArray(
                                         (Float8_fnuz*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
-                                case DataType::BFloat8_fnuz:
+                                case rocisa::DataType::BFloat8_fnuz:
                                     pruneSparseArray(
                                         (BFloat8_fnuz*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
@@ -1576,54 +1682,55 @@ namespace TensileLite
                     prop.dataType = problem.constants()[i].dataType;
                     switch(prop.dataType)
                     {
-                    case DataType::Float:
+                    case rocisa::DataType::Float:
                         prop.value = getValue<float>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Double:
+                    case rocisa::DataType::Double:
                         prop.value = getValue<double>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Half:
+                    case rocisa::DataType::Half:
                         prop.value = getValue<Half>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Int32:
+                    case rocisa::DataType::Int32:
                         prop.value = getValue<int32_t>(prop.init, prop.freeValue);
                         break;
-                    case DataType::BFloat16:
+                    case rocisa::DataType::BFloat16:
                         prop.value = getValue<BFloat16>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Int8:
+                    case rocisa::DataType::Int8:
                         prop.value = getValue<int8_t>(prop.init, prop.freeValue);
                         break;
-                    case DataType::ComplexFloat:
+                    case rocisa::DataType::ComplexFloat:
                         prop.value = getValue<std::complex<float>>(prop.init, prop.freeValue);
                         break;
-                    case DataType::ComplexDouble:
+                    case rocisa::DataType::ComplexDouble:
                         prop.value = getValue<std::complex<double>>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Int8x4:
+                    case rocisa::DataType::Int8x4:
                         prop.value = getValue<Int8x4>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Float8:
+                    case rocisa::DataType::Float8:
                         prop.value = getValue<Float8>(prop.init, prop.freeValue);
                         break;
-                    case DataType::BFloat8:
+                    case rocisa::DataType::BFloat8:
                         prop.value = getValue<BFloat8>(prop.init, prop.freeValue);
                         break;
-                    case DataType::Float8_fnuz:
+                    case rocisa::DataType::Float8_fnuz:
                         prop.value = getValue<Float8_fnuz>(prop.init, prop.freeValue);
                         break;
-                    case DataType::BFloat8_fnuz:
+                    case rocisa::DataType::BFloat8_fnuz:
                         prop.value = getValue<BFloat8_fnuz>(prop.init, prop.freeValue);
                         break;
-                    case DataType::XFloat32:
-                    case DataType::Count:
-                    case DataType::Float8BFloat8:
-                    case DataType::BFloat8Float8:
-                    case DataType::Float8BFloat8_fnuz:
-                    case DataType::BFloat8Float8_fnuz:;
+                    case rocisa::DataType::Int64:
+                    case rocisa::DataType::XFloat32:
+                    case rocisa::DataType::Count:
+                    case rocisa::DataType::Float8BFloat8:
+                    case rocisa::DataType::BFloat8Float8:
+                    case rocisa::DataType::Float8BFloat8_fnuz:
+                    case rocisa::DataType::BFloat8Float8_fnuz:;
                     }
                 }
-                if(Debug::Instance().printTensorInfo() && prop.dataType != DataType::None)
+                if(Debug::Instance().printTensorInfo() && prop.dataType != rocisa::DataType::None)
                     std::cout << "Constant " << m_cdata[i].name << ". Type "
                               << DataTypeInfo::Get(prop.dataType).abbrev << std::endl;
             }
@@ -1850,6 +1957,12 @@ namespace TensileLite
         {
             for(size_t i = 0; i < m_vdata.size(); i++)
             {
+                bool needSwizzle
+                    = (problem.swizzleTensorA() && i == ContractionProblemGemm::TENSOR::A)
+                      || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B);
+                //Copy swizzle tensor would be in copySwizzledToGPUBuffer
+                if(needSwizzle)
+                    continue;
                 void* ptr  = nullptr;
                 auto& desc = problem.tensors()[i];
                 auto  it   = m_vdata[i].pristine.find(desc.dataType());
@@ -1885,38 +1998,61 @@ namespace TensileLite
                       || (problem.swizzleTensorB() && i == ContractionProblemGemm::TENSOR::B);
 
                 void* ptr{};
-                //FIXME: Not good, need to use format to specify the way for swizzling.
-                //TODO: Support more swizzling type, such as 32x32x8, currently we have 16x16x8 only.
+
                 if(needSwizzle)
                 {
                     using Tensor = Tensor::Manipulation::Tensor;
                     // currently, if A then it means MiM = 16, if B then it means MiN = 16
                     size_t MiM_N = 16, MiK = 0, MiKv = 0, PackK = 0;
                     calculateKforSwizzling(desc.dataType(), MiK, MiKv, PackK);
-                    auto unrolledSize = desc.sizes()[0];
-                    auto tiledSize    = desc.sizes()[1];
-                    auto tmpTensor    = Tensor({tiledSize, unrolledSize}, desc.elementBytes());
-
-                    memcpy(tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
+                    auto                          unrolledSize = desc.sizes()[0];
+                    auto                          tiledSize    = desc.sizes()[1];
                     ::Tensor::Manipulation::Shape paddedShape{
                         ((tiledSize / MiM_N) + !!(tiledSize % MiM_N)) * MiM_N,
                         (unrolledSize / (MiK * PackK) + !!(unrolledSize % (MiK * PackK))) * MiK
                             * PackK};
-                    //Temporary hack
-                    uint64_t padVal{};
-                    auto     paddedTensor = ::Tensor::Manipulation::pad(
-                        tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
-                    paddedTensor.reshape({paddedShape[0] / MiM_N,
-                                          MiM_N,
-                                          paddedShape[1] / (MiK * PackK),
-                                          MiK / MiKv,
-                                          MiKv * PackK});
-                    Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
-                    ptr             = copyInputBuffers(desc,
-                                           p.gpuInput.valid.get(),
-                                           permuted.as<void>(),
-                                           permuted.getDesc().flattenSize(),
-                                           hipMemcpyHostToDevice);
+                    auto swizzleKey
+                        = std::make_tuple(toBitWidth(desc.dataType()), unrolledSize, tiledSize);
+
+                    if(g_swizzleCache.count(swizzleKey))
+                    {
+                        if(swizzleKey != g_swizzleCache.back())
+                        {
+                            Tensor& permuted = g_swizzleCache.at(swizzleKey);
+                            ptr              = copyInputBuffers(desc,
+                                                   p.gpuInput.valid.get(),
+                                                   permuted.as<void>(),
+                                                   permuted.getDesc().flattenSize(),
+                                                   hipMemcpyHostToDevice);
+                        }
+                        else
+                        {
+                            ptr = p.gpuInput.valid.get();
+                        }
+                    }
+                    else
+                    {
+                        auto tmpTensor = Tensor({tiledSize, unrolledSize}, desc.elementBytes());
+
+                        memcpy(
+                            tmpTensor.as<void>(), p.cpuInput.valid.get(), tmpTensor.getNumBytes());
+                        //Temporary hack
+                        uint64_t padVal{};
+                        auto     paddedTensor = ::Tensor::Manipulation::pad(
+                            tmpTensor, paddedShape, &padVal, tmpTensor.getElementSize());
+                        paddedTensor.reshape({paddedShape[0] / MiM_N,
+                                              MiM_N,
+                                              paddedShape[1] / (MiK * PackK),
+                                              MiK / MiKv,
+                                              MiKv * PackK});
+                        Tensor permuted = permute(paddedTensor, {0, 2, 3, 1, 4});
+                        ptr             = copyInputBuffers(desc,
+                                               p.gpuInput.valid.get(),
+                                               permuted.as<void>(),
+                                               permuted.getDesc().flattenSize(),
+                                               hipMemcpyHostToDevice);
+                        g_swizzleCache.emplace(swizzleKey, std::move(permuted));
+                    }
                 }
                 else
                 {

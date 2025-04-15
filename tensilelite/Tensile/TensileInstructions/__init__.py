@@ -28,15 +28,10 @@ if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 6):
     raise Exception("Must be using Python 3.6 or above")
 
 from .Base import *
-from .Code import *
-from .Containers import *
 from .DataType import *
-from .Enums import *
 from .ExtInstructions import *
 from .Formatting import *
 from .Instructions import *
-from .Macros import *
 from .Math import *
-from .Pass import *
 from .RegisterPool import *
 from .Utils import *

@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(BUILD_VERBOSE)
   include(../cmake/Verbose.cmake)
 endif()
+
+include(../cmake/Utilities.cmake)
 
 # Configure a header file to pass the hipBLASLt version
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
@@ -70,12 +72,11 @@ set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 include(src/CMakeLists.txt)
 
 # Create hipBLASLt library
-add_library(hipblaslt ${hipblaslt_source} ${hipblaslt_headers_public})
+add_library(hipblaslt ${hipblaslt_source} ${RocRoller_SRC} ${hipblaslt_headers_public})
 add_library(roc::hipblaslt ALIAS hipblaslt)
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
-if( BUILD_WITH_TENSILE )
 
   if( BUILD_SHARED_LIBS )
     target_link_libraries( hipblaslt PRIVATE TensileHost )
@@ -106,10 +107,9 @@ if( BUILD_WITH_TENSILE )
   endif()
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
-endif()
 
-    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
-    target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
+  target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
+  target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
@@ -164,6 +164,32 @@ endif()
 
 if( NOT BUILD_CUDA AND NOT LEGACY_HIPBLAS_DIRECT )
   target_link_libraries(hipblaslt INTERFACE roc::hipblas-common)
+endif()
+
+# RocRoller integration
+include(FetchContent)
+if(USE_ROCROLLER)
+  _save_var(BUILD_TESTING)
+  _save_var(BUILD_CLIENTS)
+  _save_var(CMAKE_SHARED_LINKER_FLAGS)
+  _save_var(CMAKE_VISIBILITY_INLINES_HIDDEN)
+  set(BUILD_CLIENTS OFF)
+  set(BUILD_TESTING OFF)
+  set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--exclude-libs,ALL")
+  set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+  FetchContent_Declare(
+    rocRoller
+    GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
+    GIT_TAG 34307b30956cac16e459db6cfdd3ba1f07c7e9b8
+  )
+  FetchContent_MakeAvailable(rocRoller)
+  target_link_libraries(hipblaslt PRIVATE rocroller_interface)
+  add_definitions(-DUSE_ROCROLLER)
+
+  _restore_var(BUILD_TESTING)
+  _restore_var(BUILD_CLIENTS)
+  _restore_var(CMAKE_SHARED_LINKER_FLAGS)
+  _restore_var(CMAKE_VISIBILITY_INLINES_HIDDEN)
 endif()
 
 # Target properties

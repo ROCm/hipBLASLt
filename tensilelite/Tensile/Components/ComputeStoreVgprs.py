@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,10 @@
 #
 ################################################################################
 
+from rocisa.container import ContinuousRegister
 from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, VMulLOU32, \
                             VMovB32, VAddCOU32, staticMultiply, vectorStaticDivide, \
-                            vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2, \
+                            vectorStaticRemainder, vgpr, sgpr, log2, \
                             vectorStaticDivideAndRemainder
 from ..Component import ComputeStoreVgprs
 from ..Common import DataDirection
@@ -71,7 +72,18 @@ class ComputeStoreVgprsVALU(ComputeStoreVgprs):
             tmpS0 = tmpSgprInfo.idx
             tmpS1 = tmpS0+1
             wgMT1 = tmpS0+2
-            module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpS0))
+            tmpVgpr = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr")
+            tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
+            # dot2: consecutive NumWaveSplitK threads compute the same element, divide it first before computing tile indices
+            if kernel["NumWaveSplitK"] > 1:
+                newSerial = writer.vgprPool.checkOut(1, "newSerial")
+                module.add(vectorStaticDivide(newSerial, "Serial", kernel["NumWaveSplitK"], tmpVgprRes, comment="Divided by NumWaveSplitK"))
+                module.add(vectorStaticDivideAndRemainder(tid1, tid0, newSerial, divisor, tmpVgprRes))
+                writer.vgprPool.checkIn(newSerial)
+            else:
+                module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpVgprRes))
+
+            writer.vgprPool.checkIn(tmpVgpr)
             module.add(staticMultiply(vgpr(tid0), vgpr(tid0), tid0Scale, sgpr(tmpS1)))
             if tid1Scale != 1:
                 module.add(staticMultiply(vgpr(tid1), vgpr(tid1), tid1Scale, sgpr(tmpS1)))
@@ -153,8 +165,8 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
 
         tmpVgpr0 = writer.vgprPool.checkOut(1,"tmpVgpr0")
         tmpVgpr1 = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr1")
-        tmpVgpr0Res = RegisterPoolResource(tmpVgpr0, 1)
-        tmpVgpr1Res = RegisterPoolResource(tmpVgpr1, 2)
+        tmpVgpr0Res = ContinuousRegister(tmpVgpr0, 1)
+        tmpVgpr1Res = ContinuousRegister(tmpVgpr1, 2)
         dummy    = writer.vgprPool.checkOut(1,"dummy")
 
         with writer.allocTmpSgpr(1) as tmpSgprInfo:
@@ -274,7 +286,7 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
         tmpVgpr0 = writer.vgprPool.checkOut(1,"tmpVgpr0")
         tmpVgpr1 = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr1")
         #lsu_id   = tmpVgpr1
-        tmpVgpr1Res = RegisterPoolResource(tmpVgpr1, 2)
+        tmpVgpr1Res = ContinuousRegister(tmpVgpr1, 2)
         dummy    = writer.vgprPool.checkOut(1,"dummy")
 
         with writer.allocTmpSgpr(1) as tmpSgprInfo:

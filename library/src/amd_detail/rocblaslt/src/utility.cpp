@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,12 @@ const char* hipDataType_to_string(hipDataType type)
 #endif
     case HIP_R_8I:
         return "R_8I";
+    case static_cast<hipDataType>(HIP_R_6F_E2M3_EXT):
+        return "R_6F_E2M3";
+    case static_cast<hipDataType>(HIP_R_6F_E3M2_EXT):
+        return "R_6F_E3M2";
+    case static_cast<hipDataType>(HIP_R_4F_E2M1_EXT):
+        return "R_4F_E2M1";
     default:
         return "Invalid";
     }
@@ -90,11 +96,10 @@ const char* hipDataType_to_string(hipDataType type)
 
 bool rocblaslt_is_complex_datatype(hipDataType type)
 {
-    return type == HIP_C_32F  || type == HIP_C_64F || type == HIP_C_16F ||
-           type == HIP_C_8I   || type == HIP_C_8U  || type == HIP_C_32I ||
-           type == HIP_C_32U || type == HIP_C_16BF || type == HIP_C_4I  ||
-           type == HIP_C_4U  || type == HIP_C_16I || type == HIP_C_16U  ||
-           type == HIP_C_64I || type == HIP_C_64U;
+    return type == HIP_C_32F || type == HIP_C_64F || type == HIP_C_16F || type == HIP_C_8I
+           || type == HIP_C_8U || type == HIP_C_32I || type == HIP_C_32U || type == HIP_C_16BF
+           || type == HIP_C_4I || type == HIP_C_4U || type == HIP_C_16I || type == HIP_C_16U
+           || type == HIP_C_64I || type == HIP_C_64U;
 }
 
 const char* hipDataType_to_bench_string(hipDataType type)
@@ -123,6 +128,12 @@ const char* hipDataType_to_bench_string(hipDataType type)
     case HIP_R_8F_E5M2:
         return "bf8_r";
 #endif
+    case static_cast<hipDataType>(HIP_R_6F_E2M3_EXT):
+        return "f6_r";
+    case static_cast<hipDataType>(HIP_R_6F_E3M2_EXT):
+        return "bf6_r";
+    case static_cast<hipDataType>(HIP_R_4F_E2M1_EXT):
+        return "f4_r";
     default:
         return "invalid";
     }
@@ -208,6 +219,8 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_POINTER_MODE";
     case ROCBLASLT_MATMUL_DESC_AMAX_D_POINTER:
         return "MATMUL_DESC_AMAX_D_POINTER";
+    case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_DATA_TYPE:
+        return "MATMUL_DESC_EPILOGUE_AUX_DATA_TYPE";
     case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT:
         return "MATMUL_DESC_A_SCALE_POINTER_VEC";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT:
@@ -322,15 +335,42 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 {
-    std::string format = matmul_desc->bias_type == HIPBLASLT_DATATYPE_INVALID
-                             ? "[computeType=%s scaleType=%s transA=%s transB=%s "
-                               "epilogue=%s biasPointer=0x%x]\0"
-                             : "[computeType=%s scaleType=%s transA=%s transB=%s "
-                               "epilogue=%s biasPointer=0x%x biasType=%s]\0";
+    std::stringstream ss;
+    ss << "[computeType=%s scaleType=%s transA=%s transB=%s epilogue=%s biasPointer=0x%x";
+    if(is_e_enabled(matmul_desc->epilogue))
+    {
+        ss << " epilogueAuxPointer=0x%x epilogueAuxLd=" << matmul_desc->lde;
+        if(matmul_desc->aux_type != HIPBLASLT_DATATYPE_INVALID)
+            ss << " epilogueAuxDataType=" << hipDataType_to_string(matmul_desc->aux_type);
+    }
+    if(matmul_desc->bias_type != HIPBLASLT_DATATYPE_INVALID)
+        ss << " biasType=%s";
+    ss << "]";
+    std::string format = ss.str();
 
     std::unique_ptr<char[]> buf(new char[255]);
 
     if(matmul_desc->bias_type == HIPBLASLT_DATATYPE_INVALID)
+        if(is_e_enabled(matmul_desc->epilogue))
+            std::sprintf(buf.get(),
+                         format.c_str(),
+                         rocblaslt_compute_type_to_string(matmul_desc->compute_type),
+                         hipDataType_to_string(matmul_desc->scale_type),
+                         hipblasOperation_to_string(matmul_desc->op_A),
+                         hipblasOperation_to_string(matmul_desc->op_B),
+                         rocblaslt_epilogue_to_string(matmul_desc->epilogue),
+                         matmul_desc->bias,
+                         matmul_desc->e);
+        else
+            std::sprintf(buf.get(),
+                         format.c_str(),
+                         rocblaslt_compute_type_to_string(matmul_desc->compute_type),
+                         hipDataType_to_string(matmul_desc->scale_type),
+                         hipblasOperation_to_string(matmul_desc->op_A),
+                         hipblasOperation_to_string(matmul_desc->op_B),
+                         rocblaslt_epilogue_to_string(matmul_desc->epilogue),
+                         matmul_desc->bias);
+    else if(is_e_enabled(matmul_desc->epilogue))
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
@@ -338,7 +378,9 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
                      hipblasOperation_to_string(matmul_desc->op_A),
                      hipblasOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
-                     matmul_desc->bias);
+                     matmul_desc->bias,
+                     matmul_desc->e,
+                     hipDataType_to_string(matmul_desc->bias_type));
     else
         std::sprintf(buf.get(),
                      format.c_str(),
@@ -357,3 +399,14 @@ bool    UserClientArguments::m_flush              = false;
 int32_t UserClientArguments::m_rotatingBufferSize = 0;
 int32_t UserClientArguments::m_coldIterations     = 0;
 int32_t UserClientArguments::m_hotIterations      = 0;
+
+// Define and initialize static members of struct hipblasltClientPerformanceArgs
+double hipblasltClientPerformanceArgs::totalGranularity = 0.0;
+double hipblasltClientPerformanceArgs::tilesPerCu       = 0.0;
+double hipblasltClientPerformanceArgs::tile0Granularity = 0.0; // loss due to tile0
+double hipblasltClientPerformanceArgs::tile1Granularity = 0.0;
+double hipblasltClientPerformanceArgs::cuGranularity    = 0.0;
+double hipblasltClientPerformanceArgs::waveGranularity  = 0.0;
+int    hipblasltClientPerformanceArgs::CUs              = 0;
+size_t hipblasltClientPerformanceArgs::memWriteBytesD   = 0.0; //! Estimated memory writes D
+size_t hipblasltClientPerformanceArgs::memReadBytes     = 0.0;

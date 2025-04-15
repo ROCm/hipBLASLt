@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,13 +47,14 @@ namespace TensileLite
             m_printValids        = args["print-valids"].as<bool>();
             m_printMax           = args["print-max"].as<int>();
 
-            m_printTensorA     = args["print-tensor-a"].as<bool>();
-            m_printTensorB     = args["print-tensor-b"].as<bool>();
-            m_printTensorC     = args["print-tensor-c"].as<bool>();
-            m_printTensorD     = args["print-tensor-d"].as<bool>();
-            m_printTensorRef   = args["print-tensor-ref"].as<bool>();
-            m_printTensorBias  = args["print-tensor-bias"].as<bool>();
-            m_printTensorAmaxD = args["print-tensor-amaxd"].as<bool>();
+            m_printTensorA             = args["print-tensor-a"].as<bool>();
+            m_printTensorB             = args["print-tensor-b"].as<bool>();
+            m_printTensorC             = args["print-tensor-c"].as<bool>();
+            m_printTensorD             = args["print-tensor-d"].as<bool>();
+            m_printTensorRef           = args["print-tensor-ref"].as<bool>();
+            m_printTensorBias          = args["print-tensor-bias"].as<bool>();
+            m_printTensorScaleAlphaVec = args["print-tensor-scale-alpha-vec"].as<bool>();
+            m_printTensorAmaxD         = args["print-tensor-amaxd"].as<bool>();
 
             m_printAny = m_printTensorA || m_printTensorB || m_printTensorC || m_printTensorD
                          || m_printTensorRef || m_printTensorBias || m_printTensorAmaxD;
@@ -176,7 +177,7 @@ namespace TensileLite
             bool rv = false;
             switch(tensor.dataType())
             {
-            case DataType::Float:
+            case rocisa::DataType::Float:
             {
                 rv = checkResultsTyped(tensor,
                                        (float const*)refPtr,
@@ -186,7 +187,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Double:
+            case rocisa::DataType::Double:
             {
                 rv = checkResultsTyped(tensor,
                                        (double const*)refPtr,
@@ -196,7 +197,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::ComplexFloat:
+            case rocisa::DataType::ComplexFloat:
             {
                 rv = checkResultsTyped(tensor,
                                        (std::complex<float> const*)refPtr,
@@ -206,7 +207,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::ComplexDouble:
+            case rocisa::DataType::ComplexDouble:
             {
                 rv = checkResultsTyped(tensor,
                                        (std::complex<double> const*)refPtr,
@@ -216,7 +217,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Half:
+            case rocisa::DataType::Half:
             {
                 rv = checkResultsTyped(tensor,
                                        (Half const*)refPtr,
@@ -226,7 +227,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Float8:
+            case rocisa::DataType::Float8:
             {
                 rv = checkResultsTyped(tensor,
                                        (Float8 const*)refPtr,
@@ -236,7 +237,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::BFloat8:
+            case rocisa::DataType::BFloat8:
             {
                 rv = checkResultsTyped(tensor,
                                        (BFloat8 const*)refPtr,
@@ -246,7 +247,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Float8_fnuz:
+            case rocisa::DataType::Float8_fnuz:
             {
                 rv = checkResultsTyped(tensor,
                                        (Float8_fnuz const*)refPtr,
@@ -256,7 +257,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::BFloat8_fnuz:
+            case rocisa::DataType::BFloat8_fnuz:
             {
                 rv = checkResultsTyped(tensor,
                                        (BFloat8_fnuz const*)refPtr,
@@ -266,12 +267,12 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Int8x4:
+            case rocisa::DataType::Int8x4:
             {
                 throw std::runtime_error("Unsupported validator data type Int8x4 for output.");
             }
             break;
-            case DataType::Int32:
+            case rocisa::DataType::Int32:
             {
                 rv = checkResultsTyped(tensor,
                                        (int32_t const*)refPtr,
@@ -281,7 +282,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::BFloat16:
+            case rocisa::DataType::BFloat16:
             {
                 rv = checkResultsTyped(tensor,
                                        (BFloat16 const*)refPtr,
@@ -291,7 +292,7 @@ namespace TensileLite
                                        validationStride);
             }
             break;
-            case DataType::Int8:
+            case rocisa::DataType::Int8:
             {
                 rv = checkResultsTyped(tensor,
                                        (int8_t const*)refPtr,
@@ -471,6 +472,9 @@ namespace TensileLite
             if(m_printTensorBias)
                 requiredBufferSize
                     = std::max(requiredBufferSize, problem.bias().totalAllocatedBytes());
+            if(m_printTensorScaleAlphaVec)
+                requiredBufferSize
+                    = std::max(requiredBufferSize, problem.scaleAlphaVec().totalAllocatedBytes());
             if(m_printTensorAmaxD)
                 requiredBufferSize
                     = std::max(requiredBufferSize, problem.amaxd().totalAllocatedBytes());
@@ -579,6 +583,18 @@ namespace TensileLite
                                       m_cpuResultBuffer.get(),
                                       problem.bias(),
                                       result.bias);
+            }
+            if(m_printTensorScaleAlphaVec)
+            {
+                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                        result.scaleAlphaVec,
+                                        problem.scaleAlphaVec().totalAllocatedBytes(),
+                                        hipMemcpyDeviceToHost));
+                m_reporter->logTensor(LogLevel::Verbose,
+                                      "scaleAlphaVec",
+                                      m_cpuResultBuffer.get(),
+                                      problem.scaleAlphaVec(),
+                                      result.scaleAlphaVec);
             }
 
             if(m_printTensorAmaxD)

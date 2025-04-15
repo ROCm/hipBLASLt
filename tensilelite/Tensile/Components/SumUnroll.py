@@ -22,6 +22,8 @@
 #
 ################################################################################
 
+from rocisa.code import RegSet
+from rocisa.container import EXEC, vgpr, sgpr
 from ..Component import SumUnroll
 from ..Common import printExit
 from ..TensileInstructions.ExtInstructions import VCvtBF16toFP32
@@ -29,7 +31,7 @@ from ..TensileInstructions import Module, VDot2F32F16, SMovB32, VAddU32, VCmpXEq
     VLShiftLeftB32, VMovB32, VAddF32, SBarrier, SDWAModifiers, SelectBit, VCvtPkFP8toF32, VCvtPkBF8toF32, \
     staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
     DSModifiers, SSetMask, DSStoreB16, DSStoreB32, DSStoreB64, \
-    RegSet, EXEC, vgpr, sgpr, RegisterPoolResource, log2
+    ContinuousRegister, log2
 
 class SumUnrollMfma(SumUnroll):
     kernel = {"EnableMatrixInstruction": True}
@@ -127,7 +129,7 @@ class SumUnrollMfma(SumUnroll):
                         printExit("Currently unsupported vgprPerInput %u"%vgprPerInput)
                     writer.vgprPool.checkIn(tmpVgpr)
                 elif (kernel["ProblemType"]["DataType"].isAnyFloat8A() and tc == "A") or \
-                     (kernel["ProblemType"]["DataType"].isAnyFloat8B() and tc == "B") :
+                     (kernel["ProblemType"]["DataType"].isAnyFloat8B() and tc == "B"):
                     #FP8
                     tmpVgpr = writer.vgprPool.checkOutAligned(4,2)
                     if vgprPerInput > 1 and (vgprPerInput % 2 == 0):
@@ -144,7 +146,7 @@ class SumUnrollMfma(SumUnroll):
                         printExit("Currently unsupported vgprPerInput %u"%vgprPerInput)
                     writer.vgprPool.checkIn(tmpVgpr)
                 elif (kernel["ProblemType"]["DataType"].isAnyBFloat8A() and tc == "A") or \
-                     (kernel["ProblemType"]["DataType"].isAnyBFloat8B() and tc == "B") :
+                     (kernel["ProblemType"]["DataType"].isAnyBFloat8B() and tc == "B"):
                     #BF8
                     tmpVgpr = writer.vgprPool.checkOutAligned(4,2)
                     if vgprPerInput > 1 and (vgprPerInput % 2 == 0):
@@ -190,7 +192,7 @@ class SumUnrollMfma(SumUnroll):
         tReg    = writer.vgprPool.checkOut(1,"tReg") # remainder
         kReg    = writer.vgprPool.checkOut(1,"kReg") # remainder
         tmpVgpr = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr")
-        tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+        tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
         ldsVgpr = writer.vgprPool.checkOut(1,"ldsVgpr")
         ldsVgpr1 = writer.vgprPool.checkOut(1,"ldsVgpr1")
         dummy   = writer.vgprPool.checkOut(1,"dummy")

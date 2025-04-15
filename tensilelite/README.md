@@ -10,11 +10,29 @@ Assumptions:
 
 - Each problem directory contains a library directory with one co file corresponding to one architecture
 
+**Edit**(2025/3/31) ``rocisa`` use the CMake build system instead of the ``virtualenv``. The behavior of the TensileLite changed a bit with only one extra line.
+
 Example:
 
+```cmake -DTENSILE_BIN=Tensile -DDEVELOP_MODE=ON -S <path-to-tensilelite-root> -B <tensile-out>```
+
+The script will be created in the build folder and will be named in Tensile.bat or Tensile.sh depending on the platform. Then you can then run the script under the ``tensile-out`` folder as usual:
+
 ```
-cd hipBLASLt/tensilelite
-Tensile/bin/Tensile Tensile/Tests/gemm/fp16_use_e.yaml tensile-out
+Tensile.sh <abs-path>/Tensile/Tests/gemm/fp16_use_e.yaml tensile-out
+```
+
+or
+
+```
+Tensile.bat <abs-path>/Tensile/Tests/gemm/fp16_use_e.yaml tensile-out
+```
+
+**You don't need to rerun CMake unless you delete the ``tensile-out`` folder.**
+
+To build asm only:
+
+```
 # modify an assembly file in tensile-out/1_BenchmarkProblems/Cijk_Ailk_Bjlk_DB_UserArgs_00/00_Final/source/build_tmp/SOURCE/assembly
 make co TENSILE_OUT=tensile-out
 # re-run the client
