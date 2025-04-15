@@ -2812,11 +2812,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # force to generate 2 loop bodies
       loopCopies = 2
 
-    if kernel["PrefetchGlobalRead"] == 2:
-      # Wait for second set of PGR before loop begins
-      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
-      module.add(SBarrier())
-
     # open unrolled summation loop
     module.addComment2("Unrolled Loop(s) - Begin")
     module.add(self.openLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, beginLabelOnly=False))
@@ -2851,6 +2846,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self._loopBody( kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, isDTVGRSecondBuf=isDTVGRSecondBuf ))
 
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
+
+    if kernel["PrefetchGlobalRead"] == 2 and (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]):
+      # Wait for any outstanding loads to complete
+      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
+      module.add(SBarrier())
 
     # swap local write, read again before noLoadLoop if PrefetchGlobalRead and DirectToLds is enabled
     # In DirectToLds enabled case, local write address is necessary for prefetch global read (for m0).
