@@ -111,10 +111,7 @@ class ToolchainDefaults(NamedTuple):
     CXX_COMPILER = osSelect(linux="amdclang++", windows="clang++.exe")
     C_COMPILER = osSelect(linux="amdclang", windows="clang.exe")
     OFFLOAD_BUNDLER = osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
-    if os.name == 'nt':
-        DEVICE_ENUMERATOR = "hipInfo"
-    else:
-        DEVICE_ENUMERATOR = "rocm_agent_enumerator" if isRhel8() else "amdgpu-arch"
+    DEVICE_ENUMERATOR = osSelect(linux="rocm_agent_enumerator" if isRhel8() else "amdgpu-arch", windows="hipinfo")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
     HIP_CONFIG = osSelect(linux="hipconfig", windows="hipconfig")
 

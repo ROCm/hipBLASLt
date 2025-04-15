@@ -136,8 +136,6 @@ class KernelWriterActivationFunction(KernelWriterBase):
     self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-    if not self._tf.isInit():
-      self._tf.init(tuple(self.state["Kernel"]["ISA"]), globalParameters["AssemblerPath"])
     activationType = self.state["ProblemType"]["ActivationType"]
     self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
