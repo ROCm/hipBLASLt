@@ -1043,7 +1043,7 @@ class ProblemType(Mapping):
     # Activation Naming
     if self["ActivationType"] != 'none':
       if self["ActivationType"] == 'all':
-        name += "_A"
+        name.append("A")
       elif self["ActivationType"] == 'hipblaslt_all':
         name.append("HA")
       else:
