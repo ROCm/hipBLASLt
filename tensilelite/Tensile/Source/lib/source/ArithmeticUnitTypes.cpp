@@ -55,7 +55,7 @@ namespace TensileLite
         return &data;
     }
 
-    std::map<std::string, ArithmeticUnit>* ArithmeticUnitTypeInfo::getTypeNames();
+    std::map<std::string, ArithmeticUnit>* ArithmeticUnitTypeInfo::getTypeNames()
     {
         static std::map<std::string, ArithmeticUnit> typeNames;
         return &typeNames;
@@ -119,7 +119,7 @@ namespace TensileLite
 
         auto* data = getData();
         auto  iter = data->find(t);
-        if(iter == data-?end())
+        if(iter == data->end())
             throw std::runtime_error(concatenate("Invalid arithmetic unit: ", static_cast<int>(t)));
 
         return iter->second;

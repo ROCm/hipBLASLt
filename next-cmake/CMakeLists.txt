@@ -1,0 +1,92 @@
+# ########################################################################
+# Copyright (C) 2025 Advanced Micro Devices, Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+# ########################################################################
+cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+project(hipBLASLt VERSION 0.1.0)
+
+################################################################################
+# Options and cache variables
+################################################################################
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ON)
+
+################################################################################
+# Includes
+################################################################################
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(GenerateExportHeader)
+
+################################################################################
+# Find dependencies 
+################################################################################
+find_package(OpenMP REQUIRED)
+find_package(hip REQUIRED CONFIG)
+find_package(hipblas-common REQUIRED CONFIG)
+
+################################################################################
+# Configure hipBLASLt host library
+################################################################################
+add_library(hipblaslt)
+add_library(roc::hipblaslt ALIAS hipblaslt)
+
+target_compile_features(hipblaslt PUBLIC cxx_std_17)
+target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
+target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
+
+target_link_libraries(hipblaslt PRIVATE hip::device)
+target_link_libraries(hipblaslt PRIVATE dl)
+target_link_libraries(hipblaslt PRIVATE roc::hipblas-common)
+target_link_libraries(hipblaslt PRIVATE OpenMP::OpenMP_CXX)
+
+add_subdirectory(host-library)
+
+################################################################################
+# Configure tensilelite device libraries
+################################################################################
+# add_subdirectory(device-library)
+
+################################################################################
+# Configure clients
+################################################################################
+add_executable(hipblaslt-bench)
+
+target_link_libraries(hipblaslt-bench PRIVATE roc::hipblaslt)
+target_link_libraries(hipblaslt-bench PRIVATE hip::host hip::device)
+target_link_libraries(hipblaslt-bench PRIVATE lapack cblas)
+target_link_libraries(hipblaslt-bench PRIVATE -mf16c)
+target_link_libraries(hipblaslt-bench PRIVATE libomp -lm -lstdc++fs)
+
+
+target_include_directories(hipblaslt-bench PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../clients/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/src/include>
+)
+
+target_include_directories(hipblaslt-bench
+    SYSTEM PRIVATE
+        $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
+        $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
+)
+
+add_subdirectory(clients)
