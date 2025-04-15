@@ -2016,18 +2016,8 @@ class Solution(collections.abc.Mapping):
             reject(state, printRejectionReason, "Not implement DTVSM with VW>1")
             break
 
-        # f32 emulation currently only supports a limited set of solutions
         if state["UseF32XEmulation"]:
-          if isaInfoMap[isa].archCaps["HasF32XEmulation"]:
-            if state["VectorWidthA"] > 1 or state["VectorWidthB"] > 1 :
-              print("carson: reject1 " + str(state["VectorWidthA"]) + " " + str(state["VectorWidthB"]))
-              reject(state, "Missing implementation for F32X Emulation VW>1")
-              break
-            if depthU != 16:
-              print("carson: reject2")
-              reject(state, "Missing implementation for F32X Emulation DepthU!=16")
-              break
-          else:
+          if not isaInfoMap[isa].archCaps["HasF32XEmulation"]:
             reject(state, "Missing emulation for F32X")
             break
 
