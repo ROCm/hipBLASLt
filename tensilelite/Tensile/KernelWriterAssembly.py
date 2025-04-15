@@ -70,6 +70,7 @@ from rocisa.instruction import BranchInstruction, BufferLoadB128, BufferLoadB32,
   VPrngB32, VReadfirstlaneB32, VSubF32, VSubI32, VSubU32, VXorB32
 
 from .Component import Component
+from .Components.F32XEmulation import F32XEmulationMFMA, F32XEmulationCvtLocalWrite
 from .KernelWriterModules import *
 from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState, VectorDataTypes
@@ -105,6 +106,9 @@ class TailOptParams:
   preDirectToLdsLoads: int         = 0
   firstLoop:           int         = 0
   finalLoop:           int         = 0
+
+dbgCounter = 0
+dbgCounterMFMA = 0
 
 ################################################################################
 # Assembly Kernel
@@ -4013,7 +4017,6 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(1) as tmpSgprInfo:
           module.add(vectorStaticMultiplyAdd(vgpr("LocalReadAddr%s"%tc), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpeDS"], vgpr("LocalReadAddr%s"%tc), tmpSgprInfo, \
                                        "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
-
       # release resources
       self.vgprPool.checkIn(tmpVgpr)
       self.vgprPool.checkIn(wave_id)
@@ -6291,6 +6294,7 @@ class KernelWriterAssembly(KernelWriter):
     else:
       return vgpr(idx, sz)
 
+
   ##############################################################################
   # MFMA Iteration
   ##############################################################################
@@ -6882,75 +6886,23 @@ class KernelWriterAssembly(KernelWriter):
                            comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
             else:
               # TF32 Emulation
-              if miInInstType == InstType.INST_XF32 and not self.states.asmCaps["HasMFMA_xf32"] and kernel["UseF32XEmulation"]:
-                tf32mod = Module()
+              if kernel["UseF32XEmulation"]:
                 acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1))
                 acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1))
-                tf32mod.add(TextBlock("/*tf32 emulation*/\n"))
-                tf32mod.add(TextBlock("/*f32 to 2 bfloat16 per input*/\n"))
-                tf32mod.add(TextBlock("/*bf16AHigh*/\n"))
-                if not kernel["EnableF32XEmulationLds"]:
-                  tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+0"), src0=vgpr(aStr_base), src1=vgpr(aStr_base + "+1")))
-                  tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+1"), src0=vgpr(aStr_base + "+2"), src1=vgpr(aStr_base + "+3")))
-                tf32mod.add(TextBlock("/*bf16BHigh*/\n"))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+2"), src0=vgpr(bStr_base), src1=vgpr(bStr_base + "+1")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+3"), src0=vgpr(bStr_base + "+2"), src1=vgpr(bStr_base + "+3")))
-                tf32mod.add(TextBlock("/*bf16ALow = A - float32(bf16AHigh)*/\n"))
-                if not kernel["EnableF32XEmulationLds"]:
-                  tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src=vgpr("Cvt+0"), vgprMask=None, vi=0))
-                  tf32mod.add(VSubF32(dst=vgpr("Cvt+8"), src0=vgpr(aStr_base+"+0"), src1=vgpr("Cvt+8")))
-                  tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+0"), vgprMask=None, vi=1))
-                  tf32mod.add(VSubF32(dst=vgpr("Cvt+9"), src0=vgpr(aStr_base+"+1"), src1=vgpr("Cvt+9")))
-                  tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+4"), src0=vgpr("Cvt+8"), src1=vgpr("Cvt+9")))
-                  tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src=vgpr("Cvt+1"), vgprMask=None, vi=0))
-                  tf32mod.add(VSubF32(dst=vgpr("Cvt+8"), src0=vgpr(aStr_base+"+2"), src1=vgpr("Cvt+8")))
-                  tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+1"), vgprMask=None, vi=1))
-                  tf32mod.add(VSubF32(dst=vgpr("Cvt+9"), src0=vgpr(aStr_base+"+3"), src1=vgpr("Cvt+9")))
-                  tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+5"), src0=vgpr("Cvt+8"), src1=vgpr("Cvt+9")))
-                tf32mod.add(TextBlock("/*bf16BLow = B - float32(bf16BHigh)*/\n"))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src=vgpr("Cvt+2"), vgprMask=None, vi=0))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+8"), src0=vgpr(bStr_base+"+0"), src1=vgpr("Cvt+8")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+2"), vgprMask=None, vi=1))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+9"), src0=vgpr(bStr_base+"+1"), src1=vgpr("Cvt+9")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+6"), src0=vgpr("Cvt+8"), src1=vgpr("Cvt+9")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src=vgpr("Cvt+3"), vgprMask=None, vi=0))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+8"), src0=vgpr(bStr_base+"+2"), src1=vgpr("Cvt+8")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+3"), vgprMask=None, vi=1))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+9"), src0=vgpr(bStr_base+"+3"), src1=vgpr("Cvt+9")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+7"), src0=vgpr("Cvt+8"), src1=vgpr("Cvt+9")))
-
-                #todo: working impl using in situ cvt cmd. lds currently some kernels are failing
-                if kernel["EnableF32XEmulationLds"]:
-                  tf32mod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                       acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
-                                       a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
-                                       comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
-                else:
-                  tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
-                  (src0, src1) = (vgpr("Cvt+2",2), vgpr("Cvt+0",2))
-                  tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                       acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
-                                       a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
-                                       comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
-                  tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
-                  (src0, src1) = (vgpr("Cvt+6",2), vgpr("Cvt+0",2))
-                  tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                       acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
-                                       a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
-                                       comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
-                  tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
-                  (src0, src1) = (vgpr("Cvt+2",2), vgpr("Cvt+4",2))
-                  tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                       acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
-                                       a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
-                                       comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
-                imod.add(tf32mod)
+                emulation = F32XEmulationMFMA()
+                #mfma_1k = True
+                imod.add(emulation(kernel, acc, acc2, src0, src1, miInInstType, miOutInstType, variant, mfma_1k,\
+                  vgprPerInputA, neg_flag=neg_flag))
+                imod.add(TextBlock("/*mfma ops: {0} {1}*/\n".format(str(src0), str(src1))))
               else:
                 imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                        acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                        a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
                                        comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
             prevAccIdx = accIdx
+            global dbgCounterMFMA
+            imod.add(TextBlock(str("label_mfma_") + str(dbgCounterMFMA) + ":\n"))
+            dbgCounterMFMA += 1
 
       if kernel["ExpertSchedulingMode"] > 0:
         imod.add(SWaitAlu(va_vdst=0, comment="wait for the current iter's writes to complete"))
@@ -8417,6 +8369,8 @@ class KernelWriterAssembly(KernelWriter):
                           glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=isHigh16Bits , \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
+                if tc == 'A' and (kernel["MIInputPerThreadA"] == 8):
+                  instOffset += 16 # 256b reads require 16B offset
 
                 if unrollMirrorWithSoffset:
                   codeMod = Module("mirrorIdx%u"%loopCnt)
@@ -9378,27 +9332,6 @@ class KernelWriterAssembly(KernelWriter):
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
-            if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
-              vgrStr = str("vgpr" + destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
-              if "A" in vgrStr:
-                tf32mod = Module()
-                tf32mod.add(TextBlock("/*TF32 Emulation write lds*/\n"))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+0"), src0=vgpr("G2LA+0"), src1=vgpr("G2LA+1")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+1"), src0=vgpr("G2LA+2"), src1=vgpr("G2LA+3")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src=vgpr("Cvt+0"), vgprMask=None, vi=0))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+2"), src0=vgpr("G2LA+0"), src1=vgpr("Cvt+8")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+0"), vgprMask=None, vi=1))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+3"), src0=vgpr("G2LA+1"), src1=vgpr("Cvt+9")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+8"), src="Cvt+1", vgprMask=None, vi=0))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+4"), src0=vgpr("G2LA+2"), src1=vgpr("Cvt+8")))
-                tf32mod.add(VCvtBF16toFP32(dst=vgpr("Cvt+9"), src=vgpr("Cvt+1"), vgprMask=None, vi=1))
-                tf32mod.add(VSubF32(dst=vgpr("Cvt+5"), src0=vgpr("G2LA+3"), src1=vgpr("Cvt+9")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("G2LA+0"), src0=vgpr("Cvt+2"), src1=vgpr("G2LA+0")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("G2LA+1"), src0=vgpr("Cvt+3"), src1=vgpr("G2LA+1")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("G2LA+2"), src0=vgpr("Cvt+4"), src1=vgpr("G2LA+2")))
-                tf32mod.add(VCvtPkF32toBF16(dst=vgpr("G2LA+3"), src0=vgpr("Cvt+5"), src1=vgpr("G2LA+3")))
-                localWriteCode.add(tf32mod)
-
             LocalWriteX = tP["localWriteInstruction"].getInst(isHigh16Bits)
             if numBlocks == 1:
               if (paramList[1] >= 0x20000):
@@ -9416,6 +9349,11 @@ class KernelWriterAssembly(KernelWriter):
             else:
               ds        = DSModifiers(na=2, offset0=paramList[2], offset1=paramList[3])
               writeInst = LocalWriteX(dstAddr=vgpr(lwa), src0=paramList[0], src1=paramList[1], ds=ds, comment=comment)
+            if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
+              vgrStr = str(destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
+              # if "A" in vgrStr:
+              emulationLocalWrite = F32XEmulationCvtLocalWrite()
+              localWriteCode.add(emulationLocalWrite(vgrStr))
             if self.do["LocalWriteCVT"]:
               localWriteCode.add(localWriteCVTCode)
             if self.do["LocalWrite%s"%tc]:
@@ -12020,6 +11958,7 @@ class KernelWriterAssembly(KernelWriter):
           # split into two dwordx4 loads. Second load offset is +0.5 bpl
           rv = Module("emulated _buffer_load_b256")
           dst = None if lds else vgpr(destVgpr, rpv//2)
+          print("emulatedb256 ", dst, addr0)
           rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
           mubuf2 = MUBUFModifiers(offen=True, offset12=int(offset + bpl/2), glc=glc, slc=slc, nt=nt, lds=lds)
@@ -12028,8 +11967,10 @@ class KernelWriterAssembly(KernelWriter):
           elif isinstance(destVgpr, int):
             dst2 = int(destVgpr + int(rpv//2))
           dst = None if lds else vgpr(dst2, rpv//2)
-          rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
-                                soffset=soffset, mubuf=mubuf2, comment=comment))
+          print("emulatedb2562 ", dst, addr0)
+          # rv.add(SWaitCnt(vmcnt=0, comment=""))
+          # rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
+          #                      soffset=soffset, mubuf=mubuf2, comment=comment))
           return rv
         elif bpl==64 and not lds:
           rv = Module("emulated _buffer_load_b512")
@@ -12060,6 +12001,11 @@ class KernelWriterAssembly(KernelWriter):
                                 soffset=soffset, mubuf=mubuf4, comment=comment))
         else:
           assert 0, "%s\nchooseGlobalRead: bad bpl %u"%(self.states.kernelName,bpl)
+      
+      # global dbgCounter
+      # rv.add(SWaitCnt(lgkmcnt=0, comment=""))
+      # rv.add(TextBlock(str("label_gr_") + str(dbgCounter) + ":\n"))
+      # dbgCounter += 1
 
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead

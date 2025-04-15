@@ -831,7 +831,11 @@ void check(hipStream_t                   stream,
            hipDataType                   To,
            hipDataType                   Tbias,
            hipDataType                   Taux,
-           hipDataType                   Tc)
+           hipDataType                   Tc,
+           double&                       absErrorMax,
+           double&                       absErrorAvg,
+           double&                       relErrorMax,
+           double&                       relErrorAvg)
 {
     // fetch GPU
     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -1040,7 +1044,11 @@ void check(hipStream_t                   stream,
                                                       num_batches[gemmIdx],
                                                       hipblaslt_atol,
                                                       hipblaslt_rtol,
-                                                      To);
+                                                      To,
+                                                      absErrorMax,
+                                                      absErrorAvg,
+                                                      relErrorMax,
+                                                      relErrorAvg);
             //TODO: confirm if allclose_check_assert is neccessary
         }
     }
@@ -3360,6 +3368,11 @@ void testing_matmul_with_bias(const Arguments& arg,
         }
     }
 
+    double absErrorMax = 0;
+    double absErrorAvg = 0;
+    double relErrorMax = 0;
+    double relErrorAvg = 0;
+
     if(!arg.timing)
     {
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
@@ -3480,7 +3493,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                       To,
                       Tbias,
                       Taux,
-                      Talpha);
+                      Talpha,
+                      absErrorMax,
+                      absErrorAvg,
+                      relErrorMax,
+                      relErrorAvg);
             }
         }
     }
@@ -3883,7 +3900,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                       To,
                       Tbias,
                       Taux,
-                      Talpha);
+                      Talpha,
+                      absErrorMax,
+                      absErrorAvg,
+                      relErrorMax,
+                      relErrorAvg);
             }
 
 #define argument_param                                                                            \
@@ -3952,7 +3973,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                     cpu_time_used,
                     hipblaslt_error,
                     hipblaslt_atol,
-                    hipblaslt_rtol);
+                    hipblaslt_rtol,
+                    absErrorMax,
+                    absErrorAvg,
+                    relErrorMax,
+                    relErrorAvg);
             }
             if(best_gpu_time > gpu_time_used)
             {
@@ -4010,7 +4035,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                 cpu_time_used,
                 best_norm,
                 best_atol,
-                best_rtol);
+                best_rtol,
+                absErrorMax,
+                absErrorAvg,
+                relErrorMax,
+                relErrorAvg);
         }
     }
 

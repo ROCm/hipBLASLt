@@ -1087,6 +1087,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       insertedPackM = 0
 
       def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
+        if not (hasattr(lr, 'dst') and callable(lr.dst)):
+          return False
         lrDataReg = lr.dst
 
         if isinstance(inst, MFMAInstruction):
@@ -1135,8 +1137,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   latencyLeft -= (tPA["localWriteInstruction"].issueLatency*2)
             readLeftLROPT = 0
             for j in range(len(localReadItemsThisLoop)):
-              latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
-              readLeftLROPT += 1 if latencyLeft >= 0 else 0
+              if (hasattr(localReadItemsThisLoop[j], "issueLatency")):
+                latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+                readLeftLROPT += 1 if latencyLeft >= 0 else 0
             # at least 1 instruction
             readLeftLROPT = max(readLeftLROPT,1)
             # evenly schedule localread with each mfma
@@ -1176,9 +1179,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
               latencyLeft -= readLeft * tPA["localWriteInstruction"].issueLatency * 2
             else:
               readLeft = len(localReadItemsThisLoop)
-              latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+              if (hasattr(j, "issueLatency")):
+                latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
           else:
-            latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+            if (hasattr(j, "issueLatency")):
+              latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
 
         # force to schedule all remaining localreads before start to schedule localwrite.
         if mfmaIndex == self.states.sync1LdsMfmaIndex and oneBufferScheduling:
@@ -1315,8 +1320,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if self.states.numItersPLR and iteration >= isBarrier:
           readLeftLROPT = 0
           for j in range(len(localReadItemsNextLoop)):
-            latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
-            readLeftLROPT += 1 if latencyLeft >= 0 else 0
+            if (hasattr(localReadItemsNextLoop[j], "issueLatency")):
+              latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
+              readLeftLROPT += 1 if latencyLeft >= 0 else 0
           # at least 1 instruction
           readLeftLROPT = max(readLeftLROPT,1)
           readLeftLREven = numReadsInst / (numMfmaPerIter - i)
@@ -4461,7 +4467,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       #align 64 bit
       vgprIdx = int((vgprIdx + 1) / 2) * 2
       self.states.startVgprCvt = vgprIdx
-      vgprIdx += 9 # for vgpr serial id
+      vgprIdx += 20 # for vgpr serial id
 
     self.states.totalVgprs = max(vgprIdx, self.states.c.numVgprValu)
     if self.states.totalVgprs < 0 or self.states.totalVgprs > self.states.regCaps["MaxVgpr"]:

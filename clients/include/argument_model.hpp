@@ -72,7 +72,11 @@ public:
                   double                      cpu_us,
                   double                      norm,
                   double                      atol,
-                  double                      rtol)
+                  double                      rtol,
+                  double                      absErrorMax,
+                  double                      absErrorAvg,
+                  double                      relErrorMax,
+                  double                      relErrorAvg)
     {
         // requires enablement for frequency logging
         ArgumentModel_log_performance(name_line, val_line);
@@ -154,6 +158,11 @@ public:
                     else
                         val_line << "," << rtol;
                 }
+                if (absErrorMax != ArgumentLogging::NA_value)
+                {
+                    name_line << ",absErrorMax,absErrorAvg,relErrorMax,relErrorAvg";
+                    val_line << "," << absErrorMax << "," << absErrorAvg << "," << relErrorMax << "," << relErrorAvg;
+                }
             }
         }
     }
@@ -176,7 +185,11 @@ public:
                   double                      cpu_us = ArgumentLogging::NA_value,
                   double                      norm   = ArgumentLogging::NA_value,
                   double                      atol   = ArgumentLogging::NA_value,
-                  double                      rtol   = ArgumentLogging::NA_value)
+                  double                      rtol   = ArgumentLogging::NA_value,
+                  double                      absErrorMax = ArgumentLogging::NA_value,
+                  double                      absErrorAvg   = ArgumentLogging::NA_value,
+                  double                      relErrorMax   = ArgumentLogging::NA_value,
+                  double                      relErrorAvg   = ArgumentLogging::NA_value)
     {
         hipblaslt_internal_ostream name_list;
         hipblaslt_internal_ostream value_list;
@@ -261,7 +274,11 @@ public:
                      cpu_us,
                      norm,
                      atol,
-                     rtol);
+                     rtol,
+                     absErrorMax,
+                     absErrorAvg,
+                     relErrorMax,
+                     relErrorAvg);
 
         if(archName != "")
         {
