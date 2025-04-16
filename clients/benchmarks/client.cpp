@@ -39,7 +39,7 @@
 #include <string>
 #include <type_traits>
 
-#include "frequency_monitor.hpp"
+#include "efficiency_monitor.hpp"
 
 #include "testing_matmul.hpp"
 
@@ -192,10 +192,11 @@ int run_bench_test(Arguments&         arg,
                     return type;
             };
 
-            arg.a_type = convertF8Type(arg.a_type);
-            arg.b_type = convertF8Type(arg.b_type);
-            arg.c_type = convertF8Type(arg.c_type);
-            arg.d_type = convertF8Type(arg.d_type);
+            arg.a_type   = convertF8Type(arg.a_type);
+            arg.b_type   = convertF8Type(arg.b_type);
+            arg.c_type   = convertF8Type(arg.c_type);
+            arg.d_type   = convertF8Type(arg.d_type);
+            arg.aux_type = convertF8Type(arg.aux_type);
         }
     }
 #endif
@@ -287,6 +288,7 @@ try
     std::string initialization;
     std::string filter;
     std::string activation_type;
+    std::string aux_type;
     int         scaleAFormat;
     int         scaleBFormat;
     int         scaleCFormat;
@@ -501,11 +503,11 @@ try
 
         ("scaleA",
          value<int>(&scaleAFormat)->default_value(0),
-         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.")
+         "Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector, 3 = block.")
 
         ("scaleB",
          value<int>(&scaleBFormat)->default_value(0),
-         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.")
+         "Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector, 3 = block.")
 
         ("scaleC",
          value<int>(&scaleCFormat)->default_value(0),
@@ -518,6 +520,22 @@ try
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
          "Apply scaleAlpha vector")
+
+        ("scaleABlockRowSize",
+         value<uint32_t>(&arg.scaleABlockRowSize)->default_value(32u),
+         "Set the row size of scale block for A")
+
+        ("scaleABlockColSize",
+         value<uint32_t>(&arg.scaleABlockColSize)->default_value(1u),
+         "Set the column size of scale block for A")
+
+        ("scaleBBlockRowSize",
+         value<uint32_t>(&arg.scaleBBlockRowSize)->default_value(1u),
+         "Set the row size of scale block for B")
+
+        ("scaleBBlockColSize",
+         value<uint32_t>(&arg.scaleBBlockColSize)->default_value(32u),
+         "Set the column size of scale block for B")
 
         ("amaxScaleA",
          bool_switch(&arg.amaxScaleA)->default_value(false),
@@ -534,6 +552,10 @@ try
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
          "Apply AUX output/ gradient input")
+
+        ("aux_type",
+         value<std::string>(&aux_type), "Used with --use_e. Precision of AUX output (matrix E)."
+	 "Options: f16_r, default (same with D type)")
 
         ("gradient",
          bool_switch(&arg.gradient)->default_value(false),
@@ -780,8 +802,8 @@ try
         throw std::invalid_argument("Invalid Device ID");
     set_device(device_id);
 
-    FrequencyMonitor& freq_monitor = getFrequencyMonitor();
-    freq_monitor.set_device_id(device_id);
+    EfficiencyMonitor& perf_monitor = getEfficiencyMonitor();
+    perf_monitor.set_device_id(device_id);
 
     if(datafile)
         return hipblaslt_bench_datafile(filter, any_stride, props);
@@ -862,6 +884,14 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
+    if(!(aux_type == "" || aux_type == "default" || arg.use_e))
+        hipblaslt_cerr << "warning: --use_e not set but --aux_type is provided" << std::endl;
+
+    arg.aux_type
+        = (aux_type == "" || aux_type == "default") ? arg.d_type : string_to_hip_datatype(aux_type);
+    if(arg.aux_type == HIPBLASLT_DATATYPE_INVALID)
+        throw std::invalid_argument("Invalid value for --aux_type " + aux_type);
+
     if(arg.swizzle_a
        && (arg.transA != 'T' || arg.transB != 'N'
            || (arg.a_type != string_to_hip_datatype("f16_r")
@@ -879,6 +909,8 @@ try
             return hipblaslt_scaling_format::Scalar;
         if(s == 2)
             return hipblaslt_scaling_format::Vector;
+        if(s == 3)
+            return hipblaslt_scaling_format::Block;
 
         return hipblaslt_scaling_format::none;
     };
@@ -886,6 +918,53 @@ try
     arg.scaleB = scaleInt2Enum(scaleBFormat);
     arg.scaleC = scaleCFormat;
     arg.scaleD = scaleDFormat;
+
+    // Validation for F4 and F6
+    if(arg.a_type == HIP_R_4F_E2M1_EXT || arg.a_type == HIP_R_6F_E2M3_EXT
+       || arg.a_type == HIP_R_6F_E3M2_EXT)
+    {
+        if(arg.scaleA != hipblaslt_scaling_format::Block)
+            throw std::invalid_argument("scaleA must be block format for F4 and F6 types");
+    }
+    if(arg.b_type == HIP_R_4F_E2M1_EXT || arg.b_type == HIP_R_6F_E2M3_EXT
+       || arg.b_type == HIP_R_6F_E3M2_EXT)
+    {
+        if(arg.scaleB != hipblaslt_scaling_format::Block)
+            throw std::invalid_argument("scaleB must be block format for F4 and F6 types");
+    }
+
+    // Block scaling only allows F8/F6/F4
+    if(arg.scaleA == hipblaslt_scaling_format::Block)
+    {
+        if(arg.a_type != HIP_R_8F_E4M3 && arg.a_type != HIP_R_8F_E5M2
+           && arg.a_type != HIP_R_4F_E2M1_EXT && arg.a_type != HIP_R_6F_E2M3_EXT
+           && arg.a_type != HIP_R_6F_E3M2_EXT)
+            throw std::invalid_argument("Invalid a_type for block scaling format: "s
+                                        + hip_datatype_to_string(arg.a_type));
+    }
+    if(arg.scaleB == hipblaslt_scaling_format::Block)
+    {
+        if(arg.b_type != HIP_R_8F_E4M3 && arg.b_type != HIP_R_8F_E5M2
+           && arg.b_type != HIP_R_4F_E2M1_EXT && arg.b_type != HIP_R_6F_E2M3_EXT
+           && arg.b_type != HIP_R_6F_E3M2_EXT)
+            throw std::invalid_argument("Invalid b_type for block scaling format: "s
+                                        + hip_datatype_to_string(arg.b_type));
+    }
+    if(arg.scaleA == hipblaslt_scaling_format::Block
+       || arg.scaleB == hipblaslt_scaling_format::Block)
+    {
+        if(arg.compute_type != HIPBLAS_COMPUTE_32F)
+            throw std::invalid_argument("Block scaling only supports f32 as compute type not "s
+                                        + compute_type);
+
+        // For C and D, only F32/BF16/F16 allowed when A or B is block scaling format
+        if(arg.c_type != HIP_R_32F && arg.c_type != HIP_R_16F && arg.c_type != HIP_R_16BF)
+            throw std::invalid_argument("Invalid c_type for block scaling format: "s
+                                        + hip_datatype_to_string(arg.c_type));
+        if(arg.d_type != HIP_R_32F && arg.d_type != HIP_R_16F && arg.d_type != HIP_R_16BF)
+            throw std::invalid_argument("Invalid d_type for block scaling format: "s
+                                        + hip_datatype_to_string(arg.d_type));
+    }
 
     if(arg.M[0] < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
@@ -929,7 +1008,7 @@ try
 
     arg.norm_check_assert = false;
     int status            = run_bench_test(arg, filter, any_stride, props);
-    freeFrequencyMonitor();
+    freeEfficiencyMonitor();
     return status;
 }
 catch(const std::invalid_argument& exp)

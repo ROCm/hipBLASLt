@@ -20,14 +20,19 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..TensileInstructions import Module, SDWAModifiers, SelectBit, UnusedBit, \
-                            SaturateCastType, VSaturateCastInt, \
-                            VAdd3U32, VCvtF32toF16, VLShiftRightB32, \
+from rocisa import rocIsa
+from rocisa.code import Module
+from rocisa.container import vgpr, sgpr,SDWAModifiers, VOP3PModifiers
+from rocisa.enum import DataTypeEnum, SelectBit, UnusedBit
+from rocisa.instruction import VAdd3U32, VCvtF32toF16, VLShiftRightB32, \
                             VCmpUF32, VCndMaskB32, VCvtPkF32toFP8, VCvtPkF32toBF8, \
-                            VOP3PModifiers, VCmpClassF32, VOrB32, VPackF16toB32, \
+                            VCmpClassF32, VOrB32, VPackF16toB32, \
                             VAndOrB32, VBfeU32, VLShiftLeftB16, SNop, VMed3F32, \
-                            vgpr, sgpr, DataType, TensileInstructions, VCvtPkF32toBF16, VAndB32, \
+                            VCvtPkF32toBF16, VAndB32, \
                             VMovB32, VLShiftLeftB32
+
+from ..TensileInstructions import DataType, \
+                            SaturateCastType, VSaturateCastInt
 
 from ..Component import PackData
 
@@ -38,7 +43,7 @@ def formatting(idx, inputPrefix, prefixOffset):
         return idx
 
 class PackData_F16(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.half)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.Half)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, tmpVgpr=None, inputPrefix="", prefixOffset=0):
         module = Module("PackData F16")
         if gwvw == 1:
@@ -64,9 +69,9 @@ class PackData_F16(PackData):
         return module
 
 class PackData_BF16(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.bfloat16)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.BFloat16)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, bf16CVTVgprStruct, tmpS01, laneSGPRC, tmpVgpr=None, inputPrefix="", prefixOffset=0):
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
 
         module = Module("PackData BF16")
         if gwvw == 1:
@@ -125,7 +130,7 @@ class PackData_BF16(PackData):
         return module
 
 class PackData_FLOAT8(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.float8)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.Float8)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, fp8CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
         vgprFp8NanInf = fp8CVTVgprStruct.vgprFp8NanInf
         vgprFp8Temp   = fp8CVTVgprStruct.vgprFp8Temp
@@ -155,7 +160,7 @@ class PackData_FLOAT8(PackData):
         return module
 
 class PackData_FLOAT8_fnuz(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.float8_fnuz)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.Float8_fnuz)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, fp8CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
         vgprFp8NanInf = fp8CVTVgprStruct.vgprFp8NanInf
         vgprFp8Temp   = fp8CVTVgprStruct.vgprFp8Temp
@@ -185,7 +190,7 @@ class PackData_FLOAT8_fnuz(PackData):
         return module
 
 class PackData_BF8(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.bfloat8)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.BFloat8)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, bf8CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
         vgprBF8NanInf = bf8CVTVgprStruct.vgprBF8NanInf
         vgprBF8Temp   = bf8CVTVgprStruct.vgprBF8Temp
@@ -216,7 +221,7 @@ class PackData_BF8(PackData):
         return module
 
 class PackData_BF8_fnuz(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.bfloat8_fnuz)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.BFloat8_fnuz)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, bf8CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
         vgprBF8NanInf = bf8CVTVgprStruct.vgprBF8NanInf
         vgprBF8Temp   = bf8CVTVgprStruct.vgprBF8Temp
@@ -247,14 +252,14 @@ class PackData_BF8_fnuz(PackData):
         return module
 
 class PackData_INT8(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.int32), "DestDataType": DataType(DataType.int8)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Int32), "DestDataType": DataType(DataTypeEnum.Int8)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
         vgprI8Mask0 = i8CVTVgprStruct.vgprI8Mask0
         vgprI8Mask1 = i8CVTVgprStruct.vgprI8Mask1
         vgprI8Temp0 = i8CVTVgprStruct.vgprI8Temp0
         vgprI8Temp1 = i8CVTVgprStruct.vgprI8Temp1
 
-        ti = TensileInstructions()
+        ti = rocIsa.getInstance()
         module = Module("PackData int8")
         gwvw4 = (gwvw // 4) * 4
         for vi in range(0, gwvw4):
@@ -268,7 +273,7 @@ class PackData_INT8(PackData):
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset))))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV-0, inputPrefix, prefixOffset))))
                 if ti.getArchCaps()["NoSDWA"]:
-                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", comment="bits 7:0")) # src0_sel=SelectBit.BYTE_0
                     module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
                                        src1=vgpr(vgprI8Mask0)))
                     module.add(VOrB32(dst=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src0=vgpr(vgprI8Temp0), \
@@ -282,7 +287,7 @@ class PackData_INT8(PackData):
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 if ti.getArchCaps()["NoSDWA"]:
-                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", comment="bits 7:0")) # src0_sel=SelectBit.BYTE_0
                     module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                                        src1=vgpr(vgprI8Mask0)))
                     module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), src0=vgpr(vgprI8Temp0), src1=vgpr(formatVgpr), sdwa=None))
@@ -295,7 +300,7 @@ class PackData_INT8(PackData):
                 if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 if ti.getArchCaps()["NoSDWA"]:
-                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFFFF", "bits 15:0")) # src0_sel=SelectBit.WORD_0
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFFFF", comment="bits 15:0")) # src0_sel=SelectBit.WORD_0
                     module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), \
                                        src1=vgpr(vgprI8Mask0)))
                     module.add(VOrB32(dst=vgpr(d), src0=vgpr(vgprI8Temp0), \
@@ -318,7 +323,7 @@ class PackData_INT8(PackData):
                     module.add(VSaturateCastInt(vgpr(formatting(sumIdxV-i, inputPrefix, prefixOffset)), vgprI8Temp0, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
                 module.add(VLShiftLeftB16(dst=vgpr(formatVgpr), shiftHex=8, src=vgpr(formatVgpr)))
                 if ti.getArchCaps()["NoSDWA"]:
-                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", "bits 7:0")) # src0_sel=SelectBit.BYTE_0
+                    module.add(VMovB32(vgpr(vgprI8Mask0), "0xFF", comment="bits 7:0")) # src0_sel=SelectBit.BYTE_0
                     module.add(VAndB32(dst=vgpr(vgprI8Temp0), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                                        src1=vgpr(vgprI8Mask0)))
                     module.add(VOrB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
@@ -337,7 +342,7 @@ class PackData_INT8(PackData):
 
 # Cvt is outside of this component, this is just a wrapper for ComputeDataType == float
 class PackData_INT8_F32(PackData):
-    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.int8)}}
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataTypeEnum.Float), "DestDataType": DataType(DataTypeEnum.Int8)}}
     packdata = PackData_INT8()
     def __call__(self, gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
         return self.packdata(gwvw, destIdx, elementSumIdx, i8CVTVgprStruct, tmpS01, SaturateTypeInt8, inputPrefix, prefixOffset)

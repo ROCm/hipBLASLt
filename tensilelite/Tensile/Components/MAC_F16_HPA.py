@@ -22,14 +22,19 @@
 #
 ################################################################################
 
-from ..TensileInstructions import DataType, Module, vgpr, SSetPrior, VFmaMixF32, VMadMixF32, VOP3PModifiers, VDot2F32F16, VDot2CF32F16
+from rocisa.code import Module
+from rocisa.container import vgpr
+from rocisa.enum import DataTypeEnum
+from rocisa.instruction import SSetPrior, VDot2F32F16, VDot2CF32F16
+
+from ..TensileInstructions import DataType
 from ..Component import Component, MAC
 
 # dot2
 class FMA_F16_HPA_DOT2(MAC):
     asmCaps = lambda caps: caps['v_dot2_f32_f16'] or caps['v_dot2c_f32_f16']
     #archCaps = {}
-    kernel = {"ProblemType": {"DataType": DataType(DataType.half),
+    kernel = {"ProblemType": {"DataType": DataType(DataTypeEnum.Half),
                               "HighPrecisionAccumulate": True},
               "UseDotInstruction": True,
              }
@@ -84,7 +89,7 @@ class FMA_F16_HPA_DOT2(MAC):
 class FMA_F16_HPA_MAD_MIX(MAC):
     asmCaps = lambda caps: caps['v_mad_mix_f32'] or caps['v_fma_mix_f32']
     #archCaps = {}
-    kernel = {"ProblemType": {"DataType": DataType(DataType.half),
+    kernel = {"ProblemType": {"DataType": DataType(DataTypeEnum.Half),
                               "HighPrecisionAccumulate": True},
               "UseDotInstruction": False,
              }

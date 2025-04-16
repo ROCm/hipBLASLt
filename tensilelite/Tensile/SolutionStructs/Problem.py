@@ -22,6 +22,7 @@
 #
 ################################################################################
 
+from rocisa.enum import DataTypeEnum
 from collections import OrderedDict
 from collections.abc import Mapping
 
@@ -662,7 +663,7 @@ class ProblemType(Mapping):
     if "F32XdlMathOp" in config:
         self["F32XdlMathOp"] = DataType(config["F32XdlMathOp"])
     else:
-        self["F32XdlMathOp"] = DataType(0)
+        self["F32XdlMathOp"] = DataType(DataTypeEnum.Float)
 
     # Modifying ComputeDataType for HHH+HPA: if (HHH+HPA), convert it to HHS_BH by setting ComputeDataType to S.
     if self["ComputeDataType"].isHalf() and self["DataType"].isHalf() and self["HighPrecisionAccumulate"]:
@@ -1029,7 +1030,7 @@ class ProblemType(Mapping):
       if self["Gradient"]:
         name += "_Grad%s"%self["DataTypeE"].toChar()
       else:
-        name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
+        name += "_Aux%s"%self["DataTypeE"].toChar()
     if self["OutputAmaxD"]:
       name += "_AmaxD"
     if self["Sparse"]:

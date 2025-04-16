@@ -48,7 +48,7 @@ from Tensile.Common.GlobalParameters import defaultSolution, \
                                             defaultInternalSupportParams, \
                                             internalParameters
 from Tensile.CustomKernels import isCustomKernelConfig
-from Tensile.SolutionStructs.Naming import getNameFull
+from Tensile.SolutionStructs.Naming import getSolutionNameFull
 from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
 
@@ -58,7 +58,6 @@ class Fbs(Enum):
   Free=0     # Expect to be free dimension
   Batch=1    # Expect to be batch dimension
   Sum=2      # Expect to be summation dimension
-
 
 ################################################################################
 # Factor Type
@@ -467,7 +466,7 @@ class Solution(collections.abc.Mapping):
 
       state["LocalSplitU"] = state["WorkGroup"][2]
       state["NumWaveSplitK"] = 1
-      
+
       state["MIOutputVectorWidth"], state["MIRegPerOut"] = Solution.getMIOutputInfo(state, isaInfoMap)
 
       if state["MatrixInstM"] == 4:
@@ -1030,16 +1029,25 @@ class Solution(collections.abc.Mapping):
     rocmVersion: SemanticVersion,
     depthUConfig: DepthUConfig
   ):
+    isa = tuple(state["ISA"])
     # NOTE: This entry should instead should already be set on the solution within the logic
     # files. This code will be removed once all logic files are updated to contain both
     # the keys "EnableF32XdlMathOp" and "F32XdlMathOp".
-    state["EnableF32XdlMathOp"] = False 
+    state["EnableF32XdlMathOp"] = False
+    state["UseF32XEmulation"] = False #enable emulation for missing hardware support
+    state["EnableF32XEmulationLds"] = False
     #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
        and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
        and (state["ProblemType"]["DataType"].isSingle()):
       state["EnableF32XdlMathOp"] = True
+      if isaInfoMap[isa].archCaps["HasF32XEmulation"]:
+        state["UseF32XEmulation"] = True
+
+    # initial info to be exported for solution prediction
+    state["CUOccupancy"]            = -1
+    state["MathClocksUnrolledLoop"] = 0
 
     Solution.assignProblemIndependentDerivedParameters(state, printRejectionReason, isaInfoMap)
 
@@ -1075,10 +1083,9 @@ class Solution(collections.abc.Mapping):
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
 
-    isa = tuple(state["ISA"])
-
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
+      state["InternalSupportParams"]["SupportUserGSU"] = False # Disable UserGSU for Stream-K
       state["GlobalSplitUAlgorithm"] = "MultipleBuffer" # Set default Algorithm
       if state["ProblemType"]["DataType"].isDouble():
         reject(state, printRejectionReason, "Type {} for DataType not yet supported with StreamK".format(state["ProblemType"]["DataType"].toChar()))
@@ -1473,10 +1480,7 @@ class Solution(collections.abc.Mapping):
 
     # DepthU == -1?
     if state["DepthU"] == -1:
-      if state["ProblemType"]["ComputeDataType"].numBytes() < 4:
-        depthuList = [256, 128, 64, 32]
-      else:
-        depthuList = [128, 64, 32, 16]
+      depthuList = [1024,512,256,128,64,32,16]
     else:
       depthuList = [state["DepthU"]]
     index = [0]
@@ -1853,7 +1857,7 @@ class Solution(collections.abc.Mapping):
           # TODO: support edge shiftptr to release this constraint.
           if state["ProblemType"]["TLUA"]:
             state["AssertFree0ElementMultiple"] = max(state["AssertFree0ElementMultiple"], state["GlobalReadVectorWidthA"])
-        
+
 
       # Default GlobalReadVectorWidthB
       if state["EnableMatrixInstruction"]:
@@ -2085,6 +2089,19 @@ class Solution(collections.abc.Mapping):
             reject(state, printRejectionReason, "Not implement DTVSM with VW>1")
             break
 
+        # f32 emulation currently only supports a limited set of solutions
+        if state["UseF32XEmulation"]:
+          if isaInfoMap[isa].archCaps["HasF32XEmulation"]:
+            if state["VectorWidthA"] > 1 or state["VectorWidthB"] > 1 :
+              reject(state, "Missing implementation for F32X Emulation VW>1")
+              break
+            if depthU != 16:
+              reject(state, "Missing implementation for F32X Emulation DepthU!=16")
+              break
+          else:
+            reject(state, "Missing emulation for F32X")
+            break
+
         # Now convert elements to vectors based on GlobalReadVectorWidth
         GlobalReadVectorWidthA = state["GlobalReadVectorWidthA"]
         GlobalReadVectorWidthB = state["GlobalReadVectorWidthB"]
@@ -2248,7 +2265,7 @@ class Solution(collections.abc.Mapping):
       if state["VectorWidthA"] != 1 or state["VectorWidthB"] != 1:
         reject(state, "dot2 kernel requires VectorWidth = 1")
       # TODO: Need to remap VGPR index
-      if (state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1) and state["InnerUnroll"] > 1: 
+      if (state["ThreadTile0"] != 1 or state["ThreadTile1"] != 1) and state["InnerUnroll"] > 1:
         reject(state, "dot2 kernel does not support wider local read with ThreadTile > 1")
       if state["ScheduleLocalWrite"] != 1:
         reject(state, "dot2 kernel requires ScheduleLocalWrite = 1")
@@ -2635,9 +2652,9 @@ class Solution(collections.abc.Mapping):
     state["LdsOffsetB_Blk"]=0
     # todo, can the alignment be a power of 2?
     state["LdsOffsetA"] = 0
+    state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
+    state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
     if state["PrefetchGlobalRead"]:
-      state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
-      state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
       state["LdsNumElementsAlignedMetadata"] = ldsNumBytesAlignedMetadata
       state["LdsOffsetMetadata"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + state["LdsNumElementsAlignedMetadata"]
@@ -3312,7 +3329,7 @@ class Solution(collections.abc.Mapping):
 
   def __str__(self):
     if self._name is None:
-      self._name = getNameFull(self._state, self.splitGSU)
+      self._name = getSolutionNameFull(self._state, self.splitGSU)
     return self._name
 
   def __repr__(self):

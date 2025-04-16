@@ -27,6 +27,8 @@ from typing import List, Optional
 from .Types import IsaVersion
 from .Utilities import locateExe
 
+import rocisa
+
 # Translate GPU targets to filter filenames in Tensile_LOGIC directory
 architectureMap = {
     "all": "_",
@@ -55,6 +57,9 @@ architectureMap = {
     "gfx1100": "navi31",
     "gfx1101": "navi32",
     "gfx1102": "navi33",
+    "gfx1103": "gfx1103",
+    "gfx1150": "gfx1150",
+    "gfx1151": "gfx1151",
     "gfx1200": "gfx1200",
     "gfx1201": "gfx1201",
 }
@@ -82,6 +87,9 @@ SUPPORTED_ISA = [
     IsaVersion(11, 0, 0),
     IsaVersion(11, 0, 1),
     IsaVersion(11, 0, 2),
+    IsaVersion(11, 0, 3), 
+    IsaVersion(11, 5, 0),
+    IsaVersion(11, 5, 1),
     IsaVersion(12, 0, 0),
     IsaVersion(12, 0, 1),
 ]
@@ -128,17 +136,7 @@ def gfxToIsa(name: str) -> Optional[IsaVersion]:
     return IsaVersion(major, minor, step)
 
 def isaToGfx(arch: IsaVersion) -> str:
-    """Converts an ISA version to a gfx architecture name.
-
-    Args:
-        arch: An object representing the major, minor, and step version of the ISA.
-
-    Returns:
-        The name of the GPU architecture (e.g., 'gfx906').
-    """
-    # Convert last digit to hex because reasons
-    name = str(arch[0]) + str(arch[1]) + ("%x" % arch[2])
-    return "gfx" + "".join(map(str, name))
+    return rocisa.isaToGfx(arch)
 
 
 def gfxToSwCodename(gfxName: str) -> Optional[str]:
