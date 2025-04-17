@@ -20,15 +20,14 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from rocisa import rocIsa
-#from rocisa import fastdeepcopy as deepcopy
-
 from copy import deepcopy
 from typing import List
 
+from rocisa import rocIsa
+
+from Tensile.Activation import ActivationInline, ActivationType
 from Tensile.Common.Architectures import isaToGfx, IsaVersion
-from .Activation import ActivationInline, ActivationType
-from .KernelWriterBase import KernelWriterBase
+from Tensile.KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
 

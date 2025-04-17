@@ -118,6 +118,8 @@ def kernelObjectNameCallables():
 
 
 def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap):
+    if kernelHelperType not in KernelHelperEnum:
+        raise Exception("Failed to find kernel helper type.")
     result = []
     if kernelHelperType == KernelHelperEnum.BetaOnly or kernelHelperType == KernelHelperEnum.All:
         result.extend(initBetaOnlyKernelObjects(solution))
@@ -131,8 +133,6 @@ def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap)
         result.extend(initActivationOnlyKernelObjects(solution))
     if kernelHelperType == KernelHelperEnum.Reduction or kernelHelperType == KernelHelperEnum.All:
         result.extend(initReductionKernelObjects(solution))
-    else:
-        raise Exception("Failed to find kenerl helper type.")
     return result
 
 
@@ -168,7 +168,7 @@ def initConversionKernelObjects(solution, isaInfoMap):
     genPGRPostKernels = False
     gsuList = [1]
   elif solution["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
-    return
+    return conversionKernelObjects
   for vw in load_vector_width:
     for globalSplitU in gsuList:
       unrollOnly = False if globalSplitU == internalParameters["GlobalSplitUPGR"] else True
