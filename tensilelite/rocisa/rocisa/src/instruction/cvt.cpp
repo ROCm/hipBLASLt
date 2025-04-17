@@ -232,7 +232,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtPkFP8toF16, rocisa::VCvtInstruction>(m_inst, "VCvtPkFP8toF16")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -247,7 +247,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtPkBF8toF16, rocisa::VCvtInstruction>(m_inst, "VCvtPkBF8toF16")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -262,7 +262,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtFP8toF16, rocisa::VCvtInstruction>(m_inst, "VCvtFP8toF16")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -277,7 +277,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtPkF16toFP8, rocisa::VCvtInstruction>(m_inst, "VCvtPkF16toFP8")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -292,7 +292,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtPkF16toBF8, rocisa::VCvtInstruction>(m_inst, "VCvtPkF16toBF8")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -307,7 +307,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtSRF16toFP8, rocisa::VCvtInstruction>(m_inst, "VCvtSRF16toFP8")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
@@ -322,7 +322,7 @@ void cvt_inst(nb::module_ m_inst)
 
     nb::class_<rocisa::VCvtSRF16toBF8, rocisa::VCvtInstruction>(m_inst, "VCvtSRF16toBF8")
         .def(nb::init<const std::shared_ptr<rocisa::RegisterContainer>&,
-                      const std::shared_ptr<rocisa::Container>&,
+                      const std::vector<InstructionInput>&,
                       std::optional<rocisa::SDWAModifiers>,
                       std::optional<rocisa::VOP3PModifiers>,
                       const std::string&>(),
