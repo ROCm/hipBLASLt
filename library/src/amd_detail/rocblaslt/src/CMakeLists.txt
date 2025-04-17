@@ -132,11 +132,13 @@ if(${GCC_VERSION} VERSION_LESS "7.6.0")
     set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES COMPILE_FLAGS "-ftemplate-depth=2048")
 endif()
 
+  ##
   set( Tensile_SRC
     src/amd_detail/rocblaslt/src/tensile_host.cpp
   )
   set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
 
+  ##
   set( Tensile_INC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile
   )

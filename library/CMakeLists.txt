@@ -32,7 +32,7 @@ endif()
 
 include(../cmake/Utilities.cmake)
 
-# Configure a header file to pass the hipBLASLt version
+## Configure a header file to pass the hipBLASLt version
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
                "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h"
 )
@@ -100,7 +100,9 @@ if(NOT BUILD_CUDA)
 
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
 
+  ##
   target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
+  ##
   target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)

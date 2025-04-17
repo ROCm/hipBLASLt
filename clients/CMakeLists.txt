@@ -43,10 +43,11 @@ else()
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+##
 find_package(Threads REQUIRED)
 
-# if it fails to find OpenMP compile and link flags in strange configurations it can just use non-parallel reference computation
-# if there is no omp.h to find the client compilation will fail and this should be obvious, used to be REQUIRED
+## if it fails to find OpenMP compile and link flags in strange configurations it can just use non-parallel reference computation
+## if there is no omp.h to find the client compilation will fail and this should be obvious, used to be REQUIRED
 find_package(OpenMP)
 
 if (TARGET OpenMP::OpenMP_CXX)
