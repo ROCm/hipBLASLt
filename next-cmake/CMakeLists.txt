@@ -52,10 +52,13 @@ target_compile_features(hipblaslt PUBLIC cxx_std_17)
 target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
 target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 
-target_link_libraries(hipblaslt PRIVATE hip::device)
-target_link_libraries(hipblaslt PRIVATE dl)
-target_link_libraries(hipblaslt PRIVATE roc::hipblas-common)
-target_link_libraries(hipblaslt PRIVATE OpenMP::OpenMP_CXX)
+target_link_libraries(hipblaslt
+    PRIVATE
+        hip::device
+        roc::hipblas-common
+        OpenMP::OpenMP_CXX
+        dl
+)
 
 add_subdirectory(host-library)
 
@@ -69,24 +72,30 @@ add_subdirectory(host-library)
 ################################################################################
 add_executable(hipblaslt-bench)
 
-target_link_libraries(hipblaslt-bench PRIVATE roc::hipblaslt)
-target_link_libraries(hipblaslt-bench PRIVATE hip::host hip::device)
-target_link_libraries(hipblaslt-bench PRIVATE lapack cblas)
-target_link_libraries(hipblaslt-bench PRIVATE -mf16c)
-target_link_libraries(hipblaslt-bench PRIVATE libomp -lm -lstdc++fs)
-
-
-target_include_directories(hipblaslt-bench PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../clients/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/src/include>
+target_link_libraries(hipblaslt-bench
+    PRIVATE
+        roc::hipblaslt
+        hip::host hip::device
+        lapack cblas
+        -mf16c
+        libomp -lm -lstdc++fs
 )
 
+
+target_include_directories(hipblaslt-bench
+    PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../clients/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/src/include>
+)
+
+# TODO: Do we need this?
 target_include_directories(hipblaslt-bench
     SYSTEM PRIVATE
         $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
         $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
 )
+
 
 add_subdirectory(clients)
