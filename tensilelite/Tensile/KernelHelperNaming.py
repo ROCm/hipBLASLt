@@ -41,6 +41,7 @@ class KernelHelperEnum(IntEnum):
     ActivationFunction = 3
     ActivationOnly = 4
     Reduction = 5
+    All = 6
 
 
 def conversionKernelObjectsNames(solution):
@@ -117,20 +118,22 @@ def kernelObjectNameCallables():
 
 
 def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap):
-    if kernelHelperType == KernelHelperEnum.BetaOnly:
-        return initBetaOnlyKernelObjects(solution)
-    if kernelHelperType == KernelHelperEnum.Conversion:
-        return initConversionKernelObjects(solution, isaInfoMap)
-    if kernelHelperType == KernelHelperEnum.ActivationEnumHeader:
-        return initActivationEnumHeaderObjects(solution)
-    if kernelHelperType == KernelHelperEnum.ActivationFunction:
-        return initActivationFunctionObjects(solution, cxxCompiler, isaInfoMap)
-    if kernelHelperType == KernelHelperEnum.ActivationOnly:
-        return initActivationOnlyKernelObjects(solution)
-    if kernelHelperType == KernelHelperEnum.Reduction:
-        return initReductionKernelObjects(solution)
+    result = []
+    if kernelHelperType == KernelHelperEnum.BetaOnly or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initBetaOnlyKernelObjects(solution))
+    if kernelHelperType == KernelHelperEnum.Conversion or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initConversionKernelObjects(solution, isaInfoMap))
+    if kernelHelperType == KernelHelperEnum.ActivationEnumHeader or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initActivationEnumHeaderObjects(solution))
+    if kernelHelperType == KernelHelperEnum.ActivationFunction or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initActivationFunctionObjects(solution, cxxCompiler, isaInfoMap))
+    if kernelHelperType == KernelHelperEnum.ActivationOnly or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initActivationOnlyKernelObjects(solution))
+    if kernelHelperType == KernelHelperEnum.Reduction or kernelHelperType == KernelHelperEnum.All:
+        result.extend(initReductionKernelObjects(solution))
     else:
         raise Exception("Failed to find kenerl helper type.")
+    return result
 
 
 def initBetaOnlyKernelObjects(solution):

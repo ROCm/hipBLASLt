@@ -253,14 +253,6 @@ class Solution(collections.abc.Mapping):
 
   ########################################
   # get Helper Kernels
-  def getHelperKernelObjects(self):
-    return self.activationEnumHeaderObjects + self.activationFunctionObjects + \
-           self.betaOnlyKernelObjects + self.conversionKernelObjects + \
-           self.activationOnlyKernelObjects + self.reductionKernelObjects
-
-
-  ########################################
-  # get Helper Kernels
   def getKernelBetaOlnyObjects(self):
     return self.betaOnlyKernelObjects
 
