@@ -61,13 +61,14 @@ else()
   set(rocm_bin "/opt/rocm/bin")
 endif()
 
-if (NOT DEFINED ENV{CXX} AND NOT CMAKE_CXX_COMPILER)
-  set(CMAKE_CXX_COMPILER "${rocm_bin}/amdclang++")
-endif()
+# TODO: Remove C/CXX compiler should always come from the user invocation.
+# if (NOT DEFINED ENV{CXX} AND NOT CMAKE_CXX_COMPILER)
+#   set(CMAKE_CXX_COMPILER "${rocm_bin}/amdclang++")
+# endif()
 
-if (NOT DEFINED ENV{CC} AND NOT CMAKE_C_COMPILER)
-  set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
-endif()
+# if (NOT DEFINED ENV{CC} AND NOT CMAKE_C_COMPILER)
+#   set(CMAKE_C_COMPILER "${rocm_bin}/amdclang")
+# endif()
 
 # TODO: move FC and CXX and CC compiler vars above to new toolchain-linux.cmake (Fortran for clients)
 if (NOT DEFINED ENV{FC} AND NOT CMAKE_Fortran_COMPILER)
@@ -187,7 +188,9 @@ else()
     message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
 
     if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+        message(STATUS "***** FINDING HIP *****")
         find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
+        message(STATUS "***** HIP FOUND FIN *****")
     endif( )
 
     # Add rocisa
@@ -266,8 +269,8 @@ endif()
 cmake_host_system_information(RESULT OS_PLATFORM QUERY DISTRIB_ID)
 cmake_host_system_information(RESULT OS_INFO QUERY DISTRIB_INFO)
 
-if( ${OS_PLATFORM} STREQUAL "rhel")
-  if( ${OS_INFO_VERSION_ID} VERSION_LESS "9.5")
+if( "${OS_PLATFORM}" STREQUAL "rhel")
+  if( "${OS_INFO_VERSION_ID}" VERSION_LESS "9.5")
     message(WARNING "RHEL version ${OS_INFO_VERSION_ID} too old, not building RocRoller")
     set(USE_ROCROLLER OFF)
   endif()

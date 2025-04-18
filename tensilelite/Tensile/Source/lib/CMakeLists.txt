@@ -99,16 +99,17 @@ set_target_properties(TensileHost
                       CXX_EXTENSIONS OFF)
 
 # Check if folder exists in virtual env, can remove this after virtual env is removed
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../../rocisa")
-    message(FATAL_ERROR "rocisa folder not found. Please check the path.")
+set(_rocisa_dir "${hipblaslt_SOURCE_DIR}/tensilelite/rocisa")
+if(NOT EXISTS "${_rocisa_dir}")
+    message(FATAL_ERROR "rocisa folder not found. Please check the path: ${_rocisa_dir}")
 endif()
 
 target_include_directories(TensileHost INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../rocisa
+    "${_rocisa_dir}"
 )
 
-target_include_directories(TensileHost PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../rocisa)
+target_include_directories(TensileHost PRIVATE "${_rocisa_dir}")
 
 if(TENSILE_USE_LLVM OR TENSILE_USE_MSGPACK)
     target_compile_definitions(TensileHost PUBLIC TENSILE_DEFAULT_SERIALIZATION)
