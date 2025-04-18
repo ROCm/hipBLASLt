@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from rocisa.code import Module
+from rocisa.code import Module, TextBlock
 from rocisa.container import DSModifiers, vgpr, sgpr, SDWAModifiers, VOP3PModifiers
 from rocisa.enum import SelectBit
 from rocisa.instruction import SMovB32, SWaitCnt, VOrB32, VPermB32, VLShiftLeftOrB32, \
@@ -628,6 +628,9 @@ class LocalReadMFMA(LocalRead):
         
         if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"] and tP["isA"] and tc == "A":
             tf32mod = F32XEmulationCvtLocalRead()
-            localReadCode.add(tf32mod())
+            # localReadCode.add(VMovB32(dst=vgpr("ValuA_X0_I0+0"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
+            # testMod = imod.add(Module("Test"))
+            # testMod.add(SWaitCnt(lgkmcnt=0, comment="CheckValue1 wait for lds read"))
+            #localReadCode.add(tf32mod(LocalReadX))
 
         return imod, pack

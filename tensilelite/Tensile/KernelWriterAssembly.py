@@ -9220,14 +9220,15 @@ class KernelWriterAssembly(KernelWriter):
                     elif blockWidth == 0.5:
                       localWriteCVTCode.add(VCvtF32toF16(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdxTmp, vi * 2 + interOffset)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
                   self.vgprPool.checkIn(vgprTmp)
+                  None
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
             if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
               vgrStr = str("vgpr" + destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
               if "A" in vgrStr:
-                emulationLocalWrite = F32XEmulationLocalWrite()
-                localWriteCode.add(emulationCvtLocalWrite())
+                emulationLocalWrite = F32XEmulationCvtLocalWrite()
+                localWriteCode.add(emulationLocalWrite())
 
             LocalWriteX = tP["localWriteInstruction"].getInst(isHigh16Bits)
             if numBlocks == 1:
