@@ -30,7 +30,7 @@
 using IsaVersion = std::array<int, 3>;
 
 std::pair<int, std::string>
-    run(const std::vector<char*>& cmd, const std::string& input, bool debug = false);
+            run(const std::vector<char*>& cmd, const std::string& input, bool debug = false);
 std::string demangle(const char* name);
 
 inline std::string getGfxNameTuple(const IsaVersion& isaVersion)

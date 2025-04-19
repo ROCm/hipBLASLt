@@ -155,10 +155,10 @@ void init_code(nb::module_ m)
         // nanobind cannot reliably bind the same method signatures that differ
         // only by const-ness, so indirectly bind via a lambda. This manifests
         // as a mangled name clash on Windows.
-        .def("addItems", [](rocisa::Module& self,
-                            const std::vector<std::shared_ptr<rocisa::Item>>& items) {
-            self.addItems(items);
-        })
+        .def("addItems",
+             [](rocisa::Module& self, const std::vector<std::shared_ptr<rocisa::Item>>& items) {
+                 self.addItems(items);
+             })
         .def("appendModule", &rocisa::Module::appendModule)
         .def("addModuleAsFlatItems", &rocisa::Module::addModuleAsFlatItems)
         .def("findIndex", &rocisa::Module::findIndex)
@@ -175,10 +175,10 @@ void init_code(nb::module_ m)
         // nanobind cannot reliably bind the same method signatures that differ
         // only by const-ness, so indirectly bind via a lambda. This manifests
         // as a mangled name clash on Windows.
-        .def("setItems", [](rocisa::Module& self,
-                            const std::vector<std::shared_ptr<rocisa::Item>>& items) {
-            self.setItems(items);
-        })
+        .def("setItems",
+             [](rocisa::Module& self, const std::vector<std::shared_ptr<rocisa::Item>>& items) {
+                 self.setItems(items);
+             })
         .def("items", &rocisa::Module::items)
         .def("itemsSize", &rocisa::Module::itemsSize)
         .def("replaceItem", &rocisa::Module::replaceItem)
