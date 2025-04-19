@@ -92,7 +92,9 @@
       ${Tensile_Options}
     )
   endif()
-  add_dependencies(TENSILE_LIBRARY_TARGET rocisa)
+  if(NOT Tensile_SKIP_BUILD)
+      add_dependencies(TENSILE_LIBRARY_TARGET rocisa)
+  endif()
 
   TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}" "build_ext_op_library")
   add_dependencies(build_ext_op_library rocisa)
@@ -148,10 +150,11 @@ if(USE_ROCROLLER)
   set_source_files_properties(${RocRoller_SRC} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++20;-x;c++")
 endif()
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
-
-CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
-add_dependencies(MatrixTransformKernels TENSILE_LIBRARY_TARGET)
+if(NOT Tensile_SKIP_BUILD)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
+    CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
+    add_dependencies(MatrixTransformKernels TENSILE_LIBRARY_TARGET)
+endif()
 
 set(DL_LIB dl)
 
