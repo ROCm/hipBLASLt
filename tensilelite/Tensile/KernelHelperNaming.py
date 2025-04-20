@@ -44,77 +44,77 @@ class KernelHelperEnum(IntEnum):
     All = 6
 
 
-def conversionKernelObjectsNames(solution):
+def conversionKernelNames(solution):
   # need to check that the fields mutated in the the init function aren't used in the naming function
   # e.g. usebias got set to zero if gradient which changes behavior of name function.
-  conversionKernelObjectsNames = []
-  load_vector_width = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
+  conversionKernelNames = []
+  loadVectorWidth = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
   gsuList = [internalParameters["GlobalSplitUPGR"]]
   if solution["GlobalSplitUAlgorithm"] == "SingleBuffer":
     gsuList = [1]
   elif solution["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
     return
-  for vw in load_vector_width:
+  for vw in loadVectorWidth:
     # for _ in gsuList: I don't think this does anything
     if solution["ProblemType"]["UseBias"]:
       typeList = solution["ProblemType"]["BiasDataTypeList"]
       if solution["ProblemType"]["Gradient"]:
       #  # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
-        conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw))
+        conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw))
       for btype in typeList:
-        conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw, btype))
+        conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw, btype))
     else:
-      conversionKernelObjectsNames.append(KernelWriterConversion._getKernelName(solution, vw))
-  return conversionKernelObjectsNames if conversionKernelObjectsNames else []
+      conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw))
+  return conversionKernelNames if conversionKernelNames else []
 
 
-def activationEnumHeaderObjectsNames(solution):
-  activationEnumHeaderObjectsNames = []
+def activationEnumHeaderNames(solution):
+  activationEnumHeaderNames = []
   if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-    activationEnumHeaderObjectsNames.append(KernelWriterActivationEnumHeader._getKernelName(solution))
-  return activationEnumHeaderObjectsNames
+    activationEnumHeaderNames.append(KernelWriterActivationEnumHeader._getKernelName(solution))
+  return activationEnumHeaderNames
 
 
-def activationFunctionObjectsNames(solution):
-  activationFunctionObjectsNames = []
+def activationFunctionNames(solution):
+  activationFunctionNames = []
   if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-    activationFunctionObjectsNames.append(KernelWriterActivationFunction._getKernelName(solution))
-  return activationFunctionObjectsNames
+    activationFunctionNames.append(KernelWriterActivationFunction._getKernelName(solution))
+  return activationFunctionNames
 
 
-def activationOnlyKernelObjectsNames(solution):
-  activationOnlyKernelObjectsNames = []
+def activationOnlyKernelNames(solution):
+  activationOnlyKernelNames = []
   if (solution["ActivationFused"] == False) and (solution["ProblemType"]["ActivationType"] != 'none'):
-    activationOnlyKernelObjectsNames.append(KernelWriterActivationOnly._getKernelName(solution))
-  return activationOnlyKernelObjectsNames
+    activationOnlyKernelNames.append(KernelWriterActivationOnly._getKernelName(solution))
+  return activationOnlyKernelNames
 
 
-def reductionKernelObjectsNames(solution):
-  reductionKernelObjectsNames = []
+def reductionKernelNames(solution):
+  reductionKernelNames = []
   if solution["ProblemType"]["Gradient"] and solution["ProblemType"]["UseBias"]:
     for btype in solution["ProblemType"]["BiasDataTypeList"]:
-      reductionKernelObjectsNames.append(KernelWriterReduction._getKernelName(solution, btype))
-  return reductionKernelObjectsNames
+      reductionKernelNames.append(KernelWriterReduction._getKernelName(solution, btype))
+  return reductionKernelNames
 
 
-def betaOnlyKernelObjectsNames(solution):
-  betaOnlyKernelObjectsNames = []
+def betaOnlyKernelNames(solution):
+  betaOnlyKernelNames = []
   if solution["GlobalSplitU"] > 1 or (solution["StreamK"] > 0 and solution["StreamKAtomic"] == 1):
     if solution["ProblemType"]["UseBias"]:
       for btype in solution["ProblemType"]["BiasDataTypeList"]:
-        betaOnlyKernelObjectsNames.append(KernelWriterBetaOnly._getKernelName(solution, btype))
+        betaOnlyKernelNames.append(KernelWriterBetaOnly._getKernelName(solution, btype))
     else:
-      betaOnlyKernelObjectsNames.append(KernelWriterBetaOnly._getKernelName(solution))
-  return betaOnlyKernelObjectsNames
+      betaOnlyKernelNames.append(KernelWriterBetaOnly._getKernelName(solution))
+  return betaOnlyKernelNames
 
 
 def kernelObjectNameCallables():
-    return [(KernelHelperEnum.Conversion, conversionKernelObjectsNames), 
-            (KernelHelperEnum.ActivationEnumHeader, activationEnumHeaderObjectsNames),
-            (KernelHelperEnum.ActivationFunction, activationFunctionObjectsNames),
-            (KernelHelperEnum.ActivationOnly, activationOnlyKernelObjectsNames),
-            (KernelHelperEnum.Reduction, reductionKernelObjectsNames),
-            (KernelHelperEnum.BetaOnly, betaOnlyKernelObjectsNames)]
+    return [(KernelHelperEnum.Conversion, conversionKernelNames),
+            (KernelHelperEnum.ActivationEnumHeader, activationEnumHeaderNames),
+            (KernelHelperEnum.ActivationFunction, activationFunctionNames),
+            (KernelHelperEnum.ActivationOnly, activationOnlyKernelNames),
+            (KernelHelperEnum.Reduction, reductionKernelNames),
+            (KernelHelperEnum.BetaOnly, betaOnlyKernelNames)]
 
 
 def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap):
@@ -133,7 +133,8 @@ def initHelperKernelObjects(solution, kernelHelperType, cxxCompiler, isaInfoMap)
         result.extend(initActivationOnlyKernelObjects(solution))
     if kernelHelperType == KernelHelperEnum.Reduction or kernelHelperType == KernelHelperEnum.All:
         result.extend(initReductionKernelObjects(solution))
-    return result
+    sortByEnum = lambda x: ("Enum" in x.getKernelName(), result.index(x))
+    return sorted(result, key=sortByEnum, reverse=True) # Ensure that we write Enum kernel helpers are first in list
 
 
 def initBetaOnlyKernelObjects(solution):
@@ -161,7 +162,7 @@ def initBetaOnlyKernelObjects(solution):
 
 def initConversionKernelObjects(solution, isaInfoMap):
   conversionKernelObjects = []
-  load_vector_width = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
+  loadVectorWidth = [1, 2] if solution["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
   genPGRPostKernels = True
   gsuList = [internalParameters["GlobalSplitUPGR"]]
   if solution["GlobalSplitUAlgorithm"] == "SingleBuffer":
@@ -169,7 +170,7 @@ def initConversionKernelObjects(solution, isaInfoMap):
     gsuList = [1]
   elif solution["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
     return conversionKernelObjects
-  for vw in load_vector_width:
+  for vw in loadVectorWidth:
     for globalSplitU in gsuList:
       unrollOnly = False if globalSplitU == internalParameters["GlobalSplitUPGR"] else True
       if solution["ProblemType"]["UseBias"]:
