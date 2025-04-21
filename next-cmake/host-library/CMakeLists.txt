@@ -20,7 +20,17 @@
 # THE SOFTWARE.
 #
 # ########################################################################
-include(GNUInstallDirs)
+
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
+    cmake_minimum_required(VERSION 3.21)
+    project(hipBLASLt-host LANGUAGES CXX)
+
+    include(GNUInstallDirs)
+
+    set(${PROJECT_NAME}_is_subproject ON)
+endif()
+
+# TODO: Deep dive into this in the future, is it really needed?
 include(GenerateExportHeader)
 
 find_package(msgpack REQUIRED NAMES msgpack msgpack-cxx msgpack-c)
@@ -31,6 +41,8 @@ find_package(msgpack REQUIRED NAMES msgpack msgpack-cxx msgpack-c)
 # TODO: conditional use of LLVM if using YAML backend for serialization and parsing
 #find_package(LLVM REQUIRED CONFIG)
 # TODO: conditional use of msgpack if using msgpack backend for serialization and parsing
+
+# TODO(@ellosel): make rocisa a sibling of these projects
 add_subdirectory(rocisa)
 target_link_libraries(hipblaslt PRIVATE rocisa::rocisa-cpp)
 
@@ -43,30 +55,33 @@ set(TENSILE_USE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files
 set(TENSILE_USE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
 set(TENSILE_STATIC_ONLY ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
 
+# TODO: Add these files in the directories where they actually live, through and add_subdirectories call
 set(TEMP_TENSILE_HOST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/lib)
-# TODO: Remove the glob and itemize these headers explicitly
+# TODO(@bstefanuk): Remove the glob and itemize these headers explicitly
 file(GLOB TENSILE_HOSTLIB_INCLUDES ${TEMP_TENSILE_HOST_SOURCE_DIR}/include/**/*.hpp)
 
 target_sources(hipblaslt PRIVATE
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/AMDGPU.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ArithmeticUnitTypes.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionProblem.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionSolution.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/DataTypes.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Debug.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedLibrary.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelArguments.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelLanguageTypes.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLFeatures.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/PerformanceMetricTypes.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ScalarValueTypes.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorDescriptor.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorOps.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Tensile.cpp
-    ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Utils.cpp
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/AMDGPU.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ArithmeticUnitTypes.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionProblem.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionSolution.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/DataTypes.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Debug.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedLibrary.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelArguments.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelLanguageTypes.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLFeatures.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/PerformanceMetricTypes.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ScalarValueTypes.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorDescriptor.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorOps.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Tensile.cpp>
+    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Utils.cpp>
+    # TODO(@bstefanuk): Make these header explicity (not a glob) and update them to use build and install interfaces for them
     ${TENSILE_HOSTLIB_INCLUDES}
 )
 
+# TODO(@bstefanuk): Move these calls into the appropriate CMakeLists in the subdirectory
 if(TENSILE_USE_LLVM)
     target_sources(hipblaslt PRIVATE
         ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/llvm/YAML.cpp
@@ -166,7 +181,7 @@ target_include_directories(hipblaslt
     $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/Tensile>  # 2: Tensile_INC
     $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
     $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
-    PUBLIC 
+    PUBLIC
     $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>      # 3/4
     $<BUILD_INTERFACE:${HIP_ROOT_DIR}/include>           # 5
     $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>    # This may not be required because hipblaslt-common is an INTERFACE lib
@@ -177,3 +192,5 @@ generate_export_header(hipblaslt
     EXPORT_FILE_NAME ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-export.h
     BASE_NAME hipblaslt
 )
+
+unset(${PROJECT_NAME}_is_subproject)

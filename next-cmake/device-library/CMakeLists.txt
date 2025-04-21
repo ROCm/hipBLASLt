@@ -61,3 +61,5 @@ add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/library
 )
 add_custom_target(tensilelite-device-libraries ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/library)
+
+# TODO(@ellosel): Add logic for extop and hipblasltTransform libraries into this CMakeLists

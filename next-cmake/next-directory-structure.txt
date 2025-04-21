@@ -1,0 +1,18 @@
+hipblaslt/
+  CMakeLists.txt
+  clients/
+  host-library/
+    include/
+        hipblaslt/
+        rocblaslt/
+        tensilelite/
+    src/
+        hipblaslt/
+        rocblaslt/
+        tensilelite/
+    test/
+  device-library/
+    logic/
+    Tensile/
+        CMakeLists.txt
+  rocisa/

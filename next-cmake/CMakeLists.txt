@@ -20,27 +20,32 @@
 # THE SOFTWARE.
 #
 # ########################################################################
-cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+
+# TODO: Which cmake version?
+cmake_minimum_required(VERSION 3.21)
 project(hipBLASLt VERSION 0.1.0)
 
 ################################################################################
 # Options and cache variables
 ################################################################################
-option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ON)
+# TODO: Instead of setting shared libs to the default, we allow the user to specify BUILD_SHARED_LIBS
+#       even though this is not the previous usage in hipblaslt.
+# option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ON)
 
 ################################################################################
 # Includes
 ################################################################################
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-include(GenerateExportHeader)
 
 ################################################################################
-# Find dependencies 
+# Find dependencies
 ################################################################################
+
+# TODO: Handling OpenMP on windows may require a conditional
 find_package(OpenMP REQUIRED)
-find_package(hip REQUIRED CONFIG)
-find_package(hipblas-common REQUIRED CONFIG)
+find_package(hip REQUIRED)
+find_package(hipblas-common REQUIRED)
 
 ################################################################################
 # Configure hipBLASLt host library
@@ -49,23 +54,17 @@ add_library(hipblaslt)
 add_library(roc::hipblaslt ALIAS hipblaslt)
 
 target_compile_features(hipblaslt PUBLIC cxx_std_17)
-target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
+target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument)
 target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 
 target_link_libraries(hipblaslt
     PRIVATE
         hip::device
         roc::hipblas-common
+        # TODO: Potentially need to guard against the openmp cxx lib
         OpenMP::OpenMP_CXX
         dl
 )
-
-add_subdirectory(host-library)
-
-################################################################################
-# Configure tensilelite device libraries
-################################################################################
-# add_subdirectory(device-library)
 
 ################################################################################
 # Configure clients
@@ -98,4 +97,6 @@ target_include_directories(hipblaslt-bench
 )
 
 
+add_subdirectory(host-library)
+# add_subdirectory(device-library)
 add_subdirectory(clients)
