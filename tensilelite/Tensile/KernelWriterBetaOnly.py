@@ -314,24 +314,8 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
 
   def getKernelName(self):
-    indexChars = INDEX_CHARS
-    # C dimensions
-    name = "C"
-    for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
-      name += indexChars[i].lower()
-    name += "_"
-    name += self.state["ProblemType"]["DestDataType"].toChar()
-    if self.state["ProblemType"]["GroupedGemm"]:
-      name += "_GG"
-    else:
-      name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
-    name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
-    name += "_GA" if self.state["_GlobalAccumulation"] else ""
-
-    current = KernelWriterBetaOnly.kernelName(self)
-    assert name == current
-    return current
-
+    btype = self.state["ProblemType"]["BiasDataType"] if self.state["ProblemType"]["BetaOnlyUseBias"] else None
+    return KernelWriterBetaOnly.kernelName(self, btype)
 
 
   def getSourceFileString(self):

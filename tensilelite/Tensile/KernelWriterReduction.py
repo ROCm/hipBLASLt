@@ -70,13 +70,7 @@ class KernelWriterReduction(KernelWriterBase):
 
 
     def getKernelName(self):
-        name = "D"
-        name += self.indicesStr
-        name += "_%s%s"%(self.state["ProblemType"]["BiasDataType"].toChar(), self.state["ProblemType"]["ComputeDataType"].toChar())
-        name += "_Reduction"
-        current = KernelWriterReduction.kernelName(self)
-        assert name == current
-        return current
+        return KernelWriterReduction.kernelName(self, self.state["ProblemType"]["BiasDataType"])
 
 
     def getHeaderFileString(self):

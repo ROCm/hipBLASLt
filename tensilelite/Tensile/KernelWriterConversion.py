@@ -842,63 +842,8 @@ class KernelWriterConversion(KernelWriterBase):
 
 
   def getKernelName(self):
-    indexChars = INDEX_CHARS
-    # C dimensions
-    name = "C"
-    for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
-      name += indexChars[i].lower()
-    name += "_"
-
-    # add input datatype into kernel name (the datatype of workspace)
-    inputTypeStr = DataType("I").toChar() if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else \
-                                  (DataType("D").toChar() if self.state["ProblemType"]["DataType"].isDouble() else DataType("S").toChar())
-
-    name += (inputTypeStr + self.state["ProblemType"]["DestDataType"].toChar())
-
-    if self.state["ProblemType"]["GroupedGemm"]:
-      name += "_GG"
-    else:
-      name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
-    if self.state["ProblemType"]["UseBias"]:
-      if self.state["ProblemType"]["Gradient"]:
-        name += "_DBias%s"%(self.state["ProblemType"]["BiasDataType"].toChar())
-        name += "_BiasSrc%s"%(self.state["ProblemType"]["BiasSrc"])
-      else:
-        name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
-
-    factorDim =  0 if self.state["ProblemType"]["Gradient"] else self.state["ProblemType"]["UseBias"]
-    factorDim =  max(factorDim, self.state["ProblemType"]["UseScaleAlphaVec"])
-    if factorDim > 1:
-        name += "_FD%s"%("N" if factorDim == 2 else "MN")
-
-    if self.state["ProblemType"]["UseE"]:
-      if self.state["ProblemType"]["Gradient"]:
-        name += "_Grad%s"%self.state["ProblemType"]["DataTypeE"].toChar()
-      else:
-        name += "_Aux%s"%self.state["ProblemType"]["DataTypeE"].toChar()
-
-    if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
-      if self.state["ProblemType"]["ActivationType"] == 'all':
-        name += "_A"
-      elif self.state["ProblemType"]["ActivationType"] == 'hipblaslt_all':
-        name += "_HA"
-      else:
-        name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
-      name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
-      name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
-    if self.state["ProblemType"]["UseScaleAB"] == "Scalar":
-      name += "_ScaleAB"
-    elif self.state["ProblemType"]["UseScaleAB"] == "Vector":
-      name += "_ScaleABVec"
-    name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
-    name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
-    name += "_PostGSU" + str(self.state["GlobalSplitU"])
-    if self.num_elements_load != None:
-      name += "_VW" + str(self.num_elements_load)
     btype = self.state["ProblemType"]["BiasDataType"] if self.state["ProblemType"]["UseBias"] else None
-    current = KernelWriterConversion.kernelName(self, self.num_elements_load, btype)
-    assert name == current
-    return current
+    return KernelWriterConversion.kernelName(self, self.num_elements_load, btype)
 
 
   def getHeaderFileString(self):

@@ -52,11 +52,8 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
                                          state["ProblemType"]["ActivationComputeDataType"].toChar())
 
   def getKernelName(self):
-    prev = "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
-                                         self.state["ProblemType"]["ActivationComputeDataType"].toChar())
-    current = KernelWriterActivationEnumHeader.kernelName(self)
-    assert prev == current
-    return current
+    return KernelWriterActivationEnumHeader.kernelName(self)
+
    
 
   def getSourceFileString(self):

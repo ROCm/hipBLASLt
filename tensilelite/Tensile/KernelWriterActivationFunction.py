@@ -67,14 +67,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
                                           state["ProblemType"]["ActivationType"])
 
   def getKernelName(self):
-    prev = "Tensile%sActivation%s_%s_%s"%(self.actGradientPrefix, \
-                                          self.gaurdStr, \
-                                          self.state["ProblemType"]["ActivationComputeDataType"].toChar(), \
-                                          self.state["ProblemType"]["ActivationType"])
-    current = KernelWriterActivationFunction.kernelName(self)
-    assert prev == current
-    return current
-
+    return KernelWriterActivationFunction.kernelName(self)
 
   def getSourceFileString(self):
     fileString = "// This is a dummy file."
