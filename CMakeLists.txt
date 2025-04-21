@@ -121,8 +121,8 @@ cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt
 option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
-  add_compile_options(-fprofile-arcs -ftest-coverage)
-  add_link_options(--coverage -lgcov)
+  add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+  add_link_options(-fprofile-instr-generate)
 endif()
 
 if(BUILD_ADDRESS_SANITIZER)
