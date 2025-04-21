@@ -208,22 +208,23 @@ class KernelWriterActivationOnly(KernelWriterBase):
     return kStr
 
 
-  @classmethod
-  def _getKernelName(cls, solution):
+  @staticmethod
+  def kernelName(solution):
+    state = solution._state if hasattr(solution, "_state") else solution.state
     indexChars = INDEX_CHARS
     # C dimensions
     name = "D"
-    for i in range(0, solution.state["ProblemType"]["NumIndicesC"]):
+    for i in range(0, state["ProblemType"]["NumIndicesC"]):
       name += indexChars[i].lower()
     name += "_"
-    name += solution.state["ProblemType"]["DestDataType"].toChar()
-    if solution.state["ProblemType"]["ActivationType"] != 'none':
-      if solution.state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
+    name += state["ProblemType"]["DestDataType"].toChar()
+    if state["ProblemType"]["ActivationType"] != 'none':
+      if state["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
         name += "_%s"%"A"
       else:
-        name += "_%s"%str(solution.state["ProblemType"]["ActivationType"]).upper()
-      name += solution.state["ProblemType"]["ActivationComputeDataType"].toChar()
-    name += ("ng" if solution.state["ProblemType"]["ActivationNoGuard"] else "")
+        name += "_%s"%str(state["ProblemType"]["ActivationType"]).upper()
+      name += state["ProblemType"]["ActivationComputeDataType"].toChar()
+    name += ("ng" if state["ProblemType"]["ActivationNoGuard"] else "")
 
     return name
 
@@ -244,7 +245,9 @@ class KernelWriterActivationOnly(KernelWriterBase):
       name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
     name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
 
-    return name
+    current = KernelWriterActivationOnly.kernelName(self)
+    assert name == current
+    return current
 
 
   def getSourceFileString(self):

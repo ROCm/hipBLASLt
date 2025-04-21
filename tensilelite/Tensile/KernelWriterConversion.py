@@ -783,58 +783,59 @@ class KernelWriterConversion(KernelWriterBase):
 
 
   @staticmethod
-  def _getKernelName(solution, num_elements_load, btype=None):
+  def kernelName(solution, num_elements_load, btype=None):
+    state = solution._state if hasattr(solution, "_state") else solution.state
     indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
-    for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+    for i in range(0, state["ProblemType"]["NumIndicesC"]):
       name += indexChars[i].lower()
     name += "_"
 
     # add input datatype into kernel name (the datatype of workspace)
-    inputTypeStr = DataType("I").toChar() if solution._state["ProblemType"]["DataType"].isInt8() or solution._state["ProblemType"]["DataType"].isInt32() else \
-                                  (DataType("D").toChar() if solution._state["ProblemType"]["DataType"].isDouble() else DataType("S").toChar())
+    inputTypeStr = DataType("I").toChar() if state["ProblemType"]["DataType"].isInt8() or state["ProblemType"]["DataType"].isInt32() else \
+                                  (DataType("D").toChar() if state["ProblemType"]["DataType"].isDouble() else DataType("S").toChar())
 
-    name += (inputTypeStr + solution._state["ProblemType"]["DestDataType"].toChar())
+    name += (inputTypeStr + state["ProblemType"]["DestDataType"].toChar())
 
-    if solution._state["ProblemType"]["GroupedGemm"]:
+    if state["ProblemType"]["GroupedGemm"]:
       name += "_GG"
     else:
-      name += "" if solution._state["ProblemType"]["StridedBatched"] else "_GB"
+      name += "" if state["ProblemType"]["StridedBatched"] else "_GB"
     if btype:
-      if solution._state["ProblemType"]["Gradient"]:
+      if state["ProblemType"]["Gradient"]:
         name += "_DBias%s"%(btype.toChar())
-        name += "_BiasSrc%s"%(solution._state["ProblemType"]["BiasSrc"])
+        name += "_BiasSrc%s"%(state["ProblemType"]["BiasSrc"])
       else:
         name += "_Bias%s"%btype.toChar()
 
-    factorDim =  0 if solution._state["ProblemType"]["Gradient"] else solution._state["ProblemType"]["UseBias"]
-    factorDim =  max(factorDim, solution._state["ProblemType"]["UseScaleAlphaVec"])
+    factorDim =  0 if state["ProblemType"]["Gradient"] else state["ProblemType"]["UseBias"]
+    factorDim =  max(factorDim, state["ProblemType"]["UseScaleAlphaVec"])
     if factorDim > 1:
         name += "_FD%s"%("N" if factorDim == 2 else "MN")
 
-    if solution._state["ProblemType"]["UseE"]:
-      if solution._state["ProblemType"]["Gradient"]:
-        name += "_Grad%s"%solution._state["ProblemType"]["DataTypeE"].toChar()
+    if state["ProblemType"]["UseE"]:
+      if state["ProblemType"]["Gradient"]:
+        name += "_Grad%s"%state["ProblemType"]["DataTypeE"].toChar()
       else:
-        name += "_Aux%s"%solution._state["ProblemType"]["DataTypeE"].toChar()
+        name += "_Aux%s"%state["ProblemType"]["DataTypeE"].toChar()
 
-    if ((solution._state["ProblemType"]["ActivationType"] != 'none') and solution._state["ActivationFused"]):
-      if solution._state["ProblemType"]["ActivationType"] == 'all':
+    if ((state["ProblemType"]["ActivationType"] != 'none') and state["ActivationFused"]):
+      if state["ProblemType"]["ActivationType"] == 'all':
         name += "_A"
-      elif solution._state["ProblemType"]["ActivationType"] == 'hipblaslt_all':
+      elif state["ProblemType"]["ActivationType"] == 'hipblaslt_all':
         name += "_HA"
       else:
-        name += "_%s"%str(solution._state["ProblemType"]["ActivationType"]).upper()
-      name += solution._state["ProblemType"]["ActivationComputeDataType"].toChar()
-      name += ("ng" if solution._state["ProblemType"]["ActivationNoGuard"] else "")
-    if solution._state["ProblemType"]["UseScaleAB"] == "Scalar":
+        name += "_%s"%str(state["ProblemType"]["ActivationType"]).upper()
+      name += state["ProblemType"]["ActivationComputeDataType"].toChar()
+      name += ("ng" if state["ProblemType"]["ActivationNoGuard"] else "")
+    if state["ProblemType"]["UseScaleAB"] == "Scalar":
       name += "_ScaleAB"
-    elif solution._state["ProblemType"]["UseScaleAB"] == "Vector":
+    elif state["ProblemType"]["UseScaleAB"] == "Vector":
       name += "_ScaleABVec"
-    name += "_ScaleCD" if solution._state["ProblemType"]["UseScaleCD"] else ""
-    name += "_ScaleAlphaVec" if solution._state["ProblemType"]["UseScaleAlphaVec"] else ""
-    name += "_PostGSU" + str(solution._state["GlobalSplitU"])
+    name += "_ScaleCD" if state["ProblemType"]["UseScaleCD"] else ""
+    name += "_ScaleAlphaVec" if state["ProblemType"]["UseScaleAlphaVec"] else ""
+    name += "_PostGSU" + str(state["GlobalSplitU"])
     if num_elements_load != None:
       name += "_VW" + str(num_elements_load)
     return name
@@ -894,7 +895,10 @@ class KernelWriterConversion(KernelWriterBase):
     name += "_PostGSU" + str(self.state["GlobalSplitU"])
     if self.num_elements_load != None:
       name += "_VW" + str(self.num_elements_load)
-    return name
+    btype = self.state["ProblemType"]["BiasDataType"] if self.state["ProblemType"]["UseBias"] else None
+    current = KernelWriterConversion.kernelName(self, self.num_elements_load, btype)
+    assert name == current
+    return current
 
 
   def getHeaderFileString(self):

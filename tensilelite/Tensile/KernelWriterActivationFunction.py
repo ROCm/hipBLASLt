@@ -57,19 +57,23 @@ class KernelWriterActivationFunction(KernelWriterBase):
     return self.getKernelName()
 
   @staticmethod
-  def _getKernelName(solution):
-    actGradientPrefix = "Gradient" if solution._state["ProblemType"]["Gradient"] else ""
-    gaurdStr = "NG" if solution._state["ProblemType"]["ActivationNoGuard"] else ""
+  def kernelName(solution):
+    state = solution._state if hasattr(solution, "_state") else solution.state
+    actGradientPrefix = "Gradient" if state["ProblemType"]["Gradient"] else ""
+    gaurdStr = "NG" if state["ProblemType"]["ActivationNoGuard"] else ""
     return "Tensile%sActivation%s_%s_%s"%(actGradientPrefix, \
                                           gaurdStr, \
-                                          solution._state["ProblemType"]["ActivationComputeDataType"].toChar(), \
-                                          solution._state["ProblemType"]["ActivationType"])
+                                          state["ProblemType"]["ActivationComputeDataType"].toChar(), \
+                                          state["ProblemType"]["ActivationType"])
 
   def getKernelName(self):
-    return "Tensile%sActivation%s_%s_%s"%(self.actGradientPrefix, \
+    prev = "Tensile%sActivation%s_%s_%s"%(self.actGradientPrefix, \
                                           self.gaurdStr, \
                                           self.state["ProblemType"]["ActivationComputeDataType"].toChar(), \
                                           self.state["ProblemType"]["ActivationType"])
+    current = KernelWriterActivationFunction.kernelName(self)
+    assert prev == current
+    return current
 
 
   def getSourceFileString(self):

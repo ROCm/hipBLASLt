@@ -235,8 +235,6 @@ class Solution(collections.abc.Mapping):
     )
     self._name = config["CustomKernelName"] if "CustomKernelName" in config and config["CustomKernelName"] else None
 
-    #self.initHelperKernelObjects(targetIsas)
-
   # these keys are copied from ProblemType to internal that may be overridden
   InternalKeys = ["UseSgprForGRO","VectorStore"]
 

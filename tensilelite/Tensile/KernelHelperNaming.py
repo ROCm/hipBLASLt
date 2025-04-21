@@ -60,32 +60,32 @@ def conversionKernelNames(solution):
       typeList = solution["ProblemType"]["BiasDataTypeList"]
       if solution["ProblemType"]["Gradient"]:
       #  # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
-        conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw))
+        conversionKernelNames.append(KernelWriterConversion.kernelName(solution, vw))
       for btype in typeList:
-        conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw, btype))
+        conversionKernelNames.append(KernelWriterConversion.kernelName(solution, vw, btype))
     else:
-      conversionKernelNames.append(KernelWriterConversion._getKernelName(solution, vw))
+      conversionKernelNames.append(KernelWriterConversion.kernelName(solution, vw))
   return conversionKernelNames if conversionKernelNames else []
 
 
 def activationEnumHeaderNames(solution):
   activationEnumHeaderNames = []
   if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-    activationEnumHeaderNames.append(KernelWriterActivationEnumHeader._getKernelName(solution))
+    activationEnumHeaderNames.append(KernelWriterActivationEnumHeader.kernelName(solution))
   return activationEnumHeaderNames
 
 
 def activationFunctionNames(solution):
   activationFunctionNames = []
   if solution["ProblemType"]["ActivationType"] in ['all', 'hipblaslt_all']:
-    activationFunctionNames.append(KernelWriterActivationFunction._getKernelName(solution))
+    activationFunctionNames.append(KernelWriterActivationFunction.kernelName(solution))
   return activationFunctionNames
 
 
 def activationOnlyKernelNames(solution):
   activationOnlyKernelNames = []
   if (solution["ActivationFused"] == False) and (solution["ProblemType"]["ActivationType"] != 'none'):
-    activationOnlyKernelNames.append(KernelWriterActivationOnly._getKernelName(solution))
+    activationOnlyKernelNames.append(KernelWriterActivationOnly.kernelName(solution))
   return activationOnlyKernelNames
 
 
@@ -93,7 +93,7 @@ def reductionKernelNames(solution):
   reductionKernelNames = []
   if solution["ProblemType"]["Gradient"] and solution["ProblemType"]["UseBias"]:
     for btype in solution["ProblemType"]["BiasDataTypeList"]:
-      reductionKernelNames.append(KernelWriterReduction._getKernelName(solution, btype))
+      reductionKernelNames.append(KernelWriterReduction.kernelName(solution, btype))
   return reductionKernelNames
 
 
@@ -102,9 +102,9 @@ def betaOnlyKernelNames(solution):
   if solution["GlobalSplitU"] > 1 or (solution["StreamK"] > 0 and solution["StreamKAtomic"] == 1):
     if solution["ProblemType"]["UseBias"]:
       for btype in solution["ProblemType"]["BiasDataTypeList"]:
-        betaOnlyKernelNames.append(KernelWriterBetaOnly._getKernelName(solution, btype))
+        betaOnlyKernelNames.append(KernelWriterBetaOnly.kernelName(solution, btype))
     else:
-      betaOnlyKernelNames.append(KernelWriterBetaOnly._getKernelName(solution))
+      betaOnlyKernelNames.append(KernelWriterBetaOnly.kernelName(solution))
   return betaOnlyKernelNames
 
 

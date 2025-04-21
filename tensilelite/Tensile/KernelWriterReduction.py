@@ -54,16 +54,17 @@ class KernelWriterReduction(KernelWriterBase):
         return kStr
 
     @staticmethod
-    def _getKernelName(solution, btype):
+    def kernelName(solution, btype):
+        state = solution._state if hasattr(solution, "_state") else solution.state
         # C dimensions
         indexChars = INDEX_CHARS
         indicesStr = ""
-        for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+        for i in range(0, state["ProblemType"]["NumIndicesC"]):
             c = indexChars[i].lower()
             indicesStr += indexChars[i].lower()
         name = "D"
         name += indicesStr
-        name += "_%s%s"%(btype.toChar(), solution._state["ProblemType"]["ComputeDataType"].toChar())
+        name += "_%s%s"%(btype.toChar(), state["ProblemType"]["ComputeDataType"].toChar())
         name += "_Reduction"
         return name
 
@@ -73,7 +74,9 @@ class KernelWriterReduction(KernelWriterBase):
         name += self.indicesStr
         name += "_%s%s"%(self.state["ProblemType"]["BiasDataType"].toChar(), self.state["ProblemType"]["ComputeDataType"].toChar())
         name += "_Reduction"
-        return name
+        current = KernelWriterReduction.kernelName(self)
+        assert name == current
+        return current
 
 
     def getHeaderFileString(self):

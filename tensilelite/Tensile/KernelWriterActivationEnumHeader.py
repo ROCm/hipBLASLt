@@ -45,14 +45,19 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
     return self.getKernelName()
 
   @staticmethod
-  def _getKernelName(solution):
-    s = "Gradient" if solution._state["ProblemType"]["Gradient"] else ""
+  def kernelName(solution):
+    state = solution._state if hasattr(solution, "_state") else solution.state
+    s = "Gradient" if state["ProblemType"]["Gradient"] else ""
     return "Tensile%sActivationEnum_%s"%(s,
-                                         solution._state["ProblemType"]["ActivationComputeDataType"].toChar())
+                                         state["ProblemType"]["ActivationComputeDataType"].toChar())
 
   def getKernelName(self):
-    return "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
+    prev = "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
                                          self.state["ProblemType"]["ActivationComputeDataType"].toChar())
+    current = KernelWriterActivationEnumHeader.kernelName(self)
+    assert prev == current
+    return current
+   
 
   def getSourceFileString(self):
     fileString = "// This is a dummy file."

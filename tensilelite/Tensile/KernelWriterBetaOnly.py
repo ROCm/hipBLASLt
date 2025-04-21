@@ -293,21 +293,22 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
 
   @staticmethod
-  def _getKernelName(solution, btype=None):
+  def kernelName(solution, btype=None):
+    state = solution._state if hasattr(solution, "_state") else solution.state
     indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
-    for i in range(0, solution._state["ProblemType"]["NumIndicesC"]):
+    for i in range(0, state["ProblemType"]["NumIndicesC"]):
       name += indexChars[i].lower()
     name += "_"
-    name += solution._state["ProblemType"]["DestDataType"].toChar()
-    if solution._state["ProblemType"]["GroupedGemm"]:
+    name += state["ProblemType"]["DestDataType"].toChar()
+    if state["ProblemType"]["GroupedGemm"]:
       name += "_GG"
     else:
-      name += "" if solution._state["ProblemType"]["StridedBatched"] else "_GB"
-    if solution._state["ProblemType"]["BetaOnlyUseBias"]:
+      name += "" if state["ProblemType"]["StridedBatched"] else "_GB"
+    if state["ProblemType"]["BetaOnlyUseBias"]:
       name += "_Bias%s"%btype.toChar()
-    name += "_GA" if solution._state["_GlobalAccumulation"] else ""
+    name += "_GA" if state["_GlobalAccumulation"] else ""
 
     return name
 
@@ -327,7 +328,10 @@ class KernelWriterBetaOnly(KernelWriterBase):
     name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
     name += "_GA" if self.state["_GlobalAccumulation"] else ""
 
-    return name
+    current = KernelWriterBetaOnly.kernelName(self)
+    assert name == current
+    return current
+
 
 
   def getSourceFileString(self):
