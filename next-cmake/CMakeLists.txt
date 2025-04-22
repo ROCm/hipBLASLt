@@ -26,31 +26,14 @@ cmake_minimum_required(VERSION 3.21)
 # TODO: Which hipblaslt version?
 project(hipblaslt VERSION 0.1.0)
 
-################################################################################
-# Options and cache variables
-################################################################################
-# TODO: Instead of setting shared libs to the default, we allow the user to specify BUILD_SHARED_LIBS
-#       even though this is not the previous usage in hipblaslt.
-# option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ON)
-
-################################################################################
-# Includes
-################################################################################
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-
-################################################################################
-# Find dependencies
-################################################################################
 
 # TODO: Handling OpenMP on windows may require a conditional
 find_package(OpenMP REQUIRED)
 find_package(hip REQUIRED)
 find_package(hipblas-common REQUIRED)
 
-################################################################################
-# Configure hipBLASLt host library
-################################################################################
 add_library(hipblaslt-host)
 add_library(roc::hipblaslt-host ALIAS hipblaslt-host)
 
