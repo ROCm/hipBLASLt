@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,7 @@ add_custom_target(matrix-transform ALL
 
 add_custom_target(MatrixTransformCp ALL
     DEPENDS tensilelite-device-libraries
-    COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../library"
+    COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
     COMMENT "Copying hipblasltTransform.hsaco"
 )
 
