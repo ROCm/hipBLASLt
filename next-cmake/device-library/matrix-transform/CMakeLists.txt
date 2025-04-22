@@ -27,17 +27,23 @@ string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${Tensile_ARCHITECTURE}")
 list(REMOVE_DUPLICATES archs)
 list(JOIN archs "," archs)
 
-set(output_library "${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco")
-set(matrix_transform_cpp ${TENSILELITE_DIR}/../library/src/amd_detail/rocblsalt/src/kernels/matrix_transform.cpp)
+set(output_library "${CMAKE_CURRENT_BINARY_DIR}/hipblasltTransform.hsaco")
+set(matrix_transform_cpp "${TENSILELITE_DIR}/../library/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp")
 
 add_custom_command(
-    COMMAND ${CMAKE_CXX_COMPILER} -x hip ${matrix_transform_cpp} --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=${Tensile_BUILD_ID} -O3 -o ${output_library}
-    OUTPUT ${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco
-    COMMENT "Compiling matrix transform kernels"
+    COMMAND ${CMAKE_CXX_COMPILER} -x hip ${matrix_transform_cpp} --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=sha1 -O3 -o ${output_library}
+    OUTPUT ${output_library}
+    COMMENT "Building hipblasltTransform.hsaco"
 )
 
 add_custom_target(matrix-transform ALL
-    DEPENDS ${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco
+    DEPENDS ${output_library}
+)
+
+add_custom_target(ExtOpCp ALL
+    DEPENDS tensilelite-device-libraries
+    COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../library"
+    COMMENT "Copying hipblasltTransform.hsaco"
 )
 
 add_dependencies(matrix-transform tensilelite-device-libraries)
