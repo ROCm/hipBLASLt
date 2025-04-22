@@ -140,8 +140,8 @@ endforeach()
 
 add_custom_target(ExtOpCp ALL
     DEPENDS tensilelite-device-libraries
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" ${CMAKE_CURRENT_BINARY_DIR}/../library
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat"${CMAKE_CURRENT_BINARY_DIR}/../library
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat" "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
     COMMENT "Copying ExtOp Library"
 )
 
