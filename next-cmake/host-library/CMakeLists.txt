@@ -33,6 +33,7 @@ set(TENSILE_USE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration fil
 set(TENSILE_USE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
 set(TENSILE_USE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
 set(TENSILE_STATIC_ONLY ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
+set(ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
 
 set(ENABLE_HIP ${TENSILE_USE_HIP})
 set(ENABLE_LLVM ${TENSILE_USE_LLVM})
@@ -40,6 +41,8 @@ set(ENABLE_MSGPACK ${TENSILE_USE_MSGPACK})
 set(ENABLE_OPENMP ${TENSILE_USE_OPENMP})
 
 set(TEMP_TENSILE_HOST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/lib)
+set(HIPBLASLT_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../library/)
+set(ROCBLASLT_LIB_DIR ${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt)
 
 if(${PROJECT_NAME}_is_subproject)
     include(GNUInstallDirs)
@@ -69,9 +72,6 @@ target_include_directories(hipblaslt-host
 )
 
 target_compile_definitions(hipblaslt-host PRIVATE TENSILE_DEFAULT_SERIALIZATION)
-
-set(HIPBLASLT_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../library/)
-set(ROCBLASLT_LIB_DIR ${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt)
 
 configure_file(
     ${HIPBLASLT_LIB_DIR}/include/hipblaslt-version.h.in

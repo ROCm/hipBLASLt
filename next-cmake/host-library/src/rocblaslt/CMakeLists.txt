@@ -31,4 +31,13 @@ target_sources(hipblaslt-host
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocblaslt_transform.cpp>
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/UserDrivenTuningParser.cpp>
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/tensile_host.cpp>
+        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src//rocblaslt_auxiliary.cpp>
+        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src//utility.cpp>
 )
+
+if(ENABLE_ROCROLLER)
+    target_sources(hipblaslt-host
+        PRIVATE
+            $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocroller_host.cpp>
+    )
+endif()
