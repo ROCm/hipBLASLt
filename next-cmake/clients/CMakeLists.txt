@@ -32,7 +32,7 @@ if(LINK_BLIS)
 endif()
 
 find_package(Threads REQUIRED)
-find_package(cblas REQUIRED)
+find_package(cblas REQUIRED CONFIG)
 
 if(${BLIS_FOUND})
     set( BLAS_LIBRARY ${BLIS_LIB} )
@@ -73,6 +73,8 @@ target_include_directories(hipblaslt-bench
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/host-library/include>
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/tensilelite>  # TODO: Maybe not needed
+        $<BUILD_INTERFACE:${CMAKE_BINARY_SIR}/include>  # TODO: Maybe not needed
 )
 
 # TODO: Do we need this?

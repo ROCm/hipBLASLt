@@ -73,7 +73,16 @@ target_link_libraries(hipblaslt-host
 ################################################################################
 add_executable(hipblaslt-bench)
 
-target_compile_options(hipblaslt-bench PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COMMON_CXX_OPTIONS}>)
+if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # GCC or hip-clang needs specific flags to turn on f16c intrinsics
+  target_compile_options( hipblaslt-bench PRIVATE -mf16c )
+endif( )
+
+target_compile_features(hipblaslt-bench PRIVATE cxx_std_17)
+set_target_properties(hipblaslt-bench
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+)
 
 target_link_libraries(hipblaslt-bench
     PRIVATE
@@ -82,9 +91,8 @@ target_link_libraries(hipblaslt-bench
         OpenMP::OpenMP_CXX
         -L${HIP_CLANG_ROOT}/lib -Wl -rpath=${HIP_CLANG_ROOT}/lib
         lapack cblas
-        -mf16c
         -lm -lstdc++fs
-        -lflang -lflagrti
+        # -lflang -lflagrti
 )
 
 add_subdirectory(rocisa/rocisa-cpp)
