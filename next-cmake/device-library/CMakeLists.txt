@@ -20,6 +20,7 @@
 # THE SOFTWARE.
 #
 # ########################################################################
+
 cmake_minimum_required(VERSION 3.21)
 project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
@@ -50,8 +51,6 @@ set(TENSILE_CREATE_LIBRARY_COMMAND
     ${CMAKE_CURRENT_BINARY_DIR}/_BUILD_FROM_CMAKE
     HIP
 )
-string(REPLACE ";" " " TEMP_BUILD_STRING "${TENSILE_CREATE_LIBRARY_COMMAND}")
-message(STATUS "Tensile build command: ${TEMP_BUILD_STRING}")
 
 add_custom_command(
     COMMENT "Building device libraries..."
