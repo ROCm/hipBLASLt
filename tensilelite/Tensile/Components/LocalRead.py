@@ -631,6 +631,6 @@ class LocalReadMFMA(LocalRead):
             # localReadCode.add(VMovB32(dst=vgpr("ValuA_X0_I0+0"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
             # testMod = imod.add(Module("Test"))
             # testMod.add(SWaitCnt(lgkmcnt=0, comment="CheckValue1 wait for lds read"))
-            #localReadCode.add(tf32mod(LocalReadX))
+            localReadCode.add(tf32mod(LocalReadX))
 
         return imod, pack

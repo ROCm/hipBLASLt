@@ -1119,8 +1119,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   latencyLeft -= (tPA["localWriteInstruction"].issueLatency*2)
             readLeftLROPT = 0
             for j in range(len(localReadItemsThisLoop)):
-              latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
-              readLeftLROPT += 1 if latencyLeft >= 0 else 0
+              if (hasattr(localReadItemsThisLoop[j], "issueLatency")):
+                latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+                readLeftLROPT += 1 if latencyLeft >= 0 else 0
             # at least 1 instruction
             readLeftLROPT = max(readLeftLROPT,1)
             # evenly schedule localread with each mfma
@@ -1160,9 +1161,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
               latencyLeft -= readLeft * tPA["localWriteInstruction"].issueLatency * 2
             else:
               readLeft = len(localReadItemsThisLoop)
-              latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+              if (hasattr(j, "issueLatency")):
+                latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
           else:
-            latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+            if (hasattr(j, "issueLatency")):
+              latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
 
         # force to schedule all remaining localreads before start to schedule localwrite.
         if mfmaIndex == self.states.sync1LdsMfmaIndex and oneBufferScheduling:
@@ -1296,8 +1299,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if self.states.numItersPLR and iteration >= isBarrier:
           readLeftLROPT = 0
           for j in range(len(localReadItemsNextLoop)):
-            latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
-            readLeftLROPT += 1 if latencyLeft >= 0 else 0
+            if (hasattr(localReadItemsNextLoop[j], "issueLatency")):
+              latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
+              readLeftLROPT += 1 if latencyLeft >= 0 else 0
           # at least 1 instruction
           readLeftLROPT = max(readLeftLROPT,1)
           readLeftLREven = numReadsInst / (numMfmaPerIter - i)
