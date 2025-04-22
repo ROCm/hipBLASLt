@@ -60,8 +60,9 @@ target_compile_definitions(hipblaslt-host PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFOR
 
 target_link_libraries(hipblaslt-host
     PRIVATE
-        hip::device
+        hip::device # this should probably be public
         roc::hipblas-common
+        rocisa::rocisa-cpp
         # TODO: Potentially need to guard against the openmp cxx lib
         OpenMP::OpenMP_CXX
         dl
@@ -97,7 +98,7 @@ target_link_libraries(hipblaslt-host
 #         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
 # )
 
-
+add_subdirectory(rocisa/rocisa-cpp)
 add_subdirectory(host-library)
-# add_subdirectory(device-library)
+add_subdirectory(device-library)
 # add_subdirectory(clients)

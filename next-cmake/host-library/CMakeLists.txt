@@ -41,9 +41,6 @@ find_package(msgpack REQUIRED NAMES msgpack msgpack-cxx msgpack-c)
 # TODO: conditional use of LLVM if using YAML backend for serialization and parsing
 #find_package(LLVM REQUIRED CONFIG)
 # TODO: conditional use of msgpack if using msgpack backend for serialization and parsing
-
-# TODO(@ellosel): make rocisa a sibling of these projects
-add_subdirectory(rocisa)
 target_link_libraries(hipblaslt-host PRIVATE rocisa::rocisa-cpp)
 
 ################################################################################
@@ -203,7 +200,7 @@ generate_export_header(hipblaslt-host
 ################################################################################
 
 # hipblaslt library
-install(TARGETS hipblaslt-host
+install(TARGETS hipblaslt-host rocisa-cpp
     EXPORT hipblaslt-host-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
