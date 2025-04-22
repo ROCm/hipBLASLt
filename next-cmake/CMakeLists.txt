@@ -71,34 +71,23 @@ target_link_libraries(hipblaslt-host
 ################################################################################
 # Configure clients
 ################################################################################
-# add_executable(hipblaslt-bench)
+add_executable(hipblaslt-bench)
 
-# target_link_libraries(hipblaslt-bench
-#     PRIVATE
-#         roc::hipblaslt
-#         hip::host hip::device
-#         lapack cblas
-#         -mf16c
-#         libomp -lm -lstdc++fs
-# )
+target_compile_options(hipblaslt-bench PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${COMMON_CXX_OPTIONS}>)
 
-
-# target_include_directories(hipblaslt-bench
-#     PRIVATE
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../clients/include>
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/include>
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/src/include>
-# )
-
-# # TODO: Do we need this?
-# target_include_directories(hipblaslt-bench
-#     SYSTEM PRIVATE
-#         $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
-#         $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
-#         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
-# )
+target_link_libraries(hipblaslt-bench
+    PRIVATE
+        roc::hipblaslt-host
+        hip::host hip::device
+        OpenMP::OpenMP_CXX
+        -L${HIP_CLANG_ROOT}/lib -Wl -rpath=${HIP_CLANG_ROOT}/lib
+        lapack cblas
+        -mf16c
+        -lm -lstdc++fs
+        -lflang -lflagrti
+)
 
 add_subdirectory(rocisa/rocisa-cpp)
 add_subdirectory(host-library)
-add_subdirectory(device-library)
-# add_subdirectory(clients)
+# add_subdirectory(device-library)
+add_subdirectory(clients)

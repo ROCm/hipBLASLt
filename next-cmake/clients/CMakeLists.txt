@@ -25,12 +25,26 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(clients LANGUAGES CXX)
 endif()
 
+if(LINK_BLIS)
+    # TODO: This does not feel right, we should be able to use a more idiomatic
+    #       approach to locating the BLIS libraries.
+    include(cmake/FindBLIS.cmake)
+endif()
+
 find_package(Threads REQUIRED)
-find_package(cblas REQUIRED CONFIG)
+find_package(cblas REQUIRED)
+
+if(${BLIS_FOUND})
+    set( BLAS_LIBRARY ${BLIS_LIB} )
+    set( BLIS_CPP ../common/blis_interface.cpp )
+else()
+    set( BLAS_LIBRARY "blas" )
+endif()
 
 set(TEMP_CLIENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../clients)
 target_sources(hipblaslt-bench PRIVATE
     ${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp
+    # Common sources
     ${TEMP_CLIENTS_SOURCE_DIR}/common/singletons.cpp
     ${TEMP_CLIENTS_SOURCE_DIR}/common/utility.cpp
     ${TEMP_CLIENTS_SOURCE_DIR}/common/efficiency_monitor.cpp
@@ -40,10 +54,38 @@ target_sources(hipblaslt-bench PRIVATE
     ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_arguments.cpp
     ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_random.cpp
     ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_init_device.cpp
-    ${TEMP_CLIENTS_SOURCE_DIR}/common/blis_interface.cpp
+    ${BLIS_CPP}  # TODO: This impl could be improved
+    # Includes
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/singletons.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/utility.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/efficiency_monitor.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/cblas_interface.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/argument_model.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_parse_data.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_arguments.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_random.hpp
+    ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_init.hpp
 )
 
+target_include_directories(hipblaslt-bench
+    PRIVATE
+        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
+        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/host-library/include>
+)
+
+# TODO: Do we need this?
+target_include_directories(hipblaslt-bench
+    SYSTEM PRIVATE
+        $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
+        $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
+
+)
 set_target_properties(hipblaslt-bench
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging
 )
+
+# TODO: Copy template files to build and install dir
