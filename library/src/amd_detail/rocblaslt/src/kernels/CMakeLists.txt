@@ -21,4 +21,27 @@
 #
 # ########################################################################
 
-add_subdirectory(src)
+# Need to support Release/Debug
+
+string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${Tensile_ARCHITECTURE}")
+list(REMOVE_DUPLICATES archs)
+list(JOIN archs "," archs)
+
+set(output_library "${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco")
+if(WIN32)
+    cmake_path(CONVERT "${output_library}" TO_NATIVE_PATH_LIST output_library)
+endif()
+
+add_custom_command(
+    COMMAND ${CMAKE_CXX_COMPILER} -x hip ${CMAKE_CURRENT_SOURCE_DIR}/matrix_transform.cpp --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=${Tensile_BUILD_ID} -O3 -o ${output_library}
+    OUTPUT ${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco
+    COMMENT "Compiling matrix transform kernels"
+)
+
+add_custom_target(MatrixTransformKernels ALL
+    DEPENDS ${PROJECT_BINARY_DIR}/Tensile/library/hipblasltTransform.hsaco
+)
+
+add_dependencies(MatrixTransformKernels TENSILE_LIBRARY_TARGET)
+
+unset(output_path)

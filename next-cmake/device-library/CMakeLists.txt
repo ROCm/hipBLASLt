@@ -62,4 +62,5 @@ add_custom_command(
 )
 add_custom_target(tensilelite-device-libraries ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/library)
 
-# TODO(@ellosel): Add logic for extop and hipblasltTransform libraries into this CMakeLists
+#add_subdirectory(extops) can't add this given current architecture of Tensile
+add_subdirectory(matrix-transform)
