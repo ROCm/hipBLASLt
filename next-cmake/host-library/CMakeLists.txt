@@ -44,7 +44,7 @@ find_package(msgpack REQUIRED NAMES msgpack msgpack-cxx msgpack-c)
 
 # TODO(@ellosel): make rocisa a sibling of these projects
 add_subdirectory(rocisa)
-target_link_libraries(hipblaslt PRIVATE rocisa::rocisa-cpp)
+target_link_libraries(hipblaslt-host PRIVATE rocisa::rocisa-cpp)
 
 ################################################################################
 # Configure Tensile host
@@ -60,58 +60,64 @@ set(TEMP_TENSILE_HOST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/T
 # TODO(@bstefanuk): Remove the glob and itemize these headers explicitly
 file(GLOB TENSILE_HOSTLIB_INCLUDES ${TEMP_TENSILE_HOST_SOURCE_DIR}/include/**/*.hpp)
 
-target_sources(hipblaslt PRIVATE
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/AMDGPU.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ArithmeticUnitTypes.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionProblem.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionSolution.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/DataTypes.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Debug.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedLibrary.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelArguments.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelLanguageTypes.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLFeatures.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/PerformanceMetricTypes.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ScalarValueTypes.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorDescriptor.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorOps.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Tensile.cpp>
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Utils.cpp>
-    # TODO(@bstefanuk): Make these header explicity (not a glob) and update them to use build and install interfaces for them
-    ${TENSILE_HOSTLIB_INCLUDES}
+target_sources(hipblaslt-host
+    PRIVATE
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/AMDGPU.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ArithmeticUnitTypes.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionProblem.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionSolution.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/DataTypes.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Debug.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedLibrary.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelArguments.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelLanguageTypes.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLFeatures.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/PerformanceMetricTypes.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ScalarValueTypes.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorDescriptor.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorOps.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Tensile.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Utils.cpp>
+        # TODO(@bstefanuk): Make these header explicity (not a glob) and update them to use build and install interfaces for them
+        ${TENSILE_HOSTLIB_INCLUDES}
 )
 
 # TODO(@bstefanuk): Move these calls into the appropriate CMakeLists in the subdirectory
 if(TENSILE_USE_LLVM)
-    target_sources(hipblaslt PRIVATE
-        ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/llvm/YAML.cpp
-        ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/llvm/Loading.cpp
+    target_sources(hipblaslt-host
+        PRIVATE
+            ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/llvm/YAML.cpp
+            ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/llvm/Loading.cpp
     )
 endif()
 
 if(TENSILE_USE_MSGPACK)
-    target_sources(hipblaslt PRIVATE
-        ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/msgpack/MessagePack.cpp
+    target_sources(hipblaslt-host
+        PRIVATE
+            ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/msgpack/MessagePack.cpp
     )
 endif()
 
 if(TENSILE_USE_HIP)
-    target_sources(hipblaslt PRIVATE
-        ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/hip/HipSolutionAdapter.cpp
-        ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/hip/HipHardware.cpp
+    target_sources(hipblaslt-host
+        PRIVATE
+            ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/hip/HipSolutionAdapter.cpp
+            ${TEMP_TENSILE_HOST_SOURCE_DIR}/source/hip/HipHardware.cpp
     )
 endif()
 
 
-target_include_directories(hipblaslt PRIVATE
-    $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
+target_include_directories(hipblaslt-host
+    PRIVATE
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
 )
 
 # TODO: should these go higher up?
-target_compile_definitions(hipblaslt PRIVATE TENSILE_USE_HIP)
-target_compile_definitions(hipblaslt PUBLIC TENSILE_DEFAULT_SERIALIZATION)
-target_compile_definitions(hipblaslt PUBLIC -DTENSILE_MSGPACK=1)
+target_compile_definitions(hipblaslt-host PRIVATE TENSILE_USE_HIP)
+target_compile_definitions(hipblaslt-host PUBLIC TENSILE_DEFAULT_SERIALIZATION)
+target_compile_definitions(hipblaslt-host PUBLIC -DTENSILE_MSGPACK=1)
 # TODO: clean this up, what's needed, add conditional configuration
+# TODO: Below is copy and pasted from before, is it really needed?
 if(TARGET msgpackc-cxx)
     get_target_property(msgpack_inc msgpackc-cxx INTERFACE_INCLUDE_DIRECTORIES)
 elseif(TARGET msgpackc)
@@ -122,7 +128,7 @@ endif()
 if(DEFINED msgpack_inc)
     # include C++ headers manually
     # External header includes included as system files
-    target_include_directories(hipblaslt
+    target_include_directories(hipblaslt-host
         SYSTEM PRIVATE $<BUILD_INTERFACE:${msgpack_inc}>
     )
 endif()
@@ -134,12 +140,12 @@ set(HIPBLASLT_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../library/)
 set(ROCBLASLT_LIB_DIR ${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt)
 
 configure_file(
-    ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-version.h.in
-    ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-version.h
+    ${HIPBLASLT_LIB_DIR}/include/hipblaslt-version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 
 set(HIPBLASLT_LIB_INCLUDES
-    ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-version.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
     ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt.h
     ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-ext.hpp
     ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-ext-op.h
@@ -149,48 +155,85 @@ set(HIPBLASLT_LIB_INCLUDES
     ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt_float8_bc.h
 )
 
-# TODO: This should just be handled by the build, no?
-# file(COPY ${HIPBLASLT_LIB_INCLUDES} DESTINATION ${PROJECT_BINARY_DIR}/include/hipblaslt)
-
-target_sources(hipblaslt PRIVATE
-    # hipblaslt_source_common
-    ${HIPBLASLT_LIB_DIR}/src/hipblaslt_ostream.cpp
-    # hipblaslt_source
-    ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
-    ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext.cpp
-    ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext-op.cpp
-    ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
-    # rocblaslt_source
-    ${ROCBLASLT_LIB_DIR}/src/Debug.cpp
-    ${ROCBLASLT_LIB_DIR}/src/handle.cpp
-    ${ROCBLASLT_LIB_DIR}/src/status.cpp
-    ${ROCBLASLT_LIB_DIR}/src/rocblaslt_auxiliary.cpp
-    ${ROCBLASLT_LIB_DIR}/src/rocblaslt_mat.cpp
-    ${ROCBLASLT_LIB_DIR}/src/utility.cpp
-    ${ROCBLASLT_LIB_DIR}/src/rocblaslt_transform.cpp
-    ${ROCBLASLT_LIB_DIR}/src/UserDrivenTuningParser.cpp  # TODO: This is also defined in Tensile host
-    # Tensile_SRC
-    ${ROCBLASLT_LIB_DIR}/src/tensile_host.cpp
-    ${HIPBLASLT_LIB_INCLUDES}
+target_sources(hipblaslt-host
+    PRIVATE
+        # hipblaslt_source_common
+        ${HIPBLASLT_LIB_DIR}/src/hipblaslt_ostream.cpp
+        # hipblaslt_source
+        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
+        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext.cpp
+        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext-op.cpp
+        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
+        # rocblaslt_source
+        ${ROCBLASLT_LIB_DIR}/src/Debug.cpp
+        ${ROCBLASLT_LIB_DIR}/src/handle.cpp
+        ${ROCBLASLT_LIB_DIR}/src/status.cpp
+        ${ROCBLASLT_LIB_DIR}/src/rocblaslt_auxiliary.cpp
+        ${ROCBLASLT_LIB_DIR}/src/rocblaslt_mat.cpp
+        ${ROCBLASLT_LIB_DIR}/src/utility.cpp
+        ${ROCBLASLT_LIB_DIR}/src/rocblaslt_transform.cpp
+        ${ROCBLASLT_LIB_DIR}/src/UserDrivenTuningParser.cpp  # TODO: This is also defined in Tensile host
+        # Tensile_SRC
+        ${ROCBLASLT_LIB_DIR}/src/tensile_host.cpp
+        ${HIPBLASLT_LIB_INCLUDES}
 )
 
 # TODO: Move this up a level?
-target_include_directories(hipblaslt
+target_include_directories(hipblaslt-host
     PRIVATE
-    $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>  # 1
-    $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/Tensile>  # 2: Tensile_INC
-    $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
-    $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
+        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>  # 1
+        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/Tensile>  # 2: Tensile_INC
+        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
+        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PUBLIC
-    $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>      # 3/4
-    $<BUILD_INTERFACE:${HIP_ROOT_DIR}/include>           # 5
-    $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>    # This may not be required because hipblaslt-common is an INTERFACE lib
-    $<INSTALL_INTERFACE:include>                         # 6
+        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>      # 3/4
+        $<BUILD_INTERFACE:${HIP_ROOT_DIR}/include>           # 5
+        $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>    # This may not be required because hipblaslt-common is an INTERFACE lib
+        $<INSTALL_INTERFACE:include>                         # 6
 )
 
-generate_export_header(hipblaslt
-    EXPORT_FILE_NAME ${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-export.h
+generate_export_header(hipblaslt-host
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-export.h
     BASE_NAME hipblaslt
+)
+
+################################################################################
+# Install hipblaslt host library
+################################################################################
+
+# hipblaslt library
+install(TARGETS hipblaslt-host
+    EXPORT hipblaslt-host-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# hipblaslt public headers
+install(FILES ${HIPBLASLT_LIB_INCLUDES}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
+)
+
+# hipblaslt generated public headers
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-export.h
+        ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
+)
+
+install(EXPORT hipblaslt-host-targets
+    FILE hipblaslt-host-targets.cmake
+    NAMESPACE roc::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
+)
+
+# hipblaslt cmake version
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-host-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
 )
 
 unset(${PROJECT_NAME}_is_subproject)

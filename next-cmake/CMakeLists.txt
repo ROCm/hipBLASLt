@@ -23,6 +23,7 @@
 
 # TODO: Which cmake version?
 cmake_minimum_required(VERSION 3.21)
+# TODO: Which hipblaslt version?
 project(hipblaslt VERSION 0.1.0)
 
 ################################################################################
@@ -50,14 +51,14 @@ find_package(hipblas-common REQUIRED)
 ################################################################################
 # Configure hipBLASLt host library
 ################################################################################
-add_library(hipblaslt)
-add_library(roc::hipblaslt ALIAS hipblaslt)
+add_library(hipblaslt-host)
+add_library(roc::hipblaslt-host ALIAS hipblaslt-host)
 
-target_compile_features(hipblaslt PUBLIC cxx_std_17)
-target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument)
-target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
+target_compile_features(hipblaslt-host PUBLIC cxx_std_17)
+target_compile_options(hipblaslt-host PRIVATE -Wno-unused-command-line-argument)
+target_compile_definitions(hipblaslt-host PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 
-target_link_libraries(hipblaslt
+target_link_libraries(hipblaslt-host
     PRIVATE
         hip::device
         roc::hipblas-common
