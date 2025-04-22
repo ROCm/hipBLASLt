@@ -20,10 +20,8 @@
 # THE SOFTWARE.
 #
 # ########################################################################
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    cmake_minimum_required(VERSION 3.21)
-    project(device-library VERSION 0.0.1)
-endif()
+cmake_minimum_required(VERSION 3.21)
+project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
 # Options and cache variables
 set(Tensile_ARCHITECTURE "" CACHE STRING "Device (GFX) architecture(s) to build libraries for")
@@ -62,5 +60,5 @@ add_custom_command(
 )
 add_custom_target(tensilelite-device-libraries ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/library)
 
-#add_subdirectory(extops) # can't add this given current architecture of Tensile
+add_subdirectory(extops) # can't add this given current architecture of Tensile
 add_subdirectory(matrix-transform)

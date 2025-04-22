@@ -35,7 +35,7 @@ foreach(arch IN LISTS archs)
     add_library(ExtOpObj_${arch} OBJECT)
     target_compile_options(ExtOpObj_${arch}
         PRIVATE
-        -Wno-unused-command-line-argument -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=${arch} -mwavefrontsize64 -c
+            -Wno-unused-command-line-argument -x assembler -target amdgcn-amd-amdhsa -mcode-object-version=4 -mcpu=${arch} -mwavefrontsize64 -c
     )
     target_sources(ExtOpObj_${arch}
         PRIVATE
@@ -94,10 +94,10 @@ foreach(arch IN LISTS archs)
         )
         target_sources(ExtOpObj_${arch}
             PRIVATE
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s
+                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s
+                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s
+                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s
+                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s
         )
     endif()
     if(arch STREQUAL "gfx950")
@@ -122,6 +122,7 @@ foreach(arch IN LISTS archs)
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s
         )
     endif()
+    
     add_custom_command(
         DEPENDS ExtOpObj_${arch}
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
@@ -139,8 +140,8 @@ endforeach()
 
 add_custom_target(ExtOpCp ALL
     DEPENDS tensilelite-device-libraries
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" ${PROJECT_BINARY_DIR}/Tensile/library
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat" ${PROJECT_BINARY_DIR}/Tensile/library
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" ${CMAKE_CURRENT_BINARY_DIR}/../library
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat"${CMAKE_CURRENT_BINARY_DIR}/../library
     COMMENT "Copying ExtOp Library"
 )
 
