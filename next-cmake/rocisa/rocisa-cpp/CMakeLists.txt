@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,31 +21,21 @@
 #
 # ########################################################################
 
-# Need to support Release/Debug
+cmake_minimum_required(VERSION 3.15)
+project(rocisa-cpp LANGUAGES CXX)
 
-string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${Tensile_ARCHITECTURE}")
-list(REMOVE_DUPLICATES archs)
-list(JOIN archs "," archs)
+if(NOT rocisa_root)
+    set(rocisa_root "${CMAKE_CURRENT_LIST_DIR}/../../../tensilelite/rocisa")
+endif()
 
-set(output_library "${CMAKE_CURRENT_BINARY_DIR}/hipblasltTransform.hsaco")
-set(matrix_transform_cpp "${TENSILELITE_DIR}/../library/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp")
+add_library(rocisa-cpp INTERFACE)
+add_library(rocisa::rocisa-cpp ALIAS rocisa-cpp)
 
-add_custom_command(
-    COMMAND ${CMAKE_CXX_COMPILER} -x hip ${matrix_transform_cpp} --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=sha1 -O3 -o ${output_library}
-    OUTPUT ${output_library}
-    COMMENT "Building hipblasltTransform.hsaco"
+target_sources(rocisa-cpp
+    INTERFACE
+        $<BUILD_INTERFACE:${rocisa_root}/rocisa/include/enum.hpp>
 )
-
-add_custom_target(matrix-transform ALL
-    DEPENDS ${output_library}
+target_include_directories(rocisa-cpp
+    INTERFACE
+        $<BUILD_INTERFACE:${rocisa_root}>
 )
-
-add_custom_target(MatrixTransformCp ALL
-    DEPENDS tensilelite-device-libraries
-    COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../library"
-    COMMENT "Copying hipblasltTransform.hsaco"
-)
-
-add_dependencies(matrix-transform tensilelite-device-libraries)
-
-unset(output_path)
