@@ -25,23 +25,26 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(clients LANGUAGES CXX)
 endif()
 
+set(TEMP_CLIENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../clients)
+set(TEMP_TENSILE_CLIENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/client)
+
 if(LINK_BLIS)
     # TODO: This does not feel right, we should be able to use a more idiomatic
     #       approach to locating the BLIS libraries.
-    include(cmake/FindBLIS.cmake)
+    include(../cmake/FindBLIS.cmake)
 endif()
 
 find_package(Threads REQUIRED)
 find_package(cblas REQUIRED CONFIG)
 
+# TODO: Improve handling of blis sources
 if(${BLIS_FOUND})
     set( BLAS_LIBRARY ${BLIS_LIB} )
-    set( BLIS_CPP ../common/blis_interface.cpp )
+    set( BLIS_CPP ${TEMP_CLIENTS_SOURCE_DIR}/common/blis_interface.cpp )
 else()
     set( BLAS_LIBRARY "blas" )
 endif()
 
-set(TEMP_CLIENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../clients)
 target_sources(hipblaslt-bench PRIVATE
     ${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp
     # Common sources
@@ -69,10 +72,11 @@ target_sources(hipblaslt-bench PRIVATE
 
 target_include_directories(hipblaslt-bench
     PRIVATE
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/host-library/include>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/tensilelite>  # TODO: Maybe not needed
         $<BUILD_INTERFACE:${CMAKE_BINARY_SIR}/include>  # TODO: Maybe not needed
 )

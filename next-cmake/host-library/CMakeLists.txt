@@ -78,6 +78,17 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 
+# target_include_directories(hipblaslt-host
+#     PRIVATE
+#         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>  # 1
+#         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/Tensile>  # 2: Tensile_INC
+#         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
+#         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
+#     PUBLIC
+#         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>      # 3/4
+#         $<BUILD_INTERFACE:${HIP_ROOT_DIR}/include>           # 5
+#         $<BUILD_INTERFACE:${HIPBLAS-COMMON_INCLUDE_DIRS}>    # This may not be required because hipblaslt-common is an INTERFACE lib
+#         $<INSTALL_INTERFACE:include>
 target_include_directories(hipblaslt-host
     PRIVATE
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
@@ -85,6 +96,7 @@ target_include_directories(hipblaslt-host
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
     PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${HIP_ROOT_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
