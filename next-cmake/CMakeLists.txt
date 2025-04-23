@@ -125,15 +125,10 @@ target_compile_definitions(hipblaslt-bench
         __HIP_PLATFORM_AMD__
 )
 
-set_target_properties(hipblaslt-bench
-    PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
-)
-
 target_link_libraries(hipblaslt-bench
     PRIVATE
         roc::hipblaslt
-        hip::host 
+        hip::host
         hip::device
         rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
@@ -144,14 +139,52 @@ target_link_libraries(hipblaslt-bench
         # -lflang -lflagrti  # TODO: Might be needed in some contexts?
 )
 
+add_executable(hipblaslt-test)
+
+find_package(GTest REQUIRED)
+# TODO: Line duplicated in device-library/CMakeLists.txt, consider consolidating
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # GCC or hip-clang needs specific flags to turn on f16c intrinsics
+  target_compile_options(hipblaslt-test PRIVATE -mf16c)
+endif()
+target_compile_options(hipblaslt-test PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
+target_compile_features(hipblaslt-test PRIVATE cxx_std_17)
+target_compile_definitions(hipblaslt-test
+    PRIVATE
+        HIPBLASLT_TEST
+        ROCM_USE_FLOAT16
+        HIPBLASLT_INTERNAL_API
+        CLIENTS_NO_FORTRAN
+        __HIP_PLATFORM_AMD__
+)
+
+target_link_libraries(hipblaslt-test
+    PRIVATE
+        roc::hipblaslt
+        hip::host
+        hip::device
+        rocisa::rocisa-cpp
+        OpenMP::OpenMP_CXX
+        rocm_smi64
+        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
+        lapack cblas
+        -lm -lstdc++fs
+        ${GTEST_BOTH_LIBRARIES}  # TODO: Is there a better way to link gtest libs
+)
+
+################################################################################
+# Add subdirectories
+################################################################################
 add_subdirectory(rocisa/rocisa-cpp)
 
 if(ENABLE_HOST)
     add_subdirectory(host-library)
 endif()
-if(ENABLE_DEVICE)
-    add_subdirectory(device-library)
-endif()
+# if(ENABLE_DEVICE)
+#     add_subdirectory(device-library)
+# endif()
 if(ENABLE_CLIENT)
     add_subdirectory(clients)
 endif()

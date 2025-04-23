@@ -34,6 +34,9 @@ set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support")
 find_package(Threads REQUIRED)  # TODO: Where is this used, should it be moved up a level?
 find_package(cblas REQUIRED CONFIG)
 
+################################################################################
+# hipblaslt-bench
+################################################################################
 if(ENABLE_BLIS)
     find_package(BLIS REQUIRED)
     target_link_libraries(hipblaslt-bench PRIVATE BLIS::BLIS)
@@ -53,7 +56,6 @@ target_sources(hipblaslt-bench PRIVATE
         ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_arguments.cpp
         ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_random.cpp
         ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_init_device.cpp
-        ${BLIS_CPP}  # TODO: This impl could be improved
         # Includes
         ${TEMP_CLIENTS_SOURCE_DIR}/include/singletons.hpp
         ${TEMP_CLIENTS_SOURCE_DIR}/include/utility.hpp
@@ -80,4 +82,58 @@ set_target_properties(hipblaslt-bench
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging
 )
 
-# TODO: Copy template files to build and install dir
+################################################################################
+# hipblaslt-test
+################################################################################
+# get_target_property(HIPBLASLT_BENCH_SOURCES hipblaslt-bench SOURCES)  # Other option for adding sources
+
+target_compile_definitions(hipblaslt-test
+    PRIVATE
+        GOOGLE_TEST
+)
+
+target_sources(hipblaslt-test
+    PRIVATE
+        # Test sources
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_main.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_test.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/matmul_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/auxiliary_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/matrix_transform_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_ext_op.cpp
+        # Test/bench common sources
+        # ${HIPBLASLT_BENCH_SOURCES}  # Other option for adding these sources
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/singletons.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/utility.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/efficiency_monitor.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/cblas_interface.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/argument_model.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_parse_data.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_arguments.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_random.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_init_device.cpp
+        # Includes
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/singletons.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/utility.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/efficiency_monitor.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/cblas_interface.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/argument_model.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_parse_data.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_arguments.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_random.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_init.hpp
+)
+
+target_include_directories(hipblaslt-test
+    PRIVATE
+        $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
+        $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: May be empty?
+        $<BUILD_INTERFACE:${GTEST_INCLUDE_DIRS}>
+)
+
+set_target_properties(hipblaslt-test
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging
+)
