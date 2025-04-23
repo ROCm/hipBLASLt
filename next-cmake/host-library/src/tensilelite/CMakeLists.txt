@@ -31,10 +31,12 @@ target_sources(hipblaslt-host
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionSolution.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/DataTypes.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Debug.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedData.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/EmbeddedLibrary.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelArguments.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/KernelLanguageTypes.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLFeatures.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLPNet.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/PerformanceMetricTypes.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ScalarValueTypes.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorDescriptor.cpp>
