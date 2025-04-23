@@ -21,9 +21,13 @@
 #
 # ########################################################################
 
-target_sources(hipblaslt-host
+set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/include")
+
+target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/hip/HipHardware.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/hip/HipSolutionAdapter.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/hip/HipUtils.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/hip/HipHardware.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/hip/HipSolutionAdapter.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/hip/HipUtils.hpp>
 )
+
+unset(_CMAKE_CURRENT_SOURCE_DIR)

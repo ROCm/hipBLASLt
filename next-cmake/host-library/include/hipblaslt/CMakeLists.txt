@@ -9,7 +9,7 @@
 # furnished to do so, subject to the following conditions:
 #
 # The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# all copies or substantial portions of the Software. 
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -21,14 +21,18 @@
 #
 # ########################################################################
 
-target_sources(hipblaslt-host
+set(_CMAKE_CURRENT_SOURCE_DIR "${HIPBLASLT_LIB_DIR}/include")
+
+target_sources(hipblaslt
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-version.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-ext.hpp>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-ext-op.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt-types.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt_xfloat32.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt_float8.h>
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include/hipblaslt/hipblaslt_float8_bc.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt-ext.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt-ext-op.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt-types.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt_xfloat32.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt_float8.h>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt_float8_bc.h>
 )
+
+unset(_CMAKE_CURRENT_SOURCE_DIR)

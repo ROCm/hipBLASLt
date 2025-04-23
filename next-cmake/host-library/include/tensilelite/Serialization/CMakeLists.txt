@@ -21,22 +21,26 @@
 #
 # ########################################################################
 
-target_sources(hipblaslt-host
+set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile")
+
+target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/Base.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/Containers.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/ContractionPredicates.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/ContractionSolution.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/ExactLogicLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/FreeSizeLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/GranularitySelectionLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/HasTraits.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/MLFeatures.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/MLPClassificationLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/MapLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/MatchingLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/PlaceholderLibrary.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/Predicates.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/Properties.hpp>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile/Serialization/SolutionLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Base.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Containers.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionPredicates.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionSolution.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ExactLogicLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/FreeSizeLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/GranularitySelectionLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/HasTraits.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLFeatures.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLPClassificationLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MapLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MatchingLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/PlaceholderLibrary.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Predicates.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Properties.hpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/SolutionLibrary.hpp>
 )
+
+unset(_CMAKE_CURRENT_SOURCE_DIR)

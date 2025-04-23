@@ -21,13 +21,16 @@
 #
 # ########################################################################
 
-target_sources(hipblaslt-host
+set(_CMAKE_CURRENT_SOURCE_DIR "${HIPBLASLT_LIB_DIR}/src")
+
+target_sources(hipblaslt
     PRIVATE
-        ${HIPBLASLT_LIB_DIR}/src/hipblaslt_ostream.cpp
-        ${HIPBLASLT_LIB_DIR}/src/hipblaslt_ostream.cpp
-        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
-        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
-        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext.cpp
-        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt-ext-op.cpp
-        ${HIPBLASLT_LIB_DIR}/src/amd_detail/hipblaslt.cpp
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_ostream.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext-op.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
 )
+
+unset(_CMAKE_CURRENT_SOURCE_DIR)

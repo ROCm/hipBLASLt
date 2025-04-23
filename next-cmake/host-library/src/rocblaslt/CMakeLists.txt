@@ -21,23 +21,27 @@
 #
 # ########################################################################
 
-target_sources(hipblaslt-host
+set(_CMAKE_CURRENT_SOURCE_DIR "${ROCBLASLT_LIB_DIR}/src")
+
+target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/Debug.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/handle.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/status.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocblaslt_mat.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocblaslt_transform.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocblaslt_transform.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/UserDrivenTuningParser.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/tensile_host.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src//rocblaslt_auxiliary.cpp>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src//utility.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/handle.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/status.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocblaslt_mat.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocblaslt_transform.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocblaslt_transform.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/UserDrivenTuningParser.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/tensile_host.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocblaslt_auxiliary.cpp>
+        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/utility.cpp>
 )
 
 if(ENABLE_ROCROLLER)
-    target_sources(hipblaslt-host
+    target_sources(hipblaslt
         PRIVATE
-            $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/rocroller_host.cpp>
+            $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocroller_host.cpp>
     )
 endif()
+
+unset(_CMAKE_CURRENT_SOURCE_DIR)
