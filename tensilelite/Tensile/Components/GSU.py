@@ -30,7 +30,7 @@ from rocisa.instruction import SAddCU32, SAddU32, SAndB32, SBranch, SCBranchSCC0
     SNop, SSleep, VAddF32, VReadfirstlaneB32, SMulHIU32, VAddPKF32, VCndMaskB32, SAtomicDec
 from rocisa.functions import scalarStaticMultiply64, scalarUInt32DivideAndRemainder, vectorStaticMultiply
 
-from ..Common import ceilDivide, log2
+from ..Common import ceilDivide, log2, print2
 from ..Component import Component
 from ..AsmStoreState import StoreState, VectorDataTypes
 from ..AsmAddressCalculation import AddrCalculation
@@ -1089,154 +1089,376 @@ class GSU(Component):
         addr1 = sgpr(tmpS06, 4)
         addr0 = vgpr(vgproffset)
         bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
-        for elementIdx in range(0, len(batchElements)):
-            mask     = ss.elementMask[elementIdx]
-            addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
-            addr0 = vgpr(addrCalc.addrDVgpr)
+        storeWidth = kernel["StoreVectorWidth"]
+        increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
+        
+        if not kernel["MbskPrefetchOpt"]:
+            for elementIdx in range(0, len(batchElements)):
+                mask     = ss.elementMask[elementIdx]
+                addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+                addr0 = vgpr(addrCalc.addrDVgpr)
 
-            SyncloadedData = 0
-            SynchronizerAddSkiplabelString = "Synchronizer_read_add_skip"
-            SynchronizerAddSkipComment = "Synchronizer read add skip"
-            SynchronizerAddSkiplabel = Label(writer.labels.getNameInc(SynchronizerAddSkiplabelString), SynchronizerAddSkipComment)
+                SyncloadedData = 0
+                SynchronizerAddSkiplabelString = "Synchronizer_read_add_skip"
+                SynchronizerAddSkipComment = "Synchronizer read add skip"
+                SynchronizerAddSkiplabel = Label(writer.labels.getNameInc(SynchronizerAddSkiplabelString), SynchronizerAddSkipComment)
 
-            GSUtotal = writer.getMBSKGSUTotal(kernel)
-            SynchronizerAddEndlabel = [""] * GSUtotal
+                GSUtotal = writer.getMBSKGSUTotal(kernel)
+                SynchronizerAddEndlabel = [""] * GSUtotal
 
-            for idx in range(0, GSUtotal):
-                SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)
-                SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
-                SynchronizerAddEndlabel[idx] = Label(writer.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
+                for idx in range(0, GSUtotal):
+                    SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)
+                    SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
+                    SynchronizerAddEndlabel[idx] = Label(writer.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
 
-            if elementIdx == 0 and batchIdx == 0:
-                # Insert check synchronizer done code here for better scheduling
-                module.add(checkSyncCode)
+                if elementIdx == 0 and batchIdx == 0:
+                    # Insert check synchronizer done code here for better scheduling
+                    module.add(checkSyncCode)
 
-            #####################################load buffer#####################################
-            module.addComment("buffer load start")
-            for times in range(elementIdx, elementIdx+1):
-                if batchIdx != 0 or elementIdx != 0:
-                    storeWidth = kernel["StoreVectorWidth"]
-                    increment = kernel["NumThreads"] * storeWidth * writer.states.bpeCinternal
-                    module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
-                    module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-                    module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
-                    module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
-                    module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
+                #####################################load buffer#####################################
+                module.addComment("buffer load start")
+                for times in range(elementIdx, elementIdx+1):
+                    if batchIdx != 0 or elementIdx != 0:
+                        module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
+                        module.add(SMulHIU32(dst=sgpr(tmpS06+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+                        module.add(SMulI32(dst=sgpr(tmpS06), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+                        module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr("AddressD+0"), src1=sgpr(tmpS06), comment="add lo to SRD"))
+                        module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpS06+1), comment="add hi to SRD"))
 
-            vgprstart = ss.elementSumIdx[elementIdx]
-            dataType  = kernel["ProblemType"]["DestDataType"]
-            if dataType.isDouble() or dataType.isSingleComplex():
-                vgprstart = vgprstart*2
-            module.add(writer.chooseGlobalRead(True, bps, vgprstart, \
-                            addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
-                            comment="load GSU D 0 "+str(vgprstart)))
-            SyncloadedData += 1
-
-            module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
-            SynchronizerlabelString = "Synchronizer_read_add"
-            SynchronizerComment = "Synchronizer read add"
-            Synchronizerlabel = Label(writer.labels.getNameInc(SynchronizerlabelString), SynchronizerComment)
-            tmpVAdd = tmpVgprDynamic.idx
-            GSUMvgpr = tmpVgpr.idx
-            GSUP1 = GSUtotal-1
-
-            for i in range(0,GSUP1):
-                module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
-
-                module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
-                module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
-
-                module.add(SCmpEQI32(src0=sgpr("GSUSync"), src1=0, comment=""))#GSUSync+GSUP1==GSU
-                module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[i].getLabelName(), comment="SyncAddbranchhere"))
-
-                if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
-                    module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                addr0, addr1, soffset=0, offset=0, glc=True, slc=True, \
-                                comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
-                else:
-                    module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
-                                comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
-
+                vgprstart = ss.elementSumIdx[elementIdx]
+                dataType  = kernel["ProblemType"]["DestDataType"]
+                if dataType.isDouble() or dataType.isSingleComplex():
+                    vgprstart = vgprstart*2
+                module.add(writer.chooseGlobalRead(True, bps, vgprstart, \
+                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
+                                comment="load GSU D 0 "+str(vgprstart)))
                 SyncloadedData += 1
-            module.addComment("buffer load end")
 
-            #####################################> GSUtotal reduction start#####################################
-            module.addComment("buffer add start")
-            vscnt = 0
-            lgkmcnt = -1
-            vmcnt = SyncloadedData = SyncloadedData -1
+                module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+                SynchronizerlabelString = "Synchronizer_read_add"
+                SynchronizerComment = "Synchronizer read add"
+                Synchronizerlabel = Label(writer.labels.getNameInc(SynchronizerlabelString), SynchronizerComment)
+                tmpVAdd = tmpVgprDynamic.idx
+                GSUMvgpr = tmpVgpr.idx
+                GSUP1 = GSUtotal-1
 
-            module.add(Synchronizerlabel)
+                for i in range(0,GSUP1):
+                    module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
 
-            for i in range(0, GSUP1):
-                if i != 0:
-                    module.addSpaceLine()
+                    module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+                    module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
+
+                    module.add(SCmpEQI32(src0=sgpr("GSUSync"), src1=0, comment=""))#GSUSync+GSUP1==GSU
+                    module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[i].getLabelName(), comment="SyncAddbranchhere"))
+
+                    if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
+                        module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
+                                    addr0, addr1, soffset=0, offset=0, glc=True, slc=True, \
+                                    comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
+                    else:
+                        module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
+                                    addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
+                                    comment="load GSU DD %u %u %u" % (bps, gwvw, kernel["ProblemType"]["DestDataType"].numRegisters())))
+
+                    SyncloadedData += 1
+                module.addComment("buffer load end")
+
+                #####################################> GSUtotal reduction start#####################################
+                module.addComment("buffer add start")
+                vscnt = 0
+                lgkmcnt = -1
                 vmcnt = SyncloadedData = SyncloadedData -1
-                module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
-                if ((gwvw % 2) == 1):
-                    for j in range(0, int(gwvw)):
-                        module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(tmpVAdd+0+gwvw*i+j), \
-                                comment="buffer add"))
-                else:
-                    for j in range(0, int(gwvw/2)):
-                        module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
-                                    src1=vgpr(tmpVAdd+0+gwvw*i+j*2, 2), comment="buffer pk"))
+                module.add(Synchronizerlabel)
 
-                module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
-                module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-(GSUP1-1), comment=""))#GSUSync+GSUP1==GSU
-                module.add(SCBranchSCC1(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
-
-                module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment=""))
-                module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment=""))
-
-                module.add(VCmpGEI32(dst=sgpr(tmpS05,2), src0=0, src1=sgpr("GSUSync"), comment=""))
-                module.add(VCndMaskB32(dst=vgpr(GSUMvgpr), src1=vgpr(bufferOOB), src0=addr0, src2=sgpr(tmpS05,2), comment="protect if OOB"))
-
-                if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
-                    module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=0, offset=0, glc=True, slc=True, \
-                                comment="load GSU DD %u" % bps))
-                else:
-                    module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
-                                vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
-                                comment="load GSU DD %u" % bps))
-
-                SyncloadedData += 1
-
-            module.addComment("buffer add end")
-
-            module.add(SCmpGtI32(src0=sgpr("GSUSync"), src1=hex(1-(GSUP1)), comment=""))
-            module.add(SCBranchSCC1(labelName=Synchronizerlabel.getLabelName(), comment="Syncbranchhere"))
-
-            #####################################< GSUtotal reduction start#####################################
-            for k in range(GSUtotal-2, -1, -1):
-                module.addSpaceLine()
-                module.add(SynchronizerAddEndlabel[k])
-
-                vmcnt = k
-                for i in range(0, k):
+                for i in range(0, GSUP1):
                     if i != 0:
                         module.addSpaceLine()
-                    vmcnt = vmcnt -1 if vmcnt > 0 else 0
+                    vmcnt = SyncloadedData = SyncloadedData -1
                     module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
 
                     if ((gwvw % 2) == 1):
                         for j in range(0, int(gwvw)):
                             module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(tmpVAdd+0+gwvw*i+j), \
-                                        comment="buffer add"))
+                                    comment="buffer add"))
                     else:
                         for j in range(0, int(gwvw/2)):
                             module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
-                                            src1=vgpr(tmpVAdd+0+gwvw*i+j*2, 2), comment="buffer pk"))
+                                        src1=vgpr(tmpVAdd+0+gwvw*i+j*2, 2), comment="buffer pk"))
 
-                    if i == k-1:
-                        module.add(SBranch(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
+                    module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1, comment="%u" % i))
+                    module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-(GSUP1-1), comment=""))#GSUSync+GSUP1==GSU
+                    module.add(SCBranchSCC1(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
 
-            module.add(SynchronizerAddSkiplabel)
+                    module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment=""))
+                    module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment=""))
 
-            module.addComment("buffer add end2")
+                    module.add(VCmpGEI32(dst=sgpr(tmpS05,2), src0=0, src1=sgpr("GSUSync"), comment=""))
+                    module.add(VCndMaskB32(dst=vgpr(GSUMvgpr), src1=vgpr(bufferOOB), src0=addr0, src2=sgpr(tmpS05,2), comment="protect if OOB"))
+
+                    if(kernel["ProblemType"]["DestDataType"].numRegisters() > 1):
+                        module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*kernel["ProblemType"]["DestDataType"].numRegisters()*i, \
+                                    vgpr(GSUMvgpr), addr1, soffset=0, offset=0, glc=True, slc=True, \
+                                    comment="load GSU DD %u" % bps))
+                    else:
+                        module.add(writer.chooseGlobalRead(True, bps, tmpVAdd+gwvw*i, \
+                                    vgpr(GSUMvgpr), addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True, \
+                                    comment="load GSU DD %u" % bps))
+
+                    SyncloadedData += 1
+
+                module.addComment("buffer add end")
+
+                module.add(SCmpGtI32(src0=sgpr("GSUSync"), src1=hex(1-(GSUP1)), comment=""))
+                module.add(SCBranchSCC1(labelName=Synchronizerlabel.getLabelName(), comment="Syncbranchhere"))
+
+                #####################################< GSUtotal reduction start#####################################
+                for k in range(GSUtotal-2, -1, -1):
+                    module.addSpaceLine()
+                    module.add(SynchronizerAddEndlabel[k])
+
+                    vmcnt = k
+                    for i in range(0, k):
+                        if i != 0:
+                            module.addSpaceLine()
+                        vmcnt = vmcnt -1 if vmcnt > 0 else 0
+                        module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
+
+                        if ((gwvw % 2) == 1):
+                            for j in range(0, int(gwvw)):
+                                module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(tmpVAdd+0+gwvw*i+j), \
+                                            comment="buffer add"))
+                        else:
+                            for j in range(0, int(gwvw/2)):
+                                module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                                src1=vgpr(tmpVAdd+0+gwvw*i+j*2, 2), comment="buffer pk"))
+
+                        if i == k-1:
+                            module.add(SBranch(labelName=SynchronizerAddSkiplabel.getLabelName(), comment="SyncAddbranch"))
+
+                module.add(SynchronizerAddSkiplabel)
+
+                module.addComment("buffer add end2")
+        else:
+            tmpWSD = writer.sgprPool.checkOutAligned(4, 4, preventOverflow=False)
+            GSUtotal = writer.getMBSKGSUTotal(kernel)-1
+            loadWidth = gwvw * int(max(1, kernel["ProblemType"]["DestDataType"].numRegisters()))
+            unrolledWGs = GSUtotal // len(batchElements)
+            tmpVidx = tmpVgprDynamic.idx
+            tmpVAdd = [[0] * len(batchElements) for _ in range(unrolledWGs)]
+            for i in range(0, unrolledWGs):
+                for j in range(0, len(batchElements)):
+                    tmpVAdd[i][j] = tmpVidx
+                    tmpVidx += loadWidth
+
+            SynchronizerAddEndlabel = [""] * (unrolledWGs+1)
+
+            for idx in range(0, unrolledWGs+1):
+                SynchronizerAddEndlabelString = "Synchronizer_read_add_end_"+str(idx+1)
+                SynchronizerAddEndComment = "Synchronizer read add end_"+str(idx+1)
+                SynchronizerAddEndlabel[idx] = Label(writer.labels.getNameInc(SynchronizerAddEndlabelString), SynchronizerAddEndComment)
+
+            # set buffer load address for WG0
+            module.add(SMulHIU32(dst=sgpr(tmpWSD+1), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+            module.add(SMulI32(dst=sgpr(tmpWSD), src0=hex(reductionOffset), src1=sgpr("GSUStartWGIdx"), comment="(MT0*MT1*bpeC)*WGIdx"))
+            module.add(SAddU32(dst=sgpr(tmpWSD), src0=sgpr("AddressD+0"), src1=sgpr(tmpWSD), comment="add lo to SRD"))
+            module.add(SAddCU32(dst=sgpr(tmpWSD+1), src0=sgpr("AddressD+1"), src1=sgpr(tmpWSD+1), comment="add hi to SRD"))
+            module.add(SMovB64(sgpr(tmpWSD+2, 2), sgpr("SrdD+2", 2), ""))
+            
+            # set buffer load address for WG1
+            module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpWSD+0), src1=sgpr(tmpS04+0), comment="" ))
+            module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpWSD+1), src1=sgpr(tmpS04+1), comment="" ))
+            module.add(SMovB64(sgpr(tmpS06+2, 2), sgpr("SrdD+2", 2), ""))
+
+            if batchIdx == 0:
+                # Insert check synchronizer done code here for better scheduling
+                module.add(checkSyncCode)
+
+            ReductionStartlabel = Label(writer.labels.getNameInc("Reduction_Start"), "Reduction Start")
+            ReductionEndlabel   = Label(writer.labels.getNameInc("Reduction_End"), "Reduction End")
+            module.add(SAndB32(dst=sgpr("GSUSync"), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
+
+            # pre-load
+            SyncloadedData = 0
+
+            # first 2 WGs: read same element first for earlier reduction
+            for elementIdx in range(0, len(batchElements)):
+                addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+                addr0    = vgpr(addrCalc.addrDVgpr)
+                if batchIdx != 0 or elementIdx != 0:
+                    module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
+                if elementIdx == 0:
+                    module.add(SMovB32(dst=sgpr("WSDstart"), src=sgpr(soffset), comment="save first element offset"))
+                for uidx in range(0, 2):
+                    if uidx == 0:
+                        data = ss.elementSumIdx[elementIdx]
+                        tmpAddr1 = tmpWSD
+                    else:
+                        data = tmpVAdd[-1][elementIdx]
+                        tmpAddr1 = tmpS06
+
+                    module.add(writer.chooseGlobalRead(True, bps, data, \
+                                    addr0, sgpr(tmpAddr1, 4), soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
+                                    comment="load GSU WG %d element %d " % (uidx, elementIdx)))
+
+                    SyncloadedData += 1
+
+            module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=2))
+            module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="GSUSync <= 0?"))
+            module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[1].getLabelName(), comment=""))
+            module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+            module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
+
+            # other WGs: read all elements together
+            for uidx in range(2, unrolledWGs+1):
+                module.add(SMovB32(dst=sgpr(soffset), src=sgpr("WSDstart"), comment="restore offset for element0"))
+                for elementIdx in range(0, len(batchElements)):
+                    addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+                    addr0    = vgpr(addrCalc.addrDVgpr)
+                    data = tmpVAdd[uidx-2][elementIdx]
+
+                    if elementIdx != 0:
+                        module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
+
+                    module.add(writer.chooseGlobalRead(True, bps, data, \
+                                    addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
+                                    comment="load GSU WG %d element %d " % (uidx, elementIdx)))
+                    SyncloadedData += 1
+
+                module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
+                module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="GSUSync <= 0?"))
+                module.add(SCBranchSCC1(labelName=SynchronizerAddEndlabel[uidx].getLabelName(), comment=""))
+                module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+                module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
+
+            module.addComment("buffer load end\n")
+
+            ##################################### reduction start #####################################
+            module.addComment("buffer add start")
+
+            vscnt = 0
+            lgkmcnt = -1
+            vmcnt = SyncloadedData
+
+            # reduce first 2 WGs
+            module.add(SMovB32(dst=sgpr(soffset), src=sgpr("WSDstart"), comment="restore offset for element0"))
+            for elementIdx in range(0, len(batchElements)):
+                addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+                addr0 = vgpr(addrCalc.addrDVgpr)
+                data = tmpVAdd[-1][elementIdx]
+                vgprstart   = ss.elementSumIdx[elementIdx]
+                vmcnt       = vmcnt - 2 if vmcnt > 0 else 0
+
+                module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
+                if ((gwvw % 2) == 1):
+                    for j in range(0, int(gwvw)):
+                        module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(data+j), \
+                                    comment="buffer add"))
+                else:
+                    for j in range(0, int(gwvw/2)):
+                        module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                        src1=vgpr(data+j*2, 2), comment="buffer pk"))
+
+                # prefetch
+                if elementIdx != 0:
+                    module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
+
+                module.add(writer.chooseGlobalRead(True, bps, data, \
+                                addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
+                                comment="prefetch element %d " % (elementIdx)))
+                vmcnt += 1
+
+            module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
+            module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-unrolledWGs, comment=""))
+            module.add(SCBranchSCC1(labelName=ReductionEndlabel.getLabelName(), comment="Reduction finished"))
+            module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+            module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
+            module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="disable buffer load if GSUSync <= 0"))
+            module.add(SCSelectB32(sgpr(tmpS06+2), 0, sgpr(tmpS06+2), ""))
+            module.add(ReductionStartlabel)
+
+            for uidx in range(0, unrolledWGs):
+                module.add(SMovB32(dst=sgpr(soffset), src=sgpr("WSDstart"), comment="restore offset for element0"))
+                for elementIdx in range(0, len(batchElements)):
+                    addrCalc: AddrCalculation = ss.elementAddr[elementIdx]
+                    addr0    = vgpr(addrCalc.addrDVgpr)
+                    data     = tmpVAdd[uidx][elementIdx]
+                    vgprstart   = ss.elementSumIdx[elementIdx]
+                    vmcnt       = vmcnt -1 if vmcnt > 0 else 0
+
+                    module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
+                    if ((gwvw % 2) == 1):
+                        for j in range(0, int(gwvw)):
+                            module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(data+j), \
+                                            comment="buffer add"))
+                    else:
+                        for j in range(0, int(gwvw/2)):
+                            module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                            src1=vgpr(data+j*2, 2), comment="buffer pk"))
+
+                    # prefetch
+                    if elementIdx != 0:
+                        module.add(SAddU32(dst=sgpr(soffset), src0=sgpr(soffset), src1=increment, comment="Increase sgpr offset for load"))
+
+                    module.add(writer.chooseGlobalRead(True, bps, data, \
+                                    addr0, addr1, soffset=sgpr(soffset), offset=0, glc=True, slc=True,\
+                                    comment="prefetch element %d " % (elementIdx)))
+                    vmcnt += 1
+
+                module.add(SSubI32(dst=sgpr("GSUSync"), src0=sgpr("GSUSync"), src1=1))
+                module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0-unrolledWGs, comment=""))
+                module.add(SCBranchSCC1(labelName=ReductionEndlabel.getLabelName(), comment="Reduction finished"))
+                module.add(SAddU32(dst=sgpr(tmpS06+0), src0=sgpr(tmpS06+0), src1=sgpr(tmpS04+0), comment="" ))
+                module.add(SAddCU32(dst=sgpr(tmpS06+1), src0=sgpr(tmpS06+1), src1=sgpr(tmpS04+1), comment="" ))
+                module.add(SCmpLeI32(src0=sgpr("GSUSync"), src1=0, comment="disable buffer load if GSUSync <= 0"))
+                module.add(SCSelectB32(sgpr(tmpS06+2), 0, sgpr(tmpS06+2), ""))
+
+            module.add(SBranch(labelName=ReductionStartlabel.getLabelName(), comment=""))
+
+            for k in range(unrolledWGs, 0, -1):
+                module.addSpaceLine()
+                module.add(SynchronizerAddEndlabel[k])
+                vmcnt = (k+1) * len(batchElements)
+
+                # reduce first 2 WGs
+                for elementIdx in range(0, len(batchElements)):
+                    vmcnt = vmcnt-2 if vmcnt > 0 else 0
+                    vgprstart   = ss.elementSumIdx[elementIdx]
+                    data  = tmpVAdd[-1][elementIdx]
+
+                    module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
+
+                    if ((gwvw % 2) == 1):
+                        for j in range(0, int(gwvw)):
+                            module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(data+j), \
+                                            comment="buffer add"))
+                    else:
+                        for j in range(0, int(gwvw/2)):
+                            module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                            src1=vgpr(data+j*2, 2), comment="buffer pk"))
+
+                for i in range(1, k):
+                    for elementIdx in range(0, len(batchElements)):
+                        vmcnt = vmcnt-1 if vmcnt > 0 else 0
+                        vgprstart   = ss.elementSumIdx[elementIdx]
+                        data  = tmpVAdd[i-1][elementIdx]
+
+                        module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(wait for buffer ready)"))
+
+                        if ((gwvw % 2) == 1):
+                            for j in range(0, int(gwvw)):
+                                module.add(VAddF32(dst=vgpr(vgprstart+j), src0=vgpr(vgprstart+j), src1=vgpr(data+j), \
+                                            comment="buffer add"))
+                        else:
+                            for j in range(0, int(gwvw/2)):
+                                module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
+                                            src1=vgpr(data+j*2, 2), comment="buffer pk"))
+
+                module.add(SBranch(labelName=ReductionEndlabel.getLabelName(), comment="Reduction End"))
+
+            module.addComment("buffer add end\n")
+            module.add(ReductionEndlabel)
+            writer.sgprPool.checkIn(tmpWSD)
 
         writer.sgprPool.checkIn(tmpS06)
         writer.sgprPool.checkIn(tmpS05)

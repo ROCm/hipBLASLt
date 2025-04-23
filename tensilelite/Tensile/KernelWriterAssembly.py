@@ -11488,11 +11488,8 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["MbskPrefetchOpt"]:
       return kernel["NumMbskPrefetchElements"] + 1
     GSUtotal = 16
-    if kernel["EnableMatrixInstruction"] and (kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) > 8:
+    if (kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) > 8:
       GSUtotal = int(GSUtotal/int((kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1]) * (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1])/8))
-    # dot2: enable GSU for non-MFMA mode, but not sure about this logic?
-    if (not kernel["EnableMatrixInstruction"]) and (kernel["ThreadTile0"]*kernel["ThreadTile1"])*(kernel["NumThreads"] // kernel["WavefrontSize"]) > 8:
-      GSUtotal = int(GSUtotal/int((kernel["ThreadTile"][0]*kernel["ThreadTile"][1])*(kernel["NumThreads"] // kernel["WavefrontSize"])/8))
     GSUtotal = max(2,GSUtotal)
     return GSUtotal
 
