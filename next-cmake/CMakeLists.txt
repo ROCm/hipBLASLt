@@ -24,7 +24,7 @@
 # TODO: Which cmake version?
 cmake_minimum_required(VERSION 3.21)
 # TODO: Which hipblaslt version?
-project(hipblaslt VERSION 0.10.0 LANGUAGES CXX)
+project(hipblaslt VERSION 0.13.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -97,7 +97,6 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PUBLIC
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
@@ -119,10 +118,10 @@ target_compile_features(hipblaslt-bench PRIVATE cxx_std_17)
 target_compile_definitions(hipblaslt-bench
     PRIVATE
         HIPBLASLT_BENCH
-        ROCM_USE_FLOAT16
-        HIPBLASLT_INTERNAL_API
         CLIENTS_NO_FORTRAN
-        __HIP_PLATFORM_AMD__
+        ROCM_USE_FLOAT16 # maybe this should be public on hipblast target to ensure consistency
+        HIPBLASLT_INTERNAL_API #and this
+        __HIP_PLATFORM_AMD__ # and this
 )
 
 set_target_properties(hipblaslt-bench
@@ -133,8 +132,8 @@ set_target_properties(hipblaslt-bench
 target_link_libraries(hipblaslt-bench
     PRIVATE
         roc::hipblaslt
-        hip::host 
-        hip::device
+        hip::host # are these needed? do we use hip headers directly
+        hip::device # are these needed? do we use hip headers directly
         rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
         rocm_smi64
@@ -156,8 +155,6 @@ if(ENABLE_CLIENT)
     add_subdirectory(clients)
 endif()
 
-
-
 install(TARGETS hipblaslt rocisa-cpp
     EXPORT hipblaslt-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -165,23 +162,24 @@ install(TARGETS hipblaslt rocisa-cpp
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-
 install(FILES ${HIPBLASLT_LIB_INCLUDES}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
 )
-
 install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-export.h
-        ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
+        ${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h
+        ${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
 )
-
-install(EXPORT hipblaslt-targets
-    FILE hipblaslt-targets.cmake
+install(
+    EXPORT hipblaslt-targets
     NAMESPACE roc::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
 )
-
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/hipblaslt-config.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
+)
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
     VERSION ${PROJECT_VERSION}
