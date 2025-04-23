@@ -2180,6 +2180,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
             if (kernel["DirectToVgprA"] or kernel["DirectToVgprB"]) and (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]):
               # DirectToVgpr + DirectToLds case, add waitcnt vmcnt before s_barrier
               waitLWCode.add(self.getWaitcntCodeForDirectToVgpr(kernel, localWriteEndIter, u, isNLL=(not isNGLL), beforeBarrier=True))
+            elif kernel["PrefetchGlobalRead"]==2 and (kernel["DirectToLdsA"] and kernel["DirectToLdsB"]):
+              waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "wait for global reads with lds"))
             syncCode.add(self._syncThreads(kernel))
 
           if isSwapAndResetLwoIter: # ResetLroIter
@@ -2846,11 +2848,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self._loopBody( kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, isDTVGRSecondBuf=isDTVGRSecondBuf ))
 
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
-
-    if kernel["PrefetchGlobalRead"] == 2 and (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]):
-      # Wait for any outstanding loads to complete
-      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
-      module.add(SBarrier())
 
     # swap local write, read again before noLoadLoop if PrefetchGlobalRead and DirectToLds is enabled
     # In DirectToLds enabled case, local write address is necessary for prefetch global read (for m0).
