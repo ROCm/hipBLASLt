@@ -41,7 +41,7 @@ add_custom_target(matrix-transform ALL
 )
 
 add_custom_target(MatrixTransformCp ALL
-    DEPENDS tensilelite-device-libraries
+    DEPENDS ${output_library} tensilelite-device-libraries
     COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
     COMMENT "Copying hipblasltTransform.hsaco"
 )
