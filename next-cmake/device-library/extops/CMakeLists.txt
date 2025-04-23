@@ -126,23 +126,16 @@ foreach(arch IN LISTS archs)
     add_custom_command(
         DEPENDS ExtOpObj_${arch}
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
-        COMMAND ${CMAKE_CXX_COMPILER};-target;amdgcn-amdhsa;-Xlinker;$<TARGET_OBJECTS:ExtOpObj_${arch}>;-o;${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
+        COMMAND ${CMAKE_CXX_COMPILER};-target;amdgcn-amdhsa;-Xlinker;$<TARGET_OBJECTS:ExtOpObj_${arch}>;-o;${device_library_dir}/extop_${arch}.co
         COMMENT "Creating extop_${arch}"
         COMMAND_EXPAND_LISTS
     )
     add_custom_target(ExtOpLibrary_${arch} ALL
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
-        COMMAND ${Python3_EXECUTABLE} ExtOpCreateLibrary.py --src=${CMAKE_CURRENT_BINARY_DIR} --co=${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co --output=${CMAKE_CURRENT_BINARY_DIR} --arch=${arch}
+        COMMAND ${Python3_EXECUTABLE} ExtOpCreateLibrary.py --src=${CMAKE_CURRENT_BINARY_DIR} --co=${device_library_dir}/extop_${arch}.co --output=${device_library_dir} --arch=${arch}
         COMMENT "Creating hipblasltExtOpLibrary.dat for ${arch}"
         WORKING_DIRECTORY ${ops_path}
     )
 endforeach()
-
-add_custom_target(ExtOpCp ALL
-    DEPENDS tensilelite-device-libraries
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat" "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
-    COMMENT "Copying ExtOp Library"
-)
 
 unset(ops_path)

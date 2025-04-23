@@ -181,9 +181,9 @@ add_subdirectory(rocisa/rocisa-cpp)
 if(ENABLE_HOST)
     add_subdirectory(host-library)
 endif()
-# if(ENABLE_DEVICE)
-#     add_subdirectory(device-library)
-# endif()
+if(ENABLE_DEVICE)
+    add_subdirectory(device-library)
+endif()
 if(ENABLE_CLIENT)
     add_subdirectory(clients)
 endif()
@@ -218,3 +218,8 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
+if(ENABLE_DEVICE)
+    install(FILES 
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/hipblaslt/library
+    )
+endif()

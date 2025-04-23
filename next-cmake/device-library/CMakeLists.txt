@@ -24,6 +24,9 @@
 cmake_minimum_required(VERSION 3.21)
 project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
+set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
+file(MAKE_DIRECTORY "${device_library_dir}")
+
 # Options and cache variables
 set(Tensile_ARCHITECTURE "" CACHE STRING "Device (GFX) architecture(s) to build libraries for")
 set(Tensile_COMPILER "" CACHE STRING "Compiler to use for building device libraries")
@@ -47,18 +50,21 @@ endif()
 set(TENSILE_CREATE_LIBRARY_COMMAND
     ${TENSILELITE_DIR}/Tensile/bin/TensileCreateLibrary
     ${TENSILE_BUILD_OPTS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../library
-    ${CMAKE_CURRENT_BINARY_DIR}/_BUILD_FROM_CMAKE
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../library"
+    "${CMAKE_CURRENT_BINARY_DIR}/Tensile"
     HIP
 )
 
 add_custom_command(
     COMMENT "Building device libraries..."
     COMMAND ${TENSILE_CREATE_LIBRARY_COMMAND}
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/library
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Tensile/library"
 )
 
-add_custom_target(tensilelite-device-libraries ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/library)
+add_custom_target(tensilelite-device-libraries ALL 
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Tensile/library
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/Tensile" "${CMAKE_BINARY_DIR}/Tensile"
+)
 
-# add_subdirectory(extops) # can't add this given current architecture of Tensile
+add_subdirectory(extops) # can't add this given current architecture of Tensile
 add_subdirectory(matrix-transform)

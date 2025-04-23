@@ -27,7 +27,7 @@ string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${Tensile_ARCHITECTURE}")
 list(REMOVE_DUPLICATES archs)
 list(JOIN archs "," archs)
 
-set(output_library "${CMAKE_CURRENT_BINARY_DIR}/hipblasltTransform.hsaco")
+set(output_library "${device_library_dir}/hipblasltTransform.hsaco")
 set(matrix_transform_cpp "${TENSILELITE_DIR}/../library/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp")
 
 add_custom_command(
@@ -40,12 +40,4 @@ add_custom_target(matrix-transform ALL
     DEPENDS ${output_library}
 )
 
-#add_custom_target(MatrixTransformCp ALL
-#    DEPENDS ${output_library}
-#    COMMAND ${CMAKE_COMMAND} -E copy ${output_library} "${CMAKE_CURRENT_BINARY_DIR}/../_BUILD_FROM_CMAKE/library"
-#    COMMENT "Copying hipblasltTransform.hsaco"
-#)
-
-add_dependencies(matrix-transform tensilelite-device-libraries)
-
-unset(output_path)
+unset(output_library)
