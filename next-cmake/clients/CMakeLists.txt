@@ -28,13 +28,15 @@ endif()
 set(TEMP_CLIENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../clients)
 set(TEMP_TENSILE_CLIENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/client)
 
+# TODO(@bstefanuk): Change this to ENABLE_BLIS, with cache variable
+#     Append your CMAKE_MODULE_PATH
 if(LINK_BLIS)
     # TODO: This does not feel right, we should be able to use a more idiomatic
     #       approach to locating the BLIS libraries.
     include(../cmake/FindBLIS.cmake)
 endif()
 
-find_package(Threads REQUIRED)
+find_package(Threads REQUIRED)  # TODO: Where is this used, should it be moved up a level?
 find_package(cblas REQUIRED CONFIG)
 
 # TODO: Improve handling of blis sources
@@ -45,8 +47,13 @@ else()
     set( BLAS_LIBRARY "blas" )
 endif()
 
+target_link_libraries(hipblaslt-bench PRIVATE ${BLAS_LIBRARY})
+
 target_sources(hipblaslt-bench PRIVATE
+    # hipblaslt client sources
     ${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp
+    # Tensile client source
+    # ${TEMP_TENSILE_CLIENT_SOURCE_DIR}/source/HardwareMonitor.cpp
     # Common sources
     ${TEMP_CLIENTS_SOURCE_DIR}/common/singletons.cpp
     ${TEMP_CLIENTS_SOURCE_DIR}/common/utility.cpp
@@ -73,17 +80,17 @@ target_sources(hipblaslt-bench PRIVATE
 target_include_directories(hipblaslt-bench
     PRIVATE
         $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
         $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/host-library/include>
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/tensilelite>  # TODO: Maybe not needed
-        $<BUILD_INTERFACE:${CMAKE_BINARY_SIR}/include>  # TODO: Maybe not needed
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>  # TODO: Maybe not needed
 )
 
 # TODO: Do we need this?
 target_include_directories(hipblaslt-bench
-    SYSTEM PRIVATE
+    PRIVATE
         $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
         $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?

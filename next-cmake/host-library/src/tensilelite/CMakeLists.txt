@@ -21,8 +21,10 @@
 #
 # ########################################################################
 
+
 target_sources(hipblaslt-host
     PRIVATE
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Activation.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/AMDGPU.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ArithmeticUnitTypes.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/ContractionProblem.cpp>
@@ -39,6 +41,7 @@ target_sources(hipblaslt-host
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/TensorOps.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Tensile.cpp>
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/Utils.cpp>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/source/MLPNet.cpp>
 )
 
 if(ENABLE_LLVM)

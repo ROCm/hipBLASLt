@@ -31,6 +31,7 @@ include(CMakePackageConfigHelpers)
 
 # TODO: Handling OpenMP on windows may require a conditional
 find_package(OpenMP REQUIRED)
+find_package(rocm_smi REQUIRED)
 find_package(hip REQUIRED)
 find_package(hipblas-common REQUIRED)
 
@@ -38,6 +39,7 @@ add_library(hipblaslt-host)
 add_library(roc::hipblaslt-host ALIAS hipblaslt-host)
 
 target_compile_features(hipblaslt-host PUBLIC cxx_std_17)
+target_compile_options(hipblaslt-host PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
 target_compile_options(hipblaslt-host PRIVATE -Wno-unused-command-line-argument)
 target_compile_definitions(hipblaslt-host PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 
@@ -70,6 +72,7 @@ target_compile_definitions(hipblaslt-bench
         ROCM_USE_FLOAT16
         HIPBLASLT_INTERNAL_API
         CLIENTS_NO_FORTRAN
+        __HIP_PLATFORM_AMD__
 )
 
 set_target_properties(hipblaslt-bench
@@ -81,8 +84,10 @@ target_link_libraries(hipblaslt-bench
     PRIVATE
         roc::hipblaslt-host
         hip::host hip::device
+        rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
-        -L${HIP_CLANG_ROOT}/lib -Wl -rpath=${HIP_CLANG_ROOT}/lib
+        rocm_smi64
+        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
         lapack cblas
         -lm -lstdc++fs
         # -lflang -lflagrti  # TODO: Might be needed in some contexts?
