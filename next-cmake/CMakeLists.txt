@@ -35,6 +35,9 @@ find_package(rocm_smi REQUIRED)
 find_package(hip REQUIRED)
 find_package(hipblas-common REQUIRED)
 
+# Put this after find_package calls to ensure original search paths aren't changed
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 add_library(hipblaslt-host)
 add_library(roc::hipblaslt-host ALIAS hipblaslt-host)
 
