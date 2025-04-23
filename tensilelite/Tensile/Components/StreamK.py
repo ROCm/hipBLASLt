@@ -756,6 +756,11 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", comment="BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
+        if kernel["EnableMatrixInstruction"]:
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+        else:
+            WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
+
         storeCode = Module("Partials GroupLoadStore")
         for elementIdx in range(len(batchElements)):
             element = batchElements[elementIdx]
@@ -771,7 +776,7 @@ class StreamK(Component):
                 # kStr += inst("v_mul_lo_u32", , "Partials buffer address")
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
-                increment = (kernel["WavefrontSize"] * 4) * storeWidth * writer.states.bpeCinternal
+                increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             # TODO StreamK need this packing code???
@@ -1089,7 +1094,6 @@ class StreamK(Component):
         storesIssued = 0
         tmpS01 = tmpSgpr # scratch sgprs
 
-        wavelen = kernel["WavefrontSize"]
         # laneSGPRC = writer.states.laneSGPRCount
         # always use gwvw for buffer load C for atomic_cmpswap
         # bpm = self.bpeCexternal * atomicW
@@ -1126,6 +1130,11 @@ class StreamK(Component):
         #     accVgprRead = Code.Module("movaccVgpr")
         #     self.StoreCUnrollLoadCWaitComment = "waitcnt for LoadC" # this will be used later to identify waitcnt for loadC
 
+        if kernel["EnableMatrixInstruction"]:
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+        else:
+            WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
+
         for elementIdx in range(0, len(batchElements)):
             element = batchElements[elementIdx]
             addrCVgpr = ss.elementAddr[elementIdx].addrCVgpr
@@ -1146,7 +1155,7 @@ class StreamK(Component):
                 # kStr += inst("v_mul_lo_u32", , "Partials buffer address")
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
-                increment = (kernel["WavefrontSize"] * 4) * storeWidth * writer.states.bpeCinternal
+                increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             module.add(writer.readInput(kernel, ss, 'WS', kernel["ProblemType"]["ComputeDataType"], addrCalc, vc0, data, gwvw, addrCVgpr, sgpr(tmpS01)))
