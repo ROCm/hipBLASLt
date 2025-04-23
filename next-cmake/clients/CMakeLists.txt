@@ -30,28 +30,20 @@ set(TEMP_TENSILE_CLIENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite
 
 set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support")
 
-if(ENABLE_BLIS)
-    find_package(BLIS REQUIRED)
-endif()
-
 find_package(Threads REQUIRED)  # TODO: Where is this used, should it be moved up a level?
 find_package(cblas REQUIRED CONFIG)
 
-# TODO: Improve handling of blis sources
+if(ENABLE_BLIS)
+    find_package(BLIS REQUIRED)
+endif()
 if(BLIS_FOUND)
-    set( BLAS_LIBRARY ${BLIS_LIB} )
-    set( BLIS_CPP ${TEMP_CLIENTS_SOURCE_DIR}/common/blis_interface.cpp )
+    target_link_libraries(hipblaslt-bench PRIVATE BLIS::BLIS)
+    target_sources(hipblaslt-bench PRIVATE ${TEMP_CLIENTS_SOURCE_DIR}/common/blis_interface.cpp)
 else()
-    set( BLAS_LIBRARY "blas" )
+    message(FATAL_ERROR "Only BLIS is currently supported in this build system. Use -DENABLE_BLIS=ON.")
 endif()
 
-target_link_libraries(hipblaslt-bench
-    PRIVATE
-        ${BLAS_LIBRARY}
-)
-
-target_sources(hipblaslt-bench
-    PRIVATE
+target_sources(hipblaslt-bench PRIVATE
         # hipblaslt client sources
         ${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp
         # Common sources
