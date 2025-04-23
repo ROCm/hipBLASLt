@@ -92,24 +92,17 @@ target_include_directories(hipblaslt
 )
 target_include_directories(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PUBLIC
+        $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-configure_file(
-    ${HIPBLASLT_LIB_DIR}/include/hipblaslt-version.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
-)
-
-generate_export_header(hipblaslt
-    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/include/hipblaslt/hipblaslt-export.h
-    BASE_NAME hipblaslt
-)
 ################################################################################
 # Configure clients
 # -----
@@ -139,8 +132,9 @@ set_target_properties(hipblaslt-bench
 
 target_link_libraries(hipblaslt-bench
     PRIVATE
-        roc::hipblaslt-host
-        hip::host hip::device
+        roc::hipblaslt
+        hip::host 
+        hip::device
         rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
         rocm_smi64
@@ -151,7 +145,6 @@ target_link_libraries(hipblaslt-bench
 )
 
 add_subdirectory(rocisa/rocisa-cpp)
-<<<<<<< HEAD
 
 if(ENABLE_HOST)
     add_subdirectory(host-library)
@@ -160,7 +153,7 @@ if(ENABLE_DEVICE)
     add_subdirectory(device-library)
 endif()
 if(ENABLE_CLIENT)
-    # add_subdirectory(clients)
+    add_subdirectory(clients)
 endif()
 
 
@@ -194,8 +187,3 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
-=======
-add_subdirectory(host-library)
-# add_subdirectory(device-library)
-add_subdirectory(clients)
->>>>>>> 35204280dc458135907bfd98da2c2b315ae8dd03

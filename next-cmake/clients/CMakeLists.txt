@@ -70,22 +70,11 @@ target_include_directories(hipblaslt-bench
     PRIVATE
         $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
-        $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/host-library/include>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/tensilelite>  # TODO: Maybe not needed
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>  # TODO: Maybe not needed
-)
-
-# TODO: Do we need this?
-target_include_directories(hipblaslt-bench
-    PRIVATE
-        $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
         $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: May be empty?
-        # TODO: Which of these are needed?
 
 )
+
 set_target_properties(hipblaslt-bench
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging

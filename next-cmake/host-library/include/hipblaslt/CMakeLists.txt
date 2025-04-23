@@ -23,6 +23,16 @@
 
 set(_CMAKE_CURRENT_SOURCE_DIR "${HIPBLASLT_LIB_DIR}/include")
 
+configure_file(
+    ${HIPBLASLT_LIB_DIR}/include/hipblaslt-version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-version.h
+)
+
+generate_export_header(hipblaslt
+    EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-export.h
+    BASE_NAME hipblaslt
+)
+
 target_sources(hipblaslt
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-version.h>
