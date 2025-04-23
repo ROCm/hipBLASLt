@@ -112,35 +112,46 @@ generate_export_header(hipblaslt
 )
 ################################################################################
 # Configure clients
+# -----
+# We do not support Fortran clients in this build system
 ################################################################################
-# add_executable(hipblaslt-bench)
+add_executable(hipblaslt-bench)
 
-# target_link_libraries(hipblaslt-bench
-#     PRIVATE
-#         roc::hipblaslt
-#         hip::host hip::device
-#         lapack cblas
-#         -mf16c
-#         libomp -lm -lstdc++fs
-# )
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  # GCC or hip-clang needs specific flags to turn on f16c intrinsics
+  target_compile_options(hipblaslt-bench PRIVATE -mf16c)
+endif()
+target_compile_options(hipblaslt-bench PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
+target_compile_features(hipblaslt-bench PRIVATE cxx_std_17)
+target_compile_definitions(hipblaslt-bench
+    PRIVATE
+        HIPBLASLT_BENCH
+        ROCM_USE_FLOAT16
+        HIPBLASLT_INTERNAL_API
+        CLIENTS_NO_FORTRAN
+        __HIP_PLATFORM_AMD__
+)
 
+set_target_properties(hipblaslt-bench
+    PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+)
 
-# target_include_directories(hipblaslt-bench
-#     PRIVATE
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../clients/include>
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/include>
-#         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../library/src/include>
-# )
-
-# # TODO: Do we need this?
-# target_include_directories(hipblaslt-bench
-#     SYSTEM PRIVATE
-#         $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
-#         $<BUILD_INTERFACE:${BLAS_INCLUDE_DIR}>
-#         $<BUILD_INTERFACE:${BLIS_INCLUDE_DIR}> # TODO: Which of these are needed?
-# )
+target_link_libraries(hipblaslt-bench
+    PRIVATE
+        roc::hipblaslt-host
+        hip::host hip::device
+        rocisa::rocisa-cpp
+        OpenMP::OpenMP_CXX
+        rocm_smi64
+        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
+        lapack cblas
+        -lm -lstdc++fs
+        # -lflang -lflagrti  # TODO: Might be needed in some contexts?
+)
 
 add_subdirectory(rocisa/rocisa-cpp)
+<<<<<<< HEAD
 
 if(ENABLE_HOST)
     add_subdirectory(host-library)
@@ -183,3 +194,8 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
+=======
+add_subdirectory(host-library)
+# add_subdirectory(device-library)
+add_subdirectory(clients)
+>>>>>>> 35204280dc458135907bfd98da2c2b315ae8dd03

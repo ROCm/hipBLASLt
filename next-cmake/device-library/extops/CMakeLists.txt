@@ -52,7 +52,7 @@ foreach(arch IN LISTS archs)
             ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s
     )
     add_custom_command(
-        OUTPUT 
+        OUTPUT
             ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s
             ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s
             ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s
@@ -122,7 +122,7 @@ foreach(arch IN LISTS archs)
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s
         )
     endif()
-    
+
     add_custom_command(
         DEPENDS ExtOpObj_${arch}
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co

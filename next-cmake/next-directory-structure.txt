@@ -16,3 +16,18 @@ hipblaslt/
     Tensile/
         CMakeLists.txt
   rocisa/
+
+
+# Build with CMake
+
+```bash
+cd /path/to/hipBLASLt
+python3 install rocisa/
+cmake -B build -S next-cmake \
+    -DCMAKE_INSTALL_PREFIX=foo \
+    -DCMAKE_CXX_COMPILER=amdclang++ \
+    -DCMAKE_PREFIX_PATH=$ROCM_PATH \
+    -DBUILD_SHARED_LIBS=ON \
+    -DENABLE_BLIS=ON
+cmake --build build --parallel 64
+```
