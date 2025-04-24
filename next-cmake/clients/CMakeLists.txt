@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.22...3.25.2)
 project(clients LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -293,7 +293,7 @@ foreach(executable ${hipblaslt_samples_all})
     set_target_properties(${executable}
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging
-)
+    )
 
     install(TARGETS ${executable}
         EXPORT hipblaslt-samples-targets

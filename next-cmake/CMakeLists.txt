@@ -21,10 +21,8 @@
 #
 # ########################################################################
 
-# TODO: Which cmake version?
-cmake_minimum_required(VERSION 3.21)
-# TODO: Which hipblaslt version?
-project(hipblaslt VERSION 0.13.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.22...3.25.2)
+project(hipblaslt VERSION 0.15.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
