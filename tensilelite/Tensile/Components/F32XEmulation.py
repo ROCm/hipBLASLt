@@ -135,10 +135,11 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
         tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         tf32mod.add(TextBlock(str("label_tf32Read_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
         F32XEmulationCvtLocalRead.dbgCounter += 1
-        tf32mod.add(LocalReadX(dst=vgpr("Cvt+0"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=0)))
-        tf32mod.add(LocalReadX(dst=vgpr("Cvt+1"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=256)))
-        tf32mod.add(LocalReadX(dst=vgpr("Cvt+2"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=512)))
-        tf32mod.add(LocalReadX(dst=vgpr("Cvt+3"), src=vgpr("LocalReadAddrA"), ds=DSModifiers(na=1, offset=768)))
+        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        tf32mod.add(VMovB32(dst=vgpr("Cvt+0"), src=vgpr("ValuA_X0_I0+0")))
+        tf32mod.add(VMovB32(dst=vgpr("Cvt+1"), src=vgpr("ValuA_X0_I0+1")))
+        tf32mod.add(VMovB32(dst=vgpr("Cvt+2"), src=vgpr("ValuA_X0_I0+2")))
+        tf32mod.add(VMovB32(dst=vgpr("Cvt+3"), src=vgpr("ValuA_X0_I0+3")))
         tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
 
         #pack high bits

@@ -40,6 +40,7 @@ from rocisa.enum import InstType
 from rocisa.macro import MacroVMagicDiv, PseudoRandomGenerator
 from . import CUSTOM_KERNEL_PATH
 from .TensileInstructions import SelectBit, \
+<<<<<<< HEAD
                           SBranchIfZero, SBranchIfNotZero, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, RegisterPool, \
                           allocTmpGpr, allocTmpGprList, log2, \
@@ -73,6 +74,19 @@ from rocisa.instruction import BranchInstruction, BufferLoadB128, BufferLoadB32,
   VMulHIU32, VMulLOU32, VMulPKF32S, VMulU32U24, VNotB32, VOrB32, VPackF16toB32, \
   VPrngB32, VReadfirstlaneB32, VSubF32, VSubI32, VSubU32, VXorB32
 
+=======
+                          SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
+                          ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
+                          scalarStaticRemainder, \
+                          scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, \
+                          scalarStaticDivideAndRemainder, scalarStaticCeilDivide, sMagicDiv, staticMultiply, staticMultiplyAdd, \
+                          scalarStaticMultiply, \
+                          RegisterPool, allocTmpGpr, allocTmpGprList, \
+                          log2, ceilDivide, DataType, \
+                          dataTypeToMfmaInstTypePair, dataTypeNameAbbrevToInstType, \
+                          Assert
+from .TensileInstructions.Instructions import *
+>>>>>>> b29ed83f (tf32 fix for hipblaslt build)
 from .Component import Component
 from .Components.F32XEmulation import F32XEmulationMFMA, F32XEmulationCvtLocalWrite
 from .KernelWriterModules import *
@@ -9220,7 +9234,6 @@ class KernelWriterAssembly(KernelWriter):
                     elif blockWidth == 0.5:
                       localWriteCVTCode.add(VCvtF32toF16(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdxTmp, vi * 2 + interOffset)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
                   self.vgprPool.checkIn(vgprTmp)
-                  None
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
