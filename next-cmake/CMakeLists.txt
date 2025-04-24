@@ -87,7 +87,7 @@ if(ENABLE_MSGPACK)
 endif()
 
 target_include_directories(hipblaslt
-    PRIVATE
+    PUBLIC
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
 )
 target_include_directories(hipblaslt
