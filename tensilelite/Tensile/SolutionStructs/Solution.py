@@ -1083,6 +1083,10 @@ class Solution(collections.abc.Mapping):
       state["SynchronizerSizeCheck"] = 1
     #   state["BatchSizeEqual"] = 1
 
+    if state["StreamK"] == 0 and state["GlobalSplitU"] == 0:
+      reject(state, printRejectionReason, "Either GSU or StreamK must be enabled")
+      return
+
     if state["StreamK"] != 0:
       state["GlobalSplitU"] = 0 # Cannot enable both Stream-K and GSU
       state["InternalSupportParams"]["SupportUserGSU"] = False # Disable UserGSU for Stream-K
