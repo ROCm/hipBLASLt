@@ -137,3 +137,29 @@ set_target_properties(hipblaslt-test
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/staging
 )
+
+set(HIPBLASLT_COMMON "${PROJECT_BINARY_DIR}/staging/hipblaslt_common.yaml")
+add_custom_command(OUTPUT "${HIPBLASLT_COMMON}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_common.yaml" "${HIPBLASLT_COMMON}"
+                   WORKING_DIRECTORY "${TEMP_CLIENTS_SOURCE_DIR}")
+
+set(HIPBLASLT_TEMPLATE "${PROJECT_BINARY_DIR}/staging/hipblaslt_template.yaml")
+add_custom_command(OUTPUT "${HIPBLASLT_TEMPLATE}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_template.yaml" "${HIPBLASLT_TEMPLATE}"
+                   WORKING_DIRECTORY "${TEMP_CLIENTS_SOURCE_DIR}")
+
+set(HIPBLASLT_GENTEST "${PROJECT_BINARY_DIR}/staging/hipblaslt_gentest.py")
+add_custom_command(OUTPUT "${HIPBLASLT_GENTEST}"
+                   COMMAND ${CMAKE_COMMAND} -E copy "${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_gentest.py" "${HIPBLASLT_GENTEST}"
+                   WORKING_DIRECTORY "${TEMP_CLIENTS_SOURCE_DIR}")
+
+add_custom_target(hipblaslt-common ALL DEPENDS "${HIPBLASLT_COMMON}" "${HIPBLASLT_TEMPLATE}" "${HIPBLASLT_GENTEST}")
+
+set(HIPBLASLT_TEST_DATA "${PROJECT_BINARY_DIR}/staging/hipblaslt_gtest.data")
+add_custom_command(OUTPUT "${HIPBLASLT_TEST_DATA}"
+                   COMMAND "${Python3_EXECUTABLE}" ${HIPBLASLT_GENTEST} -I "${TEMP_CLIENTS_SOURCE_DIR}/include" "${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest.yaml" -o "${HIPBLASLT_TEST_DATA}"
+                   DEPENDS ${HIPBLASLT_GENTEST} ${HIPBLASLT_COMMON}
+                   WORKING_DIRECTORY "${TEMP_CLIENTS_SOURCE_DIR}/gtest")
+add_custom_target(hipblaslt-test-data ALL
+                  DEPENDS "${HIPBLASLT_TEST_DATA}")
+add_dependencies(hipblaslt-test hipblaslt-test-data hipblaslt-common)
