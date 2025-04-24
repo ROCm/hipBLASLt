@@ -9092,7 +9092,7 @@ class KernelWriterAssembly(KernelWriter):
 
                 newBlockWidth = (tP["bpeGR"] / tP["bpe"]) * blockWidth
                 if newBlockWidth == 0.5:
-                  # We cannot use optimized f16->fp8 instruction here as we have only one half element to be converted
+                  # We cannot use optimized f16->fp8 instruction for non stochastic case here as we have only one half element to be converted
                   # and we only have a pack instruction which can convert 2 half elements to 2 f8 element
                   if kernel["ProblemType"]["StochasticRounding"]:
                     if self.states.asmCaps["v_prng_b32"]:
@@ -9103,30 +9103,49 @@ class KernelWriterAssembly(KernelWriter):
                     vgprTmp = self.vgprPool.checkOutAligned(1, 2)
                   src_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
                   sel = 1 if isHigh16Bits else 0
-                  localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=paramList[0], sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
-
-                  # ScaleA/B
-                  if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-                    localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
-
-                  if kernel["ProblemType"]["StochasticRounding"]:
-                    vRand = vgprTmp+1 #seed
+                  if self.states.asmCaps["Hascvtfp8_f16"] and not kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["StochasticRounding"]:
+                    vRand = vgprTmp
                     if self.states.asmCaps["v_prng_b32"]:
-                      localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=vgpr(vgprTmp),comment="Psudo Random Number Generator"))
-                    else:
-                      vTemp0 = vgprTmp+2
-                      vTemp1 = vgprTmp+3
-                      localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp, vTemp0, vTemp1]))
-
+                      localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=paramList[0],comment="Psudo Random Number Generator"))
                     if (toF8):
-                      localWriteCVTCode.add(VCvtSRF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                      if isHigh16Bits:
+                        localWriteCVTCode.add(VCvtScaleSRF16toFP8(dst=paramList[0], src0=paramList[0], src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[1,0,1,0]), comment="convert F16 to F8 SR"))
+                      else:
+                        localWriteCVTCode.add(VCvtScaleSRF16toFP8(dst=paramList[0], src0=paramList[0], src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[0,0,0,0]), comment="convert F16 to F8 SR"))
                     else:
-                      localWriteCVTCode.add(VCvtSRF32toBF8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
+                      if isHigh16Bits:
+                        localWriteCVTCode.add(VCvtScaleSRF16toBF8(dst=paramList[0], src0=paramList[0], src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[1,0,1,0]), comment="convert F16 to BF8 SR"))
+                      else:
+                        localWriteCVTCode.add(VCvtScaleSRF16toBF8(dst=paramList[0], src0=paramList[0], src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[0,0,0,0]), comment="convert F16 to BF8 SR"))
                   else:
-                    if (toF8):
-                      localWriteCVTCode.add(VCvtPkF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                    localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=paramList[0], sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
+
+                    # ScaleA/B
+                    if kernel["ProblemType"]["UseScaleAB"] == "Scalar" and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+                      localWriteCVTCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
+
+                    if kernel["ProblemType"]["StochasticRounding"]:
+                      vRand = vgprTmp+1 #seed
+                      if self.states.asmCaps["v_prng_b32"]:
+                        localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=vgpr(vgprTmp),comment="Psudo Random Number Generator"))
+                      else:
+                        vTemp0 = vgprTmp+2
+                        vTemp1 = vgprTmp+3
+                        localWriteCVTCode.add(MacroInstruction(name="PRND_GENERATOR", args=[vRand, vgprTmp, vTemp0, vTemp1]))
+
+                      if (toF8):
+                        localWriteCVTCode.add(VCvtSRF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                      else:
+                        localWriteCVTCode.add(VCvtSRF32toBF8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vRand), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
                     else:
-                      localWriteCVTCode.add(VCvtPkF32toBF8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
+                      if (toF8):
+                        localWriteCVTCode.add(VCvtPkF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                      else:
+                        localWriteCVTCode.add(VCvtPkF32toBF8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to BF8"))
                   self.vgprPool.checkIn(vgprTmp)
                 else:
                   if kernel["ProblemType"]["StochasticRounding"]:
@@ -9139,12 +9158,27 @@ class KernelWriterAssembly(KernelWriter):
                   vgprTmp2 = vgprTmp + 1
                   for vi in range(0, int(newBlockWidth)):
                     sel = 1 if vi %2 == 1 else 0
-                    if self.states.asmCaps["Hascvtfp8_f16"] and not kernel["ProblemType"]["StochasticRounding"] and not kernel["ProblemType"]["UseScaleAB"] == "Scalar":
-                      if (toF8):
-                        localWriteCVTCode.add(VCvtScalePkF16toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), scale=0x3f800000,\
-                                                              vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="convert F16 to F8"))
+                    if self.states.asmCaps["Hascvtfp8_f16"] and not kernel["ProblemType"]["UseScaleAB"] == "Scalar":
+                      if kernel["ProblemType"]["StochasticRounding"]:
+                         vRand = vgprTmp
+                         if self.states.asmCaps["v_prng_b32"]:
+                           localWriteCVTCode.add(VPrngB32(dst=vgpr(vRand),src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)),comment="Psudo Random Number Generator"))
+                         if (toF8):
+                           localWriteCVTCode.add(VCvtScaleSRF16toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="convert F16 to F8 SR"))
+                           localWriteCVTCode.add(VCvtScaleSRF16toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[1,0,1,sel]), comment="convert F16 to F8 SR"))
+                         else:
+                           localWriteCVTCode.add(VCvtScaleSRF16toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[0,0,0,sel]), comment="convert F16 to BF8 SR"))
+                           localWriteCVTCode.add(VCvtScaleSRF16toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src0=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), src1=vgpr(vRand), scale=0x3f800000,\
+                                                               vop3=VOP3PModifiers(op_sel=[1,0,1,sel]), comment="convert F16 to BF8 SR"))
                       else:
-                        localWriteCVTCode.add(VCvtScalePkF16toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), scale=0x3f800000,\
+                        if (toF8):
+                          localWriteCVTCode.add(VCvtScalePkF16toFP8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), scale=0x3f800000,\
+                                                              vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="convert F16 to F8"))
+                        else:
+                          localWriteCVTCode.add(VCvtScalePkF16toBF8(dst=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi//2)), src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), scale=0x3f800000,\
                                                               vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="convert F16 to BF8"))
                     else:
                       localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr(destVgprPrefix + "+%u+%u"%(g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert to F32"))
