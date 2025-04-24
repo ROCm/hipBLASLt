@@ -140,10 +140,8 @@ target_link_libraries(hipblaslt-bench
         rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
         rocm_smi64
-        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
         lapack cblas
         -lm -lstdc++fs
-        # -lflang -lflagrti  # TODO: Might be needed in some contexts?
 )
 
 add_executable(hipblaslt-test)
@@ -175,7 +173,6 @@ target_link_libraries(hipblaslt-test
         rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
         rocm_smi64
-        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
         lapack cblas
         -lm -lstdc++fs
         GTest::gtest
