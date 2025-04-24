@@ -1277,13 +1277,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         # scheduled pointer
         ####
-        isDTL = kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
         if mfmaIndex == self.states.lwEndMfmaIndex:
           iterCode.add(pointerLWCode)
-          # Wait for previous set of global reads to complete
-          if isDTL and not NLLlast:
-            vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 else 0
-            iterCode.add(self._wait(kernel, tPA, tPB, vmcntVal, -1, -1, "wait for previous set of global reads"))
         if i == numMfmaPerIter - 1:
           iterCode.add(pointerLRCode)
 
@@ -2580,12 +2575,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
           module.add(self.getWaitcntCodeForDirectToVgpr(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, u))
         # put barrier at localWriteEndIter+1
         if u == localWriteEndIter+1 or (u == (localWriteEndIter+1)%kernel["LoopIters"] and kernel["ScheduleIterAlg"] == 2):
+          if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
+            vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 else 0
+            waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, vmcntVal, -1, -1, \
+                                      "wait for previous set of global reads"))
           # (no local write code. Global read wait for DirectToLds is already done)
           if not kernel["NoLdsWriteCode"]:
             waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, 0, -1, "3wait for local write"))
           skipForceWaitcnt0 = False
-          if kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
-            # DTVA/B case, skip generating force waitcnt0
+          if kernel["DirectToVgprA"] or kernel["DirectToVgprB"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
+            # DTVA/B or DTLA/B case, skip generating force waitcnt0
             skipForceWaitcnt0 = True
           syncCode.add(self._syncThreads(kernel, skipForceWaitcnt0=skipForceWaitcnt0))
 
