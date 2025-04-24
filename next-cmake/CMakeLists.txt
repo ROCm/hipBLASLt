@@ -121,7 +121,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # GCC or hip-clang needs specific flags to turn on f16c intrinsics
   target_compile_options(hipblaslt-bench PRIVATE -mf16c)
 endif()
-target_compile_options(hipblaslt-bench PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
+# target_compile_options(hipblaslt-bench PRIVATE -Wno-switch)  # Uncomment to suppress warnings
 target_compile_features(hipblaslt-bench PRIVATE cxx_std_17)
 target_compile_definitions(hipblaslt-bench
     PRIVATE
@@ -156,7 +156,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   # GCC or hip-clang needs specific flags to turn on f16c intrinsics
   target_compile_options(hipblaslt-test PRIVATE -mf16c)
 endif()
-target_compile_options(hipblaslt-test PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
+# target_compile_options(hipblaslt-test PRIVATE -Wno-switch)  # Uncomment to suppress warnings
 target_compile_features(hipblaslt-test PRIVATE cxx_std_17)
 target_compile_definitions(hipblaslt-test
     PRIVATE
@@ -178,7 +178,7 @@ target_link_libraries(hipblaslt-test
         -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
         lapack cblas
         -lm -lstdc++fs
-        ${GTEST_BOTH_LIBRARIES}  # TODO: Is there a better way to link gtest libs
+        GTest::gtest
 )
 
 ################################################################################
