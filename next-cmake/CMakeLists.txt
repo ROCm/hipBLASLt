@@ -77,8 +77,13 @@ target_compile_features(hipblaslt PUBLIC cxx_std_17)
 
 target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wno-switch)
 
-target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
-target_compile_definitions(hipblaslt PRIVATE TENSILE_DEFAULT_SERIALIZATION)
+target_compile_definitions(hipblaslt
+    PRIVATE
+    ROCM_USE_FLOAT16
+    __HIP_PLATFORM_AMD__
+    TENSILE_DEFAULT_SERIALIZATION
+    ROCBLASLT_TENSILE_LAZY_LOAD
+)
 if(ENABLE_HIP)
     target_compile_definitions(hipblaslt PRIVATE TENSILE_USE_HIP)
 endif()
@@ -100,6 +105,11 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+set_target_properties(hipblaslt
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host-library
 )
 
 ################################################################################
@@ -219,7 +229,7 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 if(ENABLE_DEVICE)
-    install(FILES 
+    install(FILES
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/hipblaslt/library
     )
 endif()
