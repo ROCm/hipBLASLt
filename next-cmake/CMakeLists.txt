@@ -61,19 +61,20 @@ add_library(hipblaslt)
 add_library(roc::hipblaslt ALIAS hipblaslt)
 
 target_link_libraries(hipblaslt
-    PRIVATE
+    PUBLIC
         hip::device
-        roc::hipblas-common
         rocisa::rocisa-cpp
+    PRIVATE
+        roc::hipblas-common
         dl
 )
 if(ENABLE_OPENMP)
-    target_link_libraries(hipblaslt PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(hipblaslt PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 target_compile_features(hipblaslt PUBLIC cxx_std_17)
 
-target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wno-switch)
+# target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wno-switch)  # Uncomment to suppress warning
 
 target_compile_definitions(hipblaslt
     PRIVATE
@@ -132,13 +133,10 @@ target_compile_definitions(hipblaslt-bench
         __HIP_PLATFORM_AMD__ # and this
 )
 
+# OpenMP is conditionally propogated to the clients depending on if ENABLE_OPENMP is set
 target_link_libraries(hipblaslt-bench
     PRIVATE
         roc::hipblaslt
-        hip::host # are these needed? do we use hip headers directly
-        hip::device # are these needed? do we use hip headers directly
-        rocisa::rocisa-cpp
-        OpenMP::OpenMP_CXX
         rocm_smi64
         lapack cblas
         -lm -lstdc++fs
@@ -168,9 +166,9 @@ target_compile_definitions(hipblaslt-test
 target_link_libraries(hipblaslt-test
     PRIVATE
         roc::hipblaslt
-        hip::host
-        hip::device
-        rocisa::rocisa-cpp
+        # hip::host
+        # hip::device
+        # rocisa::rocisa-cpp
         OpenMP::OpenMP_CXX
         rocm_smi64
         lapack cblas
