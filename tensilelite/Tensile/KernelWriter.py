@@ -1277,8 +1277,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
         ####
         # scheduled pointer
         ####
+        isDTL = kernel["DirectToLdsA"] or kernel["DirectToLdsB"]
         if mfmaIndex == self.states.lwEndMfmaIndex:
           iterCode.add(pointerLWCode)
+          # Wait for previous set of global reads to complete
+          if isDTL and not NLLlast:
+            vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 else 0
+            iterCode.add(self._wait(kernel, tPA, tPB, vmcntVal, -1, -1, "wait for previous set of global reads"))
         if i == numMfmaPerIter - 1:
           iterCode.add(pointerLRCode)
 
@@ -1989,7 +1994,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters1st))
-      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd)
+      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd, True)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters2nd))
       tPA = tensorParametersA
@@ -2350,7 +2355,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # unrolled loop: global read A, B
     # M0 update for directToLds
     self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
-    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
+    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, True)
 
     g2lBufIdx1st = 0
     if grBA==True or (kernel["DirectToVgpr%s"%tc1] and isDTVGRSecondBuf):
@@ -2575,8 +2580,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
           module.add(self.getWaitcntCodeForDirectToVgpr(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, u))
         # put barrier at localWriteEndIter+1
         if u == localWriteEndIter+1 or (u == (localWriteEndIter+1)%kernel["LoopIters"] and kernel["ScheduleIterAlg"] == 2):
-          if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
-            module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "12wait for global read"))
           # (no local write code. Global read wait for DirectToLds is already done)
           if not kernel["NoLdsWriteCode"]:
             waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, 0, -1, "3wait for local write"))
@@ -2989,7 +2992,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
       module.addComment1("Update M0 for DTLDS")
-      moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
+      moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, True)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("Tail global read %s"%tc2)
       if tailLoopOpt2nd and (globalReadMode2nd == 2):
@@ -5280,7 +5283,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # mode: 0=prefetch, 1=unroll loop, 2=guardK
   ##############################################################################
   @abc.abstractmethod
-  def directToLdsM0Update(self, kernel, mode, tP):
+  def directToLdsM0Update(self, kernel, mode, tP, skipWait):
     return ""
 
   ##############################################################################
