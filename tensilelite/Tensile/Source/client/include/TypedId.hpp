@@ -226,12 +226,24 @@ namespace TensileLite
     using TypedGemm_F8H_H_H_S     = TypedGemm<Float8, Half, Half, Half, float, float, Half>;
     using TypedGemm_HF8_H_FP8_S   = TypedGemm<Half, Float8, Float8, Float8, float, float, Half>;
     using TypedGemm_F8H_H_FP8_S   = TypedGemm<Float8, Half, Float8, Float8, float, float, Half>;
+    using TypedGemm_HB8_H_S_S     = TypedGemm<Half, BFloat8, float, float, float, float, Half>;
+    using TypedGemm_B8H_H_S_S     = TypedGemm<BFloat8, Half, float, float, float, float, Half>;
+    using TypedGemm_HB8_H_H_S     = TypedGemm<Half, BFloat8, Half, Half, float, float, Half>;
+    using TypedGemm_B8H_H_H_S     = TypedGemm<BFloat8, Half, Half, Half, float, float, Half>;
+    using TypedGemm_HB8_H_FP8_S   = TypedGemm<Half, BFloat8, Float8, Float8, float, float, Half>;
+    using TypedGemm_B8H_H_FP8_S   = TypedGemm<BFloat8, Half, Float8, Float8, float, float, Half>;
     using TypedGemm_HF8_FP8_S_S   = TypedGemm<Half, Float8, float, float, float, float, Float8>;
     using TypedGemm_F8H_FP8_S_S   = TypedGemm<Float8, Half, float, float, float, float, Float8>;
     using TypedGemm_HF8_FP8_H_S   = TypedGemm<Half, Float8, Half, Half, float, float, Float8>;
     using TypedGemm_F8H_FP8_H_S   = TypedGemm<Float8, Half, Half, Half, float, float, Float8>;
     using TypedGemm_HF8_FP8_FP8_S = TypedGemm<Half, Float8, Float8, Float8, float, float, Float8>;
     using TypedGemm_F8H_FP8_FP8_S = TypedGemm<Float8, Half, Float8, Float8, float, float, Float8>;
+    using TypedGemm_HB8_B8_S_S   = TypedGemm<Half, BFloat8, float, float, float, float, BFloat8>;
+    using TypedGemm_B8H_B8_S_S   = TypedGemm<BFloat8, Half, float, float, float, float, BFloat8>;
+    using TypedGemm_HB8_B8_H_S   = TypedGemm<Half, BFloat8, Half, Half, float, float, BFloat8>;
+    using TypedGemm_B8H_B8_H_S   = TypedGemm<BFloat8, Half, Half, Half, float, float, BFloat8>;
+    using TypedGemm_HB8_B8_B8_S = TypedGemm<Half, BFloat8, BFloat8, BFloat8, float, float, BFloat8>;
+    using TypedGemm_B8H_B8_B8_S = TypedGemm<BFloat8, Half, BFloat8, BFloat8, float, float, BFloat8>;
 
     // Mix precision: NANOO
     using TypedGemm_H_F8N_H_S  = TypedGemm<Half, Half, Half, Half, float, float, Float8_fnuz>;
