@@ -34,13 +34,16 @@ include(CMakeDependentOption)
 set(ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
 set(ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
 cmake_dependent_option(ENABLE_HOST "Build hipBLASLt host library." ON "ENABLE_CLIENT" OFF)
+set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples")
 
 set(ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
 set(ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
 set(ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
 set(ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
 set(ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
+set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support")
 #set(TENSILE_STATIC_ONLY ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
+
 
 set(TEMP_TENSILE_HOST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tensilelite/Tensile/Source/lib)
 set(HIPBLASLT_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../library)
@@ -63,9 +66,10 @@ add_library(hipblaslt)
 add_library(roc::hipblaslt ALIAS hipblaslt)
 
 target_link_libraries(hipblaslt
-    PRIVATE
-        hip::device
+    PUBLIC
         roc::hipblas-common
+        hip::device
+    PRIVATE
         rocisa::rocisa-cpp
         dl
 )
@@ -74,11 +78,16 @@ if(ENABLE_OPENMP)
 endif()
 
 target_compile_features(hipblaslt PUBLIC cxx_std_17)
-
 target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wno-switch)
 
-target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
-target_compile_definitions(hipblaslt PRIVATE TENSILE_DEFAULT_SERIALIZATION)
+target_compile_definitions(hipblaslt 
+    PRIVATE 
+        TENSILE_DEFAULT_SERIALIZATION
+    PUBLIC
+        ROCM_USE_FLOAT16
+        __HIP_PLATFORM_AMD__
+)
+
 if(ENABLE_HIP)
     target_compile_definitions(hipblaslt PRIVATE TENSILE_USE_HIP)
 endif()
@@ -97,88 +106,15 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PUBLIC
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-################################################################################
-# Configure clients
-# -----
-# We do not support Fortran clients in this build system
-################################################################################
-add_executable(hipblaslt-bench)
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # GCC or hip-clang needs specific flags to turn on f16c intrinsics
-  target_compile_options(hipblaslt-bench PRIVATE -mf16c)
-endif()
-target_compile_options(hipblaslt-bench PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
-target_compile_features(hipblaslt-bench PRIVATE cxx_std_17)
-target_compile_definitions(hipblaslt-bench
-    PRIVATE
-        HIPBLASLT_BENCH
-        CLIENTS_NO_FORTRAN
-        ROCM_USE_FLOAT16 # maybe this should be public on hipblast target to ensure consistency
-        HIPBLASLT_INTERNAL_API #and this
-        __HIP_PLATFORM_AMD__ # and this
-)
-
-target_link_libraries(hipblaslt-bench
-    PRIVATE
-        roc::hipblaslt
-        hip::host # are these needed? do we use hip headers directly
-        hip::device # are these needed? do we use hip headers directly
-        rocisa::rocisa-cpp
-        OpenMP::OpenMP_CXX
-        rocm_smi64
-        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
-        lapack cblas
-        -lm -lstdc++fs
-        # -lflang -lflagrti  # TODO: Might be needed in some contexts?
-)
-
-add_executable(hipblaslt-test)
-
-find_package(GTest REQUIRED)
-# TODO: Line duplicated in device-library/CMakeLists.txt, consider consolidating
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # GCC or hip-clang needs specific flags to turn on f16c intrinsics
-  target_compile_options(hipblaslt-test PRIVATE -mf16c)
-endif()
-target_compile_options(hipblaslt-test PRIVATE -Wno-switch)  # TODO(@bstefanuk): temp for easier stdout parsing
-target_compile_features(hipblaslt-test PRIVATE cxx_std_17)
-target_compile_definitions(hipblaslt-test
-    PRIVATE
-        HIPBLASLT_TEST
-        ROCM_USE_FLOAT16
-        HIPBLASLT_INTERNAL_API
-        CLIENTS_NO_FORTRAN
-        __HIP_PLATFORM_AMD__
-)
-
-target_link_libraries(hipblaslt-test
-    PRIVATE
-        roc::hipblaslt
-        hip::host
-        hip::device
-        rocisa::rocisa-cpp
-        OpenMP::OpenMP_CXX
-        rocm_smi64
-        -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
-        lapack cblas
-        -lm -lstdc++fs
-        ${GTEST_BOTH_LIBRARIES}  # TODO: Is there a better way to link gtest libs
-)
-
-################################################################################
-# Add subdirectories
-################################################################################
-add_subdirectory(rocisa/rocisa-cpp)
-
 if(ENABLE_HOST)
+    add_subdirectory(rocisa/rocisa-cpp)
     add_subdirectory(host-library)
 endif()
 if(ENABLE_DEVICE)
