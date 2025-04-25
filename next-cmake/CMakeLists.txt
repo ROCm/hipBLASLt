@@ -21,6 +21,9 @@
 #
 # ########################################################################
 
+# Need a list of old compilation flags, definitions and link flags
+# to confirm if they are required and document what we dropped if not.
+
 cmake_minimum_required(VERSION 3.22...3.25.2)
 project(hipblaslt VERSION 0.15.0 LANGUAGES CXX)
 
@@ -32,25 +35,40 @@ include(CMakeDependentOption)
 set(ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
 set(ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
 cmake_dependent_option(ENABLE_HOST "Build hipBLASLt host library." ON "ENABLE_CLIENT" OFF)
-set(BUILD_TESTING ON CACHE BOOL "Build hipblaslt host tests.")
-set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
 
-set(ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
-set(ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
-set(ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
-set(ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
-set(ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
-set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support")
-#set(TENSILE_STATIC_ONLY ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
+if(ENABLE_CLIENT)
+    set(BUILD_TESTING ON CACHE BOOL "Build hipblaslt client tests.")
+    set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
+endif()
 
+if(ENABLE_HOST)
+    set(ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
+    set(ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
+    set(ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
+    set(ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
+    set(ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
+    set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support.")
+    set(ENABLE_LAZY_LOAD ON CACHE BOOL "Enable lazy loading of runtime code oject files to reduce ram usage.")
+endif()
 
-set(TEMP_TENSILE_HOST_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../tensilelite/Tensile/Source/lib)
-set(HIPBLASLT_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../library)
-set(ROCBLASLT_LIB_DIR ${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt)
+if(ENABLE_DEVICE)
+    set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries")
+    set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
+    file(MAKE_DIRECTORY "${device_library_dir}")
+endif()
+
+set(TEMP_TENSILE_HOST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../tensilelite/Tensile/Source/lib")
+set(HIPBLASLT_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../library")
+set(ROCBLASLT_LIB_DIR "${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt")
 
 find_package(hip REQUIRED)
-find_package(hipblas-common REQUIRED)
-
+if(ENABLE_HOST)
+    find_package(hipblas-common REQUIRED)
+endif()
+if(ENABLE_CLIENT)
+    find_package(Threads REQUIRED) # TODO: Where is this used, should it be moved up a level?
+    find_package(cblas REQUIRED)
+endif()
 if(ENABLE_OPENMP)
     find_package(OpenMP REQUIRED)
 endif()
@@ -73,25 +91,29 @@ target_link_libraries(hipblaslt
         hip::device
     PRIVATE
         rocisa::rocisa-cpp
-    PRIVATE
-        roc::hipblas-common
         dl
 )
 if(ENABLE_OPENMP)
     target_link_libraries(hipblaslt PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
-target_compile_features(hipblaslt PUBLIC cxx_std_17)
-target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wno-switch)
+target_compile_features(hipblaslt PUBLIC cxx_std_17) # I would like to make this configurable
+target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument) # is this applicable to the host?
 
-target_compile_definitions(hipblaslt 
+target_compile_definitions(hipblaslt
     PRIVATE 
         TENSILE_DEFAULT_SERIALIZATION
     PUBLIC
-        ROCBLASLT_TENSILE_LAZY_LOAD
         ROCM_USE_FLOAT16
         __HIP_PLATFORM_AMD__
 )
+
+if(ENABLE_LAZY_LOAD)
+    target_compile_definitions(hipblaslt
+        PRIVATE 
+            ROCBLASLT_TENSILE_LAZY_LOAD
+    )
+endif()
 
 if(ENABLE_HIP)
     target_compile_definitions(hipblaslt PRIVATE TENSILE_USE_HIP)

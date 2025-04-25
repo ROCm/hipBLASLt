@@ -39,87 +39,87 @@ foreach(arch IN LISTS archs)
     )
     target_sources(ExtOpObj_${arch}
         PRIVATE
-            ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s
+            "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s"
     )
     add_custom_command(
         OUTPUT
-            ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s
-            ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s
-        COMMAND ${Python3_EXECUTABLE} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s -w 256 -c 4 --sweep-once 1 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s -w 256 -c 4 --sweep-once 0 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s -m 8 -n 32 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s -m 16 -n 16 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s -m 4 -n 64 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s -m 2 -n 128 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s -m 1 -n 256 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s -t S -d S -w 256 -c 4 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s -t H -d H -w 256 -c 4 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s -t H -d S -w 256 -c 4 --arch ${arch}
-        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s -t S -d H -w 256 -c 4 --arch ${arch}
+            "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s"
+            "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s"
+        COMMAND ${Python3_EXECUTABLE} LayerNormGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s" -w 256 -c 4 --sweep-once 1 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} LayerNormGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s" -w 256 -c 4 --sweep-once 0 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s" -m 8 -n 32 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s" -m 16 -n 16 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s" -m 4 -n 64 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s" -m 2 -n 128 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} SoftmaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s" -m 1 -n 256 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s" -t S -d S -w 256 -c 4 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s" -t H -d H -w 256 -c 4 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s" -t H -d S -w 256 -c 4 --arch ${arch}
+        COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s" -t S -d H -w 256 -c 4 --arch ${arch}
         COMMENT "Creating Layer Norm, Softmax and Amax Assembly for ${arch}"
         WORKING_DIRECTORY ${ops_path}
     )
     if(arch STREQUAL "gfx942")
         add_custom_command(
             OUTPUT
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s -t S -d S -s F8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s -t S -d S -s B8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s -t S -d H -s F8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s -t S -d H -s B8N -w 256 -c 4 --arch ${arch}
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s"
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s" -t S -d S -s F8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s" -t S -d S -s B8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s" -t S -d H -s F8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s" -t S -d H -s B8N -w 256 -c 4 --arch ${arch}
             COMMENT "Creating Extra Amax Assembly for gfx942"
             WORKING_DIRECTORY ${ops_path}
         )
         target_sources(ExtOpObj_${arch}
             PRIVATE
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s"
         )
     endif()
     if(arch STREQUAL "gfx950")
         add_custom_command(
             OUTPUT
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s -t S -d S -s F8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s -t S -d S -s B8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s -t S -d H -s F8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s -t S -d H -s B8 -w 256 -c 4 --arch ${arch}
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s"
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s" -t S -d S -s F8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s" -t S -d S -s B8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s" -t S -d H -s F8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${Python3_EXECUTABLE} AMaxGenerator.py --is-scale -o "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s" -t S -d H -s B8 -w 256 -c 4 --arch ${arch}
             COMMENT "Creating Extra Amax Assembly for gfx950"
             WORKING_DIRECTORY ${ops_path}
         )
         target_sources(ExtOpObj_${arch}
             PRIVATE
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s
-                ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s"
+                "${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s"
         )
     endif()
 
@@ -130,7 +130,7 @@ foreach(arch IN LISTS archs)
         COMMENT "Creating extop_${arch}"
         COMMAND_EXPAND_LISTS
     )
-    add_custom_target(ExtOpLibrary_${arch} ALL
+    add_custom_target(ExtOpLibrary_${arch} ALL # need to remove all
         DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
         COMMAND ${Python3_EXECUTABLE} ExtOpCreateLibrary.py --src=${CMAKE_CURRENT_BINARY_DIR} --co=${device_library_dir}/extop_${arch}.co --output=${device_library_dir} --arch=${arch}
         COMMENT "Creating hipblasltExtOpLibrary.dat for ${arch}"

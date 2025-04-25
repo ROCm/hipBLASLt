@@ -31,9 +31,8 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # GCC or hip-clang needs specific flags to turn on f16c intrinsics
-    target_compile_options(sample-helper INTERFACE -mf16c) # we should confirm that this is true
+    target_compile_options(sample-helper INTERFACE -mf16c) # necessary?
 endif()
-#target_compile_options(sample-helper INTERFACE -Wno-switch)
 target_compile_features(sample-helper INTERFACE cxx_std_17)
 
 target_sources(sample-helper
@@ -47,27 +46,6 @@ target_include_directories(sample-helper
         $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
 )
 
-#target_compile_definitions(sample-helper # we need to know if these definitions are actually used in source code before adding them
-#    PRIVATE
-#    ROCM_USE_FLOAT16
-#    HIPBLASLT_INTERNAL_API
-#    CLIENTS_NO_FORTRAN
-#    __HIP_PLATFORM_AMD__
-#)
-#target_link_libraries(${executable} # we need to know if we explicitly depend on these targets
-#    PRIVATE
-#    roc::hipblaslt
-#    # hip::host
-#    hip::device
-#    rocm_smi64
-#    rocisa::rocisa-cpp
-#    OpenMP::OpenMP_CXX
-#    rocm_smi64
-#    -L${HIP_CLANG_ROOT}/lib -Wl #-rpath=${HIP_CLANG_ROOT}/lib  # TODO: Not needed?
-#    # lapack
-#    cblas
-#    -lm -lstdc++fs
-#)
 target_link_libraries(sample-helper
     INTERFACE
         roc::hipblaslt

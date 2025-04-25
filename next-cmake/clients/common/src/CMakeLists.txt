@@ -36,7 +36,10 @@ target_sources(hipblaslt-clients-common
 )
 
 if(ENABLE_BLIS)
-    target_sources(hipblaslt-clients-common PRIVATE ${_CMAKE_CURRENT_SOURCE_DIR}/blis_interface.cpp)
+    target_sources(hipblaslt-clients-common 
+        PRIVATE 
+            $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/blis_interface.cpp>
+    )
 endif()
 
 unset(_CMAKE_CURRENT_SOURCE_DIR)

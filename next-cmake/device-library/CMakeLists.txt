@@ -24,25 +24,10 @@
 cmake_minimum_required(VERSION 3.22...3.25.2)
 project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
-set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
-file(MAKE_DIRECTORY "${device_library_dir}")
-
-# Options and cache variables
-set(Tensile_ARCHITECTURE "" CACHE STRING "Device (GFX) architecture(s) to build libraries for")
-set(Tensile_COMPILER "" CACHE STRING "Compiler to use for building device libraries")
-set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries")
-
 set(TENSILELITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite)
 
-# Find dependencies
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-if(Tensile_ARCHITECTURE)
-    set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--architecture=${Tensile_ARCHITECTURE}")
-endif()
-if(Tensile_COMPILER)
-    set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--cxx-compiler=${Tensile_COMPILER}")
-endif()
+set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--architecture=${GPU_TARGETS}")
+set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--cxx-compiler=${CMAKE_CXX_COMPILER}")
 if(Tensile_CPU_THREADS)
     set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--jobs=${Tensile_CPU_THREADS}")
 endif()

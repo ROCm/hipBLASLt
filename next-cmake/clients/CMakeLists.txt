@@ -25,19 +25,12 @@ cmake_minimum_required(VERSION 3.22...3.25.2)
 project(clients LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-message(${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR} ${PROJECT_SOURCE_DIR})
-set(TEMP_CLIENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../clients)
-set(TEMP_TENSILE_CLIENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/client)
 
-find_package(Threads REQUIRED) # TODO: Where is this used, should it be moved up a level?
-find_package(cblas REQUIRED CONFIG)
+set(TEMP_CLIENTS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../clients")
+set(TEMP_TENSILE_CLIENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/client")
 
-if(ENABLE_BLIS)
-    find_package(BLIS REQUIRED)
-endif()
-
-add_library(hipblaslt-clients-common)
 add_executable(hipblaslt-bench)
+add_library(hipblaslt-clients-common)
 
 target_include_directories(hipblaslt-clients-common
     PUBLIC
@@ -51,7 +44,7 @@ if(ENABLE_BLIS)
 endif()
 
 target_link_libraries(hipblaslt-clients-common PUBLIC roc::hipblaslt lapack)
-target_compile_definitions(hipblaslt-clients-common PRIVATE CLIENTS_NO_FORTRAN)
+target_compile_definitions(hipblaslt-clients-common PRIVATE CLIENTS_NO_FORTRAN) # necessary?
 
 target_link_libraries(hipblaslt-bench PRIVATE hipblaslt-clients-common)
 
@@ -65,7 +58,7 @@ if(BUILD_TESTING)
     add_executable(hipblaslt-test)
     target_link_libraries(hipblaslt-test PRIVATE hipblaslt-clients-common GTest::gtest rocm_smi64)
     if(ENABLE_BLIS)
-        target_link_libraries(hipblaslt-test PRIVATE BLIS::BLIS)
+        target_link_libraries(hipblaslt-test PRIVATE BLIS::BLIS) # necessary?
     endif()
 
     target_compile_definitions(hipblaslt-test PRIVATE GOOGLE_TEST HIPBLASLT_TEST)

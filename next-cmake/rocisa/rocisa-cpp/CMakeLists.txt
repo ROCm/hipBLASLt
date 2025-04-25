@@ -24,9 +24,7 @@
 cmake_minimum_required(VERSION 3.22...3.25.2)
 project(rocisa-cpp LANGUAGES CXX)
 
-if(NOT rocisa_root)
-    set(rocisa_root "${CMAKE_CURRENT_LIST_DIR}/../../../tensilelite/rocisa")
-endif()
+set(rocisa_root "${CMAKE_CURRENT_LIST_DIR}/../../../tensilelite/rocisa")
 
 add_library(rocisa-cpp INTERFACE)
 add_library(rocisa::rocisa-cpp ALIAS rocisa-cpp)
@@ -39,3 +37,5 @@ target_include_directories(rocisa-cpp
     INTERFACE
         $<BUILD_INTERFACE:${rocisa_root}>
 )
+
+unset(rocisa_root)

@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-set(_CMAKE_CURRENT_SOURCE_DIR ${TEMP_CLIENTS_SOURCE_DIR}/include)
+set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_CLIENTS_SOURCE_DIR}/include")
 
 target_sources(hipblaslt-clients-common
     PRIVATE

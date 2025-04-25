@@ -23,7 +23,7 @@
 
 # Need to support Release/Debug
 
-string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${Tensile_ARCHITECTURE}")
+string(REGEX MATCHALL "gfx[a-z0-9]+" archs "${GPU_TARGETS}")
 list(REMOVE_DUPLICATES archs)
 list(JOIN archs "," archs)
 
@@ -36,7 +36,7 @@ add_custom_command(
     COMMENT "Building hipblasltTransform.hsaco"
 )
 
-add_custom_target(matrix-transform ALL
+add_custom_target(matrix-transform ALL # need to remove all
     DEPENDS ${output_library}
 )
 
