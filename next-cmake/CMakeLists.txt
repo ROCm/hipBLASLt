@@ -59,10 +59,10 @@ if(ENABLE_DEVICE)
     file(MAKE_DIRECTORY "${device_library_dir}")
 endif()
 
-set(CMAKE_SKIP_BUILD_RPATH FALSE CACHE BOOL ADVANCE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE CACHE BOOL)
-set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" CACHE STRING)
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL)
+set(CMAKE_SKIP_BUILD_RPATH FALSE CACHE BOOL "Skip build RPATH")
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE CACHE BOOL "Build with install RPATH")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" CACHE STRING "Install RPATH")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL "Use link path for RPATH")
 
 mark_as_advanced(CMAKE_SKIP_BUILD_RPATH)
 mark_as_advanced(CMAKE_BUILD_WITH_INSTALL_RPATH)
@@ -170,9 +170,18 @@ endif()
 install(TARGETS hipblaslt rocisa-cpp
     EXPORT hipblaslt-targets
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT hipBLASLt_Runtime
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT hipBLASLt_Development
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT hipBLASLt_Runtime
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT hipBLASLt_Development
+)
+install(
+    EXPORT hipblaslt-targets
+    NAMESPACE roc::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
 )
 get_target_property(hipblaslt_public_headers roc::hipblaslt INTERFACE_SOURCES)
 install(
@@ -183,7 +192,7 @@ install(
 # temporary workaround to avoid updating downstream components
 # TODO: remove the follow file install once rocblas is updated
 install(
-    FILES 
+    FILES
         "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h"
         "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h"
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -194,11 +203,6 @@ install(
     DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/hipblaslt
     COMPONENT hipBLASLt_Development
 )
-install(
-    EXPORT hipblaslt-targets
-    NAMESPACE roc::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
-)
 install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
     "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/hipblaslt-config.cmake"
@@ -207,8 +211,8 @@ install(FILES
 )
 install(
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md"
-    COMPONENT hipBLASLt_Docs
     DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+    COMPONENT hipBLASLt_Docs
 )
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
@@ -290,3 +294,58 @@ if(ENABLE_CLIENT)
         )
     endif()
 endif()
+
+set(CPACK_PACKAGE_NAME "hipBLASLt")
+set(CPACK_PACKAGE_VENDOR "Advanced Micro Devices, Inc.")
+set(CPACK_PACKAGE_CONTACT "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "HIP library for GEMM operation with extended functionality")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CPACK_PACKAGE_NAME})
+set(CPACK_RESOURCE_FILE_LICENSE ${CMAKE_CURRENT_LIST_DIR}/../LICENSE.md)
+set(CPACK_RESOURCE_FILE_README ${CMAKE_CURRENT_LIST_DIR}/../README.md)
+set(CPACK_VERBATIM_VARIABLES YES)
+set(CPACK_COMPONENTS_ALL "hipBLASLt_Runtime;hipBLASLt_Development;hipBLASLt_Docs")
+
+set(CPACK_COMPONENTS_GROUPING IGNORE)
+
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+set(CPACK_DEBIAN_FILE_NAME "DEB-DEFAULT")
+set(CPACK_DEBIAN_HIPBLASLT_RUNTIME_PACKAGE_NAME "hipblaslt")
+set(CPACK_DEBIAN_HIPBLASLT_RUNTIME_PACKAGE_SECTION "runtime")
+set(CPACK_DEBIAN_HIPBLASLT_DEVELOPMENT_PACKAGE_NAME "hipblaslt-dev")
+set(CPACK_DEBIAN_HIPBLASLT_DOCS_PACKAGE_NAME "hipblaslt-docs")
+set(CPACK_DEBIAN_PACKAGE_PROVIDES "hipblaslt (= ${PROJECT_VERSION})")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "hipblas-common (>=1.0)")
+
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_RPM_FILE_NAME "RPM-DEFAULT")
+set(CPACK_RPM_HIPBLASLT_RUNTIME_PACKAGE_NAME "hipblaslt")
+set(CPACK_RPM_HIPBLASLT_DEVELOPMENT_PACKAGE_NAME "hipblaslt-devel")
+set(CPACK_RPM_HIPBLASLT_DOCS_PACKAGE_NAME "hipblaslt-docs")
+set(CPACK_RPM_HIPBLASLT_RUNTIME_PACKAGE_REQUIRES "hipblaslt (= ${PROJECT_VERSION})")
+set(CPACK_RPM_PACKAGE_PROVIDES "hipblaslt (= ${PROJECT_VERSION})")
+set(CPACK_RPM_PACKAGE_DEPENDS "hipblas-common (>=1.0)")
+
+include(CPack)
+
+cpack_add_component(hipBLASLt_Runtime
+    DISPLAY_NAME "Runtime"
+    DESCRIPTION "Runtime libraries for hipBLASLt"
+    # GROUP Runtime
+    REQUIRED
+)
+
+cpack_add_component(hipBLASLt_Development
+    DISPLAY_NAME "Development"
+    DESCRIPTION "Headers and CMake files for hipBLASLt"
+    # GROUP Development
+    DEPENDS hipBLASLt_Runtime
+)
+
+cpack_add_component(hipBLASLt_Docs
+    DISPLAY_NAME "Documentation"
+    DESCRIPTION "Documentation for hipBLASLt"
+    # GROUP Documentation
+)
