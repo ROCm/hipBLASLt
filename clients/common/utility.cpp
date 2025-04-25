@@ -34,7 +34,7 @@
 
 #include <fcntl.h>
 
-#include "Tensile/Source/client/include/Utility.hpp"
+#include <Utility.hpp>  // TODO: Fix this namespace, should be #include <Tensile/Utility.hpp>
 
 #if __has_include(<filesystem>)
 #include <filesystem>
