@@ -50,10 +50,10 @@ if(ENABLE_BLIS)
     target_link_libraries(hipblaslt-clients-common PRIVATE BLIS::BLIS)
 endif()
 
-target_link_libraries(hipblaslt-clients-common PUBLIC roc::hipblaslt)
+target_link_libraries(hipblaslt-clients-common PUBLIC roc::hipblaslt lapack)
 target_compile_definitions(hipblaslt-clients-common PRIVATE CLIENTS_NO_FORTRAN)
 
-target_link_libraries(hipblaslt-bench PRIVATE hipblaslt-clients-common lapack)
+target_link_libraries(hipblaslt-bench PRIVATE hipblaslt-clients-common)
 
 # TODO: Still haven't added hipblaslt-bench-groupedgemm-fixed-mk and related targets
 
@@ -63,12 +63,12 @@ add_subdirectory(bench)
 if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     add_executable(hipblaslt-test)
-    target_link_libraries(hipblaslt-test PRIVATE hipblaslt-clients-common)
+    target_link_libraries(hipblaslt-test PRIVATE hipblaslt-clients-common GTest::gtest rocm_smi64)
     if(ENABLE_BLIS)
         target_link_libraries(hipblaslt-test PRIVATE BLIS::BLIS)
     endif()
 
-    target_compile_definitions(hipblaslt-test PRIVATE GOOGLE_TEST)
+    target_compile_definitions(hipblaslt-test PRIVATE GOOGLE_TEST HIPBLASLT_TEST)
     add_subdirectory(test)
 endif()
 
