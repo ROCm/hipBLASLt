@@ -59,6 +59,16 @@ if(ENABLE_DEVICE)
     file(MAKE_DIRECTORY "${device_library_dir}")
 endif()
 
+set(CMAKE_SKIP_BUILD_RPATH FALSE CACHE BOOL ADVANCE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE CACHE BOOL)
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib" CACHE STRING)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE CACHE BOOL)
+
+mark_as_advanced(CMAKE_SKIP_BUILD_RPATH)
+mark_as_advanced(CMAKE_BUILD_WITH_INSTALL_RPATH)
+mark_as_advanced(CMAKE_INSTALL_RPATH)
+mark_as_advanced(CMAKE_INSTALL_RPATH_USE_LINK_PATH)
+
 set(TEMP_TENSILE_HOST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../tensilelite/Tensile/Source/lib")
 set(HIPBLASLT_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../library")
 set(ROCBLASLT_LIB_DIR "${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt")
@@ -164,13 +174,25 @@ install(TARGETS hipblaslt rocisa-cpp
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
-install(FILES ${HIPBLASLT_LIB_INCLUDES}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
+get_target_property(hipblaslt_public_headers roc::hipblaslt INTERFACE_SOURCES)
+install(
+    FILES ${hipblaslt_public_headers}
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt"
+    COMPONENT hipBLASLt_Development
 )
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h
-        ${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt
+# temporary workaround to avoid updating downstream components
+# TODO: remove the follow file install once rocblas is updated
+install(
+    FILES 
+        "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h"
+        "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h"
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    COMPONENT hipBLASLt_Development
+)
+install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindBLIS.cmake"
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/hipblaslt
+    COMPONENT hipBLASLt_Development
 )
 install(
     EXPORT hipblaslt-targets
@@ -181,14 +203,90 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
     "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/hipblaslt-config.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/hipblaslt
+    COMPONENT hipBLASLt_Development
+)
+install(
+    FILES "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md"
+    COMPONENT hipBLASLt_Docs
+    DESTINATION "${CMAKE_INSTALL_DOCDIR}"
 )
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/hipblaslt-config-version.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion
 )
+
 if(ENABLE_DEVICE)
-    install(FILES
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/hipblaslt/library
+    install(
+        DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Tensile/library"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/hipblaslt"
+        COMPONENT hipBLASLt_Runtime
     )
+endif()
+
+if(ENABLE_CLIENT)
+    install(
+        TARGETS hipblaslt-bench hipblaslt-clients-common
+        EXPORT hipblaslt-targets
+        COMPONENT hipBLASLt_Runtime
+    )
+    if(BUILD_TESTING)
+        install(
+            TARGETS hipblaslt-test
+            EXPORT hipblaslt-targets
+            COMPONENT hipBLASLt_Runtime
+        )
+        install(
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/clients/hipblaslt_gtest.data"
+            DESTINATION "${CMAKE_INSTALL_BINDIR}"
+            COMPONENT hipBLASLt_Runtime
+        )
+    endif()
+    if(BUILD_SAMPLES)
+        install(
+            TARGETS
+                hipblaslt_gemm
+                hipblaslt_gemm_ext
+                hipblaslt_gemm_batched
+                hipblaslt_gemm_batched_ext
+                hipblaslt_gemm_tuning_splitk_ext
+                hipblaslt_gemm_bias
+                hipblaslt_gemm_bias_ext
+                hipblaslt_gemm_get_all_algos
+                hipblaslt_gemm_get_all_algos_ext
+                hipblaslt_gemm_get_algo_by_index_ext
+                hipblaslt_gemm_alphavec_ext
+                hipblaslt_gemm_gelu_aux_bias
+                hipblaslt_gemm_gelu_aux_bias_ext
+                hipblaslt_gemm_amax
+                hipblaslt_gemm_amax_ext
+                hipblaslt_gemm_amax_with_scale
+                hipblaslt_gemm_amax_with_scale_ext
+                hipblaslt_gemm_bgradb
+                hipblaslt_gemm_ext_bgradb
+                hipblaslt_gemm_dgelu_bgrad
+                hipblaslt_gemm_dgelu_bgrad_ext
+                hipblaslt_gemm_is_tuned_ext
+                hipblaslt_gemm_tuning_wgm_ext
+                hipblaslt_gemm_with_scale_a_b
+                hipblaslt_gemm_with_scale_a_b_ext
+                hipblaslt_groupedgemm_ext
+                hipblaslt_groupedgemm_fixed_mk_ext
+                hipblaslt_groupedgemm_get_all_algos_ext
+                hipblaslt_gemm_mix_precision
+                hipblaslt_gemm_mix_precision_ext
+                hipblaslt_gemm_mix_precision_with_amax_ext
+                hipblaslt_gemm_attr_tciA_tciB
+                hipblaslt_ext_op_layernorm
+                hipblaslt_ext_op_amax
+                hipblaslt_ext_op_amax_with_scale
+                hipblaslt_gemm_with_TF32
+                hipblaslt_gemm_swizzle_a
+                hipblaslt_gemm_bias_swizzle_a_ext
+                hipblaslt_weight_swizzle_padding
+                hipblaslt_gemm_swish_bias
+            EXPORT hipblaslt-targets
+            COMPONENT hipBLASLt_Runtime
+        )
+    endif()
 endif()
