@@ -459,8 +459,6 @@ namespace TensileLite
                                                size_t                   vw,
                                                size_t                   gsu) const;
 
-        bool canSolve(Problem const& problem, Hardware const& hardware) const;
-
         template <bool T_Debug>
         KernelInvocation generateActivationOnlyCall(Problem const&           problem,
                                                     ContractionInputs const& inputs) const;

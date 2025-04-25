@@ -92,7 +92,19 @@ namespace TensileLite
 
             if(solution)
             {
-                if(solution->canSolve(problem, hardware))
+                Task task(hardware, problem, *(solution));
+                if(debug)
+                {
+                    solution->hardwarePredicate->debugEval(hardware, std::cout);
+                    std::cout << std::endl;
+                    solution->problemPredicate->debugEval(problem, std::cout);
+                    std::cout << std::endl;
+                    solution->taskPredicate->debugEval(task, std::cout);
+                    std::cout << std::endl;
+                }
+
+                if((*solution->hardwarePredicate)(hardware)
+                   && (*solution->problemPredicate)(problem))
                     return solution;
             }
             else if(debug)
@@ -118,7 +130,9 @@ namespace TensileLite
                     for(int idx = 0; idx < problems.size(); idx++)
                     {
                         auto problem = problems[idx];
+                        Task task(hardware, problem, *(solution));
                         solution->problemPredicate->debugEval(problem, std::cout);
+                        solution->taskPredicate->debugEval(task, std::cout);
                     }
                 }
 
@@ -130,9 +144,10 @@ namespace TensileLite
                 for(int idx = 0; idx < problems.size(); idx++)
                 {
                     auto problem = problems[idx];
+                    Task task(hardware, problem, *(solution));
                     problem.setWorkspaceSizeGroupedGemm(ws);
                     problem.setGroupedGemmCount(problems.size());
-                    if(!(*solution->problemPredicate)(problem))
+                    if(!(*solution->problemPredicate)(problem)  || !(*solution->taskPredicate)(task) )
                         return std::shared_ptr<MySolution>();
                 }
 
@@ -163,15 +178,19 @@ namespace TensileLite
             bool useSolution = false;
             if(solution)
             {
+                Task task(hardware, problem, (*solution));
                 if(debug)
                 {
                     solution->hardwarePredicate->debugEval(hardware, std::cout);
                     if(searchType == SolutionLibrarySearchType::DEFAULT)
+                    {
                         solution->problemPredicate->debugEval(problem, std::cout);
+                        solution->taskPredicate->debugEval(task, std::cout);
+                    }
                 }
 
-                if(solution->canSolve(problem, hardware)
-                   && softwarePredicate(searchType, (*solution), problem)) 
+                if((*solution->hardwarePredicate)(hardware)
+                   && softwarePredicate(searchType, task, hardware, (*solution), problem)) 
                     useSolution = true;
             }
             else if(debug)
@@ -214,9 +233,10 @@ namespace TensileLite
                     for(int idx = 0; idx < problems.size(); idx++)
                     {
                         auto problem = problems[idx];
+                        Task task(hardware, problem, (*solution));
                         problem.setWorkspaceSizeGroupedGemm(ws);
                         problem.setGroupedGemmCount(problems.size());
-                        if(!(*solution->problemPredicate)(problem))
+                        if(!(*solution->problemPredicate)(problem) || !(*solution->taskPredicate)(task))
                             useSolution = false;
                     }
                 }
@@ -233,7 +253,9 @@ namespace TensileLite
                         for(int idx = 0; idx < problems.size(); idx++)
                         {
                             auto problem = problems[idx];
+                            Task task(hardware, problem, (*solution));
                             solution->problemPredicate->debugEval(problem, std::cout);
+                            solution->taskPredicate->debugEval(task, std::cout);
                         }
                 }
             }

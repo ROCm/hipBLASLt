@@ -78,8 +78,6 @@ namespace TensileLite
                     size_t gsu           = task.problem.getParams().gsu() > 0 ? task.problem.getParams().gsu()
                                                                         : task.solution.sizeMapping.globalSplitU;
                     size_t gsuMultiplier = gsu > 1 ? gsu : 0;
-                    const bool streamK = Debug::Instance().useExperimentalSelection() == 2;
-                    const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
 
                     if(task.problem.d().totalLogicalElements() * gsuMultiplier > MAX_GSU_WORKSPACE_SIZE)
                         return debugEvalCmp(task,
@@ -95,14 +93,6 @@ namespace TensileLite
                                             stream,
                                             "prob",
                                             task.problem.workspaceSizeGroupedGemm(),
-                                            "<=",
-                                            "max",
-                                            task.problem.workspaceSize());
-                    if(streamK && streamKDP)
-                        return debugEvalCmp(task,
-                                            stream,
-                                            "prob",
-                                            0,
                                             "<=",
                                             "max",
                                             task.problem.workspaceSize());

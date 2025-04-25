@@ -2130,26 +2130,6 @@ namespace TensileLite
         return rv;
     }
 
-    bool ContractionSolution::canSolve(Problem const& problem, Hardware const& hardware) const
-    {
-        static const bool debug = Debug::Instance().printPredicateEvaluation();
-        Task task(hardware, problem, *this);
-        if(debug)
-        {
-            std::cout << "hardwarePredicate:" << std::endl;
-            hardwarePredicate->debugEval(hardware, std::cout);
-            std::cout << std::endl;
-            std::cout << "problemPredicate:" << std::endl;
-            problemPredicate->debugEval(problem, std::cout);
-            std::cout << std::endl;
-            std::cout << "taskPredicate:" << std::endl;
-            taskPredicate->debugEval(task, std::cout);
-            std::cout << std::endl;
-        }
-        return (*taskPredicate)(task) && (*problemPredicate)(problem)
-               && (*hardwarePredicate)(hardware);
-    }
-
     std::string ContractionSolution::outputConversionKernelName(Problem const&           problem,
                                                                 ContractionInputs const& inputs,
                                                                 size_t                   vw,
