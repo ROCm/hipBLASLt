@@ -31,24 +31,24 @@ set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--cxx-compiler=${CMAKE_CXX_COMPILE
 if(Tensile_CPU_THREADS)
     set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--jobs=${Tensile_CPU_THREADS}")
 endif()
-
+set(output_dir "${CMAKE_CURRENT_BINARY_DIR}/Tensile")
 set(TENSILE_CREATE_LIBRARY_COMMAND
     ${TENSILELITE_DIR}/Tensile/bin/TensileCreateLibrary
     ${TENSILE_BUILD_OPTS}
     "${CMAKE_CURRENT_SOURCE_DIR}/../../library"
-    "${CMAKE_CURRENT_BINARY_DIR}/Tensile"
+    ${output_dir}
     HIP
 )
 
 add_custom_command(
     COMMENT "Building device libraries..."
     COMMAND ${TENSILE_CREATE_LIBRARY_COMMAND}
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Tensile/library"
+    OUTPUT "${output_dir}/library"
 )
 
 add_custom_target(tensilelite-device-libraries ALL
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Tensile/library
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/Tensile" "${CMAKE_BINARY_DIR}/Tensile"
+    DEPENDS "${output_dir}/library"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${output_dir} "${CMAKE_BINARY_DIR}/Tensile"
 )
 
 add_subdirectory(extops) # can't add this given current architecture of Tensile

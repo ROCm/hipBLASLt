@@ -36,8 +36,9 @@ add_custom_command(
     COMMENT "Building hipblasltTransform.hsaco"
 )
 
-add_custom_target(matrix-transform ALL # need to remove all
+add_custom_target(matrix-transform-cp ALL
     DEPENDS ${output_library}
+    COMMAND ${CMAKE_COMMAND} -E copy "${output_library}" "${device_library_dir}"
 )
 
 unset(output_library)

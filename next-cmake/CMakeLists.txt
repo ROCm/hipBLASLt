@@ -27,6 +27,8 @@
 cmake_minimum_required(VERSION 3.22...3.25.2)
 project(hipblaslt VERSION 0.15.0 LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
@@ -64,6 +66,7 @@ set(ROCBLASLT_LIB_DIR "${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt")
 find_package(hip REQUIRED)
 if(ENABLE_HOST)
     find_package(hipblas-common REQUIRED)
+    find_package(BLIS REQUIRED)
 endif()
 if(ENABLE_CLIENT)
     find_package(Threads REQUIRED) # TODO: Where is this used, should it be moved up a level?

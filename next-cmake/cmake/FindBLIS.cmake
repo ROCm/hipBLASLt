@@ -90,4 +90,4 @@ if(BLIS_FOUND)
     endif()
 endif()
 
-message("BLIS lib found: ${BLIS_LIB}")
+message(STATUS "Found BLIS: ${BLIS_LIB}")

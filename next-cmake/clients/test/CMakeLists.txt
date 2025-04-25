@@ -29,5 +29,5 @@ add_custom_command(
     COMMAND ${Python3_EXECUTABLE} "${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_gentest.py" -I "${TEMP_CLIENTS_SOURCE_DIR}/include" "${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest.yaml" -o ${HIPBLASLT_TEST_DATA}
 )
 
-add_custom_target(hipblaslt-test-data ALL DEPENDS ${HIPBLASLT_TEST_DATA})
+add_custom_target(hipblaslt-test-data DEPENDS ${HIPBLASLT_TEST_DATA})
 add_dependencies(hipblaslt-test hipblaslt-test-data)
