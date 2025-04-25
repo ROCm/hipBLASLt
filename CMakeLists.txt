@@ -277,7 +277,7 @@ if(HIPBLASLT_ENABLE_MARKER)
 endif()
 
 # Setup version
-set(VERSION_STRING "0.12.0")
+set(VERSION_STRING "0.12.1")
 rocm_setup_version(VERSION ${VERSION_STRING})
 set(hipblaslt_SOVERSION 0.12)
 
