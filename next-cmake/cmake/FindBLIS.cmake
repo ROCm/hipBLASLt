@@ -61,8 +61,6 @@ find_path(BLIS_INCLUDE_DIR
     # PATH_SUFFIXES include_ILP64
 )
 
-message(STATUS "blis include: ${BLIS_INCLUDE_DIR}")
-
 find_library(BLIS_LIB
     NAMES blis-mt blis
     PATHS
@@ -73,8 +71,6 @@ find_library(BLIS_LIB
         ${BLIS_PATH_4_0}/lib_ILP64
     # PATH_SUFFIXES lib lib_ILP64
 )
-
-message(STATUS "blis lib: ${BLIS_LIB}")
 
 find_package_handle_standard_args(BLIS
     REQUIRED_VARS BLIS_LIB BLIS_INCLUDE_DIR
@@ -94,5 +90,4 @@ if(BLIS_FOUND)
     endif()
 endif()
 
-message("BLIS header directory found: ${BLIS_INCLUDE_DIR}")
 message("BLIS lib found: ${BLIS_LIB}")

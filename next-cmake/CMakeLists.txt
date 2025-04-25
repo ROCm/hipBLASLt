@@ -32,7 +32,8 @@ include(CMakeDependentOption)
 set(ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
 set(ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
 cmake_dependent_option(ENABLE_HOST "Build hipBLASLt host library." ON "ENABLE_CLIENT" OFF)
-set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples")
+set(BUILD_TESTING ON CACHE BOOL "Build hipblaslt host tests.")
+set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
 
 set(ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
 set(ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
@@ -87,6 +88,7 @@ target_compile_definitions(hipblaslt
     PRIVATE 
         TENSILE_DEFAULT_SERIALIZATION
     PUBLIC
+        ROCBLASLT_TENSILE_LAZY_LOAD
         ROCM_USE_FLOAT16
         __HIP_PLATFORM_AMD__
 )
@@ -112,6 +114,11 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+set_target_properties(hipblaslt
+    PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host-library
 )
 
 if(ENABLE_HOST)
