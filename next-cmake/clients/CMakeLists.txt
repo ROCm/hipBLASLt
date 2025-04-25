@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.22...3.25.2)
 project(clients LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)

@@ -21,5 +21,9 @@
 #
 # ########################################################################
 
+# The hipBLASLt host library is the main component of the hipBLASLt library.
+# As such, a `project()` command is not used here and is instead expected to be
+# called in the top-level CMakeLists.txt file.
+
 add_subdirectory(src)
 add_subdirectory(include)

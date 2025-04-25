@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.22...3.25.2)
 project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
 set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
@@ -61,7 +61,7 @@ add_custom_command(
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/Tensile/library"
 )
 
-add_custom_target(tensilelite-device-libraries ALL 
+add_custom_target(tensilelite-device-libraries ALL
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Tensile/library
     COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/Tensile" "${CMAKE_BINARY_DIR}/Tensile"
 )

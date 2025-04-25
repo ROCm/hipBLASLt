@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22...3.25.2)
 project(rocisa-cpp LANGUAGES CXX)
 
 if(NOT rocisa_root)

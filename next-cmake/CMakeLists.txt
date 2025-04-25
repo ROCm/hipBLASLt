@@ -21,10 +21,8 @@
 #
 # ########################################################################
 
-# TODO: Which cmake version?
-cmake_minimum_required(VERSION 3.21)
-# TODO: Which hipblaslt version?
-project(hipblaslt VERSION 0.13.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.22...3.25.2)
+project(hipblaslt VERSION 0.15.0 LANGUAGES CXX)
 
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
@@ -61,6 +59,9 @@ endif()
 if(ENABLE_LLVM)
     find_package(LLVM REQUIRED)
 endif()
+if(ENABLE_DEVICE)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+endif()
 
 add_library(hipblaslt)
 add_library(roc::hipblaslt ALIAS hipblaslt)
@@ -71,10 +72,12 @@ target_link_libraries(hipblaslt
         hip::device
     PRIVATE
         rocisa::rocisa-cpp
+    PRIVATE
+        roc::hipblas-common
         dl
 )
 if(ENABLE_OPENMP)
-    target_link_libraries(hipblaslt PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries(hipblaslt PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
 target_compile_features(hipblaslt PUBLIC cxx_std_17)
@@ -110,8 +113,6 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 if(ENABLE_HOST)
     add_subdirectory(rocisa/rocisa-cpp)
@@ -155,7 +156,7 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 if(ENABLE_DEVICE)
-    install(FILES 
+    install(FILES
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/hipblaslt/library
     )
 endif()
