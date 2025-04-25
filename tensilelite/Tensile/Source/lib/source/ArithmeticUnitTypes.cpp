@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,7 +55,7 @@ namespace TensileLite
         return &data;
     }
 
-    std::map<std::string, ArithmeticUnit>* ArithmeticUnitTypeInfo::getTypeNames();
+    std::map<std::string, ArithmeticUnit>* ArithmeticUnitTypeInfo::getTypeNames()
     {
         static std::map<std::string, ArithmeticUnit> typeNames;
         return &typeNames;
@@ -119,7 +119,7 @@ namespace TensileLite
 
         auto* data = getData();
         auto  iter = data->find(t);
-        if(iter == data-?end())
+        if(iter == data->end())
             throw std::runtime_error(concatenate("Invalid arithmetic unit: ", static_cast<int>(t)));
 
         return iter->second;
