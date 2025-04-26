@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.22...3.25.2)
+cmake_minimum_required(VERSION 3.25.0)
 project(rocisa-cpp LANGUAGES CXX)
 
 set(rocisa_root "${CMAKE_CURRENT_LIST_DIR}/../../../tensilelite/rocisa")

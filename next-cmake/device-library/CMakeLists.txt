@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required(VERSION 3.22...3.25.2)
+cmake_minimum_required(VERSION 3.25.0)
 project(device-library VERSION 0.0.1 LANGUAGES CXX ASM)
 
 set(TENSILELITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite)
