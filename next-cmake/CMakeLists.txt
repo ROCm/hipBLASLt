@@ -39,7 +39,7 @@ set(HIPBLASLT_ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
 cmake_dependent_option(HIPBLASLT_ENABLE_HOST "Build hipBLASLt host library." ON "HIPBLASLT_ENABLE_CLIENT" OFF)
 
 if(HIPBLASLT_ENABLE_CLIENT)
-    set(BUILD_TESTING ON CACHE BOOL "Build hipblaslt client tests.")
+    set(HIPBLASLT_BUILD_TESTING ON CACHE BOOL "Build hipblaslt client tests.")
     set(HIPBLASLT_ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
 endif()
 
@@ -111,7 +111,6 @@ if(HIPBLASLT_ENABLE_OPENMP)
 endif()
 
 target_compile_features(hipblaslt PUBLIC cxx_std_17) # I would like to make this configurable
-target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument) # is this applicable to the host?
 
 target_compile_definitions(hipblaslt
     PRIVATE
@@ -234,7 +233,7 @@ if(HIPBLASLT_ENABLE_CLIENT)
         EXPORT hipblaslt-targets
         COMPONENT hipBLASLt_Runtime
     )
-    if(BUILD_TESTING)
+    if(BUILD_TESTING OR HIPBLASLT_BUILD_TESTING)
         install(
             TARGETS hipblaslt-test
             EXPORT hipblaslt-targets

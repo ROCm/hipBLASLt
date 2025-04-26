@@ -51,7 +51,7 @@ target_link_libraries(hipblaslt-bench PRIVATE hipblaslt-clients-common)
 add_subdirectory(common)
 add_subdirectory(bench)
 
-if(BUILD_TESTING)
+if(BUILD_TESTING OR HIPBLSALT_BUILD_TESTING)
     find_package(GTest REQUIRED)
     add_executable(hipblaslt-test)
     target_link_libraries(hipblaslt-test PRIVATE hipblaslt-clients-common GTest::gtest rocm_smi64)
