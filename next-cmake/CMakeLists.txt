@@ -49,12 +49,12 @@ if(HIPBLASLT_ENABLE_HOST)
     set(HIPBLASLT_ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
     set(HIPBLASLT_ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
     set(HIPBLASLT_ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
-    set(HIPBLASLT_ENABLE_BLIS ON CACHE BOOL "Enable BLIS support.")
+    set(HIPBLASLT_ENABLE_BLIS ON CACHE BOOL "Enable BLIS support.") # I don't know that we can build with this OFF
     set(HIPBLASLT_ENABLE_LAZY_LOAD ON CACHE BOOL "Enable lazy loading of runtime code oject files to reduce ram usage.")
 endif()
 
 if(HIPBLASLT_ENABLE_DEVICE)
-    set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries")
+    set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries (will use nproc if unset)")
     set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
     file(MAKE_DIRECTORY "${device_library_dir}")
 endif()
@@ -79,7 +79,7 @@ if(HIPBLASLT_ENABLE_HOST)
     find_package(BLIS REQUIRED)
 endif()
 if(HIPBLASLT_ENABLE_CLIENT)
-    find_package(Threads REQUIRED) # TODO: Where is this used, should it be moved up a level?
+    #find_package(Threads REQUIRED) # TODO: We don't fail to build or link without Threads remove?
     find_package(cblas REQUIRED)
 endif()
 if(HIPBLASLT_ENABLE_OPENMP)
