@@ -35,7 +35,7 @@ target_sources(hipblaslt-clients-common
         $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_init_device.cpp>
 )
 
-if(ENABLE_BLIS)
+if(HIPBLASLT_ENABLE_BLIS)
     target_sources(hipblaslt-clients-common
         PRIVATE
             $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/blis_interface.cpp>

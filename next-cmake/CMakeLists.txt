@@ -34,26 +34,26 @@ include(CMakePackageConfigHelpers)
 include(GenerateExportHeader)
 include(CMakeDependentOption)
 
-set(ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
-set(ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
-cmake_dependent_option(ENABLE_HOST "Build hipBLASLt host library." ON "ENABLE_CLIENT" OFF)
+set(HIPBLASLT_ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
+set(HIPBLASLT_ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
+cmake_dependent_option(HIPBLASLT_ENABLE_HOST "Build hipBLASLt host library." ON "HIPBLASLT_ENABLE_CLIENT" OFF)
 
-if(ENABLE_CLIENT)
+if(HIPBLASLT_ENABLE_CLIENT)
     set(BUILD_TESTING ON CACHE BOOL "Build hipblaslt client tests.")
-    set(ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
+    set(HIPBLASLT_ENABLE_SAMPLES ON CACHE BOOL "Build client samples.")
 endif()
 
-if(ENABLE_HOST)
-    set(ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
-    set(ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
-    set(ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
-    set(ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
-    set(ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
-    set(ENABLE_BLIS ON CACHE BOOL "Enable BLIS support.")
-    set(ENABLE_LAZY_LOAD ON CACHE BOOL "Enable lazy loading of runtime code oject files to reduce ram usage.")
+if(HIPBLASLT_ENABLE_HOST)
+    set(HIPBLASLT_ENABLE_HIP ON CACHE BOOL "Use the HIP runtime.")
+    set(HIPBLASLT_ENABLE_MSGPACK ON CACHE BOOL "Use msgpack for parsing configuration files.")
+    set(HIPBLASLT_ENABLE_OPENMP ON CACHE BOOL "Use OpenMP to improve performance.")
+    set(HIPBLASLT_ENABLE_LLVM OFF CACHE BOOL "Use msgpack for parsing configuration files.")
+    set(HIPBLASLT_ENABLE_ROCROLLER OFF CACHE BOOL "Use RocRoller library.")
+    set(HIPBLASLT_ENABLE_BLIS ON CACHE BOOL "Enable BLIS support.")
+    set(HIPBLASLT_ENABLE_LAZY_LOAD ON CACHE BOOL "Enable lazy loading of runtime code oject files to reduce ram usage.")
 endif()
 
-if(ENABLE_DEVICE)
+if(HIPBLASLT_ENABLE_DEVICE)
     set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries")
     set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
     file(MAKE_DIRECTORY "${device_library_dir}")
@@ -74,24 +74,24 @@ set(HIPBLASLT_LIB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../library")
 set(ROCBLASLT_LIB_DIR "${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt")
 
 find_package(hip REQUIRED)
-if(ENABLE_HOST)
+if(HIPBLASLT_ENABLE_HOST)
     find_package(hipblas-common REQUIRED)
     find_package(BLIS REQUIRED)
 endif()
-if(ENABLE_CLIENT)
+if(HIPBLASLT_ENABLE_CLIENT)
     find_package(Threads REQUIRED) # TODO: Where is this used, should it be moved up a level?
     find_package(cblas REQUIRED)
 endif()
-if(ENABLE_OPENMP)
+if(HIPBLASLT_ENABLE_OPENMP)
     find_package(OpenMP REQUIRED)
 endif()
-if(ENABLE_MSGPACK)
+if(HIPBLASLT_ENABLE_MSGPACK)
     find_package(msgpack REQUIRED NAMES msgpack msgpack-cxx msgpack-c)
 endif()
-if(ENABLE_LLVM)
+if(HIPBLASLT_ENABLE_LLVM)
     find_package(LLVM REQUIRED)
 endif()
-if(ENABLE_DEVICE)
+if(HIPBLASLT_ENABLE_DEVICE)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
 endif()
 
@@ -106,7 +106,7 @@ target_link_libraries(hipblaslt
         rocisa::rocisa-cpp
         dl
 )
-if(ENABLE_OPENMP)
+if(HIPBLASLT_ENABLE_OPENMP)
     target_link_libraries(hipblaslt PUBLIC OpenMP::OpenMP_CXX)
 endif()
 
@@ -121,17 +121,17 @@ target_compile_definitions(hipblaslt
         __HIP_PLATFORM_AMD__
 )
 
-if(ENABLE_LAZY_LOAD)
+if(HIPBLASLT_ENABLE_LAZY_LOAD)
     target_compile_definitions(hipblaslt
         PRIVATE
             ROCBLASLT_TENSILE_LAZY_LOAD
     )
 endif()
 
-if(ENABLE_HIP)
+if(HIPBLASLT_ENABLE_HIP)
     target_compile_definitions(hipblaslt PRIVATE TENSILE_USE_HIP)
 endif()
-if(ENABLE_MSGPACK)
+if(HIPBLASLT_ENABLE_MSGPACK)
     target_compile_definitions(hipblaslt PRIVATE TENSILE_MSGPACK)
 endif()
 
@@ -156,14 +156,14 @@ set_target_properties(hipblaslt
     LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/host-library
 )
 
-if(ENABLE_HOST)
+if(HIPBLASLT_ENABLE_HOST)
     add_subdirectory(rocisa/rocisa-cpp)
     add_subdirectory(host-library)
 endif()
-if(ENABLE_DEVICE)
+if(HIPBLASLT_ENABLE_DEVICE)
     add_subdirectory(device-library)
 endif()
-if(ENABLE_CLIENT)
+if(HIPBLASLT_ENABLE_CLIENT)
     add_subdirectory(clients)
 endif()
 
@@ -220,7 +220,7 @@ write_basic_package_version_file(
     COMPATIBILITY SameMajorVersion
 )
 
-if(ENABLE_DEVICE)
+if(HIPBLASLT_ENABLE_DEVICE)
     install(
         DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/Tensile/library"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/hipblaslt"
@@ -228,7 +228,7 @@ if(ENABLE_DEVICE)
     )
 endif()
 
-if(ENABLE_CLIENT)
+if(HIPBLASLT_ENABLE_CLIENT)
     install(
         TARGETS hipblaslt-bench hipblaslt-clients-common
         EXPORT hipblaslt-targets

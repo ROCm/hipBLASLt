@@ -37,7 +37,7 @@ target_sources(hipblaslt
         $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/utility.cpp>
 )
 
-if(ENABLE_ROCROLLER)
+if(HIPBLASLT_ENABLE_ROCROLLER)
     target_sources(hipblaslt
         PRIVATE
             $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/rocroller_host.cpp>

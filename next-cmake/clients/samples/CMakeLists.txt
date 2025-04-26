@@ -25,7 +25,7 @@ set(TEMP_HIPBLASLT_SAMPLE_DIR ${TEMP_CLIENTS_SOURCE_DIR}/samples)
 
 add_library(sample-helper INTERFACE)
 
-if(ENABLE_BLIS)
+if(HIPBLASLT_ENABLE_BLIS)
     target_link_libraries(sample-helper INTERFACE BLIS::BLIS)
 endif()
 

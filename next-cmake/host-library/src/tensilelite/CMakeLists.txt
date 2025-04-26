@@ -56,15 +56,15 @@ endif()
 #target_compile_options( TensileHost PUBLIC -Wno-deprecated-declarations -Wno-ignored-attributes -Wdll-attribute-on-redeclaration -fdelayed-template-parsing )
 #endif()
 
-if(ENABLE_LLVM)
+if(HIPBLASLT_ENABLE_LLVM)
   add_subdirectory(llvm)
 endif()
 
-if(ENABLE_MSGPACK)
+if(HIPBLASLT_ENABLE_MSGPACK)
   add_subdirectory(msgpack)
 endif()
 
-if(ENABLE_HIP)
+if(HIPBLASLT_ENABLE_HIP)
   add_subdirectory(hip)
 endif()
 

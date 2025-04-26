@@ -37,7 +37,7 @@ target_include_directories(hipblaslt-clients-common
         $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
 )
 
-if(ENABLE_BLIS)
+if(HIPBLASLT_ENABLE_BLIS)
     target_link_libraries(hipblaslt-clients-common PRIVATE BLIS::BLIS)
 endif()
 
@@ -55,7 +55,7 @@ if(BUILD_TESTING)
     find_package(GTest REQUIRED)
     add_executable(hipblaslt-test)
     target_link_libraries(hipblaslt-test PRIVATE hipblaslt-clients-common GTest::gtest rocm_smi64)
-    if(ENABLE_BLIS)
+    if(HIPBLASLT_ENABLE_BLIS)
         target_link_libraries(hipblaslt-test PRIVATE BLIS::BLIS) # necessary?
     endif()
 
@@ -63,6 +63,6 @@ if(BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
-if(ENABLE_SAMPLES)
+if(HIPBLASLT_ENABLE_SAMPLES)
     add_subdirectory(samples)
 endif()
