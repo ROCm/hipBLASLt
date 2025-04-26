@@ -80,38 +80,45 @@ Building device libraries
       cmake -D CMAKE_BUILD_TYPE=Release    \
             -D CMAKE_PREFIX_PATH=/opt/rocm \
             -D GPU_TARGETS=gfx950          \
-            -D ENABLE_HOST=OFF             \
-            -D ENABLE_CLIENT=OFF           \
+            -D HIPBLASLT_ENABLE_HOST=OFF   \
+            -D HIPBLASLT_ENABLE_CLIENT=OFF \
             -B build                       \
             -S .
-      cmake --build build --parallel 32
+      cmake --build build
 
 Options
 -------
 
 *Project wide options*:
-- `ENABLE_HOST`: enables generation of host library (default: `ON`)
-- `ENABLE_DEVICE`: enables generation of device libraries (default: `ON`)
-- `ENABLE_CLIENT`: enables generation of client applications (default: `ON`)
-- `ENABLE_OPENMP`:
-- `ENABLE_HIP`:
-- `ENABLE_LLVM`:
-- `ENABLE_BLIS`:
+* `HIPBLASLT_ENABLE_HOST`: enables generation of host library (default: `ON`)
+* `HIPBLASLT_ENABLE_DEVICE`: enables generation of device libraries (default: `ON`)
+* `HIPBLASLT_ENABLE_CLIENT`: enables generation of client applications (default: `ON`)
+* `HIPBLASLT_ENABLE_LAZY_LOAD` Enable lazy loading of runtime code oject files to reduce init costs (default: `ON`)
+* `GPU_TARGETS:` Semicolon separated list of gfx targets to build
+
 
 *Host library options:*
--
+* `HIPBLASLT_ENABLE_BLIS`: Enable BLIS support (default `ON`)
+* `HIPBLASLT_ENABLE_HIP`: Use the HIP runtime (default `ON`)
+* `HIPBLASLT_ENABLE_LLVM`: Use msgpack for parsing configuration files (default `OFF`)
+* `HIBLASLT_ENABLE_MSGPACK`` Use msgpack for parsing configuration files (default `ON`)
+* `HIPBLASLT_ENABLE_OPENMP`: "Use OpenMP to improve performance (default `ON`)
+* `HIPBLASLT_ENABLE_ROCROLLER:` Use RocRoller library (default `OFF`)
 
 *Device libraries options:*
--
+* `HIPBLASLT_DEVICE_JOBS:` Allow N jobs generating device code libraries (default empty, use nproc jobs)
 
 *Client options:*
--
+
+* `HIPBLASLT_BUILD_TESTING:` Build hipblaslt client tests (default `ON`)
+* `HIPBLASLT_ENABLE_SAMPLES:` Build client samples (default `ON`)
+
 
 CMake Targets
 -------------
 
-- `roc::hipblaslt`
-- `rocisa::rocisa-cpp`
+* `roc::hipblaslt`
+* `rocisa::rocisa-cpp`
 
 ---------------
 Physical Design
@@ -127,21 +134,3 @@ Each component has a corresponding directory. The host
 and device libraries are independently configurable and
 buildable but the client applications require the host
 library to build and the device libraries to run.
-
-^^^^^^^^^^^^
-Host library
-^^^^^^^^^^^^
-
-The host library code is compiled and linked into a single
-library - *libhipblaslt* - and composes three logical groups
-of source into the `host-library` directory:
-
-- hipblaslt
-- rocblaslt
-- tensilelite
-
-^^^^^^^^^^^^^^^^
-Device libraries
-^^^^^^^^^^^^^^^^
-
-The device libraries

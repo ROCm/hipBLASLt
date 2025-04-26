@@ -54,7 +54,7 @@ if(HIPBLASLT_ENABLE_HOST)
 endif()
 
 if(HIPBLASLT_ENABLE_DEVICE)
-    set(Tensile_CPU_THREADS "" CACHE STRING "Number of CPU threads to use for building device libraries (will use nproc if unset)")
+    set(HIPBLASLT_DEVICE_JOBS "" CACHE STRING "Number of CPU threads to use for building device libraries (will use nproc if unset)")
     set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
     file(MAKE_DIRECTORY "${device_library_dir}")
 endif()
@@ -150,13 +150,10 @@ endif()
 
 target_include_directories(hipblaslt
     PUBLIC
-        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
-)
-target_include_directories(hipblaslt
-    PUBLIC
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
+        $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE
         "${ROCBLASLT_LIB_DIR}/include"
