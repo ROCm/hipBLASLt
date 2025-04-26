@@ -26,6 +26,7 @@ project(clients LANGUAGES CXX)
 
 set(TEMP_CLIENTS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../clients")
 set(TEMP_TENSILE_CLIENT_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite/Tensile/Source/client")
+set(TEMP_TENSILELITE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tensilelite")
 
 add_executable(hipblaslt-bench)
 add_library(hipblaslt-clients-common)
@@ -35,6 +36,8 @@ target_include_directories(hipblaslt-clients-common
         $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common>
         $<BUILD_INTERFACE:${TEMP_TENSILE_CLIENT_SOURCE_DIR}/include>
+    PRIVATE
+        ${TEMP_TENSILELITE_DIR}
 )
 
 if(HIPBLASLT_ENABLE_BLIS)
@@ -58,7 +61,6 @@ if(BUILD_TESTING OR HIPBLSALT_BUILD_TESTING)
     if(HIPBLASLT_ENABLE_BLIS)
         target_link_libraries(hipblaslt-test PRIVATE BLIS::BLIS) # necessary?
     endif()
-
     target_compile_definitions(hipblaslt-test PRIVATE GOOGLE_TEST HIPBLASLT_TEST)
     add_subdirectory(test)
 endif()
