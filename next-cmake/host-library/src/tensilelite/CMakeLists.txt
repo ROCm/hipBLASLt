@@ -27,7 +27,7 @@ target_sources(hipblaslt
     PRIVATE
         "${_CMAKE_CURRENT_SOURCE_DIR}/Activation.cpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/AMDGPU.cpp"
-        "${_CMAKE_CURRENT_SOURCE_DIR}/ArithmeticUnitTypes.cpp"
+        #"${_CMAKE_CURRENT_SOURCE_DIR}/ArithmeticUnitTypes.cpp" # this file isn't built in existing src tree
         "${_CMAKE_CURRENT_SOURCE_DIR}/ContractionProblem.cpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/ContractionSolution.cpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/DataTypes.cpp"
