@@ -25,22 +25,20 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile")
 
 target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Base.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Containers.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionPredicates.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionSolution.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ExactLogicLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/FreeSizeLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/GranularitySelectionLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/HasTraits.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLFeatures.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLPClassificationLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MapLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MatchingLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/PlaceholderLibrary.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Predicates.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Properties.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/SolutionLibrary.hpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Base.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Containers.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionPredicates.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ContractionSolution.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/ExactLogicLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/FreeSizeLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/GranularitySelectionLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/HasTraits.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLFeatures.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MLPClassificationLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MapLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/MatchingLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/PlaceholderLibrary.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Predicates.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/Properties.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Serialization/SolutionLibrary.hpp"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

@@ -24,22 +24,20 @@
 set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_CLIENTS_SOURCE_DIR}/common")
 target_sources(hipblaslt-clients-common
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/singletons.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/utility.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/efficiency_monitor.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/cblas_interface.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/argument_model.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_parse_data.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_arguments.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_random.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_init_device.cpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/singletons.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/utility.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/efficiency_monitor.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/cblas_interface.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/argument_model.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_parse_data.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_arguments.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_random.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_init_device.cpp"
 )
 
 if(HIPBLASLT_ENABLE_BLIS)
     target_sources(hipblaslt-clients-common
         PRIVATE
-            $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/blis_interface.cpp>
+            "${_CMAKE_CURRENT_SOURCE_DIR}/blis_interface.cpp"
     )
 endif()
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

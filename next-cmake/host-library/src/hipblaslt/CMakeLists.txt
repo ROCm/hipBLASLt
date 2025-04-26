@@ -25,12 +25,10 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${HIPBLASLT_LIB_DIR}/src")
 
 target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_ostream.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext-op.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt_ostream.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt-ext-op.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/amd_detail/hipblaslt.cpp"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

@@ -22,5 +22,5 @@
 # ########################################################################
 
 target_sources(hipblaslt-bench PRIVATE
-    $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp>
+    ${TEMP_CLIENTS_SOURCE_DIR}/benchmarks/client.cpp
 )

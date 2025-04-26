@@ -25,8 +25,6 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/include/Tensile")
 
 target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/llvm/Loading.hpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/llvm/YAML.hpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/llvm/Loading.hpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/llvm/YAML.hpp"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

@@ -52,7 +52,5 @@ target_sources(hipblaslt
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt/hipblaslt-types.h>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt-version.h>
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt_xfloat32.h>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hipblaslt/hipblaslt_xfloat32.h"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

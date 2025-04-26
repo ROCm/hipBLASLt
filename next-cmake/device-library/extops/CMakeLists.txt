@@ -144,7 +144,3 @@ add_custom_target(extop-cp ALL
     COMMAND ${CMAKE_COMMAND} -E copy "${output_dir}/*.co" ${device_library_dir}
     COMMAND ${CMAKE_COMMAND} -E copy "${output_dir}/*.dat" ${device_library_dir}
 )
-
-unset(ops_dir)
-unset(output_dir)
-unset(extop_cp_depends)

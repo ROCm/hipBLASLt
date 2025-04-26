@@ -25,7 +25,5 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/source")
 
 target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/msgpack/MessagePack.cpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/msgpack/MessagePack.cpp"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

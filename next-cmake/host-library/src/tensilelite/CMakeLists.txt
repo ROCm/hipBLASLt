@@ -25,32 +25,33 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/source")
 
 target_sources(hipblaslt
     PRIVATE
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Activation.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/AMDGPU.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/ArithmeticUnitTypes.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/ContractionProblem.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/ContractionSolution.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/DataTypes.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/EmbeddedData.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/EmbeddedLibrary.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/KernelArguments.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/KernelLanguageTypes.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/MLFeatures.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/MLPNet.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/PerformanceMetricTypes.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/ScalarValueTypes.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/TensorDescriptor.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/TensorOps.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Tensile.cpp>
-        $<BUILD_INTERFACE:${_CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp>
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Activation.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/AMDGPU.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/ArithmeticUnitTypes.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/ContractionProblem.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/ContractionSolution.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/DataTypes.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Debug.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/EmbeddedData.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/EmbeddedLibrary.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/KernelArguments.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/KernelLanguageTypes.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/MLFeatures.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/MLPNet.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/PerformanceMetricTypes.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/ScalarValueTypes.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/TensorDescriptor.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/TensorOps.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/Utils.cpp"
 )
 
-include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag("-ffast-math" CXX_FAST_MATH_FLAG_SUPPORTED)
-if(CXX_FAST_MATH_FLAG_SUPPORTED)
-set_source_files_properties(MLPNet.cpp PROPERTIES COMPILE_FLAGS "-ffast-math")
-endif()
+# Need a todo on this and some of the other tensile flags
+#include(CheckCXXCompilerFlag)
+#check_cxx_compiler_flag("-ffast-math" CXX_FAST_MATH_FLAG_SUPPORTED)
+#if(CXX_FAST_MATH_FLAG_SUPPORTED)
+#    set_source_files_properties(MLPNet.cpp PROPERTIES COMPILE_FLAGS "-ffast-math")
+#endif()
 
 #if(WIN32)
 #target_compile_options( TensileHost PUBLIC -Wno-deprecated-declarations -Wno-ignored-attributes -Wdll-attribute-on-redeclaration -fdelayed-template-parsing )
@@ -67,5 +68,3 @@ endif()
 if(HIPBLASLT_ENABLE_HIP)
   add_subdirectory(hip)
 endif()
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

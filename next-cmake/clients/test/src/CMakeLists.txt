@@ -23,28 +23,28 @@
 
 target_sources(hipblaslt-test
     PRIVATE
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_main.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_test.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/matmul_gtest.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/auxiliary_gtest.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/matrix_transform_gtest.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_ext_op.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/singletons.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/utility.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/efficiency_monitor.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/cblas_interface.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/argument_model.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_parse_data.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_arguments.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_random.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_init_device.cpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/singletons.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/utility.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/efficiency_monitor.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/cblas_interface.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/argument_model.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_parse_data.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_arguments.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_random.hpp>
-        $<BUILD_INTERFACE:${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_init.hpp>
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_main.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_test.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/matmul_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/auxiliary_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/matrix_transform_gtest.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/gtest/hipblaslt_gtest_ext_op.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/singletons.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/utility.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/efficiency_monitor.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/cblas_interface.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/argument_model.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_parse_data.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_arguments.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_random.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/common/hipblaslt_init_device.cpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/singletons.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/utility.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/efficiency_monitor.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/cblas_interface.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/argument_model.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_parse_data.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_arguments.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_random.hpp
+        ${TEMP_CLIENTS_SOURCE_DIR}/include/hipblaslt_init.hpp
 )

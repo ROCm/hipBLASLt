@@ -40,5 +40,3 @@ add_custom_target(matrix-transform-cp ALL
     DEPENDS ${output_library}
     COMMAND ${CMAKE_COMMAND} -E copy "${output_library}" "${device_library_dir}"
 )
-
-unset(output_library)

@@ -29,10 +29,10 @@ if(HIPBLASLT_ENABLE_BLIS)
     target_link_libraries(sample-helper INTERFACE BLIS::BLIS)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # GCC or hip-clang needs specific flags to turn on f16c intrinsics
-    target_compile_options(sample-helper INTERFACE -mf16c) # necessary?
-endif()
+#if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#    # GCC or hip-clang needs specific flags to turn on f16c intrinsics
+#    target_compile_options(sample-helper INTERFACE -mf16c) # necessary?
+#endif()
 target_compile_features(sample-helper INTERFACE cxx_std_17)
 
 target_sources(sample-helper
@@ -50,6 +50,7 @@ target_link_libraries(sample-helper
     INTERFACE
         roc::hipblaslt
 )
+
 add_subdirectory(01_hipblaslt_gemm)
 add_subdirectory(01_hipblaslt_gemm_ext)
 add_subdirectory(02_hipblaslt_gemm_batched)

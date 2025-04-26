@@ -140,15 +140,15 @@ target_include_directories(hipblaslt
         $<BUILD_INTERFACE:${TEMP_TENSILE_HOST_SOURCE_DIR}/include>
 )
 target_include_directories(hipblaslt
-    PRIVATE
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/include>
-        $<BUILD_INTERFACE:${ROCBLASLT_LIB_DIR}/src/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     PUBLIC
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/src/include>
         $<BUILD_INTERFACE:${HIPBLASLT_LIB_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/host-library/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE
+        "${ROCBLASLT_LIB_DIR}/include"
+        "${ROCBLASLT_LIB_DIR}/src/include"
+        "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
 
 set_target_properties(hipblaslt

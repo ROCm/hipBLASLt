@@ -25,8 +25,6 @@ set(_CMAKE_CURRENT_SOURCE_DIR "${TEMP_TENSILE_HOST_SOURCE_DIR}/source")
 
 target_sources(hipblaslt
     PRIVATE
-        ${_CMAKE_CURRENT_SOURCE_DIR}/hip/HipSolutionAdapter.cpp
-        ${_CMAKE_CURRENT_SOURCE_DIR}/hip/HipHardware.cpp
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hip/HipSolutionAdapter.cpp"
+        "${_CMAKE_CURRENT_SOURCE_DIR}/hip/HipHardware.cpp"
 )
-
-unset(_CMAKE_CURRENT_SOURCE_DIR)

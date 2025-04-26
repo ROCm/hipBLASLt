@@ -37,5 +37,3 @@ target_include_directories(rocisa-cpp
     INTERFACE
         $<BUILD_INTERFACE:${rocisa_root}>
 )
-
-unset(rocisa_root)
