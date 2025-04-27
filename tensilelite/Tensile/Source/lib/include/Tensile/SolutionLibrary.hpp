@@ -32,6 +32,7 @@
 #include <vector>
 
 #include <Tensile/Tensile.hpp>
+#include <Tensile/Task.hpp>
 
 namespace TensileLite
 {
