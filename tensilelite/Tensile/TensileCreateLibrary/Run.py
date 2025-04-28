@@ -187,6 +187,46 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     return path, isa, wfsize
 
 
+def writeHelper(outputPath, kernelHelperObj) -> str:
+    name = kernelHelperObj.getKernelName()
+    KERNEL_HELPER_FILENAME_CPP = name + ".cpp"
+    KERNEL_HELPER_FILENAME_H = name + ".h"
+    kernelSourceFilename = str(Path(outputPath) / "Kernels" / KERNEL_HELPER_FILENAME_CPP)
+    kernelHeaderFilename = str(Path(outputPath) / "Kernels" / KERNEL_HELPER_FILENAME_H)
+
+    with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
+          open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
+        kernelSourceFile.write(CHeader)
+        kernelHeaderFile.write(CHeader)
+        kernelSourceFile.write("#include \"{}.h\"\n".format(name))
+        kernelHeaderFile.write("#pragma once\n")
+        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
+
+        if "Enum" not in name:
+            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_S.h\"\n")
+            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_I.h\"\n")
+            if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
+                kernelHeaderFile.write("#include \"Kernels/TensileGradientActivationEnum_S.h\"\n")
+        if "TensileActivation_S" not in name and "TensileActivation_I" not in name and "Enum" not in name:
+            kernelHeaderFile.write("#include \"Kernels/TensileActivation_S_Hipblaslt_all.h\"\n")
+            kernelHeaderFile.write("#include \"Kernels/TensileActivation_I_Hipblaslt_all.h\"\n")
+        if "TensileGradientActivation_S" not in name and "Enum" not in name:
+            if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
+                kernelHeaderFile.write("#include \"Kernels/TensileGradientActivation_S_Hipblaslt_all.h\"\n")
+
+        HeaderText = ""
+        (err, src) = kernelHelperObj.getSourceFileString()
+        kernelSourceFile.write(src)
+        if err:
+            print("*** warning: invalid kernel#%u" % name)
+        HeaderText += kernelHelperObj.getHeaderFileString()
+        kernelHeaderFile.write(HeaderText)
+
+    return kernelSourceFilename
+
+
 def writeHelpers(
     outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 ):
