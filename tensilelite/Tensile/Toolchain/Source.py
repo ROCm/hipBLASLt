@@ -32,17 +32,21 @@ from typing import List, Union, NamedTuple
 
 from ..Common import print1, ensurePath
 
-from .Component import Compiler, Bundler
+from .Component import Compiler, Bundler, RocObjLs, RocObjExtract
 
 class SourceToolchain(NamedTuple):
    compiler: Compiler
    bundler: Bundler
+   rocObjLs: RocObjLs
+   rocObjExtract: RocObjExtract
 
 
-def makeSourceToolchain(compiler_path, bundler_path, asan_build=False, build_id_kind="sha1", save_temps=False):
-   compiler = Compiler(compiler_path, build_id_kind, asan_build, save_temps)
+def makeSourceToolchain(compiler_path, bundler_path, ls_path, extract_path, cpu_threads, asan_build=False, build_id_kind="sha1", save_temps=False):
+   compiler = Compiler(compiler_path, build_id_kind, cpu_threads, asan_build, save_temps)
    bundler = Bundler(bundler_path)
-   return SourceToolchain(compiler, bundler)
+   ls = RocObjLs(ls_path)
+   extract = RocObjExtract(extract_path)
+   return SourceToolchain(compiler, bundler, ls, extract)
 
 
 def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
@@ -124,3 +128,30 @@ def buildSourceCodeObjectFiles(
     print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
 
     return coPaths
+
+
+def buildSourceCodeObjectFile(toolchain: SourceToolchain, 
+                              destPath: Union[Path, str], 
+                              sharedObjPath: Union[Path, str], ) -> List[str]:
+    """Compiles a HIP source code file into a code object file.
+
+    Args:
+        toolchain: The source toolchain.
+        destDir: The destination directory where HSA code object files are placed.
+        tmpObjDir: The directory where HIP source object files are created.
+        includeDir: The include directory path.
+        kernelPath: The path to the kernel source file.
+
+    Returns:
+        List of paths to the created code objects.
+    """
+
+    for target, filename in toolchain.rocObjLs(sharedObjPath):
+      match = re.search("gfx.*$", target)
+      if match:
+        print(f"Generating Kernels.co for {target.split('-')[-1]}")
+        arch = re.sub(":", "-", match.group())
+        toolchain.rocObjExtract(filename)
+        src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
+        dst = str(destPath / f"Kernels.so-000-{arch}.hsaco")
+        shutil.move(src, dst)

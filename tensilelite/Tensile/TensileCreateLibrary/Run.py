@@ -67,7 +67,7 @@ from Tensile.KernelWriterBase import (
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
 from Tensile.Toolchain.Assembly import makeAssemblyToolchain, buildAssemblyCodeObjectFiles
-from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles
+from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles, buildSourceCodeObjectFile
 from Tensile.Toolchain.Validators import (
     ToolchainDefaults,
     validateToolchain,
@@ -431,16 +431,16 @@ def writeSolutionsAndKernelsTCL(
     )
 
     writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-    srcKernelFile = Path(outputPath) / "Kernels.cpp"
-    buildSourceCodeObjectFiles(
-        srcToolchain.compiler,
-        srcToolchain.bundler,
-        destLibPath,
-        objectTmpPath,
-        outputPath,
-        srcKernelFile,
-        cmdlineArchs,
-    )
+
+    unaryWriteHelpers = functools.partial(writeHelper, outputPath)
+    srcFiles = ParallelMap2(unaryWriteHelpers,
+                            kernelHelperObjs,
+                            "Generating Kernel Helper Source",
+                            multiArg=False,
+                            return_as="list")
+    kernelsLib = str(objectTmpPath / "Kernels.so")
+    srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), cmdlineArchs)
+    buildSourceCodeObjectFile(srcToolchain, outputPath / "library", kernelsLib)
 
     return len(uniqueAsmKernels)
 
@@ -631,12 +631,15 @@ def run():
     arguments = parseArguments()
     setVerbosity(arguments["PrintLevel"])
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
-    cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
+
+    kernelsIncludePath = outputPath / "Kernels"
+    kernelsIncludePath.mkdir(parents=True, exist_ok=True)
+
+    cxxCompiler, offloadBundler, ls, extract = validateToolchain(
         arguments["CxxCompiler"],
-        arguments["CCompiler"],
         arguments["OffloadBundler"],
-        arguments["Assembler"],
-        ToolchainDefaults.HIP_CONFIG,
+        arguments["RocObjLs"],
+        arguments["RocObjExtract"]
     )
 
     if ";" in arguments["Architecture"]:
@@ -658,6 +661,9 @@ def run():
     srcToolchain = makeSourceToolchain(
         cxxCompiler,
         offloadBundler,
+        ls,
+        extract,
+        arguments["CpuThreads"],
         arguments["AsanBuild"],
         arguments["BuildIdKind"],
         save_temps=False
