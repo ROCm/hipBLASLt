@@ -104,9 +104,11 @@ endif()
 if(HIPBLASLT_ENABLE_DEVICE)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     if(HIPBLASLT_BUNDLE_PYTHON_DEPS)
-    set(HIPBLASLT_PYTHON_COMMAND "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/rocisa;${Python3_EXECUTABLE}")
+    set(HIPBLASLT_PYTHON_COMMAND 
+        "cmake -E env PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR}/rocisa -- ${Python3_EXECUTABLE}" 
+        CACHE STRING "Command for invoking tensile python sripts")
     else()
-        set(HIPBLASLT_PYTHON_COMMAND "${Python3_EXECUTABLE}")
+        set(HIPBLASLT_PYTHON_COMMAND "${Python3_EXECUTABLE}" CACHE STRING "Command for invoking tensile python sripts")
     endif()
 endif()
 if(HIPBLASLT_ENABLE_HOST)
