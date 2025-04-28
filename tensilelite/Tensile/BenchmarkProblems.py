@@ -246,6 +246,7 @@ def writeBenchmarkFiles(
                                asmToolchain.assembler,
                                debugConfig,
                            )
+    print1(f"Found the following kernel helpers: {kernelHelperNames}")
 
     cmdLineArchs = [var for isa in isaInfoMap.keys() for var in gfxToVariants(isaToGfx(isa))]
     # cmdLineArchs = [variant isaToGfx(isa) for isa in isaInfoMap.keys() for gfxToVariants()]

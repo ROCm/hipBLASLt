@@ -396,7 +396,7 @@ class RocObjLs(Component):
 
     def __init__(self, ls_path: Path):
         """Constructs and instance of roc-obj-ls."""
-        super(RocObjLs, self).__init__(ls_path)
+        super(RocObjLs, self).__init__(ls_path, "-v")
 
     def __call__(self, sharedObjFile):
         """Lists the code objects in shared object.
@@ -431,7 +431,7 @@ class RocObjExtract(Component):
 
     def __init__(self, extract_path: Path):
         """Constructs and instance of roc-obj-extract."""
-        super(RocObjExtract, self).__init__(extract_path)
+        super(RocObjExtract, self).__init__(extract_path, "-v")
 
     def __call__(self, filename: str):
         """Extracts code objects from a shared object.

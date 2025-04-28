@@ -67,7 +67,7 @@ from Tensile.KernelWriterBase import (
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
 from Tensile.Toolchain.Assembly import makeAssemblyToolchain, buildAssemblyCodeObjectFiles
-from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles, buildSourceCodeObjectFile
+from Tensile.Toolchain.Source import makeSourceToolchain, SourceToolchain, buildSourceCodeObjectFiles, buildSourceCodeObjectFilesNEW
 from Tensile.Toolchain.Validators import (
     ToolchainDefaults,
     validateToolchain,
@@ -186,13 +186,112 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
 
     return path, isa, wfsize
 
+def writeHelper(outputPath, kernelHelperObj, khoNames) -> str:
+    """
+    Write kernel helper source and header files.
 
-def writeHelper(outputPath, kernelHelperObj) -> str:
+    Args:
+        outputPath: Base path where files will be written
+        kernelHelperObj: Kernel helper object with source and header content
+        khoNames: List of all kernel helper object names for dependency resolution
+
+    Returns:
+        The path to the generated source file
+    """
+    name = kernelHelperObj.getKernelName()
+    sourceFilename = f"{name}.cpp"
+    headerFilename = f"{name}.h"
+    kernelsDir = Path(outputPath) / "Kernels"
+
+    if not kernelsDir.exists():
+        kernelsDir.mkdir(parents=True, exist_ok=True)
+
+    kernelSourcePath = str(kernelsDir / sourceFilename)
+    kernelHeaderPath = str(kernelsDir / headerFilename)
+
+    print1(f"Writing kernel helper: {kernelSourcePath}")
+
+    # Determine required includes based on kernel helper type
+    includes = _getRequiredIncludes(name, khoNames, kernelHelperObj)
+
+    with open(kernelHeaderPath, "w", encoding="utf-8") as kernelHeaderFile, \
+         open(kernelSourcePath, "w", encoding="utf-8") as kernelSourceFile:
+
+        # Write file headers
+        for file in (kernelSourceFile, kernelHeaderFile):
+            file.write(CHeader)
+
+        # Write source file includes
+        kernelSourceFile.write(f"#include \"{name}.h\"\n")
+
+        # Write header file standard includes
+        kernelHeaderFile.write("#pragma once\n")
+        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
+
+        # Write dependency includes
+        for include in includes:
+            kernelHeaderFile.write(f"#include \"Kernels/{include}.h\"\n")
+
+        # Write generated source and header content
+        err, src = kernelHelperObj.getSourceFileString()
+        kernelSourceFile.write(src)
+
+        if err:
+            printWarning(f"Invalid kernel: {name} (error code {err})")
+
+        kernelHeaderFile.write(kernelHelperObj.getHeaderFileString())
+
+    return kernelSourcePath
+
+def _getRequiredIncludes(name, khoNames, kernelHelperObj):
+    """
+    Determine the required includes for a kernel helper.
+
+    Args:
+        name: Kernel helper name
+        khoNames: List of all kernel helper object names
+        kernelHelperObj: The kernel helper object to analyze
+
+    Returns:
+        List of kernel helper names to include
+    """
+    includes = set()
+
+    # Add enum includes for non-enum helpers
+    if "Enum" not in name:
+        # Include all enum helpers
+        includes.update(n for n in khoNames if "Enum" in n)
+
+        # Include gradient activation enums for gradient helpers
+        hasGradient = hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient"
+        if hasGradient:
+            includes.update(n for n in khoNames if "TensileGradientActivation_" in n)
+
+    # Include activation helpers for non-activation-defining helpers
+    hasActivation = ("TensileActivation_S" in name or "TensileActivation_I" in name)
+    if not hasActivation and "Enum" not in name:
+        includes.update(n for n in khoNames if "TensileActivation_" in n)
+
+    # Include gradient activation helpers for non-gradient-activation-defining helpers
+    hasGradientActivation = "TensileGradientActivation_S" in name
+    if not hasGradientActivation and "Enum" not in name:
+        if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
+            includes.update(n for n in khoNames if "TensileGradientActivation_" in n)
+
+    return includes
+
+
+def writeHelperOld(outputPath, kernelHelperObj, khoNames) -> str:
     name = kernelHelperObj.getKernelName()
     KERNEL_HELPER_FILENAME_CPP = name + ".cpp"
     KERNEL_HELPER_FILENAME_H = name + ".h"
     kernelSourceFilename = str(Path(outputPath) / "Kernels" / KERNEL_HELPER_FILENAME_CPP)
     kernelHeaderFilename = str(Path(outputPath) / "Kernels" / KERNEL_HELPER_FILENAME_H)
+
+    print1(f"Writing kernel helper: {kernelSourceFilename}")
+
 
     with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, \
           open(kernelSourceFilename, "w", encoding="utf-8") as kernelSourceFile:
@@ -205,16 +304,28 @@ def writeHelper(outputPath, kernelHelperObj) -> str:
         kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
 
         if "Enum" not in name:
-            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_S.h\"\n")
-            kernelHeaderFile.write("#include \"Kernels/TensileActivationEnum_I.h\"\n")
+            enumkhoNames = [n for n in khoNames if "Enum" in n]
+            for khoName in enumkhoNames:
+                kernelHeaderFile.write(f"#include \"Kernels/{khoName}.h\"\n")
+
             if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
-                kernelHeaderFile.write("#include \"Kernels/TensileGradientActivationEnum_S.h\"\n")
+                actGradientEnumKhoName = [n for n in khoNames if "TensileGradientActivation_" in n]
+                for khoName in actGradientEnumKhoName:
+                    kernelHeaderFile.write(f"#include \"Kernels/{khoName}.h\"\n")
+
+        # This includes kernel helpers that don't define their own activation functions
         if "TensileActivation_S" not in name and "TensileActivation_I" not in name and "Enum" not in name:
-            kernelHeaderFile.write("#include \"Kernels/TensileActivation_S_Hipblaslt_all.h\"\n")
-            kernelHeaderFile.write("#include \"Kernels/TensileActivation_I_Hipblaslt_all.h\"\n")
+            activationkhoName = [n for n in khoNames if "TensileActivation_" in n]
+            for khoName in activationkhoName:
+                kernelHeaderFile.write(f"#include \"Kernels/{khoName}.h\"\n")
+
+        # This includes kernel helpers that don't define their own activation functions
+        # and need gradient activation functions
         if "TensileGradientActivation_S" not in name and "Enum" not in name:
             if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
-                kernelHeaderFile.write("#include \"Kernels/TensileGradientActivation_S_Hipblaslt_all.h\"\n")
+                actGradientkhoName = [n for n in khoNames if "TensileGradientActivation_" in n]
+                for khoName in actGradientkhoName:
+                    kernelHeaderFile.write(f"#include \"Kernels/{khoName}.h\"\n")
 
         HeaderText = ""
         (err, src) = kernelHelperObj.getSourceFileString()
@@ -227,32 +338,32 @@ def writeHelper(outputPath, kernelHelperObj) -> str:
     return kernelSourceFilename
 
 
-def writeHelpers(
-    outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
-):
-    kernelSourceFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_CPP)
-    kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
+# def writeHelpers(
+#     outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
+# ):
+#     kernelSourceFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_CPP)
+#     kernelHeaderFilename = os.path.join(os.path.normcase(outputPath), KERNEL_HELPER_FILENAME_H)
 
-    with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, open(
-        kernelSourceFilename, "w", encoding="utf-8"
-    ) as kernelSourceFile:
-        kernelSourceFile.write(CHeader)
-        kernelHeaderFile.write(CHeader)
-        kernelSourceFile.write('#include "Kernels.h"\n')
-        kernelHeaderFile.write("#pragma once\n")
-        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
-        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
-        kernelHeaderFile.write('#include "KernelHeader.h"\n\n')
-        HeaderText = ""
-        for ko in kernelHelperObjs:
-            kernelName = ko.getKernelName()
-            (err, src) = ko.getSourceFileString()
+#     with open(kernelHeaderFilename, "w", encoding="utf-8") as kernelHeaderFile, open(
+#         kernelSourceFilename, "w", encoding="utf-8"
+#     ) as kernelSourceFile:
+#         kernelSourceFile.write(CHeader)
+#         kernelHeaderFile.write(CHeader)
+#         kernelSourceFile.write('#include "Kernels.h"\n')
+#         kernelHeaderFile.write("#pragma once\n")
+#         kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+#         kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+#         kernelHeaderFile.write('#include "KernelHeader.h"\n\n')
+#         HeaderText = ""
+#         for ko in kernelHelperObjs:
+#             kernelName = ko.getKernelName()
+#             (err, src) = ko.getSourceFileString()
 
-            kernelSourceFile.write(src)
-            if err:
-                print("*** warning: invalid kernel#%u" % kernelName)
-            HeaderText += ko.getHeaderFileString()
-        kernelHeaderFile.write(HeaderText)
+#             kernelSourceFile.write(src)
+#             if err:
+#                 print("*** warning: invalid kernel#%u" % kernelName)
+#             HeaderText += ko.getHeaderFileString()
+#         kernelHeaderFile.write(HeaderText)
 
 
 def writeSolutionsAndKernels(
@@ -284,6 +395,8 @@ def writeSolutionsAndKernels(
     objectTmpPath = ensurePath(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
+    kernelsIncludePath = outputPath / "Kernels"
+    kernelsIncludePath.mkdir(parents=True, exist_ok=True)
 
     asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
 
@@ -332,8 +445,25 @@ def writeSolutionsAndKernels(
         multiArg=False,
     )
 
-    writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-    srcKernelFile = Path(outputPath) / "Kernels.cpp"
+    # writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
+    # srcKernelFile = Path(outputPath) / "Kernels.cpp"
+
+    khoNames = [kho.getKernelName() for kho in kernelHelperObjs]
+    srcFiles = []
+    for helper in kernelHelperObjs:
+        srcFile = writeHelper(outputPath, helper, khoNames)
+        srcFiles.append(srcFile)
+    # unaryWriteHelpers = functools.partial(writeHelper, outputPath)
+    # srcFiles = ParallelMap2(unaryWriteHelpers,
+    #                         kernelHelperObjs,
+    #                         "Generating Kernel Helper Source",
+    #                         multiArg=False,
+    #                         return_as="list")
+    kernelsLib = str(objectTmpPath / "Kernels.so")
+
+    print1(f"Writing kernels library: {kernelsLib}")
+
+    # return len(uniqueAsmKernels)
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
@@ -345,15 +475,17 @@ def writeSolutionsAndKernels(
             assemblyTmpPath,
             compress,
         )
-        buildSourceCodeObjectFiles(
-            srcToolchain.compiler,
-            srcToolchain.bundler,
-            destLibPath,
-            objectTmpPath,
-            outputPath,
-            srcKernelFile,
-            cmdlineArchs,
-        )
+        srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), cmdlineArchs)
+        buildSourceCodeObjectFilesNEW(srcToolchain, outputPath / "library", kernelsLib)
+        # buildSourceCodeObjectFiles(
+        #     srcToolchain.compiler,
+        #     srcToolchain.bundler,
+        #     destLibPath,
+        #     objectTmpPath,
+        #     outputPath,
+        #     srcKernelFile,
+        #     cmdlineArchs,
+        # )
 
     return codeObjectFiles, numKernels
 
@@ -430,8 +562,7 @@ def writeSolutionsAndKernelsTCL(
         compress,
     )
 
-    writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-
+    # writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
     unaryWriteHelpers = functools.partial(writeHelper, outputPath)
     srcFiles = ParallelMap2(unaryWriteHelpers,
                             kernelHelperObjs,
@@ -439,8 +570,10 @@ def writeSolutionsAndKernelsTCL(
                             multiArg=False,
                             return_as="list")
     kernelsLib = str(objectTmpPath / "Kernels.so")
+
+    print1(f"Writing kernels library: {kernelsLib}")
     srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), cmdlineArchs)
-    buildSourceCodeObjectFile(srcToolchain, outputPath / "library", kernelsLib)
+    buildSourceCodeObjectFilesNEW(srcToolchain, outputPath / "library", kernelsLib)
 
     return len(uniqueAsmKernels)
 

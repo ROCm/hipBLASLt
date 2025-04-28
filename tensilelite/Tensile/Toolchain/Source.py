@@ -130,8 +130,8 @@ def buildSourceCodeObjectFiles(
     return coPaths
 
 
-def buildSourceCodeObjectFile(toolchain: SourceToolchain, 
-                              destPath: Union[Path, str], 
+def buildSourceCodeObjectFilesNEW(toolchain: SourceToolchain,
+                              destPath: Union[Path, str],
                               sharedObjPath: Union[Path, str], ) -> List[str]:
     """Compiles a HIP source code file into a code object file.
 
@@ -147,6 +147,7 @@ def buildSourceCodeObjectFile(toolchain: SourceToolchain,
     """
 
     for target, filename in toolchain.rocObjLs(sharedObjPath):
+      print1(f"Processing {filename} for {target}")
       match = re.search("gfx.*$", target)
       if match:
         print(f"Generating Kernels.co for {target.split('-')[-1]}")
