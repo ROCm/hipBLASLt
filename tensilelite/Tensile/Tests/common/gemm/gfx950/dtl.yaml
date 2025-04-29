@@ -259,7 +259,6 @@ BenchmarkProblems:
         - GlobalReadVectorWidthA: [8]
         - GlobalReadVectorWidthB: [8]
         - DirectToLds: [1]
-        - AssertSummationElementMultiple: [64]
         - LdsPadA: [0, 8]
         - LdsPadB: [0, 8]
         - 1LDSBuffer: [-1]
@@ -273,6 +272,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 256]
           - Exact: [256, 256, 1, 512]
           - Exact: [4096, 8192, 1, 128]
+          - Range: [[1,17,256], [3,17,256], [1], [1,31,512]]
 
   ########################################
   # HHS TN DTL
@@ -312,7 +312,6 @@ BenchmarkProblems:
         - GlobalReadVectorWidthA: [8]
         - GlobalReadVectorWidthB: [8]
         - DirectToLds: [1]
-        - AssertSummationElementMultiple: [64]
         - LdsPadA: [-1, 0, 8]
         - LdsPadB: [-1, 0, 8]
         - 1LDSBuffer: [-1]
@@ -326,6 +325,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 256]
           - Exact: [256, 256, 1, 512]
           - Exact: [4096, 8192, 1, 128]
+          - Range: [[1,17,256], [3,17,256], [1], [1,31,512]]
 
   ########################################
   # HHS TT DTL
@@ -365,7 +365,6 @@ BenchmarkProblems:
         - GlobalReadVectorWidthA: [8]
         - GlobalReadVectorWidthB: [8]
         - DirectToLds: [1]
-        - AssertSummationElementMultiple: [64]
         - LdsPadA: [-1, 0, 8]
         - LdsPadB: [-1, 0, 8]
         - 1LDSBuffer: [-1]
@@ -378,4 +377,5 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128]
           - Exact: [256, 256, 1, 256]
           - Exact: [256, 256, 1, 512]
+          - Range: [[1,17,256], [3,17,256], [1], [1,31,512]]
           - Range: [[4096], [8192], [1], [64,64,384]]

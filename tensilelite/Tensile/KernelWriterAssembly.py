@@ -58,7 +58,7 @@ from rocisa.instruction import BranchInstruction, BufferLoadB128, BufferLoadB32,
   SLShiftRightB64, SLoadB32, SLoadB64, SMFMAInstruction, SMemLoadInstruction, SMinI32, \
   SMinU32, SMovB32, SMovB64, SMulHIU32, SMulI32, SNop, SOrB32, SOrSaveExecB32, \
   SOrSaveExecB64, SSExtI16toI32, SSetPCB64, SSetRegIMM32B32, SSetPrior, SSubBU32, SSubI32, SSubU32, \
-  SWaitCnt, SWaitAlu, SXorB32, VAShiftRightI32, VAccvgprReadB32, VAccvgprWrite, VAccvgprWriteB32, \
+  SWaitCnt, SWaitAlu, SSetVSkip, SXorB32, VAShiftRightI32, VAccvgprReadB32, VAccvgprWrite, VAccvgprWriteB32, \
   VAdd3U32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, VAddLShiftLeftU32, VAddU32, VAndB32, \
   VBfeU32, VCmpEQI32, VCmpEQU32, VCmpGEI32, VCmpGEU32, VCmpGtU32, VCmpLeI32, VCmpLtI32, \
   VCmpLtU32, VCmpUF32, VCmpXGeU32, VCmpXLtU32, VCmpXLtU64, VCndMaskB32, VCvtF16toF32, \
@@ -4125,6 +4125,89 @@ class KernelWriterAssembly(KernelWriter):
                          comment="xor both lds buffer offsets to enable swapping"))
     return module
 
+  def checkAlignmentForDTLTailLoop(self, kernel, tPA, tPB):
+    # For 16bit/8bit floats we need to check for alignment and modify the
+    # buffer loads when using wider (dword,dwordx4) loads to workaround OOB behaviours
+    #
+    # For 16b:
+    # if k even: nothing needs to be done
+    # else k odd:
+    #   if addr 4B aligned: add 2B to size record in buf desc
+    #   else: shift gro left by 2B and shift lro right by 2B
+    #
+    # For 8b: TBD.
+    #
+    module = Module("Check Alignment For DTL Tail Loop")
+
+    if not kernel["DirectToLdsA"] and not kernel["DirectToLdsB"]:
+      return Module()
+
+    # Skip this for 8bit types for now.
+    if kernel["ProblemType"]["DataTypeA"].isAnyFloat8() or kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
+      return Module()
+
+    module.addComment0("Check if global reads need to be modified for DTL Tail Loop")
+
+    tmpSgpr = self.sgprPool.checkOut(1)
+    labelSkip = Label("SkipDTLTailLoopGRChanges", "" )
+    goodLMultiple = 2
+
+    module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeL"), src1=hex(goodLMultiple - 1), comment="Check if K is multiple of %u"%goodLMultiple))
+    module.add(SCmpEQU32(src0=sgpr(tmpSgpr), src1=hex(0), comment="" ))
+    self.sgprPool.checkIn(tmpSgpr)
+
+    module.add(SCBranchSCC1(labelName=labelSkip.getLabelName(), comment="Skip global read changes" ))
+
+    def offsetCalcDTLTailloop(kernel, tP):
+      tc = tP["tensorChar"]
+
+      if not kernel["DirectToLds%s"%tc]:
+        return Module()
+
+      module = Module("DTL OOB checks for %s"%tc)
+      dataType = kernel["ProblemType"]["DataType%s"%tc]
+
+      if dataType.isHalf() or dataType.BFloat16():
+        tmpSgpr = self.sgprPool.checkOut(1)
+        labelEnd = Label("EndDTLTailLoopGRChanges%s"%tc, "" )
+        labelOffsetMod = Label("DTLOffsetMod%s"%tc, "" )
+
+        padValue = 2
+
+        module.add(SAndB32(dst=sgpr(tmpSgpr), src0=sgpr("Srd%s+%u"%(tc,0)), src1=hex(0x3), comment="Check if addr is 4B aligned"))
+        module.add(SCmpEQU32(src0=sgpr(tmpSgpr), src1=hex(0), comment="" )) # check if 4B aligned
+        module.add(SCBranchSCC0(labelName=labelOffsetMod.getLabelName(), comment="" ))
+
+        # Case where address is 4B aligned
+        module.add(SCmpEQU32(src0=sgpr("Srd%s+%u"%(tc,2)), src1="BufferLimit", comment="" )) # check if 4B aligned
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=0, src1=padValue, comment="Set pad to zero if size limit = 2^31 - 1, else set pad to %u"%padValue))
+        module.add(SAddU32(dst=sgpr("Srd%s+%u"%(tc,2)), src0=sgpr("Srd%s+%u"%(tc,2)), src1=sgpr(tmpSgpr), comment="Pad size record"))
+
+        module.add(SSetVSkip(src0=1, src1=0, comment="Enable VSKIP: skip over else case"))
+
+        # Case where address is 2B aligned but not 4B
+        module.add(labelOffsetMod)
+        module.add(VSubU32(dst=vgpr("GlobalReadOffset%s"%tc), src0=vgpr("GlobalReadOffset%s"%tc), src1=padValue, comment="shift gro left by %u bytes"%padValue))
+        module.add(VAddU32(dst=vgpr("LocalReadAddr%s"%tc), src0=vgpr("LocalReadAddr%s"%tc), src1=padValue, comment="shift lro right by %u bytes"%padValue))
+
+        self.sgprPool.checkIn(tmpSgpr)
+
+        module.add(SSetVSkip(src0=0, src1=0, comment="Disable VSKIP: resume normal execution"))
+        module.add(labelEnd)
+
+      return module
+
+    # Modify A global reads for OOB
+    module.add(offsetCalcDTLTailloop(kernel, tPA))
+    # Modify B global reads for OOB
+    module.add(offsetCalcDTLTailloop(kernel, tPB))
+
+
+    module.add(labelSkip)
+
+    return module
+
+
   ##############################################################################
   # openShadowInit
   # Label after prefetches are launched.  This is present even if ShadowInit not
@@ -7607,6 +7690,8 @@ class KernelWriterAssembly(KernelWriter):
                             vgprIdx = vgprIdx + 1
                         else:
                           destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+                  if kernel["DirectToLds%s"%tc]:
+                    numElementsPerLoad = kernel["GlobalReadVectorWidth%c"%tc] # For DTL numElementsPerLoad must be the same as main loop
                   regIdx = r // 2
                 elif dataType.isInt8x4() or dataType.isSingle():
                   regIdx = r

@@ -2969,6 +2969,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.removeStagger(kernel, tensorParametersA))
         module.add(self.removeStagger(kernel, tensorParametersB))
 
+      module.add(self.checkAlignmentForDTLTailLoop(kernel, tensorParametersA, tensorParametersB))
+
       # if swapGlobalRoad is true, swap the order of global read (B->A)
       tensorParameters1st = tensorParametersA
       tensorParameters2nd = tensorParametersB
@@ -5441,6 +5443,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   @abc.abstractmethod
   def isSwapGlobalReadOrderForDtvOrDtl(self, kernel, prefetch1=False):
+    return ""
+
+  ##############################################################################
+  # checkAlignmentForDTLTailLoop
+  ##############################################################################
+  @abc.abstractmethod
+  def checkAlignmentForDTLTailLoop(self, kernel, tPA, tPB):
     return ""
 
   ##############################################################################

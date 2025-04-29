@@ -588,6 +588,13 @@ void common_inst(nb::module_ m_common)
         .def("__deepcopy__",
              [](const rocisa::SSetPrior& self, nb::dict&) { return new rocisa::SSetPrior(self); });
 
+    nb::class_<rocisa::SSetVSkip, rocisa::Instruction>(m_common, "SSetVSkip")
+        .def(nb::init<int, int, const std::string&>(), nb::arg("src0"), nb::arg("src1"), nb::arg("comment") = "")
+        .def("getParams", &rocisa::SSetVSkip::getParams)
+        .def("__str__", &rocisa::SSetVSkip::toString)
+        .def("__deepcopy__",
+             [](const rocisa::SSetVSkip& self, nb::dict&) { return new rocisa::SSetVSkip(self); });
+
     nb::class_<rocisa::SBarrier, rocisa::Instruction>(m_common, "SBarrier")
         .def(nb::init<const std::string&>(), nb::arg("comment") = "")
         .def("getParams", &rocisa::SBarrier::getParams)

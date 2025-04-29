@@ -1244,6 +1244,40 @@ namespace rocisa
         int prior;
     };
 
+    struct SSetVSkip : public Instruction
+    {
+        SSetVSkip(int src0, int src1, const std::string& comment = "")
+            : Instruction(InstType::INST_NOTYPE, comment)
+            , src0(src0), src1(src1)
+        {
+            setInst("s_setvskip");
+        }
+
+        SSetVSkip(const SSetVSkip& other)
+            : Instruction(other)
+            , src0(other.src0), src1(other.src1)
+        {
+        }
+
+        std::shared_ptr<Item> clone() const override
+        {
+            return std::make_shared<SSetVSkip>(*this);
+        }
+
+        std::vector<InstructionInput> getParams() const override
+        {
+            return {src0, src1};
+        }
+
+        std::string toString() const override
+        {
+            return formatWithComment(instStr + " " + std::to_string(src0) + ", " + std::to_string(src1));
+        }
+
+    private:
+        int src0, src1;
+    };
+
     struct SBarrier : public Instruction
     {
         SBarrier(const std::string& comment = "")
