@@ -49,90 +49,11 @@ def makeSourceToolchain(compiler_path, bundler_path, ls_path, extract_path, cpu_
    return SourceToolchain(compiler, bundler, ls, extract)
 
 
-def _computeSourceCodeObjectFilename(target: str, base: str, buildPath: Union[Path, str], arch: str) -> Union[Path, None]:
-    """Generates a code object file path using the target, base, and build path.
-
-    Args:
-        target: The target triple.
-        base: The base name for the output file (name without extension).
-        buildPath: The build directory path.
-
-    Returns:
-        Path to the code object file.
-    """
-    coPath = None
-    buildPath = Path(buildPath)
-    if "TensileLibrary" in base and "fallback" in base:
-        coPath = buildPath / "{0}_{1}.hsaco.raw".format(base, arch)
-    elif "TensileLibrary" in base:
-        variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
-        baseVariant = base + "-" + variant if variant else base
-        if arch in baseVariant:
-            coPath = buildPath / (baseVariant + ".hsaco.raw")
-    else:
-        coPath= buildPath / "{0}.so-000-{1}.hsaco.raw".format(base, arch)
-
-    return coPath
-
-
 def buildSourceCodeObjectFiles(
-        compiler: Compiler,
-        bundler: Bundler,
-        destDir: Union[Path, str],
-        tmpObjDir: Union[Path, str],
-        includeDir: Union[Path, str],
-        kernelPath: Union[Path, str],
-        cmdlineArchs: List[str]
-    ) -> List[str]:
-    """Compiles a HIP source code file into a code object file.
-
-    Args:
-        toolchain: The source toolchain.
-        destDir: The destination directory where HSA code object files are placed.
-        tmpObjDir: The directory where HIP source object files are created.
-        includeDir: The include directory path.
-        kernelPath: The path to the kernel source file.
-
-    Returns:
-        List of paths to the created code objects.
-    """
-    start = timer()
-
-    tmpObjDir = Path(ensurePath(tmpObjDir))
-    destDir = Path(ensurePath(destDir))
-    kernelPath = Path(kernelPath)
-
-    objFilename = kernelPath.stem + '.o'
-    coPathsRaw = []
-    coPaths= []
-
-    objPath = str(tmpObjDir / objFilename)
-    compiler(str(includeDir), cmdlineArchs, str(kernelPath), objPath)
-
-    for target in bundler.targets(objPath):
-      match = re.search("gfx.*$", target)
-      if match:
-        arch = re.sub(":", "-", match.group())
-        coPathRaw = _computeSourceCodeObjectFilename(target, kernelPath.stem, tmpObjDir, arch)
-        if not coPathRaw: continue
-        bundler(target, objPath, str(coPathRaw))
-
-        coPath = str(destDir / coPathRaw.stem)
-        coPathsRaw.append(coPathRaw)
-        coPaths.append(coPath)
-
-    for src, dst in zip(coPathsRaw, coPaths):
-        shutil.move(src, dst)
-
-    stop = timer()
-    print1(f"buildSourceCodeObjectFile time (s): {(stop-start):3.2f}")
-
-    return coPaths
-
-
-def buildSourceCodeObjectFilesNEW(toolchain: SourceToolchain,
-                              destPath: Union[Path, str],
-                              sharedObjPath: Union[Path, str], ) -> List[str]:
+        toolchain: SourceToolchain,
+        destPath: Path,
+        sharedObjPath: Union[Path, str]
+    ):
     """Compiles a HIP source code file into a code object file.
 
     Args:
@@ -147,10 +68,9 @@ def buildSourceCodeObjectFilesNEW(toolchain: SourceToolchain,
     """
 
     for target, filename in toolchain.rocObjLs(sharedObjPath):
-      print1(f"Processing {filename} for {target}")
       match = re.search("gfx.*$", target)
       if match:
-        print(f"Generating Kernels.co for {target.split('-')[-1]}")
+        print(f"Generating Kernels.so for {target.split('-')[-1]}")
         arch = re.sub(":", "-", match.group())
         toolchain.rocObjExtract(filename)
         src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))

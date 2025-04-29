@@ -396,7 +396,8 @@ class RocObjLs(Component):
 
     def __init__(self, ls_path: Path):
         """Constructs and instance of roc-obj-ls."""
-        super(RocObjLs, self).__init__(ls_path, "-v")
+        # Use `-h` because roc-obj-ls doesn't have a version flag
+        super(RocObjLs, self).__init__(ls_path, "-h")
 
     def __call__(self, sharedObjFile):
         """Lists the code objects in shared object.
@@ -431,7 +432,9 @@ class RocObjExtract(Component):
 
     def __init__(self, extract_path: Path):
         """Constructs and instance of roc-obj-extract."""
-        super(RocObjExtract, self).__init__(extract_path, "-v")
+        # Use `-h` because roc-obj-extract doesn't have a version flag
+        # and will print  to stdout "Error: No arguments."
+        super(RocObjExtract, self).__init__(extract_path, "-h")
 
     def __call__(self, filename: str):
         """Extracts code objects from a shared object.
