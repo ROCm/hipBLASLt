@@ -1,3 +1,27 @@
+################################################################################
+#
+# Copyright (C) 2025 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# SPDX-License-Identifier: MIT
+################################################################################
 from os import name as os_name
 from os import environ
 from pathlib import Path
@@ -124,7 +148,7 @@ class Assembler(Component):
 
         super(Assembler, self).__init__(component_path)
         self._code_object_version = co_version
-        
+
         self._default_args = [
             *split(environ.get('Tensile_ASM_COMPILER_LAUNCHER', '')),
             str(component_path),
@@ -262,13 +286,14 @@ class Bundler(Component):
         Raises:
             RuntimeError: If compressing the code object file fails.
         """
+        devnull = "/dev/null" if os_name != "nt" else "NUL"
         args = [
             self._component_path,
             "--compress",
             "--type=o",
             "--bundle-align=4096",
             f"--targets=host-x86_64-unknown-linux-gnu,hipv4-amdgcn-amd-amdhsa-unknown-{target}",
-            "--input=/dev/null",
+            f"--input={devnull}",
             f"--input={srcPath}",
             f"--output={destPath}",
         ]
@@ -335,8 +360,7 @@ class Linker(Component):
         if os_name == "nt":
             # Use args file on Windows b/c the command may exceed the limit of 8191 characters
             with open(Path.cwd() / "clang_args.txt", "wt") as file:
-                file.write(" ".join(srcPaths))
-                file.flush()
+                file.write(" ".join(srcPaths).replace('\\', '\\\\'))
             args = [*(self.default_args), "-o", destPath, "@clang_args.txt"]
         else:
             args = [*(self.default_args), *srcPaths, "-o", destPath]

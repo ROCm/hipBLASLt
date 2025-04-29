@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,9 @@ from rocisa import countInstruction, countGlobalRead, countLocalWrite, \
                    countDSStoreB128, countVMovB32
 from rocisa.base import Item, DummyItem
 from rocisa.code import Module
-from rocisa.container import DSModifiers, HolderContainer
+from rocisa.container import DSModifiers, HolderContainer, replaceHolder
 
-from rocisa.instruction import SWaitCnt, DSStoreB128, DSStoreB64, DSStoreB32
-
-from ..TensileInstructions import replaceHolder
+from rocisa.instruction import SWaitCnt, SWaitAlu, DSStoreB128, DSStoreB64, DSStoreB32
 
 from ..Common import roundUp, print2
 from ..Component import SIA
@@ -697,6 +695,8 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
         numDummy = 0
         lenA = len(list(writer.codes.globalReadA.middle.items()))
         lenB = len(list(writer.codes.globalReadB.middle.items()))
+        lenAFooter = len(list(writer.codes.globalReadA.footer.items()))
+        lenBFooter = len(list(writer.codes.globalReadB.footer.items()))
         # A/B swap check for DTV. NGLL case, no swap
         swapped = writer.isSwapGlobalReadOrderForDtvOrDtl(kernel) and (not isNGLL)
         insertDummyTop = True
@@ -706,13 +706,13 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
         if kernel["DirectToLdsA"] or kernel["DirectToVgprA"]:
             if kernel["DirectToLdsA"]:
               # PGR2 + DTLcase, footer code is added in middle. Need to subtract 1 (for footer inst)
-              lenA -= 1
+              lenA -= lenAFooter
             numDummy += lenA
             insertDummyTop = (not swapped)
         if kernel["DirectToLdsB"] or kernel["DirectToVgprB"]:
             if kernel["DirectToLdsB"]:
               # PGR2 + DTLcase, footer code is added in middle. Need to subtract 1 (for footer inst)
-              lenB -= 1
+              lenB -= lenBFooter
             numDummy += lenB
             insertDummyTop = swapped
         for i in range(numDummy):
@@ -824,7 +824,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                     itemNew, numItemNew, globalReadInstOffset = splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, syncEndExpandedNumIndex, itemsLWToSchedIndex) if writer.do["AutoSplitDsWrite"] else (None, 0, 0)
                     if itemsLWToSchedIndex + globalReadInstOffset <= len(itemsLWToSched):
                         additionalIndexList = {}
-                        for i in range(numItemNew): 
+                        for i in range(numItemNew):
                             additionalIndexList[i * numLocalWritesPerSched + itemsLWToSchedIndex] = itemNew[i]
                     else:
                         globalReadInstOffset = 0
@@ -853,7 +853,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                             readsToWaitAdjust = len(list(writer.codes.globalReadA.middle.items())) + len(list(writer.codes.globalReadB.middle.items()))
                         for wc in wcList:
                             replaceHolder(wc, (readsToWaitAdjust))
-            
+
             if itemsLWToSchedIndex in additionalIndexList:
                 imod.add(additionalIndexList[itemsLWToSchedIndex])
                 additionalIndexList.pop(itemsLWToSchedIndex)
@@ -891,6 +891,8 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                     reads = reads + readsInc
                     if reads > readCnt:
                         break
+                    if kernel["ExpertSchedulingMode"] > 0:
+                        imod.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
                     # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
                     hasHolder, wcList = hasHolderInWaitCnt(itemGR)
                     if hasHolder:
@@ -999,7 +1001,7 @@ def splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, 
         writeInst.append(LocalWriteX(dstAddr=addr, src=r1, ds=ds1, comment=instruction.comment + " splitted"))
 
     print2(f"Split ds_write_b128 to 4xds_write_b32 for {str(instruction)}")
-    
+
     return writeInst, len(writeInst), numLocalWritesPerSched * (div - 1)
 
 

@@ -75,7 +75,7 @@ if (NOT DEFINED ENV{FC} AND NOT CMAKE_Fortran_COMPILER)
 endif()
 
 # hipBLASLt project
-project(hipblaslt LANGUAGES CXX)
+project(hipblaslt LANGUAGES CXX ASM)
 
 # Dependencies
 include(cmake/Dependencies.cmake)
@@ -200,7 +200,11 @@ else()
 
     set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
     set( Tensile_CODE_OBJECT_VERSION "4" CACHE STRING "Tensile code_object_version")
-    set( Tensile_COMPILER "amdclang++" CACHE STRING "Tensile compiler")
+    if(WIN32)
+      set( Tensile_COMPILER "clang++.exe" CACHE STRING "Tensile compiler")
+    else()
+      set( Tensile_COMPILER "amdclang++" CACHE STRING "Tensile compiler")
+    endif()
     set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
     set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
 
@@ -257,6 +261,16 @@ else()
     else()
       list(APPEND TENSILE_DEFINES ROCBLASLT_TENSILE_LAZY_LOAD=1)
     endif()
+endif()
+
+cmake_host_system_information(RESULT OS_PLATFORM QUERY DISTRIB_ID)
+cmake_host_system_information(RESULT OS_INFO QUERY DISTRIB_INFO)
+
+if( ${OS_PLATFORM} STREQUAL "rhel")
+  if( ${OS_INFO_VERSION_ID} VERSION_LESS "9.5")
+    message(WARNING "RHEL version ${OS_INFO_VERSION_ID} too old, not building RocRoller")
+    set(USE_ROCROLLER OFF)
+  endif()
 endif()
 
 if( LEGACY_HIPBLAS_DIRECT )
