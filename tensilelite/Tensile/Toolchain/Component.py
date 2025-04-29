@@ -48,7 +48,6 @@ def _invoke(args: List[str], desc: str="", working_dir=None):
       out = check_output(args, stderr=STDOUT, cwd=working_dir)
   except:
       raise RuntimeError(
-          #f"Error with {desc}: {err.output}\n"
           f"Failed command: {' '.join(args)}"
       )
   return out

@@ -454,7 +454,7 @@ def writeSolutionsAndKernelsTCL(
     kernelsLib = str(objectTmpPath / "Kernels.so")
 
     srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), cmdlineArchs)
-    buildSourceCodeObjectFilesNEW(srcToolchain, outputPath / "library", kernelsLib)
+    buildSourceCodeObjectFiles(srcToolchain, outputPath / "library", kernelsLib)
 
     return len(uniqueAsmKernels)
 
