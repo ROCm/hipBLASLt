@@ -27,7 +27,7 @@ import collections
 import math
 
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Literal
 
 from Tensile.AsmStoreState import VectorDataTypes
 from Tensile.Activation import ActivationType
@@ -366,9 +366,11 @@ class Solution(collections.abc.Mapping):
           or state["MacroTile1"] != state["MacroTile"][1]:
         reject(state, printRejectionReason, "MacroTile mismatch")
 
-    # dot2: currently only support fp16 with HPA on gfx942
-    state["UseDotInstruction"] = (not state["EnableMatrixInstruction"]) and state["ProblemType"]["DataType"].isHalf() \
-      and state["ProblemType"]["HighPrecisionAccumulate"] and (state["ISA"] == IsaVersion(9,4,2))
+    # dot2: currently only support fp16 with HPA on gfx942 or fp16 &bf16 on gfx950
+    state["UseDotInstruction"] = (not state["EnableMatrixInstruction"]) \
+      and state["ProblemType"]["HighPrecisionAccumulate"] \
+      and ((state["ISA"] == IsaVersion(9,4,2) and state["ProblemType"]["DataType"].isHalf()) \
+      or (state["ISA"] == IsaVersion(9,5,0) and (state["ProblemType"]["DataType"].isBFloat16() or state["ProblemType"]["DataType"].isHalf())))
     if state["UseDotInstruction"]:
       # need modification for dot4 or dot8
       state["NumDotElements"] = 2
@@ -832,11 +834,6 @@ class Solution(collections.abc.Mapping):
       reject(state, printRejectionReason, "DirectToLds%c does not supports NumLoadsCoalesced%c > 1 for zgemm"%(tc, tc))
       return False
 
-    # Does not work with PrefetchGlobalRead=2 and PrefetchLocalRead=1 (cannot schedule DTL global read after local read)
-    if state["PrefetchGlobalRead"] == 2 and state["PrefetchLocalRead"] == 1:
-      reject(state, printRejectionReason, "DirectToLds%c does not work with PrefetchGlobalRead=2 and PrefetchLocalRead=1"%(tc))
-      return False
-
     # DirectToLds does not work if MacroTile is not power of 2
     # LDS offset swap/rotate logic works only when MacroTile is power of 2
     mt = state["MacroTile%c"%tc]
@@ -1108,6 +1105,7 @@ class Solution(collections.abc.Mapping):
 
 
     if state["ProblemType"]["Sparse"]:
+      state["LocalWriteUseSgprMetadata"] = False
       if state["ProblemType"]["Sparse"] == 2:
         if not state["DirectToVgprSparseMetadata"]:
           state["ThreadTileMetadata"] = state["ThreadTileB"]
@@ -1115,7 +1113,6 @@ class Solution(collections.abc.Mapping):
           state["MacroTileMetadata"] = state["MacroTileB"]
           state["WaveSeparateGlobalReadMetadata"] = state["WaveSeparateGlobalReadB"]
           state["DirectToLdsMetadata"] = False
-          state["LocalWriteUseSgprMetadat"] = False
           state["ProblemType"]["MirrorDimsMetadata"]  = list(state["ProblemType"]["MirrorDimsB"])
           state["VectorWidthMetadata"] = state["VectorWidthB"]
         if state["EnableMatrixInstruction"]:
@@ -1127,7 +1124,6 @@ class Solution(collections.abc.Mapping):
           state["MacroTileMetadata"] = state["MacroTileA"]
           state["WaveSeparateGlobalReadMetadata"] = state["WaveSeparateGlobalReadA"]
           state["DirectToLdsMetadata"] = False
-          state["LocalWriteUseSgprMetadat"] = False
           state["ProblemType"]["MirrorDimsMetadata"]  = list(state["ProblemType"]["MirrorDimsA"])
           state["VectorWidthMetadata"] = state["VectorWidthA"]
         if state["EnableMatrixInstruction"]:
@@ -1375,6 +1371,55 @@ class Solution(collections.abc.Mapping):
         break
     if "ValidDepthU" in state:
       del state["ValidDepthU"]
+
+    # 0: Normal mode. Hardware applies all of the normal data dependency checks
+    # 1: Full expert mode (not suppoeted yet). Disable hardware checks against: VA_VDST, VA_SDST, VA_SSRC, VA_VCC, VM_VSRC and SA_SDST.
+    # 2: Disable only VA_VDST and VM_VSRC checks.
+    def evaluateExpertSchedulingMode() -> Literal[0, 1, 2]:
+      # Check if the current parameters is supported by the ExpertSchedulingMode
+      if not isaInfoMap[isa].archCaps["HasSchedMode"]: return 0
+      if state["ProblemType"]["Sparse"]: return 0
+      if state["ProblemType"]["DataType"].isSingle(): return 0
+
+      # parameters not tested yet:
+      supportedParameters = {
+        "EnableMatrixInstruction": state["EnableMatrixInstruction"],
+        "ScheduleIterAlg": state["ScheduleIterAlg"] == 3,
+        "WavefrontSize": state["WavefrontSize"] == 32,
+        "UnrollLoopSwapGlobalReadOrder": not state["UnrollLoopSwapGlobalReadOrder"],
+        "SuppressNoLoadLoop": not state["SuppressNoLoadLoop"],
+        "ScheduleGlobalRead": state["ScheduleGlobalRead"] == 1,
+        "ScheduleLocalWrite": state["ScheduleLocalWrite"] == 1,
+        "GlobalReadPerMfma": state["GlobalReadPerMfma"] == 1,
+        "InterleaveAlpha": not state["InterleaveAlpha"],
+        "DirectToVgprA": not state["DirectToVgprA"],
+        "DirectToLds": not state["DirectToLds"],
+        "UseSgprForGRO": state["UseSgprForGRO"] == -1,
+        "UseInstOffsetForGRO": not state["UseInstOffsetForGRO"],
+        "Use64bShadowLimit": state["Use64bShadowLimit"] == 1,
+        "StorePriorityOpt": not state["StorePriorityOpt"],
+        "StoreSyncOpt": not state["StoreSyncOpt"],
+        "GroupLoadStore": not state["GroupLoadStore"],
+        "StreamK": not state["StreamK"],
+        "StreamKAtomic": not state["StreamKAtomic"],
+        "StreamKXCCMapping": not state["StreamKXCCMapping"],
+        "DebugStreamK": not state["DebugStreamK"],
+        "WorkGroupReduction": not state["WorkGroupReduction"],
+        "ConvertAfterDS": not state["ConvertAfterDS"],
+        "ForceDisableShadowInit": not state["ForceDisableShadowInit"],
+      }
+      
+      for key, supported in supportedParameters.items():
+        if supported:
+          continue
+
+        print2(f"ExpertSchedulingMode not supported with {key}={state[key]}")
+        return 0
+
+      # Currently, only the mode that disables VA_VDST and VM_VSRC checks is supported.
+      return 2
+
+    state["ExpertSchedulingMode"] = evaluateExpertSchedulingMode()
 
   def depthUIteration(
       state,
@@ -2132,8 +2177,10 @@ class Solution(collections.abc.Mapping):
         reject(state, "dot inst is for mac kernel!")
       if not bufferLoad:
         reject(state, "dot2 kernel only support bufferLoad!")
-      if not (state["ProblemType"]["DataType"].isHalf() and state["ProblemType"]["HighPrecisionAccumulate"]):
-        reject(state, "dot2 kernel only support DataType fp16 with HPA")
+      if not ((isaInfoMap[isa].asmCaps['v_dot2_f32_f16'] and state["ProblemType"]["DataType"].isHalf()) \
+      or (isaInfoMap[isa].asmCaps['v_dot2_f32_bf16'] and state["ProblemType"]["DataType"].isBFloat16())) \
+      and state["ProblemType"]["HighPrecisionAccumulate"]:
+        reject(state, "dot2 kernel only support DataType fp16 or bf16 with HPA")
       if state["InnerUnroll"] not in [1,2,4]:
         reject(state, "dot2 kernel requires InnerUnroll = 1,2 or 4")
       if state["NumWaveSplitK"] not in [1,2,4,8,16,32,64]:
@@ -2522,12 +2569,13 @@ class Solution(collections.abc.Mapping):
     ldsNumBytesA, ldsNumBytesAlignedA, ldsNumBytesB, ldsNumBytesAlignedB, ldsNumBytesMetadata, ldsNumBytesAlignedMetadata = calcLdsNumBytes(state["LdsPadA"], state["LdsBlockSizePerPadA"], state["LdsPadB"], state["LdsBlockSizePerPadB"])
     state["LdsOffsetA_Blk"]=0
     state["LdsOffsetB_Blk"]=0
+    state["LdsOffsetMetadata_Blk"]=0
     # todo, can the alignment be a power of 2?
     state["LdsOffsetA"] = 0
     state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
     state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
+    state["LdsNumElementsAlignedMetadata"] = ldsNumBytesAlignedMetadata
     if state["PrefetchGlobalRead"]:
-      state["LdsNumElementsAlignedMetadata"] = ldsNumBytesAlignedMetadata
       state["LdsOffsetMetadata"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + state["LdsNumElementsAlignedMetadata"]
 

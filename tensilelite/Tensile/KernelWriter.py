@@ -25,14 +25,20 @@
 from rocisa import rocIsa, countInstruction, countGlobalRead, \
             countLocalRead, countLocalWrite, countDSStoreB256
 from rocisa.code import Module, TextBlock, StructuredModule, KernelBody
-from rocisa.container import RegisterContainer
+from rocisa.container import RegisterContainer, replaceHolder, HWRegContainer
 from rocisa.label import LabelManager
-from rocisa.asmpass import rocIsaPass, rocIsaPassOption, rocIsaPassResult
-from rocisa.instruction import SLongBranchPositive
-from .TensileInstructions import replaceHolder, \
-                          Dump, RegisterPool, Assert, \
-                          SBranch, SCBranchSCC0, SCBranchSCC1
-from .TensileInstructions.Instructions import *
+from rocisa.asmpass import rocIsaPass, rocIsaPassOption
+from rocisa.instruction import BufferLoadB128, BufferLoadB32, BufferLoadB64, \
+  BufferLoadD16B16, BufferLoadD16U8, DSLoad2B32, DSLoad2B64, DSLoadB128, \
+  DSLoadB32, DSLoadB64, DSLoadB64TrB16, DSLoadInstruction, DSLoadU16, \
+  DSLoadU8, DSStore2B32, DSStore2B64, DSStoreB128, DSStoreB16, DSStoreB256, \
+  DSStoreB32, DSStoreB64, DSStoreB8, DSStoreInstruction, FlatLoadB128, FlatLoadB32, \
+  FlatLoadB64, FlatStoreB128, FlatStoreB32, FlatStoreB64, Instruction, \
+  MFMAInstruction, SBarrier, SBranch, SCBranchSCC0, SCBranchSCC1, SCmpLeU32, \
+  SMFMAInstruction, SNop, SSetPrior, SSetRegIMM32B32, SSubU32, SWaitCnt, SWaitAlu, \
+  SLongBranchPositive, VFmaMixF32, VMadMixF32, VMovB32
+
+from .TensileInstructions import Dump, RegisterPool, Assert
 from .KernelWriterModules import *
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
@@ -45,8 +51,6 @@ from Tensile.SolutionStructs.Naming import getKernelNameMin
 from Tensile.Toolchain.Component import Assembler
 
 import abc
-import os
-import shutil
 import sys
 import collections
 from copy import deepcopy
@@ -750,7 +754,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       iterCode.add(pointerLWCode)
       iterCode.add(pointerLRCode)
       iterCode.add(SSetPrior(prior=2, comment="Raise priority while processing macs"))
-      pass
     elif self.states.scheduleIterAlg == 3:
       iterCode.addComment0(" grEndMfmaIndex:%u, lwStartMfmaIndex:%u, lwEndMfmaIndex:%u "\
                           %(self.states.grEndMfmaIndex, self.states.lwStartMfmaIndex, self.states.lwEndMfmaIndex))
@@ -1986,7 +1989,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters1st)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters1st))
-      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd)
+      moduleTmp = self.directToLdsM0Update(kernel, 0, tensorParameters2nd, True)
       module.add(replaceHolder(moduleTmp, 0))
       module.add(self.globalReadDo(kernel, 0, tensorParameters2nd))
       tPA = tensorParametersA
@@ -2180,6 +2183,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
             if (kernel["DirectToVgprA"] or kernel["DirectToVgprB"]) and (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]):
               # DirectToVgpr + DirectToLds case, add waitcnt vmcnt before s_barrier
               waitLWCode.add(self.getWaitcntCodeForDirectToVgpr(kernel, localWriteEndIter, u, isNLL=(not isNGLL), beforeBarrier=True))
+            elif kernel["PrefetchGlobalRead"]==2 and (kernel["DirectToLdsA"] and kernel["DirectToLdsB"]):
+              waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "wait for global reads with lds"))
             syncCode.add(self._syncThreads(kernel))
 
           if isSwapAndResetLwoIter: # ResetLroIter
@@ -2345,7 +2350,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # unrolled loop: global read A, B
     # M0 update for directToLds
     self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
-    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
+    self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, True)
 
     g2lBufIdx1st = 0
     if grBA==True or (kernel["DirectToVgpr%s"%tc1] and isDTVGRSecondBuf):
@@ -2571,17 +2576,22 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # put barrier at localWriteEndIter+1
         if u == localWriteEndIter+1 or (u == (localWriteEndIter+1)%kernel["LoopIters"] and kernel["ScheduleIterAlg"] == 2):
           if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
-            module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "12wait for global read"))
+            vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 else 0
+            waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, vmcntVal, -1, -1, \
+                                      "wait for previous set of global reads"))
           # (no local write code. Global read wait for DirectToLds is already done)
           if not kernel["NoLdsWriteCode"]:
             waitLWCode.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, 0, -1, "3wait for local write"))
           skipForceWaitcnt0 = False
-          if kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
-            # DTVA/B case, skip generating force waitcnt0
+          if kernel["DirectToVgprA"] or kernel["DirectToVgprB"] or kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
+            # DTVA/B or DTLA/B case, skip generating force waitcnt0
             skipForceWaitcnt0 = True
           syncCode.add(self._syncThreads(kernel, skipForceWaitcnt0=skipForceWaitcnt0))
 
         if isSwapAndResetLwoIter: # ResetLroIter
+          if kernel["ExpertSchedulingMode"] > 0:
+            pointerLWCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+
           # local write for next iter, used to have local writes here
           pointerLWCode.addComment1("local write swap offsets a")
           pointerLWCode.add(self.localWriteSwapOffsets(kernel, expand, tensorParametersA))
@@ -2589,6 +2599,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pointerLWCode.add(self.localWriteSwapOffsets(kernel, expand, tensorParametersB))
 
         if isSwapLroIter: # ResetLroIter
+          if kernel["ExpertSchedulingMode"] > 0:
+            pointerLRCode.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
           # Swap, reset, or increment the LRO:
           pointerLRCode.addComment1("local read swap offsets a")
           pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersA))
@@ -2812,11 +2824,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # force to generate 2 loop bodies
       loopCopies = 2
 
-    if kernel["PrefetchGlobalRead"] == 2:
-      # Wait for second set of PGR before loop begins
-      module.add(self.getWaitcntCodeForPGR(kernel, tensorParametersA, tensorParametersB, "wait for global read"))
-      module.add(SBarrier())
-
     # open unrolled summation loop
     module.addComment2("Unrolled Loop(s) - Begin")
     module.add(self.openLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, beginLabelOnly=False))
@@ -2850,6 +2857,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         finalLoop = lc == loopCopies - 1
         module.add(self._loopBody( kernel, tensorParametersA, tensorParametersB, pack, lc, loopCopies, finalLoop, isDTVGRSecondBuf=isDTVGRSecondBuf ))
 
+    if kernel["ExpertSchedulingMode"] > 0:
+      module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="26", value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
+
     module.addComment1("Before NLL: Check VGPR.checkin for INT8 LW")
 
     # swap local write, read again before noLoadLoop if PrefetchGlobalRead and DirectToLds is enabled
@@ -2872,6 +2882,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # generate extra NGLL for second GR buffer
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
         module.add(loopLabelToNoGRloopAfterABLoop)
+        if kernel["ExpertSchedulingMode"] > 0:
+          module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="26", value=[0,2]), src=0x0, comment="enable hardware dependency checking"))
         NGLLindex += 1
       module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=True, pack=pack, NLLindex=NGLLindex, NLLnum=NGLLnum))
 
@@ -2989,7 +3001,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         module.add(self.globalReadDo(kernel, globalReadMode1st, tensorParameters1st))
       module.addComment1("Update M0 for DTLDS")
-      moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd)
+      moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, True)
       module.add(replaceHolder(moduleTmp, 0))
       module.addComment1("Tail global read %s"%tc2)
       if tailLoopOpt2nd and (globalReadMode2nd == 2):
@@ -3952,34 +3964,37 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.m.numVgprLocalReadAddr = 1 * self.states.rpla
     self.states.a.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprA"] else 1 * self.states.rpla
     self.states.b.numVgprLocalWriteAddr = 0 if kernel["LocalWriteUseSgprB"] else 1 * self.states.rpla
+    self.states.m.numVgprLocalWriteAddr = 0 if kernel["ProblemType"]["Sparse"] and kernel["LocalWriteUseSgprMetadata"] else 1 * self.states.rpla
     self.states.a.numVgprLocalReadSwapAddr = 0
     self.states.b.numVgprLocalReadSwapAddr = 0
+    self.states.m.numVgprLocalReadSwapAddr = 0
     self.states.a.numVgprLocalWriteSwapAddr = 0
     self.states.b.numVgprLocalWriteSwapAddr = 0
+    self.states.m.numVgprLocalWriteSwapAddr = 0
 
-    if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]:
-      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
-        self.states.a.numVgprLocalReadAddr =3* self.states.rpla
-      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
-        self.states.a.numVgprLocalReadAddr =2* self.states.rpla
-      if (kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
-        self.states.b.numVgprLocalReadAddr =3* self.states.rpla
-      elif (kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
-        self.states.b.numVgprLocalReadAddr =2* self.states.rpla
+    if self.states.archCaps["HasLDSGT64K"] and not kernel["StoreSwapAddr"]:
+      need128K = kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]
+      need64K = kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]
+      if need128K or kernel["LdsNumElementsAlignedA"]>=131072:
+        self.states.a.numVgprLocalReadAddr *= 3
+        self.states.a.numVgprLocalWriteAddr *= 3
+      elif need64K or kernel["LdsNumElementsAlignedA"]>=65536:
+        self.states.a.numVgprLocalReadAddr *= 2
+        self.states.a.numVgprLocalWriteAddr *= 2
 
-    if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] \
-       and not kernel["StoreSwapAddr"] and not kernel["LocalWriteUseSgprA"]:
-      if (kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=131072:
-        self.states.a.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif (kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedA"]>=65536:
-        self.states.a.numVgprLocalWriteAddr = 2* self.states.rpla
+      if need128K or kernel["LdsNumElementsAlignedB"]>=131072:
+        self.states.b.numVgprLocalReadAddr *= 3
+        self.states.b.numVgprLocalWriteAddr *= 3
+      elif need64K or kernel["LdsNumElementsAlignedB"]>=65536:
+        self.states.b.numVgprLocalReadAddr *= 2
+        self.states.b.numVgprLocalWriteAddr *= 2
 
-    if self.states.archCaps["HasLDSGT64K"] and not kernel["1LDSBuffer"] \
-       and not kernel["StoreSwapAddr"] and not kernel["LocalWriteUseSgprB"]:
-      if (kernel["LdsOffsetB_Blk"]>=131072 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=131072:
-        self.states.b.numVgprLocalWriteAddr = 3* self.states.rpla
-      elif (kernel["LdsOffsetB_Blk"]>=65536 and kernel["ExpandPointerSwap"]) or kernel["LdsNumElementsAlignedB"]>=65536:
-        self.states.b.numVgprLocalWriteAddr = 2* self.states.rpla
+      if need128K or kernel["LdsNumElementsAlignedMetadata"]>=131072:
+        self.states.m.numVgprLocalReadAddr *= 3
+        self.states.m.numVgprLocalWriteAddr *= 3
+      elif need64K or kernel["LdsNumElementsAlignedMetadata"]>=65536:
+        self.states.m.numVgprLocalReadAddr *= 2
+        self.states.m.numVgprLocalWriteAddr *= 2
 
     if not (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]):
       self.states.m.numVgprLocalReadAddr = 0
@@ -3989,7 +4004,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["DirectToVgprB"]:
       self.states.b.numVgprLocalReadAddr = 0
 
-    self.states.m.numVgprLocalWriteAddr = 1 * self.states.rpla
     if not (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]):
       self.states.m.numVgprLocalWriteAddr = 0
     # do not allocate local write address register if DirectToVgpr is enabled
@@ -4003,10 +4017,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.a.numVgprLocalReadSwapAddr = 1
       if self.states.b.numVgprLocalReadAddr > 0:
         self.states.b.numVgprLocalReadSwapAddr = 1
+      if self.states.m.numVgprLocalReadAddr > 0:
+        self.states.m.numVgprLocalReadSwapAddr = 1
       if not kernel["LocalWriteUseSgprA"] and self.states.a.numVgprLocalWriteAddr > 0:
         self.states.a.numVgprLocalWriteSwapAddr = 1
       if not kernel["LocalWriteUseSgprB"] and self.states.b.numVgprLocalWriteAddr > 0:
         self.states.b.numVgprLocalWriteSwapAddr = 1
+      if kernel["ProblemType"]["Sparse"] and not kernel["LocalWriteUseSgprMetadata"] and self.states.m.numVgprLocalWriteAddr > 0:
+        self.states.m.numVgprLocalWriteSwapAddr = 1
 
     ####################################
     # num vgprs: global read addresses
@@ -4354,11 +4372,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.a.numVgprLocalReadSwapAddr > 0:
       self.states.a.startVgprLocalReadSwapAddr = vgprIdx
       vgprIdx += 1
+    if self.states.m.numVgprLocalReadSwapAddr > 0:
+      self.states.m.startVgprLocalReadSwapAddr = vgprIdx
+      vgprIdx += 1
     if self.states.b.numVgprLocalReadSwapAddr > 0:
       self.states.b.startVgprLocalReadSwapAddr = vgprIdx
       vgprIdx += 1
     if self.states.a.numVgprLocalWriteSwapAddr > 0:
       self.states.a.startVgprLocalWriteSwapAddr = vgprIdx
+      vgprIdx += 1
+    if self.states.m.numVgprLocalWriteSwapAddr > 0:
+      self.states.m.startVgprLocalWriteSwapAddr = vgprIdx
       vgprIdx += 1
     if self.states.b.numVgprLocalWriteSwapAddr > 0:
       self.states.b.startVgprLocalWriteSwapAddr = vgprIdx
@@ -4596,6 +4620,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.defineSgpr("SwapA", 1)
       if kernel["LocalWriteUseSgprB"]:
         self.defineSgpr("SwapB", 1)
+      if kernel["ProblemType"]["Sparse"] and kernel["LocalWriteUseSgprMetadata"]:
+        self.defineSgpr("SwapMetadata", 1)
 
 
     if GSUAMBSK:
@@ -5266,7 +5292,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # mode: 0=prefetch, 1=unroll loop, 2=guardK
   ##############################################################################
   @abc.abstractmethod
-  def directToLdsM0Update(self, kernel, mode, tP):
+  def directToLdsM0Update(self, kernel, mode, tP, skipWait):
     return ""
 
   ##############################################################################
@@ -5484,7 +5510,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
      * A code object file
      * A Python script which can create byte array variable definitions.
     """
-    pass
 
   def getHeaderFileString(self, kernel):
     kernelName = getKernelNameMin(kernel, self.debugConfig.splitGSU)

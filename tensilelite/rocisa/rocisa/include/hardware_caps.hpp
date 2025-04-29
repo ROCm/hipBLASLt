@@ -199,6 +199,12 @@ inline std::map<std::string, int>
         = tryAssembler(isaVersion, assemblerPath, "v_dot2c_f32_f16 v47, v36, v34", isDebug)
           || tryAssembler(isaVersion, assemblerPath, "v_dot2acc_f32_f16 v47, v36, v34", isDebug);
 
+    rv["v_dot2_f32_bf16"]
+        = tryAssembler(isaVersion, assemblerPath, "v_dot2_f32_bf16 v20, v36, v34, v20", isDebug);
+    rv["v_dot2c_f32_bf16"]
+        = tryAssembler(isaVersion, assemblerPath, "v_dot2c_f32_bf16 v47, v36, v34", isDebug)
+          || tryAssembler(isaVersion, assemblerPath, "v_dot2acc_f32_bf16 v47, v36, v34", isDebug);
+
     rv["v_dot4_i32_i8"]
         = tryAssembler(isaVersion, assemblerPath, "v_dot4_i32_i8 v47, v36, v34", isDebug);
     rv["v_dot4c_i32_i8"]
@@ -301,6 +307,7 @@ inline std::map<std::string, bool> initArchCaps(const IsaVersion& isaVersion)
     rv["SeparateVMcnt"]    = isaVersion[0] == 12;
     rv["CMPXWritesSGPR"]   = checkNotInList(isaVersion[0], {10, 11, 12});
     rv["HasWave32"]        = checkInList(isaVersion[0], {10, 11, 12});
+    rv["HasSchedMode"]     = checkInList(isaVersion[0], {12});
     rv["HasAccCD"]         = checkInList(isaVersion, {{9, 0, 10}, {9, 4, 2}, {9, 5, 0}});
     rv["ArchAccUnifiedRegs"] = checkInList(isaVersion, {{9, 0, 10}, {9, 4, 2}, {9, 5, 0}});
     rv["CrosslaneWait"]      = checkInList(isaVersion, {{9, 4, 2}, {9, 5, 0}});
