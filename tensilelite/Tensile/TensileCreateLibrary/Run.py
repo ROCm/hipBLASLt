@@ -445,12 +445,8 @@ def writeSolutionsAndKernelsTCL(
         compress,
     )
 
-    unaryWriteHelpers = functools.partial(writeHelper, outputPath)
-    srcFiles = ParallelMap2(unaryWriteHelpers,
-                            kernelHelperObjs,
-                            "Generating Kernel Helper Source",
-                            multiArg=False,
-                            return_as="list")
+    khoNames = [kho.getKernelName() for kho in kernelHelperObjs]
+    srcFiles = [writeHelper(outputPath, helper, khoNames) for helper in kernelHelperObjs]
     kernelsLib = str(objectTmpPath / "Kernels.so")
 
     srcToolchain.compiler(srcFiles, kernelsLib, str(outputPath), cmdlineArchs)
