@@ -175,8 +175,9 @@ namespace TensileLite
                 string_to_hip_datatype(entries[static_cast<size_t>(HeaderFields::b_type)]));
             outputType = hipDataType_to_tensile_type(
                 string_to_hip_datatype(entries[static_cast<size_t>(HeaderFields::c_type)]));
-            computeType = hipDataType_to_tensile_type(
-                string_to_hip_datatype(entries[static_cast<size_t>(HeaderFields::compute_type)]));
+            computeType = rocComputeType_to_tensile_type(
+                (rocblaslt_compute_type)string_to_hipblas_computetype(
+                    entries[static_cast<size_t>(HeaderFields::compute_type)]));
             solution_idx = std::stoi(entries[static_cast<size_t>(HeaderFields::solution_index)]);
         }
         catch(std::invalid_argument const& ex)
