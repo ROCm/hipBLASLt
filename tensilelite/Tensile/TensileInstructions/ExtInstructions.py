@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,21 @@ from rocisa import rocIsa
 from rocisa.code import Module, Label, TextBlock
 from rocisa.container import vgpr, sgpr, DSModifiers, SDWAModifiers, RegisterContainer, VCC
 from rocisa.enum import SelectBit
-from rocisa.instruction import *
+from rocisa.instruction import DSLoadB32, DSStoreB32, FlatLoadB32, FlatStoreB32, \
+    Instruction, PVCvtBF16toFP32, SAddU32, SAndB32, SAndB64, SAndSaveExecB32, \
+    SAndSaveExecB64, SBarrier, SCBranchSCC0, SCBranchSCC1, SCBranchVCCNZ, \
+    SCBranchVCCZ, SCMovB32, SCMovB64, SCmpEQU32, SCmpEQU64, SCmpLtU32, SLoadB128, \
+    SLoadB256, SLoadB32, SLoadB512, SLoadB64, SMovB32, SMovB64, SMovkI32, SMulHII32, \
+    SMulHIU32, SMulI32, SOrSaveExecB32, SOrSaveExecB64, SWaitCnt, VAddCOU32, VAndB32, \
+    VCmpEQF32, VCmpEQF64, VCmpXEqU32, VCmpXGeU32, VCmpXGtU32, VCmpXInstruction, \
+    VCmpXLeU32, VCmpXLtI32, VCmpXLtU32, VCmpXNeU16, VCmpXNeU32, VLShiftLeftB32, \
+    VMaxI32, VMed3I32, VMinI32, VMovB32, VMulHII32, VMulHIU32, VMulLOU32, VReadfirstlaneB32
 
 from .DataType import DataType
 from .RegisterPool import ContinuousRegister
 from .Utils import log2
 
-from enum import Enum 
+from enum import Enum
 
 
 from typing import Union
@@ -117,36 +125,6 @@ def SBranchIfNotZero(sgprName, computeDataType: DataType, label):
     else:
         module.add(SCmpEQU32(src0=sgpr(sgprName), src1=0, comment="%s == 0 ?" % sgprStr))
         module.add(SCBranchSCC0(labelName=label.getLabelName(), comment="branch if %s != 0" % sgprStr))
-    return module
-
-# Perform 32-bit scalar mul and save 64-bit result in two SGPR
-# src0 and src1 are 32-bit ints in scalar sgpr or small int constants (<64?))
-# signed indicates if input and output data is signed
-# return returns in dst0:dest (lower 32-bit in dst0, high 64-bit in dst1))
-# Requires 2 tmp vgprs
-def SMulInt64to32(hasSMulHi, dst0, dst1, src0, src1, signed, vtmp0, comment):
-    module = Module("SMulInt64to32")
-    sign = "i" if signed else "u"
-    assert(dst1 != src0) # no worky since dst1 overwritten by first mul operations
-    assert(dst1 != src1) # no worky since dst1 overwritten by first mul operations
-    # the else path below has less restrictions but prefer consistency
-    if hasSMulHi:
-        SInst = SMulHII32 if signed else SMulHIU32
-        module.add(SInst(dst=dst1, src0=src0, src1=src1, comment=comment))
-        module.add(SMulI32(dst=dst0, src0=src0, src1=src1, comment=comment))
-    else:
-        if (not isinstance(src1, RegisterContainer)) or (src1.regType != "s"):
-            # Swap operands, need a scalar sgpr in src1 (not a constant)
-            t = src0
-            src0 = src1
-            src1 = t
-        vtmp1 = vtmp0+1
-        module.add(VMovB32(dst=vgpr(vtmp0), src=src0, comment=comment))
-        VInst = VMulHII32 if signed else VMulHIU32
-        module.add(VInst(dst=vgpr(vtmp1), src0=vgpr(vtmp0), src1=src1, comment=comment))
-        module.add(VReadfirstlaneB32(dst=dst1, src=vgpr(vtmp1), comment=comment))
-        module.add(VMulLOU32(dst=vgpr(vtmp1), src0=vgpr(vtmp0), src1=src1, comment=comment))
-        module.add(VReadfirstlaneB32(dst=dst0, src=vgpr(vtmp1), comment=comment))
     return module
 
 ########################################

@@ -37,28 +37,20 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
                "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h"
 )
 
-# Copy Public Headers to Build Dir
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext.hpp" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext.hpp" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_xfloat32.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_xfloat32.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8_bc.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8_bc.h" COPYONLY)
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext-op.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext-op.h" COPYONLY)
 
 # Public hipBLASLt headers
 set(hipblaslt_headers_public
-  include/hipblaslt.h
-  include/hipblaslt-ext.hpp
-  include/hipblaslt_xfloat32.h
-  include/hipblaslt_float8.h
-  include/hipblaslt_float8_bc.h
-  include/hipblaslt-ext-op.h
+  include/hipblaslt/hipblaslt.h
+  include/hipblaslt/hipblaslt-ext.hpp
+  include/hipblaslt/hipblaslt_xfloat32.h
+  include/hipblaslt/hipblaslt_float8.h
+  include/hipblaslt/hipblaslt_float8_bc.h
+  include/hipblaslt/hipblaslt-ext-op.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 
 if(NOT BUILD_CUDA)
-    set(hipblaslt_headers_public ${hipblaslt_headers_public} include/hipblaslt-types.h)
+    set(hipblaslt_headers_public ${hipblaslt_headers_public} include/hipblaslt/hipblaslt-types.h)
 endif()
 source_group("Header Files\\Public" FILES ${hipblaslt_headers_public})
 
@@ -68,12 +60,21 @@ set(BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR})
 set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
 set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
 
-# Include sources
-include(src/CMakeLists.txt)
-
 # Create hipBLASLt library
-add_library(hipblaslt ${hipblaslt_source} ${RocRoller_SRC} ${hipblaslt_headers_public})
+add_library(hipblaslt ${hipblaslt_headers_public})
 add_library(roc::hipblaslt ALIAS hipblaslt)
+
+# Include sources
+add_subdirectory(src)
+
+if(USE_ROCROLLER)
+    set_source_files_properties(
+      "${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/rocroller_host.cpp"
+        PROPERTIES
+            LANGUAGE CXX
+            COMPILE_OPTIONS "-std=c++20;-x;c++"
+    )
+endif()
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
@@ -126,7 +127,6 @@ target_include_directories(hipblaslt
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/include>
                                    $<BUILD_INTERFACE:${Tensile_INC}>
                            PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/library/include>
-                                   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>
                                    $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
                                    $<INSTALL_INTERFACE:include>
 )
@@ -155,7 +155,7 @@ endif()
 # Target link libraries
 if(NOT BUILD_CUDA)
 # Target link libraries
-  target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
+  target_link_libraries(hipblaslt PRIVATE hip::device ${CMAKE_DL_LIBS})
 endif()
 
 if(HIPBLASLT_ENABLE_MARKER)
@@ -180,7 +180,7 @@ if(USE_ROCROLLER)
   FetchContent_Declare(
     rocRoller
     GIT_REPOSITORY https://github.com/ROCm/rocRoller.git
-    GIT_TAG 34307b30956cac16e459db6cfdd3ba1f07c7e9b8
+    GIT_TAG b6512d0f05a5bec4fd8ec89bd596f4c7d9e536b0
   )
   FetchContent_MakeAvailable(rocRoller)
   target_link_libraries(hipblaslt PRIVATE rocroller_interface)
@@ -222,6 +222,12 @@ rocm_install_targets(TARGETS hipblaslt
                      INCLUDE
                        ${CMAKE_BINARY_DIR}/include
 )
+install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    PATTERN "*.h"
+    PATTERN "*.hpp"
+)
 
 if ( NOT BUILD_CUDA )
     if (WIN32)
@@ -237,10 +243,10 @@ if ( NOT BUILD_CUDA )
       set( TENSILE_DATA_COMPONENT_NAME devel )
     endif()
 
-      rocm_install(
-        DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
-        DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
-        COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
+    rocm_install(
+      DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+      DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
+      COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
     endif()
 endif()
 
@@ -264,9 +270,9 @@ endif()
 
 
 if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
-  rocm_install(
-    DIRECTORY
-       "${PROJECT_BINARY_DIR}/hipblaslt"
-        DESTINATION "." )
-  message( STATUS "Backward Compatible Sym Link Created for include directories" )
+rocm_install(
+  DIRECTORY
+     "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt"
+      DESTINATION "." )
+message( STATUS "Backward Compatible Sym Link Created for include directories" )
 endif()

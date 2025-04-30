@@ -724,6 +724,20 @@ void common_inst(nb::module_ m_common)
         .def("__deepcopy__",
              [](const rocisa::SWaitCnt& self, nb::dict&) { return new rocisa::SWaitCnt(self); });
 
+    nb::class_<rocisa::SWaitAlu, rocisa::Instruction>(m_common, "SWaitAlu")
+        .def(nb::init<int, int, int, int, int, int, int, const std::string&>(),
+             nb::arg("va_vdst")  = -1,
+             nb::arg("va_sdst")  = -1,
+             nb::arg("va_ssrc")  = -1,
+             nb::arg("hold_cnt") = -1,
+             nb::arg("vm_vsrc")  = -1,
+             nb::arg("va_vcc")   = -1,
+             nb::arg("sa_sdst")  = -1,
+             nb::arg("comment")  = "")
+        .def("getParams", &rocisa::SWaitAlu::getParams)
+        .def("__deepcopy__",
+             [](const rocisa::SWaitAlu& self, nb::dict&) { return new rocisa::SWaitAlu(self); });
+
     nb::class_<rocisa::VAddF16, rocisa::CommonInstruction>(m_common, "VAddF16")
         .def(nb::init<const std::shared_ptr<rocisa::Container>&,
                       const InstructionInput&,
@@ -1129,6 +1143,21 @@ void common_inst(nb::module_ m_common)
              nb::arg("comment") = "")
         .def("__deepcopy__", [](const rocisa::VDot2CF32F16& self, nb::dict&) {
             return new rocisa::VDot2CF32F16(self);
+        });
+
+    nb::class_<rocisa::VDot2CF32BF16, rocisa::CommonInstruction>(m_common, "VDot2CF32BF16")
+        .def(nb::init<const std::shared_ptr<rocisa::Container>&,
+                      const InstructionInput&,
+                      const InstructionInput&,
+                      std::optional<rocisa::SDWAModifiers>,
+                      const std::string&>(),
+             nb::arg("dst"),
+             nb::arg("src0"),
+             nb::arg("src1"),
+             nb::arg("sdwa")    = std::nullopt,
+             nb::arg("comment") = "")
+        .def("__deepcopy__", [](const rocisa::VDot2CF32BF16& self, nb::dict&) {
+            return new rocisa::VDot2CF32BF16(self);
         });
 
     nb::class_<rocisa::VDot2F32F16, rocisa::CommonInstruction>(m_common, "VDot2F32F16")
