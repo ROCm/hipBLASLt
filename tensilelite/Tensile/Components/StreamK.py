@@ -688,7 +688,7 @@ class StreamK(Component):
         # AccVgpr read
         # if kernel.enabledSetPrioSplitLDS:
         #     kStr += inst("s_setprio", "0", "")
-        if codeAccVgprRead is not None: # and writer.kernel["LocalSplitU"] == 1
+        if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             # loop over store instructions within one batch
             for elementIdx in range(0, len(batchElements)):
@@ -757,7 +757,7 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
         if kernel["EnableMatrixInstruction"]:
-            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["WorkGroup"][2]
         else:
             WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
 
@@ -777,6 +777,7 @@ class StreamK(Component):
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
                 increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
+                # module.addComment1("WavefrontSize={}, WaveNum={}, storeWidth={}, bpeC={}".format(kernel["WavefrontSize"], WaveNum, storeWidth, writer.states.bpeCinternal))
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             # TODO StreamK need this packing code???
@@ -1131,7 +1132,7 @@ class StreamK(Component):
         #     self.StoreCUnrollLoadCWaitComment = "waitcnt for LoadC" # this will be used later to identify waitcnt for loadC
 
         if kernel["EnableMatrixInstruction"]:
-            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["WorkGroup"][2]
         else:
             WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
 
@@ -1156,6 +1157,7 @@ class StreamK(Component):
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
                 increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
+                # module.addComment1("WavefrontSize={}, WaveNum={}, storeWidth={}, bpeC={}".format(kernel["WavefrontSize"], WaveNum, storeWidth, writer.states.bpeCinternal))
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             module.add(writer.readInput(kernel, ss, 'WS', kernel["ProblemType"]["ComputeDataType"], addrCalc, vc0, data, gwvw, addrCVgpr, sgpr(tmpS01)))
@@ -1165,7 +1167,7 @@ class StreamK(Component):
         # AccVgpr read
         # if kernel.enabledSetPrioSplitLDS:
         #     kStr += inst("s_setprio", "0", "")
-        if codeAccVgprRead is not None:
+        if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             # loop over store instructions within one batch
             for elementIdx in range(0, len(batchElements)):
