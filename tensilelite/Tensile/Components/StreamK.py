@@ -28,10 +28,10 @@ from rocisa.instruction import SAddCU32, SAddI32, SAddU32, SAndB32, SBarrier, \
     SCmpGtU32, SCmpLeU32, SCmpLtU32, SLShiftLeftB32, SLShiftRightB32, SLoadB32, \
     SMinU32, SMovB32, SMovB64, SMulI32, SNop, SSleep, SStoreB32, SSubU32, \
     SWaitCnt, VAddF32, VAddF64, VAddPKF16, VAddU32, VLShiftRightB32, VMovB32, \
-    VReadfirstlaneB32
+    VReadfirstlaneB32, scalarStaticDivideAndRemainder, sMagicDiv2, vectorStaticMultiply
 
-from ..TensileInstructions import ContinuousRegister, sMagicDivAlg2, SBranchIfNotZero, \
-    ceilDivide, VCvtBF16toFP32, staticMultiply, scalarStaticDivideAndRemainder, log2
+from ..TensileInstructions import ContinuousRegister, SBranchIfNotZero, \
+    ceilDivide, VCvtBF16toFP32, log2
 from ..Common import print2
 # from ..TensileInstructions.Containers import SMEMModifiers
 from ..Component import Component
@@ -128,7 +128,7 @@ class StreamK(Component):
         module.addComment0("StreamK calculate tile idx and map to WG")
 
         # sTmp = tile index
-        module.add(sMagicDivAlg2(sTmp, sgpr("StreamKIter"), sgpr("MagicNumberItersPerTile"), sgpr("MagicShiftItersPerTile")))
+        module.add(sMagicDiv2(sgpr(sTmp), sgpr(sTmp+1), sgpr("StreamKIter"), sgpr("MagicNumberItersPerTile"), sgpr("MagicShiftItersPerTile"), sgpr(sTmp+2)))
         # sTmp+1 = tile start
         module.add(SMulI32(dst=sgpr(sTmp+1), src0=sgpr(sTmp), src1=sgpr("ItersPerTile"), comment="Tile start iteration"))
         # sTmp+2 = tile end
@@ -146,12 +146,12 @@ class StreamK(Component):
 
         # Map StreamK tile index to wg0/1
         module.addComment0("Map StreamK tile index to wg0/1/2")
-        module.add(sMagicDivAlg2(sTmp+1, sgpr(sTmp), sgpr("MagicNumProblemNumGroupTiles0By1"), sgpr("MagicShiftProblemNumGroupTiles0By1")))
+        module.add(sMagicDiv2(sgpr(sTmp+1), sgpr(sTmp+2), sgpr(sTmp), sgpr("MagicNumProblemNumGroupTiles0By1"), sgpr("MagicShiftProblemNumGroupTiles0By1"), sgpr(sTmp+3)))
         module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(sTmp+1), comment="wg2 = Tile Idx / problemNumGroupTiles0By1"))
         module.add(SMulI32(dst=sgpr(sTmp+1), src0=sgpr(sTmp+1), src1=sgpr("NumWorkGroups0"), comment="remainder part 1 : quotient * divisor"))
         module.add(SMulI32(dst=sgpr(sTmp+1), src0=sgpr(sTmp+1), src1=sgpr("NumWorkGroups1"), comment="remainder part 1 : quotient * divisor"))
         module.add(SSubU32(dst=sgpr(sTmp), src0=sgpr(sTmp), src1=sgpr(sTmp+1), comment="remainder"))
-        module.add(sMagicDivAlg2(sTmp+1, sgpr(sTmp), sgpr("MagicNumberProblemNumGroupTiles0"), sgpr("MagicShiftProblemNumGroupTiles0")))
+        module.add(sMagicDiv2(sgpr(sTmp+1), sgpr(sTmp+2), sgpr(sTmp), sgpr("MagicNumberProblemNumGroupTiles0"), sgpr("MagicShiftProblemNumGroupTiles0"), sgpr(sTmp+3)))
         module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(sTmp+1), comment="wg1 = Tile Idx / problemNumGroupTiles0"))
         module.add(SMulI32(dst=sgpr("WorkGroup0"), src0=sgpr(sTmp+1), src1=sgpr("NumWorkGroups0"), comment="remainder part 1 : quotient * divisor"))
         module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr(sTmp), src1=sgpr("WorkGroup0"), comment="wg0 = Tile Idx % problemNumGroupTiles0"))
@@ -170,7 +170,7 @@ class StreamK(Component):
         # StreamK partial tile - offset to tile start index
         module.add(SMulI32(dst=sgpr(sTmp), src0=sgpr("StreamKLocalStart"), src1="DepthU", comment="StreamK tile start offset"))
         strideL = writer.strideRef(tc, kernel["ProblemType"]["IndicesSummation"][0])
-        module.add(writer.s_mul_u64_u32(sgpr(sTmp), sgpr(sTmp+1), sgpr(sTmp), strideL, "StreamK tile start offset"))
+        module.add(writer.s_mul_u64_u32(sgpr(sTmp), sgpr(sTmp+1), sgpr(sTmp), strideL, comment="StreamK tile start offset"))
         # Overflow check removed
         # if kernel["CheckDimOverflow"] >=2:
         #     kStr += self.assert_eq(sgpr(sTmp+1),0)
@@ -301,7 +301,7 @@ class StreamK(Component):
             module.add(SAddU32(dst=sgpr(sCtaIdx), src0=sgpr("StreamKIdx"), src1=1, comment="input partial tile index"))
 
             sFixupEnd = writer.sgprPool.checkOut(1, "FixupEnd", preventOverflow=0) # self.defineSgpr("CtaEnd", 1)
-            module.add(sMagicDivAlg2(tmpSgpr, sgpr("StreamKIterEnd"), sgpr("MagicNumberItersPerTile"), sgpr("MagicShiftItersPerTile")))
+            module.add(sMagicDiv2(sgpr(tmpSgpr), sgpr(tmpSgpr+1), sgpr("StreamKIterEnd"), sgpr("MagicNumberItersPerTile"), sgpr("MagicShiftItersPerTile"), sgpr(tmpSgpr+2)))
             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr("ItersPerTile"), comment="start iteration of partial tile"))
             module.add(SSubU32(dst=sgpr(sFixupEnd), src0=sgpr("StreamKIterEnd"), src1=sgpr(tmpSgpr), comment="calc iterations completed by this WG"))
 
@@ -693,7 +693,7 @@ class StreamK(Component):
         # AccVgpr read
         # if kernel.enabledSetPrioSplitLDS:
         #     kStr += inst("s_setprio", "0", "")
-        if codeAccVgprRead is not None: # and writer.kernel["LocalSplitU"] == 1
+        if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             # loop over store instructions within one batch
             for elementIdx in range(0, len(batchElements)):
@@ -761,6 +761,11 @@ class StreamK(Component):
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Max), "0x47600000", comment="BF8 Max value 57344 as float32" ))
             module.add(VMovB32(vgpr(cvtVgprStruct.vgprBF8Min), "0xc7600000", comment="BF8 Min value -57344 as float32" ))
 
+        if kernel["EnableMatrixInstruction"]:
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["WorkGroup"][2]
+        else:
+            WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
+
         storeCode = Module("Partials GroupLoadStore")
         for elementIdx in range(len(batchElements)):
             element = batchElements[elementIdx]
@@ -772,11 +777,12 @@ class StreamK(Component):
             # storeWidth = 2
             if batchIdx == 0 and elementIdx == 0:
                 tmpSgprRes = ContinuousRegister(idx=tmpS01, size=1)
-                module.add(staticMultiply(vgpr(addr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpSgprRes))
+                module.add(vectorStaticMultiply(vgpr(addr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpSgprRes))
                 # kStr += inst("v_mul_lo_u32", , "Partials buffer address")
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
-                increment = (kernel["WavefrontSize"] * 4) * storeWidth * writer.states.bpeCinternal
+                increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
+                # module.addComment1("WavefrontSize={}, WaveNum={}, storeWidth={}, bpeC={}".format(kernel["WavefrontSize"], WaveNum, storeWidth, writer.states.bpeCinternal))
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             # TODO StreamK need this packing code???
@@ -1094,7 +1100,6 @@ class StreamK(Component):
         storesIssued = 0
         tmpS01 = tmpSgpr # scratch sgprs
 
-        wavelen = kernel["WavefrontSize"]
         # laneSGPRC = writer.states.laneSGPRCount
         # always use gwvw for buffer load C for atomic_cmpswap
         # bpm = self.bpeCexternal * atomicW
@@ -1131,6 +1136,11 @@ class StreamK(Component):
         #     accVgprRead = Code.Module("movaccVgpr")
         #     self.StoreCUnrollLoadCWaitComment = "waitcnt for LoadC" # this will be used later to identify waitcnt for loadC
 
+        if kernel["EnableMatrixInstruction"]:
+            WaveNum = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1] * kernel["WorkGroup"][2]
+        else:
+            WaveNum = kernel["NumThreads"] // kernel["WavefrontSize"]
+
         for elementIdx in range(0, len(batchElements)):
             element = batchElements[elementIdx]
             addrCVgpr = ss.elementAddr[elementIdx].addrCVgpr
@@ -1147,11 +1157,13 @@ class StreamK(Component):
             storeWidth = kernel["StoreVectorWidth"]
             # storeWidth = 2
             if batchIdx == 0 and elementIdx == 0:
-                module.add(staticMultiply(vgpr(addrCVgpr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, sgpr(tmpS01)))
+                tmpS01Res = ContinuousRegister(idx=tmpS01, size=1)
+                module.add(vectorStaticMultiply(vgpr(addrCVgpr), vgpr("Serial"), storeWidth * writer.states.bpeCinternal, tmpS01Res))
                 # kStr += inst("v_mul_lo_u32", , "Partials buffer address")
                 module.add(SMovB32(dst=sgpr(tmpS01), src=0, comment="Init sgpr offset"))
             else:
-                increment = (kernel["WavefrontSize"] * 4) * storeWidth * writer.states.bpeCinternal
+                increment = (kernel["WavefrontSize"] * WaveNum) * storeWidth * writer.states.bpeCinternal
+                # module.addComment1("WavefrontSize={}, WaveNum={}, storeWidth={}, bpeC={}".format(kernel["WavefrontSize"], WaveNum, storeWidth, writer.states.bpeCinternal))
                 module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=increment, comment="Inc sgpr offset"))
 
             module.add(writer.readInput(kernel, ss, 'WS', kernel["ProblemType"]["ComputeDataType"], addrCalc, vc0, data, gwvw, addrCVgpr, sgpr(tmpS01)))
@@ -1161,7 +1173,7 @@ class StreamK(Component):
         # AccVgpr read
         # if kernel.enabledSetPrioSplitLDS:
         #     kStr += inst("s_setprio", "0", "")
-        if codeAccVgprRead is not None:
+        if codeAccVgprRead is not None and kernel["LocalSplitU"] == 1:
             regsPerScalar = writer.states.bpeCinternal // writer.states.bpr # register per scalar
             # loop over store instructions within one batch
             for elementIdx in range(0, len(batchElements)):
@@ -1540,9 +1552,9 @@ class StreamKOff(StreamK):
         if kernel["NoTailLoop"] and kernel["AssertSummationElementMultiple"] % kernel["DepthU"] != 0:
             # round up SizesSum/DepthU for noTailLoop case
             module.add(SAddI32(dst=sgpr(quotient), src0=(divisor - 1), src1=sgpr(dividend), comment="round up SizeSum / DepthU" ))
-            module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=-1, dReg=quotient, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=0))
+            module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=-1, dReg=quotient, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=False))
         else:
-            module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=-1, dReg=dividend, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=0))
+            module.add(scalarStaticDivideAndRemainder(qReg=quotient, rReg=-1, dReg=dividend, divisor=divisor, tmpSgprRes=tmpSgprInfo, doRemainder=False))
 
         return module
 

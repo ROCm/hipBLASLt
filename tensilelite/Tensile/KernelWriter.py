@@ -375,11 +375,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def __init__(
       self,
-      kernelSerialNaming,
       assembler: Assembler,
       debugConfig: DebugConfig,
     ):
-    self.kernelSerialNaming = kernelSerialNaming
     self.assembler = assembler
     self.debugConfig = debugConfig
 
@@ -2298,8 +2296,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if not self.states.numItersPLR:
       if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
-        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "10wait for global read"))
-      module.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, 0, -1, "4wait for local write"))
+        vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 and isNGLL else 0
+        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, vmcntVal, -1, -1, "10wait for global read"))
+      if not kernel["NoLdsWriteCode"]:
+        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, 0, -1, "4wait for local write"))
       module.add(self._syncThreads(kernel))
 
     # generate no Load Loop Body code
@@ -2330,8 +2330,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment2("Unrolled Loop %u/%u - Begin" % (lc+1, loopCopies))
     if kernel["PrefetchGlobalRead"] and not self.states.numItersPLR and not kernel["ScheduleIterAlg"] == 2:
       if kernel["DirectToLdsA"] or kernel["DirectToLdsB"]:
-        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "11wait for global read"))
-      module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 1, 0, -1, "1wait for local write"))
+        vmcntVal = 1 if kernel["PrefetchGlobalRead"] == 2 else 0
+        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, vmcntVal, -1, -1, "11wait for global read"))
+      if not kernel["NoLdsWriteCode"]:
+        module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 1, 0, -1, "1wait for local write"))
       module.add(self._syncThreads(kernel, "4sync for global read"))
 
     module.addComment1("Begin Each Unroll: Check VGPR.checkin for INT8 LW")
@@ -4788,8 +4790,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.localReadDoCntMetadata  = 0
 
     if kernel["EnableMatrixInstruction"]:
+      numBytes = kernel["ProblemType"]["DataType"].numBytes()
       mi_divisor = 2
-
       miIssueLatency = 2
       if (self.states.version == (9,4,0) or self.states.version == (9,4,1) or self.states.version == (9,4,2) or self.states.version == (9,5,0)) and kernel["MatrixInstB"] == 1 and \
          (kernel["ProblemType"]["DataType"].isHalf() or \
@@ -4798,6 +4800,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
           kernel["ProblemType"]["DataType"].is8bitFloat()):
         mi_divisor = 4
         miIssueLatency = 1
+      if (self.states.version == (9,5,0) and numBytes ==2):
+        mi_divisor = 2
+        miIssueLatency = 2
 
       if kernel["ProblemType"]["Sparse"] or (kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32()):
         mi_divisor = 4
