@@ -227,7 +227,7 @@ class LSUOn(LSU):
             dataPerWave = numAccVgpr * kernel["WavefrontSize"] * 4
             ldsStride   = dataPerWave * numWaves
 
-            addr = writer.vgprPool.checkOut(1,"addr")
+            addr = writer.vgprPool.checkOut(2,"addr")
 
             # Prepare Write/Read instruction info
             if bytesPerVector % 16 == 0:
@@ -298,6 +298,8 @@ class LSUOn(LSU):
                     comment="lsu offset = lsu_id * LSU Process Offset"))
                 module.add(VAddU32(dst=vgpr(addr), src0=vgpr(addr), src1=vgpr(tmpVgpr), \
                     comment="addr += lsu offset"))
+                module.add(VAddU32(vgpr(addr+1),0x10000, vgpr(addr), \
+                    comment="addr += 65536"))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -312,11 +314,15 @@ class LSUOn(LSU):
                     for r in range(0, kernel["LocalSplitU"]):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
+                        srcvgpr = vgpr(addr)
+                        if offset>=65536:
+                            offset-=65536
+                            srcvgpr = vgpr(addr+1)
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
                         else:
                             vgprStr = inLoopTmpVgpr + (numVgprPerLSU * (r - 1) + regIdx)
-                        module.add(DSLoadBX(dst=vgpr(vgprStr, regsPerStore), src=vgpr(addr), \
+                        module.add(DSLoadBX(dst=vgpr(vgprStr, regsPerStore), src=srcvgpr, \
                                     ds=DSModifiers(offset=(offset)), \
                                     comment="r=%u i=%u, from acc[%d]"%(r, (i * numInstPerVW + v), neededAccVGPRIdx[0][(i * numInstPerVW + v)])))
                         # Generate Reduction code at the same time.
