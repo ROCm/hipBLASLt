@@ -226,10 +226,6 @@ class LSUOn(LSU):
 
             dataPerWave = numAccVgpr * kernel["WavefrontSize"] * 4
             ldsStride   = dataPerWave * numWaves
-            if  writer.states.archCaps["HasLDSGT64K"]:
-                addr = writer.vgprPool.checkOut(3,"addr")
-            else:
-                addr = writer.vgprPool.checkOut(1,"addr")
             # Prepare Write/Read instruction info
             if bytesPerVector % 16 == 0:
                 DSStoreBX    = DSStoreB128
@@ -246,6 +242,12 @@ class LSUOn(LSU):
                 DSLoadBX     = DSLoadB32
                 numInstPerVW = bytesPerVector // 4
                 regsPerStore = 1
+            maxOffset =  (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
+            numAddr =maxOffset // 65536 + 1
+            if  writer.states.archCaps["Has160KLDS"]:
+               addr = writer.vgprPool.checkOut(numAddr,"addr")
+            else:
+                addr = writer.vgprPool.checkOut(1,"addr")
 
             with writer.allocTmpSgpr(1) as tmpSgprInfo:
                 tmpSgpr = tmpSgprInfo.idx
@@ -299,11 +301,10 @@ class LSUOn(LSU):
                     comment="lsu offset = lsu_id * LSU Process Offset"))
                 module.add(VAddU32(dst=vgpr(addr), src0=vgpr(addr), src1=vgpr(tmpVgpr), \
                     comment="addr += lsu offset"))
-                if  writer.states.archCaps["HasLDSGT64K"]:
-                    module.add(VAddU32(vgpr(addr+1),0x10000, vgpr(addr), \
-                        comment="addr += 65536"))
-                    module.add(VAddU32(vgpr(addr+2),0x20000, vgpr(addr), \
-                        comment="addr += 65536*2"))
+                if  writer.states.archCaps["Has160KLDS"] and numAddr > 1:
+                    for i in range(1,numAddr):
+                        module.add(VAddU32(vgpr(addr+i), 0x10000*i, vgpr(addr), \
+                            comment="addr += 65536*%u"%(i)))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -319,13 +320,10 @@ class LSUOn(LSU):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
                         srcvgpr = vgpr(addr)
-                        if writer.states.archCaps["HasLDSGT64K"]:
-                            if offset>=65536*2:
-                                offset-=65536*2
-                                srcvgpr = vgpr(addr+2)
-                            elif offset>=65536:
-                                offset-=65536
-                                srcvgpr = vgpr(addr+1)
+                        if writer.states.archCaps["Has160KLDS"]:
+                            num = offset // 65536
+                            offset -= num * 65536
+                            srcvgpr = vgpr(addr+num)
                                 
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
