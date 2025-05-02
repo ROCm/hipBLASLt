@@ -27,15 +27,10 @@ archStr=$1
 dst=$2
 venv=$3
 build_id_kind=$4
+toolchain=$5
+python_exe_name=$6
 
-rocm_path=/opt/rocm
-if ! [ -z ${ROCM_PATH+x} ]; then
-    rocm_path=${ROCM_PATH}
-fi
-
-toolchain=${rocm_path}/bin/amdclang++
-
-. ${venv}/bin/activate
+. ${venv}/activate
 
 IFS=';' read -r -a archs <<< "$archStr"
 
@@ -46,21 +41,21 @@ for arch in "${archs[@]}"; do
         set -- $i
         s=$dst/L_$1_$2_$3_$arch.s
         o=$dst/L_$1_$2_$3_$arch.o
-        python3 ./LayerNormGenerator.py -o $s -w $1 -c $2 --sweep-once $3 --arch $arch --toolchain $toolchain &
+        ${python_exe_name} ./LayerNormGenerator.py -o $s -w $1 -c $2 --sweep-once $3 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     for i in "16 16" "8 32" "4 64" "2 128" "1 256"; do
         set -- $i
         s=$dst/S_$1_$2_$arch.s
         o=$dst/S_$1_$2_$arch.o
-        python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch --toolchain $toolchain &
+        ${python_exe_name} ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     for i in "S S 256 4" "H H 256 4" "H S 256 4" "S H 256 4"; do
         set -- $i
         s=$dst/A_$1_$2_$3_$4_$arch.s
         o=$dst/A_$1_$2_$3_$4_$arch.o
-        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 -w $3 -c $4 --arch $arch --toolchain $toolchain &
+        ${python_exe_name} ./AMaxGenerator.py -o $s -t $1 -d $2 -w $3 -c $4 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     if [[ $arch =~ gfx94[0-9] ]]; then
@@ -68,7 +63,7 @@ for arch in "${archs[@]}"; do
             set -- $i
             s=$dst/A_$1_$2_$3_$4_$5_$arch.s
             o=$dst/A_$1_$2_$3_$4_$5_$arch.o
-            python3 ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 -w $4 -c $5 --arch $arch --toolchain $toolchain &
+            ${python_exe_name} ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 -w $4 -c $5 --arch $arch --toolchain $toolchain &
             objs+=($o)
         done
     fi
@@ -77,13 +72,13 @@ for arch in "${archs[@]}"; do
             set -- $i
             s=$dst/A_$1_$2_$3_$4_$5_$arch.s
             o=$dst/A_$1_$2_$3_$4_$5_$arch.o
-            python3 ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 -w $4 -c $5 --arch $arch --toolchain $toolchain &
+            ${python_exe_name} ./AMaxGenerator.py --is-scale -o $s -t $1 -d $2 -s $3 -w $4 -c $5 --arch $arch --toolchain $toolchain &
             objs+=($o)
         done
     fi
     wait
     ${toolchain} -target amdgcn-amdhsa -Xlinker --build-id=$build_id_kind -o $dst/extop_$arch.co ${objs[@]}
-    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
+    ${python_exe_name} ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
 done
 
 deactivate

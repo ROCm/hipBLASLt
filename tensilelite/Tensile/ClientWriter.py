@@ -104,7 +104,7 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
   functionNames = []
 
   createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]), useShortNames)
-  subprocess.run(shlex.split(createLibraryScript), cwd=clientLibraryPath)
+  subprocess.run(createLibraryScript, cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
 
@@ -219,36 +219,31 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
   return process.returncode
 
 def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames: bool=False):
-  import io
-  runScriptFile = io.StringIO()
-
-  callCreateLibraryCmd = ROOT_PATH + "/bin/TensileCreateLibrary"
+  callCreateLibraryCmd = ["python"] if os.name == "nt" else []
+  callCreateLibraryCmd += [ROOT_PATH + "/bin/TensileCreateLibrary"]
 
   if not globalParameters["LazyLibraryLoading"]:
-    callCreateLibraryCmd += " --no-lazy-library-loading"
+    callCreateLibraryCmd += ["--no-lazy-library-loading"]
 
   if useShortNames:
-    callCreateLibraryCmd += " --short-file-names"
+    callCreateLibraryCmd += ["--short-file-names"]
 
   if globalParameters.get("AsmDebug", False):
-    callCreateLibraryCmd += " --asm-debug"
+    callCreateLibraryCmd += ["--asm-debug",]
 
   if globalParameters["KeepBuildTmp"]:
-    callCreateLibraryCmd += " --keep-build-tmp"
+    callCreateLibraryCmd += ["--keep-build-tmp"]
 
-  callCreateLibraryCmd += " --architecture=" + targetGfx
-  callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
-  callCreateLibraryCmd += " --cxx-compiler=" + cxxCompiler
-  callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
+  callCreateLibraryCmd += ["--architecture=" + targetGfx]
+  callCreateLibraryCmd += ["--code-object-version=" + globalParameters["CodeObjectVersion"]]
+  callCreateLibraryCmd += ["--cxx-compiler=" + cxxCompiler]
+  callCreateLibraryCmd += ["--library-format=" + globalParameters["LibraryFormat"]]
 
-  callCreateLibraryCmd += " %s" % libraryLogicPath
-  callCreateLibraryCmd += " %s" % buildPath #" ../source"
-  callCreateLibraryCmd += " %s\n" % globalParameters["RuntimeLanguage"]
+  callCreateLibraryCmd += ["%s" % libraryLogicPath]
+  callCreateLibraryCmd += ["%s" % buildPath] #" ../source"
+  callCreateLibraryCmd += ["%s" % globalParameters["RuntimeLanguage"]]
 
-  runScriptFile.write(callCreateLibraryCmd)
-
-  return runScriptFile.getvalue()
-
+  return callCreateLibraryCmd
 
 def writeRunScript(path, forBenchmark, enableTileSelection, cxxCompiler: str, cCompiler: str, buildDir, configPaths=None):
   if configPaths is None:

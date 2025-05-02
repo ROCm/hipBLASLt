@@ -90,11 +90,12 @@ def isExe(filePath):
     return os.path.isfile(filePath) and os.access(filePath, os.X_OK)
 
 
-def locateExe(defaultPath, exeName):  # /opt/rocm/bin, hip-clang
-    # look in defaultPath first
-    exePath = os.path.join(defaultPath, exeName)
-    if isExe(exePath):
-        return exePath
+def locateExe(defaultPaths, exeName):  # /opt/rocm/bin, hip-clang
+    # look in defaultPaths first
+    for p in defaultPaths:
+        exePath = os.path.join(p, exeName)
+        if isExe(exePath):
+            return exePath
     # look in PATH second
     for path in os.environ["PATH"].split(os.pathsep):
         exePath = os.path.join(path, exeName)

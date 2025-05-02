@@ -31,6 +31,10 @@ from pathlib import Path
 from . import SOURCE_PATH
 from Tensile.Common import print2, ClientExecutionLock, ensurePath, CLIENT_BUILD_DIR
 from Tensile.Common.GlobalParameters import globalParameters
+from Tensile.Toolchain.Validators import validateToolchain, ToolchainDefaults
+
+def cmake_path(os_path):
+    return (os_path.replace("\\", "/") if (os.name == "nt") else os_path)
 
 class CMakeEnvironment:
     def __init__(self, sourceDir, buildDir, **options):
@@ -41,18 +45,28 @@ class CMakeEnvironment:
     def generate(self):
 
         args = ['cmake']
-        args += itertools.chain.from_iterable([ ['-D', '{}={}'.format(key, value)] for key,value in self.options.items()])
+        args += ['-G', 'Ninja'] if (os.name == 'nt') else []
+        args += itertools.chain.from_iterable([ ['-D{}={}'.format(key, value)] for key,value in self.options.items()])
         args += [self.sourceDir]
+        args = [cmake_path(arg) for arg in args]
 
         print2(' '.join(args))
         with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
             subprocess.check_call(args, cwd=ensurePath(self.buildDir))
 
     def build(self):
-        args = ['make', '-j']
+        makeProgram = CMakeEnvironment.getBuildProgramPath()
+        args = [makeProgram, '-j']
         print2(' '.join(args))
         with ClientExecutionLock(globalParameters["ClientExecutionLockPath"]):
             subprocess.check_call(args, cwd=self.buildDir)
+
+    @staticmethod
+    def getBuildProgramPath() -> str:
+        if os.name == "nt":
+            return os.environ.get("NINJA_PATH")
+        else:
+            return "make"
 
     def builtPath(self, path, *paths):
         return os.path.join(self.buildDir, path, *paths)
@@ -67,8 +81,8 @@ def clientExecutableEnvironment(builddir: Optional[str], cxxCompiler: str, cComp
                'TENSILE_USE_LLVM': 'OFF' if (os.name == "nt") else 'ON',
                'Tensile_LIBRARY_FORMAT': globalParameters["LibraryFormat"],
                'Tensile_ENABLE_MARKER' : globalParameters["EnableMarker"],
-               'CMAKE_CXX_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cxxCompiler),
-               'CMAKE_C_COMPILER': os.path.join(globalParameters["ROCmBinPath"], cCompiler)}
+               'CMAKE_CXX_COMPILER': validateToolchain(ToolchainDefaults.CXX_COMPILER),
+               'CMAKE_C_COMPILER': validateToolchain(ToolchainDefaults.C_COMPILER)}
 
     if "CCACHE_BASEDIR" in os.environ:
         options.update({'CMAKE_C_COMPILER_LAUNCHER': 'ccache', 'CMAKE_CXX_COMPILER_LAUNCHER': 'ccache'})
@@ -90,4 +104,6 @@ def getClientExecutable(cxxCompiler: str, cCompiler: str, builddir: Path):
         buildEnv.generate()
         buildEnv.build()
 
-    return buildEnv.builtPath("client/tensile_client")
+    ext = ".exe" if os.name == "nt" else ""
+    return buildEnv.builtPath("client", f"tensile_client{ext}")
+

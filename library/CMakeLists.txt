@@ -77,6 +77,22 @@ add_library(roc::hipblaslt ALIAS hipblaslt)
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
+  if (WIN32)
+    find_package(msgpack-cxx REQUIRED)
+
+    target_compile_definitions(hipblaslt PUBLIC -DTENSILE_MSGPACK=1)
+    get_target_property(msgpack_inc msgpack-cxx INTERFACE_INCLUDE_DIRECTORIES)
+
+    if(DEFINED msgpack_inc)
+        # include C++ headers manually
+        # External header includes included as system files
+        target_include_directories(hipblaslt
+            SYSTEM PRIVATE $<BUILD_INTERFACE:${msgpack_inc}>
+        )
+
+      target_link_libraries(hipblaslt PRIVATE TensileHost shlwapi)
+    endif()
+  endif()
 
   if( BUILD_SHARED_LIBS )
     target_link_libraries( hipblaslt PRIVATE TensileHost )
@@ -155,7 +171,11 @@ endif()
 # Target link libraries
 if(NOT BUILD_CUDA)
 # Target link libraries
-  target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
+  if (WIN32)
+    target_link_libraries(hipblaslt PRIVATE hip::device ${CMAKE_DL_LIBS})
+  else()
+    target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
+  endif()
 endif()
 
 if(HIPBLASLT_ENABLE_MARKER)
@@ -199,6 +219,13 @@ set_target_properties(hipblaslt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBI
 set_target_properties(hipblaslt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging")
 set_target_propertieS(hipblaslt PROPERTIES DEBUG_POSTFIX "-d")
 
+if (WIN32 AND BUILD_CLIENTS)
+  add_custom_command( TARGET hipblaslt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/staging/$<TARGET_FILE_NAME:hipblaslt> ${PROJECT_BINARY_DIR}/clients/staging/$<TARGET_FILE_NAME:hipblaslt> )
+  if( ${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    add_custom_command( TARGET hipblaslt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/staging/hipblaslt.pdb ${PROJECT_BINARY_DIR}/clients/staging/hipblaslt.pdb )
+  endif()
+endif()
+
 # TODO ??
 # Following boost conventions of prefixing 'lib' on static built libraries
 if(NOT BUILD_SHARED_LIBS)
@@ -225,7 +252,7 @@ rocm_install_targets(TARGETS hipblaslt
 
 if ( NOT BUILD_CUDA )
     if (WIN32)
-      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library" )
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipblaslt" CACHE PATH "path to tensile library" )
     else()
       set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library" )
     endif()

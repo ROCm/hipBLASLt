@@ -28,6 +28,7 @@ import os.path
 import subprocess
 import sys
 import time
+import shutil
 from collections import OrderedDict
 from copy import deepcopy
 from typing import Dict
@@ -39,6 +40,7 @@ from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      getVerbosity
 from .ValidParameters import validParameters
+from ..Toolchain.Validators import ToolchainDefaults, _windowsSearchPaths, _posixSearchPaths, _validateExecutable, osSelect
 
 startTime = time.time()
 
@@ -534,24 +536,16 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         else:
             print2(" %24s: %8s (unspecified)" % (key, defaultValue))
 
-    globalParameters["ROCmPath"] = "/opt/rocm"
-    if "ROCM_PATH" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("ROCM_PATH")
-    if "TENSILE_ROCM_PATH" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("TENSILE_ROCM_PATH")
-    if os.name == "nt" and "HIP_DIR" in os.environ:
-        globalParameters["ROCmPath"] = os.environ.get("HIP_DIR")  # windows has no ROCM
     globalParameters["CmakeCxxCompiler"] = None
     if "CMAKE_CXX_COMPILER" in os.environ:
         globalParameters["CmakeCxxCompiler"] = os.environ.get("CMAKE_CXX_COMPILER")
     if "CMAKE_C_COMPILER" in os.environ:
         globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
-    globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
-    globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
-    globalParameters["ROCmLdPath"] = locateExe(
-        os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld"
-    )
+    searchPaths = _windowsSearchPaths() if os.name == "nt" else _posixSearchPaths()
+    if os.name != "nt":
+        globalParameters["ROCmSMIPath"] = locateExe(searchPaths, "rocm-smi")
+    globalParameters["ROCmLdPath"] = locateExe(searchPaths, osSelect(linux="ld.lld", windows="ld.lld.exe"))
 
     if "AsanBuild" in config:
         globalParameters["AsanBuild"] = config["AsanBuild"]
@@ -579,10 +573,15 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
     # The following try except block computes the hipcc version
     # TODO: hipcc is deprecated, this block should be removed.
     try:
-        compiler = "hipcc"
-        output = subprocess.run(
-            [compiler, "--version"], check=True, stdout=subprocess.PIPE
-        ).stdout.decode()
+        if os.name == "nt":
+            compiler = _validateExecutable("hipcc", searchPaths)
+            compileArgs = ['--version']
+            output = subprocess.run([compiler] + compileArgs, check=True, stdout=subprocess.PIPE).stdout.decode()
+        else:
+            compiler = "hipcc"
+            output = subprocess.run(
+                [compiler, "--version"], check=True, stdout=subprocess.PIPE
+            ).stdout.decode()
 
         for line in output.split("\n"):
             if "HIP version" in line:

@@ -257,6 +257,12 @@ function(TensileCreateLibraryFiles
 
 endfunction()
 
+if(WIN32)
+    SET(toolchain "${ROCM_PATH}\\bin\\clang++.exe")
+else()
+    SET(toolchain "${ROCM_PATH}/bin/amdclang++")
+endif()
+
 function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
   list(REMOVE_DUPLICATES Archs)
@@ -274,8 +280,9 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
-    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
+    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_BIN_DIR}" "${Tensile_BUILD_ID}" "${toolchain}" "${VIRTUALENV_PYTHON_EXENAME}"
+    COMMAND bash -c "cp ${build_tmp_dir}/extop_*.co ${OutputFolder}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${OutputFolder}
   )
 
   add_custom_target(

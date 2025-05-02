@@ -28,6 +28,10 @@ cmake_minimum_required(VERSION 3.22...3.25.2)
 file(TO_CMAKE_PATH "$ENV{ROCM_PATH}" ROCM_PATH_ENV_VALUE)
 list(APPEND CMAKE_PREFIX_PATH ${ROCM_PATH_ENV_VALUE} /opt/rocm /opt/rocm/lib/llvm)
 
+if(WIN32)
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_PATH}/scripts/buildsystems/vcpkg.cmake")
+endif()
+
 project(Tensile)
 
 option(Tensile_ENABLE_MARKER "ENable roctx marker in Tensile" OFF)

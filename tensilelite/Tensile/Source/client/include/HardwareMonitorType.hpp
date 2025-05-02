@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,22 @@
  *
  *******************************************************************************/
 
-#include "blis.h"
-#include "omp.h"
+#pragma once
 
-void setup_blis()
+namespace TensileLite
 {
-#ifndef _WIN32
-    bli_init();
-#endif
+    namespace Client
+    {
+        typedef enum
+        {
+            CLK_TYPE_SYS   = 0x0,
+            CLK_TYPE_FIRST = CLK_TYPE_SYS,
+            CLK_TYPE_DF,
+            CLK_TYPE_DCEF,
+            CLK_TYPE_SOC,
+            CLK_TYPE_MEM,
+            CLK_TYPE_LAST = CLK_TYPE_MEM,
+            CLK_INVALID   = 0xFFFFFFFF
+        } ClockType;
+    }
 }
-
-static int initialize_blis = (setup_blis(), 0);
