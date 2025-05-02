@@ -48,8 +48,6 @@ add_custom_command(
     COMMAND ${TENSILE_CREATE_LIBRARY_COMMAND}
     COMMAND ${CMAKE_COMMAND} -E touch "${output_stamp}"
     DEPENDS  ${HIPBLASLT_PYTHON_DEPS}
-    # Prevent unnecessary rebuilds by stating there are no implicit dependencies
-    DEPFILE ""
     # Because the command can contain special characters
     VERBATIM
     # Because this can be very long running and difficult to debug deadlocks
