@@ -226,9 +226,10 @@ class LSUOn(LSU):
 
             dataPerWave = numAccVgpr * kernel["WavefrontSize"] * 4
             ldsStride   = dataPerWave * numWaves
-
-            addr = writer.vgprPool.checkOut(2,"addr")
-
+            if  writer.states.archCaps["HasLDSGT64K"]:
+                addr = writer.vgprPool.checkOut(3,"addr")
+            else:
+                addr = writer.vgprPool.checkOut(1,"addr")
             # Prepare Write/Read instruction info
             if bytesPerVector % 16 == 0:
                 DSStoreBX    = DSStoreB128
@@ -298,8 +299,11 @@ class LSUOn(LSU):
                     comment="lsu offset = lsu_id * LSU Process Offset"))
                 module.add(VAddU32(dst=vgpr(addr), src0=vgpr(addr), src1=vgpr(tmpVgpr), \
                     comment="addr += lsu offset"))
-                module.add(VAddU32(vgpr(addr+1),0x10000, vgpr(addr), \
-                    comment="addr += 65536"))
+                if  writer.states.archCaps["HasLDSGT64K"]:
+                    module.add(VAddU32(vgpr(addr+1),0x10000, vgpr(addr), \
+                        comment="addr += 65536"))
+                    module.add(VAddU32(vgpr(addr+2),0x20000, vgpr(addr), \
+                        comment="addr += 65536*2"))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -315,9 +319,14 @@ class LSUOn(LSU):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
                         srcvgpr = vgpr(addr)
-                        if offset>=65536:
-                            offset-=65536
-                            srcvgpr = vgpr(addr+1)
+                        if writer.states.archCaps["HasLDSGT64K"]:
+                            if offset>=65536*2:
+                                offset-=65536*2
+                                srcvgpr = vgpr(addr+2)
+                            elif offset>=65536:
+                                offset-=65536
+                                srcvgpr = vgpr(addr+1)
+                                
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
                         else:
