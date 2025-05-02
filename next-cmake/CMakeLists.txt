@@ -298,7 +298,7 @@ if(HIPBLASLT_ENABLE_HOST)
                 COMPONENT hipBLASLt_Runtime
             )
         endif()
-        if(BUILD_SAMPLES)
+        if(HIPBLASLT_ENABLE_SAMPLES)
             install(
                 TARGETS
                     hipblaslt_gemm
