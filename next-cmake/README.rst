@@ -12,7 +12,7 @@ Quick Start Guide
 This section describes how to configure and build the |project_name| project. We assume the user has a
 ROCm installation, Python 3.8 or newer and CMake 3.25.0 or newer.
 
-The hipBLASLt project consists of three components:
+The |project_name| project consists of three components:
 
 1. host library
 2. device libraries
@@ -26,18 +26,18 @@ device libraries at runtime.
 Configure and build
 ^^^^^^^^^^^^^^^^^^^
 
-hipBLASLt provides modern CMake support and relies on native CMake fnuctionality with exception of
+|project_name| provides modern CMake support and relies on native CMake fnuctionality with exception of
 some project specific options. As such, users are advised to refer to the CMake documentation for
 general usage questions. Below are usage examples to get started. For details on all configuration
 options see the options section.
 
-Full build of hipBLASLt
+Full build of |project_name| 
 -----------------------
 
    .. code-block:: cmake
       :linenos:
 
-      cd hipBLASLt/next-cmake
+      cd |project_name|/next-cmake
       # configure
       CC=/opt/rocm/bin/amdclang++          \
       CXX=/opt/rocm/bin/amdclang++         \
@@ -58,7 +58,7 @@ Building device libraries
       :linenos:
       :emphasize-lines: 8,9
 
-      cd hipBLASLt/next-cmake
+      cd |project_name|/next-cmake
       # configure
       CC=/opt/rocm/bin/amdclang++          \
       CXX=/opt/rocm/bin/amdclang++         \
@@ -126,7 +126,7 @@ CMake Targets
 Physical Design
 ---------------
 
-The hipBLASLt project consists of three components:
+|project_name| consists of three components:
 
 1. host library
 2. device libraries
