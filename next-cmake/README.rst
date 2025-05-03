@@ -1,14 +1,15 @@
 .. highlight:: rst
+.. |project_name| replace:: hipBLASLt
 
-=========
-hipBLASLt
-=========
+==============
+|project_name|
+==============
 
 -----------------
 Quick Start Guide
 -----------------
 
-This section describes how to configure and build the hipBLASLt project. We assume the user has a
+This section describes how to configure and build the |project_name| project. We assume the user has a
 ROCm installation, Python 3.8 or newer and CMake 3.25.0 or newer.
 
 The hipBLASLt project consists of three components:
@@ -36,15 +37,19 @@ Full build of hipBLASLt
    .. code-block:: cmake
       :linenos:
 
-      cd hipBLSALt/next-cmake
+      cd hipBLASLt/next-cmake
+      # configure
       CC=/opt/rocm/bin/amdclang++          \
       CXX=/opt/rocm/bin/amdclang++         \
-      cmake -D CMAKE_BUILD_TYPE=Release    \
+      cmake -B build                       \
+            -S .                           \
+            -D CMAKE_BUILD_TYPE=Release    \
             -D CMAKE_PREFIX_PATH=/opt/rocm \
-            -D BUILD_SHARED_LIBS=ON        \
             -D GPU_TARGETS=gfx950          \
-            -B build                       \
-            -S .
+            -D HIPBLASLT_ENABLE_DEVICE=ON  \
+            -D HIPBLASLT_ENABLE_HOST=OFF   \
+            -D HIPBLASLT_ENABLE_CLIENT=OFF 
+      # build
       cmake --build build --parallel 32
 
 Building device libraries
@@ -53,26 +58,40 @@ Building device libraries
       :linenos:
       :emphasize-lines: 8,9
 
-      cd hipBLSALt/next-cmake
+      cd hipBLASLt/next-cmake
+      # configure
       CC=/opt/rocm/bin/amdclang++          \
       CXX=/opt/rocm/bin/amdclang++         \
-      cmake -D CMAKE_BUILD_TYPE=Release    \
+      cmake -B build                       \
+            -S .                           \
+            -D CMAKE_BUILD_TYPE=Release    \
             -D CMAKE_PREFIX_PATH=/opt/rocm \
             -D GPU_TARGETS=gfx950          \
+            -D HIPBLASLT_ENABLE_DEVICE=ON  \
             -D HIPBLASLT_ENABLE_HOST=OFF   \
-            -D HIPBLASLT_ENABLE_CLIENT=OFF \
-            -B build                       \
-            -S .
-      cmake --build build
+            -D HIPBLASLT_ENABLE_CLIENT=OFF 
+      # build
+      cmake --build build --parallel 32
+
+.. tip::
+      **For Developers**
+
+      View debugging info by adding ``--log-level=VERBOSE`` to the configure command.
+
 
 Options
 -------
 
+*CMake options*:
+* `CMAKE_BUILD_TYPE`: Any of Release, Debug, RelWithDebInfo, MinSizeRel
+* `CMAKE_INSTALL_PREFIX`: Base installation directory
+* `CMAKE_PREFIX_PATH`: Find package search path (consider setting to ``$ROCM_PATH``)
+
 *Project wide options*:
 
-* `HIPBLASLT_ENABLE_HOST`: enables generation of host library (default: `ON`)
-* `HIPBLASLT_ENABLE_DEVICE`: enables generation of device libraries (default: `ON`)
-* `HIPBLASLT_ENABLE_CLIENT`: enables generation of client applications (default: `ON`)
+* `HIPBLASLT_ENABLE_HOST`: Enables generation of host library (default: `ON`)
+* `HIPBLASLT_ENABLE_DEVICE`: Enables generation of device libraries (default: `ON`)
+* `HIPBLASLT_ENABLE_CLIENT`: Enables generation of client applications (default: `ON`)
 * `HIPBLASLT_ENABLE_LAZY_LOAD` Enable lazy loading of runtime code oject files to reduce init costs (default: `ON`)
 * `GPU_TARGETS:` Semicolon separated list of gfx targets to build
 
@@ -89,6 +108,7 @@ Options
 *Device libraries options:*
 
 * `HIPBLASLT_DEVICE_JOBS:` Allow N jobs generating device code libraries (default empty, use nproc jobs)
+* `HIPBLASLT_DEVICE_KEEP_TEMP:` Keep temporary build files (default `OFF`)
 
 *Client options:*
 

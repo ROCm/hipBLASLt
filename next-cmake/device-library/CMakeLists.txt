@@ -32,6 +32,10 @@ set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--cxx-compiler=${CMAKE_CXX_COMPILE
 if(HIPBLASLT_DEVICE_JOBS)
     set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--jobs=${HIPBLASLT_DEVICE_JOBS}")
 endif()
+if(HIPBLASLT_DEVICE_KEEP_TEMP)
+    set(TENSILE_BUILD_OPTS ${TENSILE_BUILD_OPTS} "--keep-build-tmp")
+endif()
+
 set(output_dir "${hipblaslt_BINARY_DIR}/Tensile")
 set(output_stamp "${CMAKE_CURRENT_BINARY_DIR}/Tensile.stamp")
 set(TENSILE_CREATE_LIBRARY_COMMAND
@@ -54,6 +58,9 @@ add_custom_command(
     # without streaming.
     USES_TERMINAL
 )
+
+string(REPLACE ";" " " TCL "${TENSILE_CREATE_LIBRARY_COMMAND}")
+message(VERBOSE "Device lib build command: ${TCL}")
 
 add_custom_target(tensilelite-device-libraries ALL
     DEPENDS "${output_stamp}"
