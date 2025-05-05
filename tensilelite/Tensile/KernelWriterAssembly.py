@@ -40,7 +40,6 @@ from rocisa.enum import InstType
 from rocisa.macro import MacroVMagicDiv, PseudoRandomGenerator
 from . import CUSTOM_KERNEL_PATH
 from .TensileInstructions import SelectBit, \
-<<<<<<< HEAD
                           SBranchIfZero, SBranchIfNotZero, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, RegisterPool, \
                           allocTmpGpr, allocTmpGprList, log2, \
@@ -74,19 +73,6 @@ from rocisa.instruction import BranchInstruction, BufferLoadB128, BufferLoadB32,
   VMulHIU32, VMulLOU32, VMulPKF32S, VMulU32U24, VNotB32, VOrB32, VPackF16toB32, \
   VPrngB32, VReadfirstlaneB32, VSubF32, VSubI32, VSubU32, VXorB32
 
-=======
-                          SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
-                          ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
-                          scalarStaticRemainder, \
-                          scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, \
-                          scalarStaticDivideAndRemainder, scalarStaticCeilDivide, sMagicDiv, staticMultiply, staticMultiplyAdd, \
-                          scalarStaticMultiply, \
-                          RegisterPool, allocTmpGpr, allocTmpGprList, \
-                          log2, ceilDivide, DataType, \
-                          dataTypeToMfmaInstTypePair, dataTypeNameAbbrevToInstType, \
-                          Assert
-from .TensileInstructions.Instructions import *
->>>>>>> b29ed83f (tf32 fix for hipblaslt build)
 from .Component import Component
 from .Components.F32XEmulation import F32XEmulationMFMA, F32XEmulationCvtLocalWrite
 from .KernelWriterModules import *
@@ -9237,12 +9223,6 @@ class KernelWriterAssembly(KernelWriter):
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
-            if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
-              vgrStr = str("vgpr" + destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
-              if "A" in vgrStr:
-                emulationLocalWrite = F32XEmulationCvtLocalWrite()
-                localWriteCode.add(emulationLocalWrite())
-
             LocalWriteX = tP["localWriteInstruction"].getInst(isHigh16Bits)
             if numBlocks == 1:
               if (paramList[1] >= 0x20000):
@@ -9260,6 +9240,11 @@ class KernelWriterAssembly(KernelWriter):
             else:
               ds        = DSModifiers(na=2, offset0=paramList[2], offset1=paramList[3])
               writeInst = LocalWriteX(dstAddr=vgpr(lwa), src0=paramList[0], src1=paramList[1], ds=ds, comment=comment)
+            if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
+              vgrStr = str(destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
+              if "A" in vgrStr:
+                emulationLocalWrite = F32XEmulationCvtLocalWrite()
+                localWriteCode.add(emulationLocalWrite(vgrStr))
             if self.do["LocalWriteCVT"]:
               localWriteCode.add(localWriteCVTCode)
             if self.do["LocalWrite%s"%tc]:

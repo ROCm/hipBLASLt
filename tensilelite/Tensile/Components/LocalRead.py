@@ -240,6 +240,7 @@ class LocalReadMFMA(LocalRead):
             for vIdx in range(0, numVectorsPerTile):
                 for eIdx in range(0, numReadsPerVector):
                     valuiIdx = int(valufIdx)
+                    baseValuiIdx = valuiIdx
                     localReadCode = imod.add(Module("LocalRead%s Valu%u"%(tc,valuiIdx)))
                     if needPack or numSplitMetadata:
                         packCode = pack.add(Module("packCode"))
@@ -622,15 +623,14 @@ class LocalReadMFMA(LocalRead):
                                 elif kernel["ProblemType"]["DataType"].isSingle():
                                     localReadCode.add(writer.assert_eq( dbgVgpr, 1.0) )
 
+                    if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"] and tP["isA"] and tc == "A":
+                        tf32mod = F32XEmulationCvtLocalRead()
+                        dstStart = "Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, baseValuiIdx)
+                        localReadCode.add(tf32mod(dstStart))
+
+
         # DTV case, do not return local read code. Return pack code only.
         if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
           imod = Module("LocalReadDo%s_I%s (Empty)" % (tP["tensorChar"],iui))
         
-        if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"] and tP["isA"] and tc == "A":
-            tf32mod = F32XEmulationCvtLocalRead()
-            # localReadCode.add(VMovB32(dst=vgpr("ValuA_X0_I0+0"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
-            # testMod = imod.add(Module("Test"))
-            # testMod.add(SWaitCnt(lgkmcnt=0, comment="CheckValue1 wait for lds read"))
-            localReadCode.add(tf32mod(LocalReadX))
-
         return imod, pack
