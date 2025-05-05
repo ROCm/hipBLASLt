@@ -108,7 +108,7 @@ Options
 *Device libraries options:*
 
 * `HIPBLASLT_DEVICE_JOBS:` Allow N jobs generating device code libraries (default empty, use nproc jobs)
-* `HIPBLASLT_DEVICE_KEEP_TEMP:` Keep temporary build files (default `OFF`)
+* `HIPBLASLT_DEVICE_KEEP_TMP:` Keep temporary build files (default `OFF`)
 
 *Client options:*
 
