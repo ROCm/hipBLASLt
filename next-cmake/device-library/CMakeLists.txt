@@ -59,8 +59,10 @@ add_custom_command(
     USES_TERMINAL
 )
 
-string(REPLACE ";" " " TCL "${TENSILE_CREATE_LIBRARY_COMMAND}")
-message(VERBOSE "Device lib build command: ${TCL}")
+block(SCOPE_FOR VARIABLES)
+    list(JOIN TENSILE_CREATE_LIBRARY_COMMAND " " FORMATTED_TCL)
+    message(VERBOSE "Device lib build command: ${FORMATTED_TCL}")
+endblock()
 
 add_custom_target(tensilelite-device-libraries ALL
     DEPENDS "${output_stamp}"
