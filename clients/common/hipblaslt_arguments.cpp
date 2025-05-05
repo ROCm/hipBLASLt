@@ -68,6 +68,9 @@ void Arguments::init()
     iters      = 10;
     cold_iters = 2;
 
+    bench_time      = 0.f;
+    cold_bench_time = 0.f;
+
     algo                   = 0;
     solution_index         = -1;
     requested_solution_num = 1;
@@ -146,9 +149,9 @@ void Arguments::init()
         wgm_vector[i] = -1;
     }
 
-    print_solution_found = false;
-    flush                = false;
-    tensile_solution_selection_method   = -1;
+    print_solution_found              = false;
+    flush                             = false;
+    tensile_solution_selection_method = -1;
 }
 
 // Function to print Arguments out to stream in YAML format

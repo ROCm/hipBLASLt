@@ -61,6 +61,7 @@ For more information, run the command with the ``--help`` option. The output of 
 .. code-block:: bash
 
    ./hipblaslt-bench --help
+
    --sizem |-m <value>                Specific matrix size: the number of rows or columns in matrix.                      (Default value is: 128)
    --sizen |-n <value>                Specific matrix the number of rows or columns in matrix                             (Default value is: 128)
    --sizek |-k <value>                Specific matrix size: the number of columns in A and rows in B.                     (Default value is: 128)
@@ -87,7 +88,7 @@ For more information, run the command with the ``--help`` option. The output of 
    --compute_input_typeA <value>      Precision of computation input A. Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.
    --compute_input_typeB <value>      Precision of computation input B. Options: f32_r, f16_r, bf16_r, f8_r, bf8_r, f8_fnuz_r, bf8_fnuz_r, The default value indicates that the compute_input_typeA has no effect.
    --scale_type <value>               Precision of scalar. Options: f16_r,bf16_r
-   --initialization <value>           Initialize matrix data.Options: rand_int, trig_float, hpl(floating), special, zero  (Default value is: hpl)
+   --initialization <value>           Initialize matrix data. Options: rand_int, trig_float, hpl(floating), special, zero, norm_dist  (Default value is: hpl)
    --transA <value>                   N = no transpose, T = transpose                                                     (Default value is: N)
    --transB <value>                   N = no transpose, T = transpose                                                     (Default value is: N)
    --swizzleA                         Enable tensor swizzling for A
@@ -96,24 +97,31 @@ For more information, run the command with the ``--help`` option. The output of 
    --verify |-v                       Validate GPU results with CPU?
    --iters |-i <value>                Iterations to run inside timing loop                                                (Default value is: 10)
    --cold_iters |-j <value>           Cold Iterations to run before entering the timing loop                              (Default value is: 2)
+   --bench_time <value>               Minimum time to run (with a minimum of iters iterations) inside timing loop (in seconds). Only supported with --use_gpu_timer.  (Default value is: 0)
+   --cold_bench_time <value>          Minimum cold time to run (with a minimum of cold_iters iterations) before entering the main timing loop (in seconds). Only supported with --use_gpu_timer.  (Default value is: 0)
    --algo_method <value>              Use different algorithm search API. Options: heuristic, all, index.                 (Default value is: heuristic)
    --solution_index <value>           Used with --algo_method 2.  Specify solution index to use in benchmark.             (Default value is: -1)
    --requested_solution <value>       Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.  (Default value is: 1)
    --activation_type <value>          Options: none, gelu, relu, swish                                                    (Default value is: none)
    --activation_arg1 <value>          Reserved.                                                                           (Default value is: 0)
    --activation_arg2 <value>          Reserved.                                                                           (Default value is: inf)
-   --bias_type <value>                Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
+   --bias_type <value>                Precision of bias vector. Options: f16_r,bf16_r,f32_r,default(same with D type)
    --bias_source <value>              Choose bias source: a, b, d                                                         (Default value is: d)
    --bias_vector                      Apply bias vector
-   --scaleA <value>                   Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector.                         (Default value is: 0)
-   --scaleB <value>                   Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector.                         (Default value is: 0)
+   --scaleA <value>                   Apply scale for A buffer. 0 = None, 1 = scalar, 2 = vector, 3 = block.              (Default value is: 0)
+   --scaleB <value>                   Apply scale for B buffer. 0 = None, 1 = scalar, 2 = vector, 3 = block.              (Default value is: 0)
    --scaleC <value>                   Apply scale for C buffer. 0 = None, 1 = scalar                                      (Default value is: 0)
    --scaleD <value>                   Apply scale for D buffer. 0 = None, 1 = scalar                                      (Default value is: 0)
    --scaleAlpha_vector                Apply scaleAlpha vector
+   --scaleABlockRowSize <value>       Set the row size of scale block for A                                               (Default value is: 32)
+   --scaleABlockColSize <value>       Set the column size of scale block for A                                            (Default value is: 1)
+   --scaleBBlockRowSize <value>       Set the row size of scale block for B                                               (Default value is: 1)
+   --scaleBBlockColSize <value>       Set the column size of scale block for B                                            (Default value is: 32)
    --amaxScaleA                       Apply scale for A buffer by abs max of A buffer
    --amaxScaleB                       Apply scale for B buffer by abs max of B buffer
    --amaxD                            Output Amax of intermediate D matrix
    --use_e                            Apply AUX output/ gradient input
+   --aux_type <value>                 Used with --use_e. Precision of AUX output (matrix E).Options: f16_r, default (same with D type)
    --gradient                         Enable gradient
    --grouped_gemm                     Use grouped_gemm.
    --use_user_args                    Use UserArguments located in device memory for grouped gemm.

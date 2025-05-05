@@ -93,6 +93,8 @@ struct Arguments
 
     int32_t iters;
     int32_t cold_iters;
+    float   bench_time;
+    float   cold_bench_time;
 
     uint32_t algo;
     int32_t  solution_index;
@@ -179,7 +181,7 @@ struct Arguments
     bool print_kernel_info;
 
     bool flush;
-    int tensile_solution_selection_method;
+    int  tensile_solution_selection_method;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -216,6 +218,8 @@ struct Arguments
     OPER(batch_count) SEP            \
     OPER(iters) SEP                  \
     OPER(cold_iters) SEP             \
+    OPER(bench_time) SEP             \
+    OPER(cold_bench_time) SEP        \
     OPER(algo) SEP                   \
     OPER(solution_index) SEP         \
     OPER(requested_solution_num) SEP \
@@ -871,7 +875,7 @@ namespace ArgumentsHelper
                 func("rotating_buffer", arg.rotating);
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 #error "Unsupported C++ version"

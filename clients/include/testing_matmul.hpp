@@ -251,34 +251,125 @@ void swizzle_tensor_type(HipHostBuffer&       dst,
     }
 }
 
-inline void pre_gpu_time(bool         use_gpu_timer,
-                         hipEvent_t&  event_gpu_time_start,
-                         double&      gpu_time_used,
-                         hipStream_t& stream)
+template <class it>
+typename std::iterator_traits<it>::value_type median(it begin, it end)
 {
-    if(use_gpu_timer)
-        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
-    else
-        gpu_time_used = get_time_us_sync(stream);
-}
-inline void post_gpu_time(bool         use_gpu_timer,
-                          hipEvent_t&  event_gpu_time_start,
-                          hipEvent_t&  event_gpu_time_end,
-                          double&      gpu_time_used,
-                          hipStream_t& stream)
-{
-    if(use_gpu_timer)
+    if(begin == end)
     {
-        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
-        CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
-        float gpu_time_ms;
-        CHECK_HIP_ERROR(
-            hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
-        gpu_time_used = gpu_time_ms * 1000; // ms to us
+        return std::numeric_limits<double>::quiet_NaN();
+    }
+    auto n  = std::distance(begin, end);
+    auto n2 = n / 2;
+    std::nth_element(begin, begin + n2, end);
+    return (n % 2) ? begin[n2] : (*std::max_element(begin, begin + n2) + begin[n2]) / 2.0;
+}
+
+void remove_outliers(std::vector<float>& v)
+{
+    // 1.5x IQR method to detect and remove outliers
+    auto n2 = v.size() / 2;
+    std::nth_element(v.begin(), v.begin() + n2, v.end());
+    auto q1  = median(v.begin(), v.begin() + n2);
+    auto q3  = median(v.begin() + ((v.size() % 2) ? n2 + 1 : n2), v.end());
+    auto iqr = q3 - q1;
+    auto lb  = q1 - 1.5 * iqr;
+    auto ub  = q3 + 1.5 * iqr;
+    v.erase(std::remove_if(v.begin(), v.end(), [&](float f) { return f < lb || f > ub; }), v.end());
+}
+
+/**
+ * Op and Post should be void(int i) functions, where i is the iteration index
+ */
+template <typename Op, typename Post>
+void timing_loop(bool         use_gpu_timer,
+                 int          number_calls,
+                 float        bench_time_secs,
+                 Op&&         operation,
+                 Post&&       post,
+                 double&      gpu_time_used,
+                 hipStream_t& stream)
+{
+    if(number_calls == 0 && bench_time_secs == 0)
+    {
+        gpu_time_used = 0.;
+        return;
+    }
+    if(!use_gpu_timer)
+    {
+        gpu_time_used = get_time_us_sync(stream);
+        for(int i = 0; i < number_calls; i++)
+        {
+            operation(i);
+            post(i);
+        }
+        gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+        gpu_time_used /= number_calls;
     }
     else
     {
-        gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+        std::vector<hipEvent_t> start_event(2), stop_event(2);
+        for(auto& e : start_event)
+        {
+            CHECK_HIP_ERROR(hipEventCreate(&e));
+        }
+        for(auto& e : stop_event)
+        {
+            CHECK_HIP_ERROR(hipEventCreate(&e));
+        }
+        hipEvent_t event0;
+        CHECK_HIP_ERROR(hipEventCreate(&event0));
+        CHECK_HIP_ERROR(hipEventRecord(event0, stream));
+        float              gpu_time = 0.f;
+        std::vector<float> gpu_times;
+        int                i             = 0;
+        const float        bench_time_ms = bench_time_secs * 1000;
+        // run a minimum of number_call iterations and bench_time_secs runtime
+        while(i < number_calls || gpu_time < bench_time_ms)
+        {
+            CHECK_HIP_ERROR(hipEventRecord(start_event[i % 2], stream));
+            operation(i);
+            CHECK_HIP_ERROR(hipEventRecord(stop_event[i % 2], stream));
+            post(i);
+
+            if(i > 0)
+            {
+                // while iteration i is ongoing, wait for iteration i-1 to end
+                CHECK_HIP_ERROR(hipEventSynchronize(stop_event[(i - 1) % 2]));
+                CHECK_HIP_ERROR(hipEventElapsedTime(
+                    &gpu_time, start_event[(i - 1) % 2], stop_event[(i - 1) % 2]));
+                // record time for iteration i-1
+                gpu_times.push_back(gpu_time);
+                // if iterations 0 to i-1 took more than the required runtime, we can stop
+                CHECK_HIP_ERROR(hipEventElapsedTime(&gpu_time, event0, stop_event[(i - 1) % 2]));
+            }
+            i++;
+        }
+        if(!i)
+        {
+            gpu_time_used = 0.;
+        }
+        else
+        {
+            // wait for the final iteration
+            CHECK_HIP_ERROR(hipEventSynchronize(stop_event[(i - 1) % 2]));
+            CHECK_HIP_ERROR(
+                hipEventElapsedTime(&gpu_time, start_event[(i - 1) % 2], stop_event[(i - 1) % 2]));
+            gpu_times.push_back(gpu_time);
+            // gpu_time_used = median(gpu_times.begin(), gpu_times.end());
+            remove_outliers(gpu_times);
+            gpu_time_used
+                = std::accumulate(gpu_times.begin(), gpu_times.end(), 0.) / gpu_times.size();
+            gpu_time_used *= 1000; // ms to us
+        }
+        for(auto& e : start_event)
+        {
+            CHECK_HIP_ERROR(hipEventDestroy(e));
+        }
+        for(auto& e : stop_event)
+        {
+            CHECK_HIP_ERROR(hipEventDestroy(e));
+        }
+        CHECK_HIP_ERROR(hipEventDestroy(event0));
     }
 }
 
@@ -1295,10 +1386,6 @@ void testing_matmul_with_bias(const Arguments& arg,
     hipblaslt_local_handle handle{arg};
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
-
-    hipEvent_t event_gpu_time_start, event_gpu_time_end;
-    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_start));
-    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_end));
 
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
@@ -3476,36 +3563,44 @@ void testing_matmul_with_bias(const Arguments& arg,
                   : arg.cold_iters;
         int number_hot_calls = arg.iters;
 
+        auto flush = [&](int) {
+            if(arg.flush)
+                hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
+        };
+
         int    flush_iter      = 100000;
         double flush_time_used = 0;
-        if(arg.flush)
+        if(arg.flush && !arg.use_gpu_timer)
         {
             for(int i = 0; i < flush_iter; i++)
                 hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
-
-            if(arg.use_gpu_timer)
-                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
-            else
-            {
-                flush_time_used = get_time_us_sync(stream);
-            }
+            flush_time_used = get_time_us_sync(stream);
             for(int i = 0; i < flush_iter; i++)
                 hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
-            if(arg.use_gpu_timer)
-            {
-                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
-                CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
-                float gpu_time_ms;
-                CHECK_HIP_ERROR(
-                    hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
-                flush_time_used = gpu_time_ms * 1000; // ms to us
-            }
-            else
-            {
-                flush_time_used = get_time_us_sync(stream) - flush_time_used;
-            }
+            flush_time_used = get_time_us_sync(stream) - flush_time_used;
             flush_time_used /= flush_iter;
         }
+
+        auto copy_to_host = [&](int i) {
+            if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
+                copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
+        };
+        auto skip_slow = [&](size_t sol, double& best_time, double time_used) -> bool {
+            if(arg.skip_slow_solution_ratio)
+            {
+                best_time = std::min(best_time, time_used);
+                if((time_used * arg.skip_slow_solution_ratio) > best_time)
+                {
+                    hipblaslt_cout << std::setprecision(2) << "Skip solution: " << sol
+                                   << " (best warm-up = " << best_time / number_cold_calls
+                                   << " us , warm-up = " << time_used / number_cold_calls
+                                   << " us, skip ratio = " << arg.skip_slow_solution_ratio << ")"
+                                   << std::endl;
+                    return true;
+                }
+            }
+            return false;
+        };
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
@@ -3526,58 +3621,38 @@ void testing_matmul_with_bias(const Arguments& arg,
                             gemmVec[b].initialize(heuristicResult[sol].algo,
                                                   tuningVec[heuristicTuningIndex[sol]],
                                                   *dWorkspace));
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
-                    {
+                    auto op = [&](int i) {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
-                            copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
-                    }
-                    if(arg.skip_slow_solution_ratio)
+                    };
+                    timing_loop(arg.use_gpu_timer,
+                                number_cold_calls,
+                                arg.cold_bench_time,
+                                op,
+                                copy_to_host,
+                                gpu_time_used,
+                                stream);
+                    if(skip_slow(sol, best_warm_time, gpu_time_used))
                     {
-                        post_gpu_time(arg.use_gpu_timer,
-                                      event_gpu_time_start,
-                                      event_gpu_time_end,
-                                      gpu_time_used,
-                                      stream);
-                        best_warm_time
-                            = best_warm_time < gpu_time_used ? best_warm_time : gpu_time_used;
-                        if((gpu_time_used * arg.skip_slow_solution_ratio) > best_warm_time)
-                        {
-                            hipblaslt_cout
-                                << std::setprecision(2) << "Skip solution: " << sol
-                                << " (best warm-up = " << best_warm_time / number_cold_calls
-                                << " us , warm-up = " << gpu_time_used / number_cold_calls
-                                << " us, skip ratio = " << arg.skip_slow_solution_ratio << ")"
-                                << std::endl;
-                            continue;
-                        }
+                        continue;
                     }
                     perf_monitor.start();
-                    pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-
-                    for(int i = 0; i < number_hot_calls; i++)
-                    {
-                        CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
-                        if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
-                    }
+                    timing_loop(arg.use_gpu_timer,
+                                number_hot_calls,
+                                arg.bench_time,
+                                op,
+                                flush,
+                                gpu_time_used,
+                                stream);
+                    perf_monitor.stop();
                 }
                 else
                 {
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
-                    {
+                    auto op = [&](int i) {
                         auto ptr_matmul = matmul[i % block_count][0];
                         auto ptr_alpha  = arg.scaleAlpha_vector
                                               ? (dScaleAlphaVec[0].as<char>())
                                                    + (i % block_count) * size_scaleAlphaVec[0]
                                               : alpha_in[0];
-
                         EXPECT_HIPBLAS_STATUS(
                             hipblasLtMatmul(
                                 handle,
@@ -3601,72 +3676,28 @@ void testing_matmul_with_bias(const Arguments& arg,
                                 workspace_size,
                                 stream),
                             HIPBLAS_STATUS_SUCCESS);
-                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
-                            copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
-                    }
-                    if(arg.skip_slow_solution_ratio)
+                    };
+                    timing_loop(arg.use_gpu_timer,
+                                number_cold_calls,
+                                arg.cold_bench_time,
+                                op,
+                                copy_to_host,
+                                gpu_time_used,
+                                stream);
+                    if(skip_slow(sol, best_warm_time, gpu_time_used))
                     {
-                        post_gpu_time(arg.use_gpu_timer,
-                                      event_gpu_time_start,
-                                      event_gpu_time_end,
-                                      gpu_time_used,
-                                      stream);
-                        best_warm_time
-                            = best_warm_time < gpu_time_used ? best_warm_time : gpu_time_used;
-                        if((gpu_time_used * arg.skip_slow_solution_ratio) > best_warm_time)
-                        {
-                            hipblaslt_cout
-                                << std::setprecision(2) << "Skip solution: " << sol
-                                << " (best warm-up = " << best_warm_time / number_cold_calls
-                                << " us , warm-up = " << gpu_time_used / number_cold_calls
-                                << " us, skip ratio = " << arg.skip_slow_solution_ratio << ")"
-                                << std::endl;
-                            continue;
-                        }
+                        continue;
                     }
                     perf_monitor.start();
-                    pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-
-                    for(int i = 0; i < number_hot_calls; i++)
-                    {
-                        auto ptr_matmul = matmul[i % block_count][0];
-                        auto ptr_alpha  = arg.scaleAlpha_vector
-                                              ? (dScaleAlphaVec[0].as<char>())
-                                                   + (i % block_count) * size_scaleAlphaVec[0]
-                                              : alpha_in[0];
-                        EXPECT_HIPBLAS_STATUS(
-                            hipblasLtMatmul(
-                                handle,
-                                ptr_matmul,
-                                ptr_alpha,
-                                dA[0].as<char>()
-                                    + (i % block_count) * size_dA[0] * realDataTypeSize(TiA),
-                                matA[0],
-                                dB[0].as<char>()
-                                    + (i % block_count) * size_B[0] * realDataTypeSize(TiB),
-                                matB[0],
-                                &(h_beta[0]),
-                                dC[0].as<char>()
-                                    + (i % block_count) * size_C[0] * realDataTypeSize(To),
-                                matC[0],
-                                (*dDp)[0].as<char>()
-                                    + (i % block_count) * size_D[0] * realDataTypeSize(To),
-                                matD[0],
-                                &heuristicResult[sol].algo,
-                                *dWorkspace,
-                                workspace_size,
-                                stream),
-                            HIPBLAS_STATUS_SUCCESS);
-                        if(arg.flush)
-                            hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
-                    }
+                    timing_loop(arg.use_gpu_timer,
+                                number_hot_calls,
+                                arg.bench_time,
+                                op,
+                                flush,
+                                gpu_time_used,
+                                stream);
+                    perf_monitor.stop();
                 }
-                post_gpu_time(arg.use_gpu_timer,
-                              event_gpu_time_start,
-                              event_gpu_time_end,
-                              gpu_time_used,
-                              stream);
-                perf_monitor.stop();
             }
             else
             {
@@ -3690,48 +3721,30 @@ void testing_matmul_with_bias(const Arguments& arg,
                                                   gemm_count * sizeof(hipblaslt_ext::UserArguments),
                                                   hipMemcpyHostToDevice));
                     }
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
-                    {
+                    auto op = [&](int i) {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
-                            copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
-                    }
-                    if(arg.skip_slow_solution_ratio)
+                    };
+                    timing_loop(arg.use_gpu_timer,
+                                number_cold_calls,
+                                arg.cold_bench_time,
+                                op,
+                                copy_to_host,
+                                gpu_time_used,
+                                stream);
+                    if(skip_slow(sol, best_warm_time, gpu_time_used))
                     {
-                        post_gpu_time(arg.use_gpu_timer,
-                                      event_gpu_time_start,
-                                      event_gpu_time_end,
-                                      gpu_time_used,
-                                      stream);
-                        best_warm_time
-                            = best_warm_time < gpu_time_used ? best_warm_time : gpu_time_used;
-                        if((gpu_time_used * arg.skip_slow_solution_ratio) > best_warm_time)
-                        {
-                            hipblaslt_cout
-                                << std::setprecision(2) << "Skip solution: " << sol
-                                << " (best warm-up = " << best_warm_time / number_cold_calls
-                                << " us , warm-up = " << gpu_time_used / number_cold_calls
-                                << " us, skip ratio = " << arg.skip_slow_solution_ratio << ")"
-                                << std::endl;
-                            continue;
-                        }
+                        continue;
                     }
                     perf_monitor.start();
-                    pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-
-                    for(int i = 0; i < number_hot_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
-                            d_userArgsVec[i % block_count], stream));
-
-                    post_gpu_time(arg.use_gpu_timer,
-                                  event_gpu_time_start,
-                                  event_gpu_time_end,
-                                  gpu_time_used,
-                                  stream);
+                    timing_loop(
+                        arg.use_gpu_timer,
+                        number_hot_calls,
+                        arg.bench_time,
+                        op,
+                        [](int) {},
+                        gpu_time_used,
+                        stream);
                     perf_monitor.stop();
                 }
                 else
@@ -3744,47 +3757,29 @@ void testing_matmul_with_bias(const Arguments& arg,
                             ((unsigned char*)(*dWorkspace) + b * workspace_size),
                             false,
                             stream));
-
-                    if(arg.skip_slow_solution_ratio)
-                        pre_gpu_time(
-                            arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-                    for(int i = 0; i < number_cold_calls; i++)
-                    {
+                    auto op = [&](int i) {
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
-                        if(i == 0 && (arg.unit_check || arg.norm_check || arg.allclose_check))
-                            copy_gemm_to_host(stream, gemm_count, hD_1, (*dDp));
-                    }
-                    if(arg.skip_slow_solution_ratio)
+                    };
+                    timing_loop(arg.use_gpu_timer,
+                                number_cold_calls,
+                                arg.cold_bench_time,
+                                op,
+                                copy_to_host,
+                                gpu_time_used,
+                                stream);
+                    if(skip_slow(sol, best_warm_time, gpu_time_used))
                     {
-                        post_gpu_time(arg.use_gpu_timer,
-                                      event_gpu_time_start,
-                                      event_gpu_time_end,
-                                      gpu_time_used,
-                                      stream);
-                        best_warm_time
-                            = best_warm_time < gpu_time_used ? best_warm_time : gpu_time_used;
-                        if((gpu_time_used * arg.skip_slow_solution_ratio) > best_warm_time)
-                        {
-                            hipblaslt_cout
-                                << std::setprecision(2) << "Skip solution: " << sol
-                                << " (best warm-up = " << best_warm_time / number_cold_calls
-                                << " us , warm-up = " << gpu_time_used / number_cold_calls
-                                << " us, skip ratio = " << arg.skip_slow_solution_ratio << ")"
-                                << std::endl;
-                            continue;
-                        }
+                        continue;
                     }
                     perf_monitor.start();
-                    pre_gpu_time(arg.use_gpu_timer, event_gpu_time_start, gpu_time_used, stream);
-
-                    for(int i = 0; i < number_hot_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
-
-                    post_gpu_time(arg.use_gpu_timer,
-                                  event_gpu_time_start,
-                                  event_gpu_time_end,
-                                  gpu_time_used,
-                                  stream);
+                    timing_loop(
+                        arg.use_gpu_timer,
+                        number_hot_calls,
+                        arg.bench_time,
+                        op,
+                        [](int) {},
+                        gpu_time_used,
+                        stream);
                     perf_monitor.stop();
                 }
             }
@@ -3916,7 +3911,6 @@ void testing_matmul_with_bias(const Arguments& arg,
                     (uint32_t)tuningVec[heuristicTuningIndex[sol]].getSplitK(),
                     (uint32_t)tuningVec[heuristicTuningIndex[sol]].getWgm(),
                     gpu_time_used,
-                    flush_time_used,
                     flops,
                     gpu_mem_gbytes,
                     cpu_time_used,
@@ -3974,7 +3968,6 @@ void testing_matmul_with_bias(const Arguments& arg,
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].getSplitK(),
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].getWgm(),
                 best_gpu_time,
-                flush_time_used,
                 best_flops,
                 gpu_mem_gbytes,
                 cpu_time_used,
@@ -3997,6 +3990,4 @@ void testing_matmul_with_bias(const Arguments& arg,
         CHECK_HIP_ERROR(hipFree(d_userArgs));
 
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
-    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
-    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
 }

@@ -382,10 +382,10 @@ try
          "Specific stride of strided_batched matrix E, second dimension * leading dimension.")
 
         ("alpha",
-          value<float>(&arg.alpha)->default_value(1.0), "specifies the scalar alpha")
+          value<float>(&arg.alpha)->default_value(1.0), "Specifies the scalar alpha")
 
         ("beta",
-         value<float>(&arg.beta)->default_value(0.0), "specifies the scalar beta")
+         value<float>(&arg.beta)->default_value(0.0), "Specifies the scalar beta")
 
         ("function,f",
          value<std::string>(&function)->default_value("matmul"), "BLASLt function to test. "
@@ -429,7 +429,7 @@ try
 
         ("initialization",
          value<std::string>(&initialization)->default_value("hpl"),
-         "Initialize matrix data."
+         "Initialize matrix data. "
          "Options: rand_int, trig_float, hpl(floating), special, zero, norm_dist")
 
         ("transA",
@@ -464,6 +464,14 @@ try
          value<int32_t>(&arg.cold_iters)->default_value(tuningEnv? 1000 : 2),
          "Cold Iterations to run before entering the timing loop")
 
+        ("bench_time",
+         value<float>(&arg.bench_time)->default_value(0.),
+         "Minimum time to run (with a minimum of iters iterations) inside timing loop (in seconds). Only supported with --use_gpu_timer.")
+
+        ("cold_bench_time",
+         value<float>(&arg.cold_bench_time)->default_value(0.),
+         "Minimum cold time to run (with a minimum of cold_iters iterations) before entering the main timing loop (in seconds). Only supported with --use_gpu_timer.")
+
         ("algo_method",
          value<std::string>(&algo_method_str)->default_value("heuristic"),
          "Use different algorithm search API. Options: heuristic, all, index.")
@@ -489,7 +497,7 @@ try
          "Reserved.")
 
         ("bias_type",
-         value<std::string>(&bias_type), "Precision of bias vector."
+         value<std::string>(&bias_type), "Precision of bias vector. "
         "Options: f16_r,bf16_r,f32_r,default(same with D type)")
 
         ("bias_source",
@@ -554,7 +562,7 @@ try
 
         ("aux_type",
          value<std::string>(&aux_type), "Used with --use_e. Precision of AUX output (matrix E)."
-	 "Options: f16_r, default (same with D type)")
+         "Options: f16_r, default (same with D type)")
 
         ("gradient",
          bool_switch(&arg.gradient)->default_value(false),
@@ -623,7 +631,7 @@ try
         value<bool>(&arg.flush)->default_value(tuningEnv ? true : false),
         "Flush icache, only works for gemm.")
 
-        ("help,h", "produces this help message")
+        ("help,h", "Produces this help message")
 
         ("version", "Prints the version number");
     // clang-format on
@@ -725,6 +733,13 @@ try
     if((max_wgm > 0) && (api_method == 0))
     {
         hipblaslt_cerr << "Currently workgroup mapping only supports api_method mix or cpp."
+                       << std::endl;
+        return 1;
+    }
+
+    if((arg.bench_time > 0. || arg.cold_bench_time > 0.) && !arg.use_gpu_timer)
+    {
+        hipblaslt_cerr << "Use of bench_time and cold_bench_time requires --use_gpu_timer."
                        << std::endl;
         return 1;
     }
