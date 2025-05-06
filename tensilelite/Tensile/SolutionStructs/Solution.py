@@ -891,7 +891,7 @@ class Solution(collections.abc.Mapping):
     # the keys "EnableF32XdlMathOp" and "F32XdlMathOp".
     state["EnableF32XdlMathOp"] = False
     state["UseF32XEmulation"] = False #enable emulation for missing hardware support
-    state["EnableF32XEmulationLds"] = False
+    state["EnableF32XEmulationLds"] = True
     #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -2016,16 +2016,8 @@ class Solution(collections.abc.Mapping):
             reject(state, printRejectionReason, "Not implement DTVSM with VW>1")
             break
 
-        # f32 emulation currently only supports a limited set of solutions
         if state["UseF32XEmulation"]:
-          if isaInfoMap[isa].archCaps["HasF32XEmulation"]:
-            if state["VectorWidthA"] > 1 or state["VectorWidthB"] > 1 :
-              reject(state, "Missing implementation for F32X Emulation VW>1")
-              break
-            if depthU != 16:
-              reject(state, "Missing implementation for F32X Emulation DepthU!=16")
-              break
-          else:
+          if not isaInfoMap[isa].archCaps["HasF32XEmulation"]:
             reject(state, "Missing emulation for F32X")
             break
 

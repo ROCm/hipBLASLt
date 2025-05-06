@@ -281,6 +281,12 @@ class SIA(Component):
 class GlobalWriteComponents(Component):
     pass
 
+class F32XEmulation(Component):
+    """
+    Emulate F32 compute type mfma using BF16.
+    """
+    pass
+
 # Importing here allows auto-registry of components in the Components directory.
 # Each file must be listed in __all__ in Components/__init__.py
 # "noqa" prevents linter from complaining here.
