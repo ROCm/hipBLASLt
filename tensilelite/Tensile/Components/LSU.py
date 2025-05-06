@@ -148,7 +148,7 @@ class LSUOn(LSU):
 
         numAccIdx    = len(self.LSUelementsArchIdx[0])
         numSetAccIdx = ceilDivide(numAccIdx, kernel["LocalSplitUReuseLDS"])
-
+        maxLDSConstOffset = writer.states.regCaps["maxLDSConstOffset"]
         # computeStoreVgprs
         if kernel["EnableMatrixInstruction"]:
             module.add(writer.computeStoreVgprs(kernel))
@@ -243,7 +243,7 @@ class LSUOn(LSU):
                 numInstPerVW = bytesPerVector // 4
                 regsPerStore = 1
             maxOffset =  (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
-            numAddr =maxOffset // 65536 + 1
+            numAddr =maxOffset // maxLDSConstOffset + 1
             if  writer.states.archCaps["Has160KLDS"]:
                addr = writer.vgprPool.checkOut(numAddr,"addr")
             else:
@@ -304,7 +304,7 @@ class LSUOn(LSU):
                 if  writer.states.archCaps["Has160KLDS"] and numAddr > 1:
                     for i in range(1,numAddr):
                         module.add(VAddU32(vgpr(addr+i), 0x10000*i, vgpr(addr), \
-                            comment="addr += 65536*%u"%(i)))
+                            comment="addr += maxLDSConstOffset*%u"%(i)))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -321,8 +321,8 @@ class LSUOn(LSU):
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
                         srcvgpr = vgpr(addr)
                         if writer.states.archCaps["Has160KLDS"]:
-                            num = offset // 65536
-                            offset -= num * 65536
+                            num = offset // maxLDSConstOffset
+                            offset -= num * maxLDSConstOffset
                             srcvgpr = vgpr(addr+num)
                                 
                         if r == 0:
