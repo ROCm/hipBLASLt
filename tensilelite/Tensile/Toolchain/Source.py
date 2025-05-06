@@ -25,6 +25,7 @@
 import os
 import re
 import shutil
+import subprocess
 
 from pathlib import Path
 from timeit import default_timer as timer
@@ -67,12 +68,48 @@ def buildSourceCodeObjectFiles(
         List of paths to the created code objects.
     """
 
-    for target, filename in toolchain.rocObjLs(sharedObjPath):
-      match = re.search("gfx.*$", target)
-      if match:
-        print(f"Generating Kernels.so for {target.split('-')[-1]}")
-        arch = re.sub(":", "-", match.group())
-        toolchain.rocObjExtract(filename)
-        src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
-        dst = str(destPath / f"Kernels.so-000-{arch}.hsaco")
-        shutil.move(src, dst)
+    print(f"[debug] sharedObjPath = {sharedObjPath}")
+
+    try:
+        output_lines = toolchain.rocObjLs(sharedObjPath)
+        print("[debug] rocObjLs output:")
+        for line in output_lines:
+            print(f"  {line}")
+
+        for line in output_lines:
+            parts = line.strip().split()
+            if len(parts) != 2:
+                print(f"[error] Malformed line from rocObjLs: '{line}'")
+                print(f"[action] Running 'roc-obj-ls {sharedObjPath}' manually to investigate:")
+
+                try:
+                    result = subprocess.run(
+                        ["roc-obj-ls", str(sharedObjPath)],
+                        capture_output=True,
+                        text=True,
+                        check=True
+                    )
+                    print("[manual output from roc-obj-ls]:")
+                    print(result.stdout)
+                    print("[end of manual output]")
+                except subprocess.CalledProcessError as sub_err:
+                    print(f"[fatal] Failed to run roc-obj-ls: {sub_err}")
+                    print(f"[stderr] {sub_err.stderr}")
+
+                raise ValueError(f"Malformed line from rocObjLs: '{line}'")
+
+            target, filename = parts
+
+            match = re.search("gfx.*$", target)
+            if match:
+                print(f"Generating Kernels.so for {target.split('-')[-1]}")
+                arch = re.sub(":", "-", match.group())
+                toolchain.rocObjExtract(filename)
+                src = str(Path(sharedObjPath).parent / (str(Path(filename).name).replace("#","-").replace("=","").replace("&","-") + ".co"))
+                dst = destPath / f"Kernels.so-000-{arch}.hsaco"
+                print(f"[debug] Moving {src} -> {dst}")
+                shutil.move(src, dst)
+
+    except Exception as e:
+        print(f"[fatal] Exception while processing {sharedObjPath}: {e}")
+        raise
