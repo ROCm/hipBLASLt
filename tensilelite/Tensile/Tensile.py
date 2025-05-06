@@ -104,7 +104,6 @@ def executeStepsInConfig(
             cCompiler,
             outputPath,
             buildTmpPath,
-            config["ShortNames"],
             debugConfig,
             depthUConfig,
             deviceId,
@@ -158,7 +157,6 @@ def executeStepsInConfig(
             outputPath,
             deviceId,
             gfxName,
-            config["ShortNames"]
         )
         print1("")
 
@@ -190,8 +188,6 @@ def addCommonArguments(argParser):
         help="set PrintLevel=2")
     argParser.add_argument("--debug", dest="debug", action="store_true", \
         help="set PrintLevel=2 and CMakeBuildType=Debug")
-    argParser.add_argument("--short-names", dest="shortNames", action="store_true", \
-        help="use serial kernel and solution names")
     argParser.add_argument("--cxx-compiler", dest="CxxCompiler", \
         action="store", default=ToolchainDefaults.CXX_COMPILER, help="select which C++/HIP compiler to use")
     argParser.add_argument("--c-compiler", dest="CCompiler", \
@@ -470,17 +466,20 @@ def Tensile(userArgs):
         offloadBundler,
     )
 
-    currentIsa = detectGlobalCurrentISA(device_id, enumerator)
-    if currentIsa == IsaVersion(9,5,0):
+    if "ISA" in args.global_parameters:
+        isaList = [IsaVersion(isa[0], isa[1], isa[2]) for isa in args.global_parameters["ISA"]]
+        
+    else:
+        isaList = [detectGlobalCurrentISA(device_id, enumerator)]
+
+    if IsaVersion(9,5,0) in isaList:
         printWarning("HardwareMonitor currently disabled for gfx950")
         globalParameters["HardwareMonitor"] = False
-    isaInfoMap = makeIsaInfoMap([currentIsa], cxxCompiler)
+
+    isaInfoMap = makeIsaInfoMap(isaList, cxxCompiler)
     assignGlobalParameters(config.get("GlobalParameters", {}), isaInfoMap)
 
     overrideParameters = argUpdatedGlobalParameters(args)
-
-    if "ShortNames" not in config:
-      config["ShortNames"] = args.shortNames
 
     debugConfig = makeDebugConfig(config["GlobalParameters"])
     depthUConfig = makeDepthUConfig(config["GlobalParameters"])

@@ -36,8 +36,8 @@ def getKeyNoInternalArgs(state, splitGSU: bool):
   state_copy = deepcopy(state)
   state_copy["ProblemType"]["GroupedGemm"] = False
   if splitGSU:
-    state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1) else state_copy["GlobalSplitU"]
-  elif state["GlobalSplitU"] > 0:
+    state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1 or state_copy["GlobalSplitU"] == -1) else state_copy["GlobalSplitU"]
+  elif state["GlobalSplitU"] != 0:
     state_copy["GlobalSplitU"] = "M"
   state_copy["WorkGroupMapping"] = "M"
   state_copy["WorkGroupMappingXCC"] = "M"
@@ -105,13 +105,13 @@ def _getName(state, requiredParameters: frozenset, splitGSU: bool, ignoreInterna
   if ignoreInternalArgs:
     state["ProblemType"]["GroupedGemm"] = False
     if splitGSU:
-      state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1) else state["GlobalSplitU"]
+      state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1 or state["GlobalSplitU"] == -1) else state["GlobalSplitU"]
 
 
   requiredParametersTemp = set(requiredParameters.union(["GlobalSplitU"]))
 
   if ignoreInternalArgs:
-    if state["GlobalSplitU"] > 0:
+    if state["GlobalSplitU"] > 0 or state["GlobalSplitU"] == -1:
       requiredParametersTemp.discard("GlobalSplitU")
   else:
     requiredParametersTemp = requiredParametersTemp.union(["WorkGroupMapping",
@@ -146,45 +146,6 @@ def _getName(state, requiredParameters: frozenset, splitGSU: bool, ignoreInterna
   return '_'.join(components)
 
 
-def getSerialNaming(objs):
-  data = {}
-  for obj in objs:
-    for paramName in sorted(obj.keys()):
-      if paramName in validParameters.keys():
-        paramValue = obj[paramName]
-        if paramName in data:
-          if paramValue not in data[paramName]:
-            data[paramName].append(paramValue)
-        else:
-          data[paramName] = [ paramValue ]
-  maxObjs = 1
-  for paramName in data:
-    if not isinstance(data[paramName][0], dict):
-      data[paramName] = sorted(data[paramName])
-    maxObjs *= len(data[paramName])
-  numDigits = len(str(maxObjs))
-  return [ data, numDigits ]
-
-
-def getNameSerial(state, serialNaming):
-  data = serialNaming[0]
-  numDigits = serialNaming[1]
-  serial = 0
-  multiplier = 1
-  for paramName in sorted(state.keys()):
-    if paramName in list(validParameters.keys()):
-      paramValue = state[paramName]
-      paramData = data[paramName]
-      paramNameMultiplier = len(paramData)
-      if paramValue in paramData:
-        paramValueIdx = paramData.index(paramValue)
-      serial += paramValueIdx * multiplier
-      multiplier *= paramNameMultiplier
-  name = "%s%0*u" % ("S" if hasattr(state, "_state") else "K", \
-      numDigits, serial)
-  return name
-
-
 def shortenFileBase(splitGSU, kernel):
   base = getKernelNameMin(kernel, splitGSU)
   if len(base) <= MAX_FILENAME_LENGTH:
@@ -199,11 +160,9 @@ def shortenFileBase(splitGSU, kernel):
   return firstPart + secondPart
 
 
-def getKernelFileBase(useShortNames: bool, splitGSU: bool, kernelSerialNaming, kernel):
+def getKernelFileBase(splitGSU: bool, kernel):
   if "CustomKernelName" in kernel and kernel["CustomKernelName"]:
     fileBase = kernel["CustomKernelName"]
-  elif useShortNames:
-    fileBase = getNameSerial(kernel, kernelSerialNaming)
   else:
     fileBase = shortenFileBase(splitGSU, kernel)
   return fileBase

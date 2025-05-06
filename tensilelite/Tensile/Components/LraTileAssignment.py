@@ -22,9 +22,12 @@
 #
 ################################################################################
 
-from rocisa.container import ContinuousRegister
-from ..TensileInstructions import Module, VAddU32, staticMultiply, staticMultiplyAdd, vectorStaticDivide, \
-                                vectorStaticRemainder, vectorStaticDivideAndRemainder, vgpr
+from rocisa.code import Module
+from rocisa.container import vgpr, ContinuousRegister
+from rocisa.instruction import VAddU32, vectorStaticRemainder, \
+    vectorStaticDivideAndRemainder, vectorStaticDivide, vectorStaticMultiply, \
+    vectorStaticMultiplyAdd
+
 from ..Component import LraTileAssignment, LraTileProperties
 from dataclasses import dataclass
 
@@ -76,13 +79,13 @@ class LraTileAssignmentVALU(LraTileAssignment):
                         # generate instruction
                         module.add(vectorStaticDivideAndRemainder(qReg, rReg, newSerial, divisor, tmpVgprRes))
                         # tile offset
-                        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                        module.add(vectorStaticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
                         "1. M offset: mOffset = mIdx * mStride(%u)" % strideTile))
                         writer.vgprPool.checkIn(newSerial)
                     else:
                         module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
                         # tile offset
-                        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                        module.add(vectorStaticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
                         "1. M offset: mOffset = mIdx * mStride(%u)" % strideTile))
                 else:
                     module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
@@ -103,7 +106,7 @@ class LraTileAssignmentVALU(LraTileAssignment):
 
                 if kernel["UseDotInstruction"]:
                     # tile offset
-                    module.add(staticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
+                    module.add(vectorStaticMultiply(vgpr(rReg), vgpr(rReg), strideTile, tmpSgprInfo, \
                     "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
 
                 # release and return resource
@@ -208,7 +211,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
               isSparseTrack = (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"]) or tP["isM"]
               strideK      = (inputPerThread if umlds else (mt + LdsPad) * inputPerThread) * (2 if isSparseTrack and kernel["MIInputPerThread%s"%tc] >  inputPerThread else 1)
         #special case for new F8 MFMA
-        elif kernel["MatrixInstK"] > 32:
+        elif  kernel["ProblemType"]["DataType"].is8bitFloat() and kernel["MatrixInstK"] > 32:
             if umlds:
                 strideK = 16
             else:
@@ -236,13 +239,13 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                                                 "1. N offset: nIdx = wtid %% MI_M(%d)"%dividendForKId))
                module.add(vectorStaticDivide(sReg, sReg, 16, tmpVgprRes, \
                                                 "1. thread id in wave: k1Idx = mtid // 4"))
-               module.add(staticMultiply(vgpr(sReg), vgpr(sReg), 16, tmpSgprInfo, \
+               module.add(vectorStaticMultiply(vgpr(sReg), vgpr(sReg), 16, tmpSgprInfo, \
                                          "1. K1 offset: lrK1Offset = k1Idx * mStride(%u)" % (strideK1)))
 
             else:
                module.add(vectorStaticRemainder(dummy, tReg, kReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
                                              "1. N offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstN"]))
-            module.add(staticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
+            module.add(vectorStaticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
                 "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
             if enableLDSTr:
                 module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(sReg), src1=vgpr(tReg), \
@@ -253,12 +256,12 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                     "2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
                 module.add(vectorStaticRemainder(dummy, dummy, dummy, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
                     "2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
-                module.add(staticMultiplyAdd(vgpr(tReg), vgpr(dummy), strideBlock, vgpr(tReg), tmpSgprInfo, \
+                module.add(vectorStaticMultiplyAdd(vgpr(tReg), vgpr(dummy), strideBlock, vgpr(tReg), tmpSgprInfo, \
                     "2. block offset: bnOffset = bnIdx * strideBlock(%u); 3. add N and block offset: bnOffset = block and N offset" % strideBlock))
             else:
                 module.addComment0("Skip. 2. block offset: bnOffset = 0 when num1DBlocks = 1")
 
-            module.add(staticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
+            module.add(vectorStaticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
                 "4. apply VectorWidth: bnOffset = bnOffset * vw(%u)" % vectorWidth))
 
             # unroll offset
@@ -276,16 +279,16 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                         "5. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
                 if (dividendForKId != waveWidth) and (not isDTVAB):
                     if enableLDSTr:
-                        module.add(staticMultiply(vgpr(kReg), vgpr(kReg), strideK, tmpSgprInfo, \
+                        module.add(vectorStaticMultiply(vgpr(kReg), vgpr(kReg), strideK, tmpSgprInfo, \
                                                  "5. K offset: lrKOffset = kIdx * mStride(%u)" % (strideK)))
-                        module.add(staticMultiply(vgpr(mReg), vgpr(mReg), strideK1, tmpSgprInfo, \
+                        module.add(vectorStaticMultiply(vgpr(mReg), vgpr(mReg), strideK1, tmpSgprInfo, \
                                                  "5.1 K1 offset: lrK1Offset = k1Idx * mStride(%u)" % (strideK1)))
                         module.add(VAddU32(dst=vgpr(kReg), src0=vgpr(mReg), src1=vgpr(kReg), \
                                           comment="5.2 offset in wave: lrOffset = bnOffset + lrKOffset"))
                         module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \
                                           comment="6. offset in wave: lrOffset = bnOffset + lrKOffset"))
                     else:
-                        module.add(staticMultiplyAdd(vgpr(tReg), vgpr(kReg), strideK, vgpr(tReg), tmpSgprInfo, \
+                        module.add(vectorStaticMultiplyAdd(vgpr(tReg), vgpr(kReg), strideK, vgpr(tReg), tmpSgprInfo, \
                                                     "5. K offset: lrKOffset = kIdx * mStride(%u); 6. offset in wave: lrOffset = bnOffset + lrKOffset" % (strideK)))
 
             # wave offset
@@ -294,7 +297,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                     "7. wave offset in N dimen: wtid = tid / dividedForWaveId(%u)" % dividedForWaveId))
                 module.add(vectorStaticRemainder(dummy, dummy, dummy, num1DWaves, tmpVgprRes, tmpSgprInfo, \
                     "7. wave offset in M dimen: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
-                module.add(staticMultiplyAdd(vgpr(tReg), vgpr(dummy), strideWave, vgpr(tReg), tmpSgprInfo, \
+                module.add(vectorStaticMultiplyAdd(vgpr(tReg), vgpr(dummy), strideWave, vgpr(tReg), tmpSgprInfo, \
                                              "7. wave offset in M dimen: wOffset = wtid0 * W0Stride(%u); 7. final local read offset: flrOffset = lrOffset + WOffset" % strideWave))
 
         # release register

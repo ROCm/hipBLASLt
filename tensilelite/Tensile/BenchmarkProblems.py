@@ -34,13 +34,13 @@ from typing import Dict
 
 from Tensile import CUSTOM_KERNEL_PATH, ClientExecutable, SolutionLibrary, LibraryIO
 from Tensile.KernelWriter import DebugConfig
+from Tensile.KernelHelperNaming import KernelHelperEnum, initHelperKernelObjects
 from Tensile.Toolchain.Component import Assembler
 from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizes
 from Tensile.SolutionStructs.Solution import Solution
 from Tensile.SolutionStructs.Validators.MatrixInstruction import matrixInstructionToMIParameters, \
                                                                  validateMIParameters
-from Tensile.SolutionStructs.Naming import getSerialNaming, getKeyNoInternalArgs, getSolutionNameMin, \
-                                           getKernelNameMin
+from Tensile.SolutionStructs.Naming import getKeyNoInternalArgs, getSolutionNameMin, getKernelNameMin
 
 from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
@@ -203,7 +203,6 @@ def writeBenchmarkFiles(
         asmToolchain: AssemblyToolchain,
         srcToolchain: SourceToolchain,
         sourcePath: Path,
-        useShortNames: bool,
         debugConfig: DebugConfig,
         depthUConfig: DepthUConfig,
         deviceId: int,
@@ -229,19 +228,17 @@ def writeBenchmarkFiles(
                 kernels.append(kernel)
                 kernelNames.add(kName)
 
-        solutionHelperKernels = solution.getHelperKernelObjects()
+        solutionHelperKernels = initHelperKernelObjects(solution,
+                                                        KernelHelperEnum.All,
+                                                        str(asmToolchain.assembler.path),
+                                                        isaInfoMap)
         for ko in solutionHelperKernels:
             kname = ko.getKernelName()
             if kname not in kernelHelperNames:
                 kernelHelperObjs.append(ko)
                 kernelHelperNames.add(kname)
 
-    kernelSerialNaming = getSerialNaming(kernels)
-    kernelWriterAssembly = KernelWriterAssembly(
-                               kernelSerialNaming,
-                               asmToolchain.assembler,
-                               debugConfig,
-                           )
+    kernelWriterAssembly = KernelWriterAssembly(asmToolchain.assembler, debugConfig)
 
     cmdLineArchs = [var for isa in isaInfoMap.keys() for var in gfxToVariants(isaToGfx(isa))]
     # cmdLineArchs = [variant isaToGfx(isa) for isa in isaInfoMap.keys() for gfxToVariants()]
@@ -257,11 +254,9 @@ def writeBenchmarkFiles(
                             kernelWriterAssembly,
                             debugConfig.splitGSU,
                             cmdLineArchs,
-                            kernelSerialNaming,
                             errorTolerant=True,
                             generateSourcesAndExit=globalParameters["GenerateSourcesAndExit"], # put in debug config
                             compress=False,
-                            useShortNames=useShortNames
                         )
     # ^ this is where solutions is mutated
     for s in solutions:
@@ -323,7 +318,7 @@ def writeBenchmarkFiles(
 
 def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeGroupIdx, useCache,
                          asmToolchain: AssemblyToolchain, srcToolchain: SourceToolchain, cCompiler: str,
-                         buildTmpPath: Path, benchmarkProblemsPath: Path, useShortNames: bool,
+                         buildTmpPath: Path, benchmarkProblemsPath: Path,
                          debugConfig: DebugConfig, depthUConfig: DepthUConfig, deviceId: int,
                          gfxName: str, isaInfoMap: Dict[str, IsaInfo]
     ):
@@ -440,7 +435,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
                     benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs, \
                     benchmarkStep.factorDimArgs, benchmarkStep.activationArgs, \
                     benchmarkStep.icacheFlushArgs, shortName, [], asmToolchain, srcToolchain, \
-                    sourcePath, useShortNames, debugConfig, depthUConfig, deviceId, gfxName, isaInfoMap)
+                    sourcePath, debugConfig, depthUConfig, deviceId, gfxName, isaInfoMap)
             # ^ this mutates solutions
 
             # write cache data
@@ -512,7 +507,6 @@ def main(
     cCompiler: str,
     outputPath: Path,
     buildTmpPath: Path,
-    useShortNames: bool,
     debugConfig: DebugConfig,
     depthUConfig: DepthUConfig,
     deviceId: int,
@@ -567,7 +561,6 @@ def main(
                             cCompiler,
                             buildTmpPath,
                             benchmarkProblemsPath,
-                            useShortNames,
                             debugConfig,
                             depthUConfig,
                             deviceId,

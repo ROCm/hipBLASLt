@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,11 @@
 
 from rocisa.code import Module, Label, RegSet
 from rocisa.container import DSModifiers, ContinuousRegister
-from ..TensileInstructions import SCmpEQU32, \
-    SMovB32, log2, ceilDivide, SCBranchSCC0, \
-    SAndB32, vectorStaticDivide
+from rocisa.instruction import DSLoadB128, DSLoadB32, DSLoadB64, DSStoreB128, \
+    DSStoreB32, DSStoreB64, SAndB32, SCBranchSCC0, SCmpEQU32, SMovB32, SWaitCnt, \
+    VAddF32, VAddI32, VAddU32, VAndB32, VLShiftLeftAddU32, VMovB32, VMulLOU32, \
+    vectorStaticDivide
+from ..TensileInstructions import log2, ceilDivide
 from ..Component import Component
 from ..KernelWriterModules import *
 from ..AsmStoreState import StoreState, VectorDataTypes
@@ -210,7 +212,7 @@ class LSUOn(LSU):
 
             assert numAccVgpr > 0,"startLSUaccIdxSet=%u,endLSUaccIdxSet=%u,numAccIdx=%u"%(startLSUaccIdxSet,endLSUaccIdxSet,numAccIdx)
             accVgprRes = writer.vgprPool.checkOutAligned(numAccVgpr, 4, "accLSUVgprRes")
-            
+
             destIdx = 0
             for lsu in range(kernel["LocalSplitU"]):
                 for i in range(numVgprPerLSU):
@@ -397,7 +399,7 @@ class LSUOn(LSU):
                 strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(writer.vgprs.coord1InMT), src1=sgpr(strideC1), comment=" offset 1"))
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(writer.vgprs.coord1InMT), src1=sgpr(strideD1), comment=" offset 1"))
-                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitU"] == -1):
                         module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(writer.vgprs.coord1InMT), comment=" save offset 1 for E"))
                 if writer.vgprs.coutRowPtrBias != -1:
                         index = packedC1[0] - 1
@@ -441,7 +443,7 @@ class LSUOn(LSU):
                     src=sgpr("AddressC+1"), \
                     comment="sgpr -> vgpr"))
 
-            if kernel["GlobalSplitU"] > 0:
+            if kernel["GlobalSplitU"] != 0:
                 gsuLabel = Label(label=writer.labels.getNameInc("GSU"), comment="")
                 with writer.allocTmpSgpr(1) as tmpSgprGSU:
                     module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
@@ -496,7 +498,7 @@ class LSUOn(LSU):
                         dst=vgpr(self.vgprs.addrScaleAlphaVec+1), \
                         src=sgpr("AddressScaleAlphaVec+1"), \
                         comment="sgpr -> vgpr"))
-            if kernel["GlobalSplitU"] > 0:
+            if kernel["GlobalSplitU"] != 0:
                 module.add(gsuLabel)
 
         return module

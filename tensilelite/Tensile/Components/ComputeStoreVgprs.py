@@ -23,10 +23,11 @@
 ################################################################################
 
 from rocisa.container import ContinuousRegister
-from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, VMulLOU32, \
-                            VMovB32, VAddCOU32, staticMultiply, vectorStaticDivide, \
-                            vectorStaticRemainder, vgpr, sgpr, log2, \
-                            vectorStaticDivideAndRemainder
+from rocisa.instruction import SMulI32, VAddLShiftLeftU32, VAddU32, VMovB32, VMulLOU32, \
+    vectorStaticRemainder, vectorStaticDivideAndRemainder, vectorStaticDivide, vectorStaticMultiply
+from ..TensileInstructions import Module, vgpr, \
+                            sgpr, log2
+
 from ..Component import ComputeStoreVgprs
 from ..Common import DataDirection
 
@@ -84,9 +85,10 @@ class ComputeStoreVgprsVALU(ComputeStoreVgprs):
                 module.add(vectorStaticDivideAndRemainder(tid1, tid0, "Serial", divisor, tmpVgprRes))
 
             writer.vgprPool.checkIn(tmpVgpr)
-            module.add(staticMultiply(vgpr(tid0), vgpr(tid0), tid0Scale, sgpr(tmpS1)))
+            tmpS1Res = ContinuousRegister(tmpS1, 1)
+            module.add(vectorStaticMultiply(vgpr(tid0), vgpr(tid0), tid0Scale, tmpS1Res))
             if tid1Scale != 1:
-                module.add(staticMultiply(vgpr(tid1), vgpr(tid1), tid1Scale, sgpr(tmpS1)))
+                module.add(vectorStaticMultiply(vgpr(tid1), vgpr(tid1), tid1Scale, tmpS1Res))
 
             if kernel["BufferStore"]:
                 # compute rowStart- this is just tid1 scaled by appropriate stride.
@@ -198,7 +200,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(lsuTid1), src1=sgpr(strideC1), comment=" offset 1"))
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(lsuTid1), src1=sgpr(strideD1), comment=" offset 1"))
-            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitU"] == -1):
                 module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(lsuTid1), comment=" save offset 1 for E"))
             if writer.vgprs.coutRowPtrBias != -1:
                 index = packedC1[0] - 1
@@ -212,7 +214,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             # coord 0 : thread part
             module.add(vectorStaticRemainder(dummy, tid0, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
             module.add(vectorStaticDivide(tid0, tid0, matrixInstN, tmpVgpr1Res))
-            module.add(staticMultiply(vgpr(tid0), vgpr(tid0), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
+            module.add(vectorStaticMultiply(vgpr(tid0), vgpr(tid0), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
             module.add(VAddLShiftLeftU32(dst=vgpr(lsuTid0), src0=vgpr(tmpVgpr0), src1=vgpr(tid0), shiftHex=log2(kernel["VectorWidthA"]), comment="coordination 0 = vwA *(wave_id0 + tid0)"))
 
             wg0="WorkGroup0"
@@ -312,7 +314,7 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
             # coord 1 : thread part
             module.add(vectorStaticRemainder(dummy, tid1, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
             module.add(vectorStaticDivide(tid1, tid1, matrixInstM, tmpVgpr1Res))
-            module.add(staticMultiply(vgpr(tid1), vgpr(tid1), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
+            module.add(vectorStaticMultiply(vgpr(tid1), vgpr(tid1), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
             module.add(VAddLShiftLeftU32(dst=vgpr(lsuTid1), src0=vgpr(tmpVgpr0), src1=vgpr(tid1), shiftHex=log2(kernel["VectorWidthB"]), comment="coordination 1 = vwB *(wave_id1 + tid1)"))
 
             # coord 1 : offset part
@@ -321,7 +323,7 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
             strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(lsuTid1), src1=sgpr(strideC1), comment=" offset 1"))
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(lsuTid1), src1=sgpr(strideD1), comment=" offset 1"))
-            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitU"] == -1):
                 module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(lsuTid1), comment=" save offset 1 for E"))
             if writer.vgprs.coutRowPtrBias != -1:
                 index = packedC1[0] - 1

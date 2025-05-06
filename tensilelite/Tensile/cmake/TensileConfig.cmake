@@ -232,6 +232,7 @@ function(TensileCreateLibraryFiles
 
       add_custom_command(
         COMMENT "Generating Tensile Libraries"
+        USES_TERMINAL
         OUTPUT ${Tensile_OUTPUT_PATH}/library
         COMMAND ${CommandLine}
       )
@@ -250,33 +251,5 @@ function(TensileCreateLibraryFiles
     target_link_libraries(${Tensile_EMBED_LIBRARY} PUBLIC TensileHost)
 
   endif()
-
-endfunction()
-
-function(TensileCreateExtOpLibraries OutputFolder ArchStr TensileExt_LIBRARY_TARGET)
-  string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
-  list(REMOVE_DUPLICATES Archs)
-  set(build_tmp_dir ${OutputFolder}/../build_tmp/ops)
-  set(Tensile_PACKAGE_DIR ${Tensile_SOURCE_DIR}/../)
-  set(cwd "${Tensile_PACKAGE_DIR}/Ops")
-  set(script "${cwd}/gen_assembly.sh")
-  set(ext_op_library_path ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
-  file(REMOVE ${ext_op_library_path})
-
-  add_custom_command(
-    OUTPUT ${OutputFolder}/hipblasltExtOpLibrary.dat
-    WORKING_DIRECTORY "${cwd}"
-    COMMENT "Creating ExtOp Libraries"
-    COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
-    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${PROJECT_BINARY_DIR}/lib -- bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}" "${Tensile_BUILD_ID}"
-    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
-  )
-
-  add_custom_target(
-    ${TensileExt_LIBRARY_TARGET} ALL
-    WORKING_DIRECTORY "${cwd}"
-    DEPENDS ${OutputFolder}/hipblasltExtOpLibrary.dat)
 
 endfunction()

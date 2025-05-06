@@ -878,7 +878,7 @@ namespace TensileLite
                     // if value is true, then we also need to check gsu
                     // otherwise we just check outputAmaxD
                     if(value)
-                        return amaxDStatusEqual && problem.getParams().gsu() <= 1;
+                        return amaxDStatusEqual && (problem.getParams().gsu() == 0 || problem.getParams().gsu() == 1);
                     else
                         return amaxDStatusEqual;
                 }
@@ -886,25 +886,25 @@ namespace TensileLite
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return (value) ? debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value,
-                                                  "prob_gsu",
-                                                  (int)(problem.getParams().gsu()),
-                                                  "<=",
-                                                  "sol_gsu",
-                                                  1)
-                                   : debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value);
+                    if (value)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "prob_amaxD " << problem.outputAmaxD() << " == " << "sol_amaxD "
+                               << value << " prob_gsu " << problem.getParams().gsu() << " is either 0 or 1"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
+                    else
+                        return debugEvalCmp(problem,
+                                            stream,
+                                            "prob_amaxD",
+                                            problem.outputAmaxD(),
+                                            "==",
+                                            "sol_amaxD",
+                                            value);
+                    return false;
                 }
             };
 
@@ -1533,7 +1533,11 @@ namespace TensileLite
                 }
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int16_t gsu = problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[2];
+                    // auto gsu will consider workgroup number, so bypassed
+                    if (gsu == -1)
+                        return 1;
+
                     gsu     = gsu > 1 ? gsu : 1;
                     return (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                             * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
@@ -1543,7 +1547,17 @@ namespace TensileLite
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int16_t gsu = problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[2];
+                    if (gsu == -1)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "auto gsu will consider workgroup number, so bypassed"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
+
                     gsu     = gsu > 1 ? gsu : 1;
                     int workgroupNumber
                         = std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
@@ -1613,7 +1627,10 @@ namespace TensileLite
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                        = (problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[1]);
+                    // auto gsu will consider MinK, so bypassed
+                    if (minK == -1)
+                        return 1;
                     if(minK == 1)
                         minK = 0;
                     minK *= value[0];
@@ -1624,7 +1641,16 @@ namespace TensileLite
                                        std::ostream&                 stream) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                        = (problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[1]);
+                    if (minK == -1)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "auto gsu will consider MinK, so bypassed"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
                     if(minK == 1)
                         minK = 0;
                     minK *= value[0];

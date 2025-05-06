@@ -21,5 +21,4 @@
 #
 # ########################################################################
 
-# Include sources
-include(src/amd_detail/rocblaslt/src/CMakeLists.txt)
+add_subdirectory(src)
