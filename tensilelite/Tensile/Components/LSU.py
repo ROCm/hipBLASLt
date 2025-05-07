@@ -244,11 +244,8 @@ class LSUOn(LSU):
                 regsPerStore = 1
             maxOffset = (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
             numAddr = maxOffset // maxLDSConstOffset + 1
-            if  writer.states.archCaps["Has160KLDS"]:
-               addr = writer.vgprPool.checkOut(numAddr,"addr")
-            else:
-                addr = writer.vgprPool.checkOut(1,"addr")
-
+            addr = writer.vgprPool.checkOut(numAddr,"addr")
+            
             with writer.allocTmpSgpr(1) as tmpSgprInfo:
                 tmpSgpr = tmpSgprInfo.idx
                 module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(dataPerWave), \
