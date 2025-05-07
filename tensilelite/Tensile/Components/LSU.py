@@ -242,8 +242,8 @@ class LSUOn(LSU):
                 DSLoadBX     = DSLoadB32
                 numInstPerVW = bytesPerVector // 4
                 regsPerStore = 1
-            maxOffset =  (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
-            numAddr =maxOffset // maxLDSConstOffset + 1
+            maxOffset = (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
+            numAddr = maxOffset // maxLDSConstOffset + 1
             if  writer.states.archCaps["Has160KLDS"]:
                addr = writer.vgprPool.checkOut(numAddr,"addr")
             else:
@@ -301,10 +301,9 @@ class LSUOn(LSU):
                     comment="lsu offset = lsu_id * LSU Process Offset"))
                 module.add(VAddU32(dst=vgpr(addr), src0=vgpr(addr), src1=vgpr(tmpVgpr), \
                     comment="addr += lsu offset"))
-                if  writer.states.archCaps["Has160KLDS"] and numAddr > 1:
-                    for i in range(1,numAddr):
-                        module.add(VAddU32(vgpr(addr+i), 0x10000*i, vgpr(addr), \
-                            comment="addr += maxLDSConstOffset*%u"%(i)))
+                for i in range(1,numAddr):
+                    module.add(VAddU32(vgpr(addr+i), maxLDSConstOffset*i, vgpr(addr), \
+                    comment="addr += maxLDSConstOffset*%u"%(i)))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -320,10 +319,10 @@ class LSUOn(LSU):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
                         srcvgpr = vgpr(addr)
-                        if writer.states.archCaps["Has160KLDS"]:
-                            num = offset // maxLDSConstOffset
-                            offset -= num * maxLDSConstOffset
-                            srcvgpr = vgpr(addr+num)
+                        
+                        num = offset // maxLDSConstOffset
+                        offset -= num * maxLDSConstOffset
+                        srcvgpr = vgpr(addr+num)
                                 
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
