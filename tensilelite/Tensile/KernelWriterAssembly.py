@@ -223,7 +223,7 @@ class KernelWriterAssembly(KernelWriter):
   def getLdsLimitedOccupancy(deviceLdsSize, ldsSize):
     # As ldsSize gets large, rounding might push us slightly higher than deviceLdsSize.
     # Clamp at deviceLdsSize
-    ldsSize = min(ldsSize + 255, deviceLdsSize) & 0x1ff00 # 256-byte granularity
+    ldsSize = min(ldsSize + 255, deviceLdsSize) & 0xffffff00 # 256-byte granularity
 
     ldsLimitedOccupancy = deviceLdsSize//ldsSize
     return ldsLimitedOccupancy
