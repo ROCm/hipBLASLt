@@ -28,7 +28,7 @@ from .Activation import ActivationType
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
-from Tensile.Common import state, state_key_ordering, IsaInfo, DepthUConfig
+from Tensile.Common import state, state_key_ordering, IsaInfo
 from Tensile.Common.Architectures import gfxToIsa
 from Tensile.Common.GlobalParameters import internalParameters
 from Tensile.SolutionStructs import Solution as OriginalSolution
@@ -679,7 +679,6 @@ class Solution:
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
-        depthUConfig: DepthUConfig,
         assembler: Assembler,
         isaInfoMap: Dict[str, IsaInfo]
     ):
@@ -688,7 +687,6 @@ class Solution:
                    splitGSU,
                    printSolutionRejectionReason,
                    printIndexAssignmentInfo,
-                   depthUConfig,
                    assembler,
                    isaInfoMap,
                    solution.srcName
@@ -701,7 +699,6 @@ class Solution:
             splitGSU: bool,
             printSolutionRejectionReason: bool,
             printIndexAssignmentInfo: bool,
-            depthUConfig: DepthUConfig,
             #mink
             assembler,
             isaInfoMap,
@@ -756,7 +753,6 @@ class Solution:
                                   splitGSU,
                                   printSolutionRejectionReason,
                                   printIndexAssignmentInfo,
-                                  depthUConfig,
                                   assembler,
                                   isaInfoMap,
                                   srcName

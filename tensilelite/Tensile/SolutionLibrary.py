@@ -29,7 +29,7 @@ from . import Properties
 from . import Hardware
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
-from Tensile.Common import state, IsaInfo, DepthUConfig
+from Tensile.Common import state, IsaInfo
 from Tensile.Common.Architectures import gfxToIsa
 from Tensile.SolutionStructs.Naming import getSolutionNameMin, getKernelNameMin
 
@@ -299,7 +299,6 @@ class MasterSolutionLibrary:
                           splitGSU: bool,
                           printSolutionRejectionReason: bool,
                           printIndexAssignmentInfo: bool,
-                          depthUConfig: DepthUConfig,
                           assembler,
                           isaInfoMap: Dict[str, IsaInfo],
                           lazyLibraryLoading: bool,
@@ -458,7 +457,6 @@ class MasterSolutionLibrary:
                                                         splitGSU,
                                                         printSolutionRejectionReason,
                                                         printIndexAssignmentInfo,
-                                                        depthUConfig,
                                                         assembler,
                                                         isaInfoMap,
                                                         lazyLibraryLoading,
@@ -474,7 +472,6 @@ class MasterSolutionLibrary:
                             splitGSU,
                             printSolutionRejectionReason,
                             printIndexAssignmentInfo,
-                            depthUConfig,
                             assembler,
                             isaInfoMap
                         ) for s in origSolutions]
@@ -505,7 +502,6 @@ class MasterSolutionLibrary:
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
-        depthUConfig: DepthUConfig,
         isaInfoMap
     ):
         solutionObjs = list([Contractions.Solution.FromOriginalState(
@@ -513,7 +509,6 @@ class MasterSolutionLibrary:
                                  splitGSU,
                                  printSolutionRejectionReason,
                                  printIndexAssignmentInfo,
-                                 depthUConfig,
                                  assembler,
                                  isaInfoMap)
                             for s in solutions])
