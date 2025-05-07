@@ -22,7 +22,6 @@
 #
 ################################################################################
 
-from Tensile.TensileInstructions.Base import fastdeepcopy as deepcopy
 import collections
 import math
 
@@ -31,22 +30,15 @@ from typing import List, Dict, Literal
 
 from Tensile.AsmStoreState import VectorDataTypes
 from Tensile.Activation import ActivationType
-from Tensile.TensileInstructions import DataType, roundUpToNearestMultiple
-from Tensile.KernelWriterBetaOnly import KernelWriterBetaOnly
-from Tensile.KernelWriterConversion import KernelWriterConversion
-from Tensile.KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
-from Tensile.KernelWriterActivationFunction import KernelWriterActivationFunction
-from Tensile.KernelWriterActivationOnly import KernelWriterActivationOnly
-from Tensile.KernelWriterReduction import KernelWriterReduction
 from Tensile.Activation import ActivationType
 from Tensile.AsmStoreState import VectorDataTypes
 from Tensile.Common import assignParameterWithDefault, IsaInfo, \
                     print2, printExit, printWarning, \
-                    roundUp, INDEX_CHARS, IsaVersion, SemanticVersion
+                    roundUp, INDEX_CHARS, IsaVersion, SemanticVersion, \
+                    roundUpToNearestMultiple
+from Tensile.Common.DataType import DataType
 from Tensile.Common.GlobalParameters import defaultSolution, \
-                                            defaultInternalSupportParams, \
-                                            internalParameters
-from Tensile.CustomKernels import isCustomKernelConfig
+                                            defaultInternalSupportParams
 from Tensile.SolutionStructs.Naming import getSolutionNameFull
 from Tensile.SolutionStructs.Problem import ProblemType
 from Tensile.Toolchain.Component import Assembler
@@ -1410,7 +1402,7 @@ class Solution(collections.abc.Mapping):
         "ConvertAfterDS": not state["ConvertAfterDS"],
         "ForceDisableShadowInit": not state["ForceDisableShadowInit"],
       }
-      
+
       for key, supported in supportedParameters.items():
         if supported:
           continue
