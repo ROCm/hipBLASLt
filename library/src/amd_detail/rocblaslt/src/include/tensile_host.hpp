@@ -289,3 +289,5 @@ TensileLite::ProblemOverride
     RocblasltContractionProblem2ProblemOverride(const RocblasltContractionProblem&);
 
 TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void>);
+
+TensileLite::ContractionProblemGemm* ExtractProblemGemm(std::shared_ptr<void>);

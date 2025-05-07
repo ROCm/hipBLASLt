@@ -1652,6 +1652,8 @@ namespace
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(rocisa::DataType::XFloat32);
+        else
+            tensileProblem.setF32XdlMathOp(rocisa::DataType::Float);
 
         tensileProblem.setSwizzleTensorA(prob.swizzleA);
         tensileProblem.setSwizzleTensorB(prob.swizzleB);
@@ -2276,6 +2278,13 @@ TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<voi
                                         data->problem.freeSizeB(0),
                                         data->problem.boundSize(0),
                                         data->problem.batchSize(0));
+}
+
+TensileLite::ContractionProblemGemm* ExtractProblemGemm(std::shared_ptr<void> gemmData)
+{
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+
+    return &data->problem;
 }
 
 void initTensileGemmData(rocblaslt_handle       handle,
