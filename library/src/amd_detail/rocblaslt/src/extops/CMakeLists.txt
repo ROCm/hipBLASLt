@@ -143,7 +143,7 @@ foreach(arch IN LISTS archs)
 endforeach()
 
 add_custom_target(ExtOpCp ALL
-    DEPENDS ${dat_depends}
+    DEPENDS ${dat_depends} TENSILE_LIBRARY_TARGET
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" ${PROJECT_BINARY_DIR}/Tensile/library
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat" ${PROJECT_BINARY_DIR}/Tensile/library
     COMMENT "Copying ExtOp Library"
