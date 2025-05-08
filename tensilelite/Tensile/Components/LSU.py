@@ -242,10 +242,10 @@ class LSUOn(LSU):
                 DSLoadBX     = DSLoadB32
                 numInstPerVW = bytesPerVector // 4
                 regsPerStore = 1
-            maxOffset = (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * (numInstPerVW-1) + numInstPerVW) * regsPerStore * (bpr * kernel["WavefrontSize"])
+
+            maxOffset = (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * numInstPerVW + (numInstPerVW -1)) * regsPerStore * (bpr * kernel["WavefrontSize"])
             numAddr = maxOffset // maxLDSConstOffset + 1
             addr = writer.vgprPool.checkOut(numAddr,"addr")
-            
             with writer.allocTmpSgpr(1) as tmpSgprInfo:
                 tmpSgpr = tmpSgprInfo.idx
                 module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(dataPerWave), \
@@ -315,12 +315,9 @@ class LSUOn(LSU):
                     for r in range(0, kernel["LocalSplitU"]):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
-                        srcvgpr = vgpr(addr)
-                        
                         num = offset // maxLDSConstOffset
                         offset -= num * maxLDSConstOffset
                         srcvgpr = vgpr(addr+num)
-                                
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
                         else:
