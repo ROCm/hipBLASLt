@@ -21,13 +21,15 @@
 ################################################################################
 
 from rocisa import countInstruction
-from rocisa.container import ContinuousRegister, SMEMModifiers
+from rocisa.code import Module, Label
+from rocisa.container import ContinuousRegister, SMEMModifiers, vgpr, sgpr
 from rocisa.instruction import SAddCU32, SAddU32, SAndB32, SAtomicDec, SBranch, SCBranchSCC0, \
     SCBranchSCC1, SCMovB32, SCSelectB32, SCmpEQI32, SCmpEQU32, SCmpGtI32, SCmpLeI32, SCmpLgU32, SCmpLtU32, \
     SLShiftLeftB32, SLShiftLeftB64, SLShiftRightB32, SMovB32, SMovB64, SMulI32, SNop, VReadfirstlaneB32, SSubI32, SSubU32, \
-    SWaitCnt, scalarStaticMultiply64, scalarUInt32DivideAndRemainder, VAddF32, VAddPKF32, VCmpGEI32, VCndMaskB32, VMovB32
+    SWaitCnt, VAddF32, VAddPKF32, VCmpGEI32, VCndMaskB32, VMovB32
+from rocisa.functions import scalarStaticMultiply64, scalarUInt32DivideAndRemainder
 
-from ..TensileInstructions import Module, Label, sgpr, vgpr, log2
+from ..Common import log2
 from ..Component import Component
 from ..AsmAddressCalculation import AddrCalculation
 import abc
@@ -215,7 +217,7 @@ class GSUOn(GSU):
 
     @classmethod
     def matches(cls, writer, debug=False):
-        return writer.states.kernel["GlobalSplitU"] > 0
+        return writer.states.kernel["GlobalSplitU"] > 0 or writer.states.kernel["GlobalSplitU"] == -1
 
     def __call__(self):
         assert(0)
@@ -1044,7 +1046,7 @@ class GSUOn(GSU):
                         module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
                                    src1=vgpr(data+j*2, 2), comment="buffer pk"))
 
-                # prefetch 
+                # prefetch
                 if ss.optSrdIncForRow and addrCalc.rowInc:
                     module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS05, dst=tmpS06))
 
@@ -1081,7 +1083,7 @@ class GSUOn(GSU):
                             module.add(VAddPKF32(dst=vgpr(vgprstart+j*2, 2), src0=vgpr(vgprstart+j*2, 2), \
                                                  src1=vgpr(data+j*2, 2), comment="buffer pk"))
 
-                    # prefetch 
+                    # prefetch
                     if ss.optSrdIncForRow and addrCalc.rowInc:
                         module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS05, dst=tmpS06))
 
@@ -1208,7 +1210,7 @@ class GSUOn(GSU):
     def writeBiasToGlobal(self, writer, kernel, biasDataType, tP, tmpSgprRes, biasBpe):
         module = Module("GSU On writeBiasToGlobal")
 
-        if kernel["GlobalSplitU"] > 1 and not (kernel["GlobalSplitUAlgorithm"] == "SingleBuffer" and kernel["ProblemType"]["ComputeDataType"] == biasDataType):
+        if (kernel["GlobalSplitU"] > 1 or kernel["GlobalSplitU"] == -1) and not (kernel["GlobalSplitUAlgorithm"] == "SingleBuffer" and kernel["ProblemType"]["ComputeDataType"] == biasDataType):
             '''
             We use num_records to save the bias data, so we have to shift the global pointer.
             final offset = d_size * gsu + sizeI/J * gsuIdx

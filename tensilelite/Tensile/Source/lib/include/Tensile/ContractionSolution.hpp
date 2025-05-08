@@ -38,6 +38,7 @@
 #include <Tensile/ContractionProblem_fwd.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/Predicates.hpp>
+#include <Tensile/Task.hpp>
 #include <Tensile/Utils.hpp>
 
 #define TENSILE_COMMON_KERNEL_ARGS_SIZE 16
@@ -119,13 +120,13 @@ namespace TensileLite
         size_t             gwvwC = 1;
         size_t             gwvwD = 1;
 
-        size_t staggerU           = 0;
-        size_t staggerUMapping    = 0;
-        size_t depthU             = 0;
-        size_t globalSplitUPGR    = 0;
-        size_t globalSplitU       = 0;
-        size_t staggerStrideShift = 0;
-        int    workGroupMapping   = 0;
+        size_t  staggerU           = 0;
+        size_t  staggerUMapping    = 0;
+        size_t  depthU             = 0;
+        size_t  globalSplitUPGR    = 0;
+        int16_t globalSplitU       = 0;
+        size_t  staggerStrideShift = 0;
+        int     workGroupMapping   = 0;
 
         size_t packBatchDims              = 0;
         int    packSummationDims          = 0;
@@ -538,7 +539,8 @@ namespace TensileLite
         ThreadSafeValue<std::string> codeObjectFilename;
         bool                         debugKernel   = false;
         bool                         kernelArgsLog = false;
-
+        std::shared_ptr<Predicates::Predicate<Task>> taskPredicate
+            = std::make_shared<Predicates::True<Task>>();
         std::shared_ptr<Predicates::Predicate<Problem>> problemPredicate
             = std::make_shared<Predicates::True<Problem>>();
         std::shared_ptr<Predicates::Predicate<Hardware>> hardwarePredicate
@@ -564,6 +566,10 @@ namespace TensileLite
         uint32_t magicNumberAlg2(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumber(int magicDivAlg, uint32_t x, uint32_t* magicShift) const;
         uint32_t smallMagicNumber(uint32_t x) const;
+
+        inline void calculateAutoGSU(Problem const&  problem,
+                                     Hardware const* hardware) const;
+        mutable uint32_t autoGSU = 0;
     };
 
     template <typename TAct>

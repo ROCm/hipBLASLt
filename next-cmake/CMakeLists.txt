@@ -60,6 +60,8 @@ endif()
 if(HIPBLASLT_ENABLE_DEVICE)
     set(HIPBLASLT_BUNDLE_PYTHON_DEPS ON CACHE BOOL "Build python dependencies requied for device code generation.")
     set(HIPBLASLT_DEVICE_JOBS "" CACHE STRING "Number of CPU threads to use for building device libraries (will use nproc if unset).")
+    set(HIPBLASLT_DEVICE_KEEP_TMP OFF CACHE STRING "Keep temporary build directory for device libraries (turning this ON  bloat the build size).")
+    set(HIPBLASLT_DEVICE_LIBLOGIC_PATH "" CACHE STRING "Path to library logic files (will use 'library' if unset).")
     set(device_library_dir "${CMAKE_BINARY_DIR}/Tensile/library")
     file(MAKE_DIRECTORY "${device_library_dir}")
 endif()
@@ -80,7 +82,7 @@ set(ROCBLASLT_LIB_DIR "${HIPBLASLT_LIB_DIR}/src/amd_detail/rocblaslt")
 
 find_package(hip REQUIRED)
 if(HIPBLASLT_ENABLE_HOST)
-    if(NOT TARGET hip::hipblas-common)
+    if(NOT TARGET roc::hipblas-common)
         find_package(hipblas-common REQUIRED)
     endif()
     if(HIPBLASLT_ENABLE_BLIS)
@@ -148,7 +150,7 @@ if(HIPBLASLT_ENABLE_HOST)
 
     target_link_libraries(hipblaslt
         PUBLIC
-            hip::hipblas-common
+            roc::hipblas-common
         PRIVATE
             hip::device
             rocisa::rocisa-cpp

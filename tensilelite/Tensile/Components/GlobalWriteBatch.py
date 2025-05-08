@@ -20,37 +20,33 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from rocisa.container import SMEMModifiers, VOP3PModifiers, MUBUFModifiers, \
-  replaceHolder, EXEC
-from rocisa.enum import CvtType, RoundType
+from rocisa.code import Label, Module
+from rocisa.container import VOP3PModifiers, MUBUFModifiers, replaceHolder, \
+  EXEC, VCC, SDWAModifiers, vgpr, sgpr
+from rocisa.enum import CvtType, RoundType, SaturateCastType, SelectBit
 from rocisa.instruction import BufferAtomicAddF32, BufferAtomicCmpswapB32, \
-  BufferAtomicCmpswapB64, FlatAtomicCmpswapB32, SAddCU32, SAddU32, SAndB32, \
-  SAndB64, SAtomicDec, SBarrier, SBranch, SCBranchExecNZ, SCBranchExecZ, \
-  SCBranchSCC1, SCSelectB32, SCmpEQI32, SCmpEQU32, SCmpGtI32, SCmpLeI32, \
-  SLShiftLeftB32, SLShiftLeftB64, SLShiftRightB32, SMovB32, SMovB64, SMulI32, \
-  SNop, SOrB32, SOrB64, SOrSaveExecB32, SOrSaveExecB64, SSleep, SSubI32, SSubU32, \
-  SSwapPCB64, SWaitCnt, SWaitAlu, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
-  VAddI32, VAddPKF16, VAddPKF32, VAddU32, VBfeI32, VCmpEQU32, VCmpGEI32, VCmpGtU32, \
-  VCmpNeU32, VCmpNeU64, VCndMaskB32, VCvtBF8toF32, VCvtF16toF32, VCvtF32toI32, \
-  VCvtFP8toF32, VCvtI32toF32, VCvtPkBF8toF32, VCvtPkFP8toF32, VFmaF64, VFmaMixF32, \
-  VLShiftRightB32, VMacF32, VMadMixF32, VMaxF32, VMovB32, VMovB64, VMulF32, VMulF64, \
-  VMulLOU32, VMulPKF16, VMulPKF32, VPackF16toB32, VReadfirstlaneB32, VRndneF32
+  BufferAtomicCmpswapB64, FlatAtomicCmpswapB32, SAndB32, SAndB64, SBarrier, \
+  SCBranchExecNZ, SCBranchExecZ, SMovB32, SMovB64, SNop, SOrB32, \
+  SOrB64, SOrSaveExecB32, SOrSaveExecB64, SSleep, SSwapPCB64, SWaitCnt, \
+  SWaitAlu, VAShiftRightI32, VAddCCOU32, VAddCOU32, VAddF32, VAddF64, \
+  VAddI32, VAddPKF16, VAddPKF32, VAddU32, VBfeI32, VCmpEQU32, VCmpGtU32, VCmpNeU32, \
+  VCmpNeU64, VCndMaskB32, VCvtBF8toF32, VCvtF16toF32, VCvtF32toI32, VCvtFP8toF32, VCvtI32toF32, VCvtPkBF8toF32, \
+  VCvtPkFP8toF32, VFmaF64, VFmaMixF32, VLShiftRightB32, VMacF32, VMadMixF32, VMaxF32, VMovB32, \
+  VMovB64, VMulF32, VMulF64, VMulLOU32, VMulPKF16, VMulPKF32, \
+  VPackF16toB32, VRndneF32, VCvtBF16toFP32
 
 from ..Common import DataDirection, SemanticVersion
+from ..Common.DataType import DataType
 from ..Component import GlobalWriteComponents
 from ..Component import Component
 from ..SolutionStructs import Solution
 from ..Activation import ActivationModule
 from ..AsmStoreState import StoreState
-from ..TensileInstructions import Label, Module, SDWAModifiers, VCC, SelectBit, \
-                            vgpr, sgpr, SaturateCastType, VCvtBF16toFP32, \
-                            DataType
 
 from ..AsmAddressCalculation import AddrCalculation
 from ..Components.PackData import formatting, PackData_F16, PackData_BF16, PackData_FLOAT8, PackData_FLOAT8_fnuz
 
 from math import ceil
-from ..TensileInstructions import log2
 
 class GlobalWriteBatchComponent(GlobalWriteComponents):
   kernel = {"ProblemType": {"OperationType": "GEMM" }}
@@ -177,7 +173,7 @@ class GlobalWriteBatchWriter:
     vmcnt = -1
     lgkmcnt = -1
     vscnt = -1
-    isSingleKernel = (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
+    isSingleKernel = ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
     if interleaveStoreVmcnt:
       waitLocalLoadCnt = 0
       waitLocalLoadCntStrList = []
@@ -434,7 +430,7 @@ class GlobalWriteBatchWriter:
           self.loadsBetaIssued += ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw / 16)
       self.betaLoadIssued.append(len(loadedDataBeta) * ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16))
 
-      if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none') and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none') and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
         if dataE not in loadedDataE:
           loadOffset = int((self.kernel["ProblemType"]["ComputeDataType"].numRegisters() - self.kernel["ProblemType"]["DataTypeE"].numRegisters()) * self.ss.cfg.gwvw)
@@ -453,7 +449,7 @@ class GlobalWriteBatchWriter:
         loadsIssued = 0
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, ldName, self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrVecVgpr, addrVec, dim))
         ldsAddrVgpr = referenceVgpr if (referenceVgpr and (dim == referenceDim)) else addrVecVgpr
-        isSingleKernel = (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
+        isSingleKernel = ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
         if dataVec not in loadedDataVec:
           if self.kernel["GroupLoadStore"]:
             # Group bias load with C input to
@@ -491,7 +487,7 @@ class GlobalWriteBatchWriter:
 
       self.biasLoadIssued.append(len(loadedDataBias) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * factor_gwvw / 16))
 
-      isSingleKernel = (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
+      isSingleKernel = ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
 
       if self.kernel["ProblemType"]["UseScaleAlphaVec"] and isSingleKernel:
         modGwvwScaleAlpha = Module("GwvwScaleAlpha")
@@ -523,7 +519,7 @@ class GlobalWriteBatchWriter:
           if len(mod.items()) > index:
             module.add(mod.items()[index])
 
-      if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE, 0))
       if self.storeBiasD == 1:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias, self.factorDim))
@@ -572,7 +568,7 @@ class GlobalWriteBatchWriter:
       if self.kernel["_GlobalAccumulation"] == "MultipleBufferSingleKernel":
         if self.ss.optSrdIncForRow and addrCalc.rowInc and self.kernel["StoreRemapVectorWidth"] > 0:
           module.addComment1("StoreRemap: shift coord1 address MultipleBufferSingleKernel")
-          if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+          if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1):
             # TODO Check if works with StreamK
             printExit("Use E does not support StoreRemapVectorWidth if GSU == 1.")
             # module.add(addrCalc.incrementToNextRow(self.kernel, "E", self.ss, self.tmpS01, isCompute=True))
@@ -618,7 +614,7 @@ class GlobalWriteBatchWriter:
       module.addComment1("store after Acc, "+"GSU: "+str(self.kernel["GlobalSplitU"]))
       for elementIdx in range(0, len(self.batchElements)):
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
-        if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+        if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
           vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
           vgprDst = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else "ValuC+%d"%vgprIdx
           module.add(self.parentWriter.addStore(self.kernel, self.ss, 'E', addrCalc, vgprDst, self.tmpS01, self.edge, comment="store E"))
@@ -837,7 +833,7 @@ class GlobalWriteBatchWriter:
       if self.kernel["_GlobalAccumulation"] != "MultipleBufferSingleKernel":
         if self.ss.optSrdIncForRow and addrCalc.rowInc and self.kernel["StoreRemapVectorWidth"] > 0:
           module.addComment1("StoreRemap: shift coord1 address")
-          if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+          if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1):
             # TODO Check if works with StreamK
             printExit("Use E does not support StoreRemapVectorWidth if GSU == 1.")
             # module.add(addrCalc.incrementToNextRow(self.kernel, "E", self.ss, self.tmpS01, isCompute=True))
@@ -908,7 +904,7 @@ class GlobalWriteBatchWriter:
           else:
             raise RuntimeError("Unsupported %s compute data type %s."%(addressStr, str(self.kernel["ProblemType"]["ComputeDataType"])))
 
-      isSingleKernel = (self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
+      isSingleKernel = ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel") or self.kernel["StreamK"] > 0
 
       scaleAVecModule = Module("ScaleAVecModule")
       scaleBVecModule = Module("ScaleBVecModule")
@@ -939,7 +935,7 @@ class GlobalWriteBatchWriter:
       if self.parentWriter.states.useBias == DataDirection.READ:
         if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
           mergeActFuncCall = True
-        if (self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["UseE"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+        if (self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["UseE"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
           mergeActFuncCall = False
 
         if self.factorDim and self.gwvw > 1:
@@ -965,7 +961,7 @@ class GlobalWriteBatchWriter:
           else:
             raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
-      if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         vgprIdx   = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
         vgprDst   = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else vgprIdx
         prefixStr = "" if mergeActFuncCall else "ValuC+"
@@ -1007,7 +1003,7 @@ class GlobalWriteBatchWriter:
       SaturateTypeInt8 = SaturateCastType.NORMAL
 
       gradientCvtModule = Module("gradientCvtModule")
-      if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         loadOffset = int((self.kernel["ProblemType"]["ComputeDataType"].numRegisters() - self.kernel["ProblemType"]["DataTypeE"].numRegisters()) * self.ss.cfg.gwvw)
         if activationCDataType != self.kernel["ProblemType"]["DataTypeE"]:
           if activationCDataType.isSingle() and self.kernel["ProblemType"]["DataTypeE"].isHalf():
@@ -1021,14 +1017,14 @@ class GlobalWriteBatchWriter:
               dataEV  = dataE + vi
               dataEV2 = dataE + vi // 2
               selectWord = 0 if (self.gwvw != 1 and vi % 2 == 0) or (self.gwvw == 1 and elementIdx % 2 == 0) else 1
-              module.add(VCvtBF16toFP32(dst=(dataEV), src=(dataEV2+loadOffset), vgprMask=(self.cvtVgprStruct.vgprBf16Mask), vi=(selectWord), additionalCmts="gwvw %d, elementIdx %d"%(self.gwvw, elementIdx)))
+              module.add(VCvtBF16toFP32(dst=vgpr(dataEV), src=vgpr(dataEV2+loadOffset), vgprMask=vgpr(self.cvtVgprStruct.vgprBf16Mask), vi=(selectWord), comment="gwvw %d, elementIdx %d"%(self.gwvw, elementIdx)))
           else:
             printExit("[Gradient input] Unsupported conversion.")
 
       # Activation
       activationModule = None
       isActivationInsertAfter = False
-      if self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if self.kernel["ProblemType"]["Gradient"] and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         gradientInput = dataE
         enableValuC   = False
       else:
@@ -1064,7 +1060,7 @@ class GlobalWriteBatchWriter:
         activationModule = self.parentWriter.getActivationActivationComputeType(self.kernel, self.activation, \
           self.activationTypeStr, self.gwvw, gradientInput, gradientInput, self.tmpVgpr, self.tmpSgpr, satInt8, enableValuC)
       # Add C *= GradientAct
-      if self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["Gradient"] and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         if isActivationInsertAfter:
           assert 0, "Gradient does not support isActivationInsertAfter."
         for vi in range(0, self.gwvw):
@@ -1084,7 +1080,7 @@ class GlobalWriteBatchWriter:
             assert 0, "Unsupported gradient type"
 
       scaleDModule = Module("Empty scaleDModule")
-      if self.kernel["ProblemType"]["UseScaleCD"] and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+      if self.kernel["ProblemType"]["UseScaleCD"] and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
         for vi in range(0, self.gwvw):
           sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
           if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
@@ -1147,7 +1143,7 @@ class GlobalWriteBatchWriter:
             dVgpr = formatting(d, "ValuC+", self.parentWriter.states.c.startVgprValu)
             packModule.add(VPackF16toB32(dst=vgpr(dVgpr), src0=vgpr(formatting(sumIdxV-1, "ValuC+", self.parentWriter.states.c.startVgprValu)), src1=vgpr(formatVgpr), \
                           comment="Pack with neighbor"))
-      
+
       if self.kernel["ExpertSchedulingMode"] > 0:
         packModule.add(SWaitAlu(va_vdst=0, comment="wait for writes to complete"))
 
@@ -1180,7 +1176,7 @@ class GlobalWriteBatchWriter:
           module.add(tmpStoreCode)
 
         self.storesIssued += 1
-        if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+        if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
           self.storesIssued += 1
         if self.storeBiasD == 1:
           self.storesIssued += 1
@@ -1200,7 +1196,7 @@ class GlobalWriteBatchWriter:
           module.add(tmpStoreCode)
 
           self.storesIssued += 1
-          if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1 or self.kernel["StreamK"] > 0):
+          if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and ((self.kernel["GlobalSplitU"] == 1 or self.kernel["GlobalSplitU"] == -1) or self.kernel["StreamK"] > 0):
             self.storesIssued += 1
           if self.storeBiasD == 1:
             self.storesIssued += 1
@@ -1689,7 +1685,7 @@ class GlobalWriteBatchWriter:
           # src1 = dataV = f16.lo = opsel 10 or 11 depending on even/odd
           # src2 = sumIdxV = f32 = opsel 00
           dataCExternal = ss.elementData[elementIdx] + vi//2
-          module.add(VCvtBF16toFP32(dst=(tmpVgpr), src=(dataCExternal), vgprMask=(cvtVgprStruct.vgprBf16Mask), vi=(vi)))
+          module.add(VCvtBF16toFP32(dst=vgpr(tmpVgpr), src=vgpr(dataCExternal), vgprMask=vgpr(cvtVgprStruct.vgprBf16Mask), vi=(vi)))
           newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), \
               comment="finalSum = sum*alpha + C*beta"))

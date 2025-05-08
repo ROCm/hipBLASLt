@@ -25,10 +25,10 @@
 import pprint
 from typing import Dict, Optional
 
-from Tensile.Common import IsaVersion, IsaInfo, print1, print2, elineno
+from Tensile.Common import IsaVersion, IsaInfo, print2, elineno
 from Tensile.Common.Architectures import SUPPORTED_ISA
+from Tensile.Common.DataType import DataType
 from Tensile.Common.ValidParameters import makeValidMatrixInstructions, makeValidMFMA, makeValidSMFMA, makeValidWMMA
-from Tensile.TensileInstructions.DataType import DataType
 
 from ..Utilities import reject
 

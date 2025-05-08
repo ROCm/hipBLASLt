@@ -23,11 +23,8 @@
 ################################################################################
 
 import itertools
-import rocisa
-import math
 import os.path
 import subprocess
-import sys
 import time
 from collections import OrderedDict
 from copy import deepcopy
@@ -35,7 +32,7 @@ from typing import Dict
 
 from Tensile import __version__
 
-from .Architectures import isaToGfx, SUPPORTED_ISA
+from .Architectures import isaToGfx
 from .Types import IsaVersion, IsaInfo
 from .Utilities import locateExe, versionIsCompatible, print1, print2, printExit, printWarning, \
      getVerbosity
@@ -549,7 +546,14 @@ def assignGlobalParameters(config, isaInfoMap: Dict[IsaVersion, IsaInfo]):
         globalParameters["CmakeCCompiler"] = os.environ.get("CMAKE_C_COMPILER")
 
     globalParameters["ROCmBinPath"] = os.path.join(globalParameters["ROCmPath"], "bin")
-    globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
+    try:
+        globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
+    except OSError:
+        if os.name == "nt":
+            # rocm-smi is not presently supported on Windows so do not require it.
+            pass
+        else:
+            raise
     globalParameters["ROCmLdPath"] = locateExe(
         os.path.join(globalParameters["ROCmPath"], "lib/llvm/bin"),
         "ld.lld" if os.name != "nt" else "ld.lld.exe"
@@ -626,10 +630,13 @@ def setupRestoreClocks():
     import atexit
 
     def restoreClocks():
+        # Clocks will only be pinned if rocm-smi is available, therefore
+        # we only need to restore if found.
         if globalParameters["PinClocks"]:
             rsmi = globalParameters["ROCmSMIPath"]
-            subprocess.call([rsmi, "-d", "0", "--resetclocks"])
-            subprocess.call([rsmi, "-d", "0", "--setfan", "50"])
+            if rsmi is not None:
+                subprocess.call([rsmi, "-d", "0", "--resetclocks"])
+                subprocess.call([rsmi, "-d", "0", "--setfan", "50"])
 
     atexit.register(restoreClocks)
 
