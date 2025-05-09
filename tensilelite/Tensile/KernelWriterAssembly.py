@@ -10944,6 +10944,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeJ"), src1=sgpr(tmpSgpr)))
           else:
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
+          # module.add(SMovB32(dst=sgpr(tmpSgpr), src=128, comment="set bias stride"))
           module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
 
         loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
