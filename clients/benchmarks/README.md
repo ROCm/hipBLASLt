@@ -68,7 +68,7 @@ cd hipBLASLt; cd build/release
 --amaxScaleB                       Apply scale for B buffer by abs max of B buffer
 --amaxD                            Output Amax of intermediate D matrix
 --use_e                            Apply AUX output/ gradient input
---aux_type <value>                 Used with --use_e. Precision of AUX output (matrix E).Options: f16_r, default (same with D type)
+--aux_type <value>                 Used with --use_e. Precision of AUX output (matrix E). Options: f16_r, default (same with D type)
 --gradient                         Enable gradient
 --grouped_gemm                     Use grouped_gemm.
 --use_user_args                    Use UserArguments located in device memory for grouped gemm.

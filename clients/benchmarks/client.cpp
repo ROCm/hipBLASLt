@@ -561,7 +561,7 @@ try
          "Apply AUX output/ gradient input")
 
         ("aux_type",
-         value<std::string>(&aux_type), "Used with --use_e. Precision of AUX output (matrix E)."
+         value<std::string>(&aux_type), "Used with --use_e. Precision of AUX output (matrix E). "
          "Options: f16_r, default (same with D type)")
 
         ("gradient",
