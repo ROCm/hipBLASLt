@@ -24,7 +24,7 @@
  *
  *******************************************************************************/
 
-#include "hipblaslt-ext-op.h"
+#include "hipblaslt/hipblaslt-ext-op.h"
 #include "hipblaslt-ext-op-internal.hpp"
 #include <Tensile/hip/HipHardware.hpp>
 #include <Tensile/hip/HipSolutionAdapter.hpp>
@@ -32,11 +32,12 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <hip/hip_ext.h>
 #include <hip/hip_runtime_api.h>
-#include <libgen.h>
 #include <memory>
+#include <optional>
 #include <rocblaslt-auxiliary.h>
 #include <sstream>
 #include <string>
@@ -162,22 +163,10 @@ namespace
             return libPath;
         }
 
-        auto        soPath = rocblaslt_internal_get_so_path("hipblaslt");
-        std::string libPath(dirname(&soPath[0]));
-
-        if(rocblaslt_internal_test_path(libPath + "/../Tensile/library"))
-            libPath += "/../Tensile/library";
-        else if(rocblaslt_internal_test_path(libPath + "library"))
-            libPath += "/library";
-        else
-            libPath += "/hipblaslt/library";
-
-        libPath += "/hipblasltExtOpLibrary.dat";
-
-        if(rocblaslt_internal_test_path(libPath))
-        {
-            return libPath;
-        }
+        auto path = rocblaslt_find_library_relative_path(
+            std::filesystem::path("hipblasltExtOpLibrary.dat"));
+        if(path)
+            return path->string();
 
         return DEFAULT_EXT_OP_LIBRARY_PATH;
     }
@@ -483,9 +472,9 @@ hipblasStatus_t hipblasltAMaxWithScaleRun(const hipDataType datatype,
     if(datatype != HIP_R_32F
        || scaleDatatype != HIP_R_8F_E4M3_FNUZ && scaleDatatype != HIP_R_8F_E5M2_FNUZ
 #ifdef ROCM_USE_FLOAT8
-          && scaleDatatype != HIP_R_8F_E4M3 && scaleDatatype != HIP_R_8F_E5M2
+              && scaleDatatype != HIP_R_8F_E4M3 && scaleDatatype != HIP_R_8F_E5M2
 #endif
-      )
+    )
     {
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }

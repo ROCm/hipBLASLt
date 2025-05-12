@@ -21,14 +21,10 @@
 #
 # ########################################################################
 cmake_minimum_required(VERSION 3.15)
-project(rocisa LANGUAGES HIP CXX)
+project(rocisa LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 if(DEFINED Python_EXECUTABLE AND Python_EXECUTABLE)
     message(STATUS "Manually set Python_EXECUTABLE to ${Python_EXECUTABLE}")
@@ -59,19 +55,30 @@ set(ROCISAINST_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/instruc
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/mfma.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/instruction/extension.cpp)
 
+set(ROCISAFUNC_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/functions/functions.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/functions/argument.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/functions/f_math.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/functions/f_branch.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/functions/f_cast.cpp)
+
 set(ROCISAPASS_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/pass.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/graph.cpp
-                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/composite.cpp)
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/composite.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/cycle.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/remove.cpp)
 
-nanobind_add_module(rocisa NOMINSIZE NB_SUPPRESS_WARNINGS 
+nanobind_add_module(rocisa NOMINSIZE NB_SUPPRESS_WARNINGS
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/main.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/base.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/code.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/container.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/count.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/enum.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/helper.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/label.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/macro.cpp
                         ${ROCISAINST_SOURCE}
-                        ${ROCISAPASS_SOURCE})
+                        ${ROCISAPASS_SOURCE}
+                        ${ROCISAFUNC_SOURCE})
 target_include_directories(rocisa PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/include)
+set_target_properties(rocisa PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)

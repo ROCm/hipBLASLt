@@ -878,7 +878,7 @@ namespace TensileLite
                     // if value is true, then we also need to check gsu
                     // otherwise we just check outputAmaxD
                     if(value)
-                        return amaxDStatusEqual && problem.getParams().gsu() <= 1;
+                        return amaxDStatusEqual && (problem.getParams().gsu() == 0 || problem.getParams().gsu() == 1);
                     else
                         return amaxDStatusEqual;
                 }
@@ -886,25 +886,25 @@ namespace TensileLite
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    return (value) ? debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value,
-                                                  "prob_gsu",
-                                                  (int)(problem.getParams().gsu()),
-                                                  "<=",
-                                                  "sol_gsu",
-                                                  1)
-                                   : debugEvalCmp(problem,
-                                                  stream,
-                                                  "prob_amaxD",
-                                                  problem.outputAmaxD(),
-                                                  "==",
-                                                  "sol_amaxD",
-                                                  value);
+                    if (value)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "prob_amaxD " << problem.outputAmaxD() << " == " << "sol_amaxD "
+                               << value << " prob_gsu " << problem.getParams().gsu() << " is either 0 or 1"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
+                    else
+                        return debugEvalCmp(problem,
+                                            stream,
+                                            "prob_amaxD",
+                                            problem.outputAmaxD(),
+                                            "==",
+                                            "sol_amaxD",
+                                            value);
+                    return false;
                 }
             };
 
@@ -1252,7 +1252,7 @@ namespace TensileLite
                 };
                 TypesEqual() = default;
 
-                std::array<DataType, 5> value;
+                std::array<rocisa::DataType, 5> value;
 
                 static std::string Type()
                 {
@@ -1506,105 +1506,6 @@ namespace TensileLite
                 }
             };
 
-            struct WorkspaceCheck : public Predicate_CRTP<WorkspaceCheck, ContractionProblemGemm>
-            {
-                enum
-                {
-                    HasIndex = true,
-                    HasValue = true
-                };
-#define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
-                size_t             index;
-                std::array<int, 3> value;
-
-                WorkspaceCheck() = default;
-                WorkspaceCheck(size_t index, std::array<int, 3> value)
-                    : index(index)
-                    , value(value)
-                {
-                }
-
-                static std::string Type()
-                {
-                    return "WorkspaceCheck";
-                }
-
-                static size_t
-                    reductionSize(ContractionProblemGemm const& problem, int& elemC, int& elemBias)
-                {
-                    size_t reductionSize = 0;
-                    // 2d reduction
-                    if(problem.useGradient() && problem.useBias()
-                       && problem.getParams().biasEnum() != DataType::None)
-                    {
-                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (elemC == 0))
-                            reductionSize += problem.d().totalLogicalElements()
-                                             * problem.computeTypeElementSize();
-                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
-                        {
-                            reductionSize += problem.freeSizeA(0) * elemBias;
-                        }
-                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
-                        {
-                            reductionSize += problem.freeSizeB(0) * elemBias;
-                        }
-                    }
-                    return reductionSize;
-                }
-
-                virtual bool operator()(ContractionProblemGemm const& problem) const override
-                {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
-                    int gsuMultiplier = gsu > 1 ? gsu : 0;
-                    int elemC         = value[0] * gsuMultiplier;
-                    int elemBias      = value[1] * gsuMultiplier;
-                    size_t rs         = reductionSize(problem, elemC, elemBias);
-                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
-                        return 0;
-
-                    if(problem.groupedGemm())
-                        return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
-                    else
-                        return problem.d().totalLogicalElements() * elemC + rs
-                               <= problem.workspaceSize();
-                }
-
-                virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
-                {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
-                    int gsuMultiplier = gsu > 1 ? gsu : 0;
-                    int elemC         = value[0] * gsuMultiplier;
-                    int elemBias      = value[1] * gsuMultiplier;
-                    size_t rs         = reductionSize(problem, elemC, elemBias);
-
-                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
-                        return debugEvalCmp(problem,
-                                            stream,
-                                            "prob",
-                                            problem.d().totalLogicalElements() * elemC,
-                                            "<=",
-                                            "max gsu workspace size",
-                                            MAX_GSU_WORKSPACE_SIZE);
-
-                    if(problem.groupedGemm())
-                        return debugEvalCmp(problem,
-                                            stream,
-                                            "prob",
-                                            problem.workspaceSizeGroupedGemm(),
-                                            "<=",
-                                            "max",
-                                            problem.workspaceSize());
-                    return debugEvalCmp(problem,
-                                        stream,
-                                        "prob",
-                                        problem.d().totalLogicalElements() * value[0] + rs,
-                                        "<=",
-                                        "max",
-                                        problem.workspaceSize());
-                }
-            };
-
             struct WorkgroupNumberCheck
                 : public Predicate_CRTP<WorkgroupNumberCheck, ContractionProblemGemm>
             {
@@ -1632,7 +1533,11 @@ namespace TensileLite
                 }
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int16_t gsu = problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[2];
+                    // auto gsu will consider workgroup number, so bypassed
+                    if (gsu == -1)
+                        return 1;
+
                     gsu     = gsu > 1 ? gsu : 1;
                     return (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
                             * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]) * gsu
@@ -1642,7 +1547,17 @@ namespace TensileLite
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int16_t gsu = problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[2];
+                    if (gsu == -1)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "auto gsu will consider workgroup number, so bypassed"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
+
                     gsu     = gsu > 1 ? gsu : 1;
                     int workgroupNumber
                         = std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
@@ -1712,7 +1627,10 @@ namespace TensileLite
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                        = (problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[1]);
+                    // auto gsu will consider MinK, so bypassed
+                    if (minK == -1)
+                        return 1;
                     if(minK == 1)
                         minK = 0;
                     minK *= value[0];
@@ -1723,7 +1641,16 @@ namespace TensileLite
                                        std::ostream&                 stream) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                        = (problem.getParams().gsu() != 0 ? problem.getParams().gsu() : value[1]);
+                    if (minK == -1)
+                    {
+                        bool rv = (*this)(problem);
+
+                        stream << *this << ": (" << "auto gsu will consider MinK, so bypassed"
+                               << ") == " << rv;
+
+                        return rv;
+                    }
                     if(minK == 1)
                         minK = 0;
                     minK *= value[0];
@@ -1924,8 +1851,7 @@ namespace TensileLite
                 }
             };
 
-            struct ExperimentalMLP
-                : public Predicate_CRTP<ExperimentalMLP, ContractionProblemGemm>
+            struct ExperimentalMLP : public Predicate_CRTP<ExperimentalMLP, ContractionProblemGemm>
             {
                 enum
                 {
@@ -2153,10 +2079,10 @@ namespace TensileLite
                     HasIndex = false,
                     HasValue = true
                 };
-                DataType value;
+                rocisa::DataType value;
 
                 ActivationComputeTypeEqual() = default;
-                ActivationComputeTypeEqual(DataType value)
+                ActivationComputeTypeEqual(rocisa::DataType value)
                     : value(value)
                 {
                 }
@@ -2298,10 +2224,10 @@ namespace TensileLite
                     HasIndex = false,
                     HasValue = true
                 };
-                DataType value;
+                rocisa::DataType value;
 
                 DataTypeEEqual() = default;
-                DataTypeEEqual(DataType value)
+                DataTypeEEqual(rocisa::DataType value)
                     : value(value)
                 {
                 }
@@ -2454,7 +2380,7 @@ namespace TensileLite
                 };
                 BiasDataTypeWhiteList() = default;
 
-                std::vector<DataType> value;
+                std::vector<rocisa::DataType> value;
 
                 static std::string Type()
                 {
@@ -2694,10 +2620,10 @@ namespace TensileLite
                     HasIndex = false,
                     HasValue = true
                 };
-                DataType value;
+                rocisa::DataType value;
 
                 F32XdlMathOpEqual() = default;
-                F32XdlMathOpEqual(DataType value)
+                F32XdlMathOpEqual(rocisa::DataType value)
                     : value(value)
                 {
                 }

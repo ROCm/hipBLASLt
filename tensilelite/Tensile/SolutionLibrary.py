@@ -22,16 +22,14 @@
 #
 ################################################################################
 
-import itertools
 from typing import Dict
 
 from . import Properties
 from . import Hardware
 from . import Contractions
-from .SolutionStructs import Solution as OriginalSolution
-from Tensile.Common import state, IsaInfo, DepthUConfig
+from Tensile.Common import state, IsaInfo
 from Tensile.Common.Architectures import gfxToIsa
-from Tensile.SolutionStructs.Naming import getMinNaming, getNameMin
+from Tensile.SolutionStructs.Naming import getSolutionNameMin, getKernelNameMin
 
 class SingleSolutionLibrary:
     Tag = "Single"
@@ -299,7 +297,6 @@ class MasterSolutionLibrary:
                           splitGSU: bool,
                           printSolutionRejectionReason: bool,
                           printIndexAssignmentInfo: bool,
-                          depthUConfig: DepthUConfig,
                           assembler,
                           isaInfoMap: Dict[str, IsaInfo],
                           lazyLibraryLoading: bool,
@@ -458,7 +455,6 @@ class MasterSolutionLibrary:
                                                         splitGSU,
                                                         printSolutionRejectionReason,
                                                         printIndexAssignmentInfo,
-                                                        depthUConfig,
                                                         assembler,
                                                         isaInfoMap,
                                                         lazyLibraryLoading,
@@ -474,7 +470,6 @@ class MasterSolutionLibrary:
                             splitGSU,
                             printSolutionRejectionReason,
                             printIndexAssignmentInfo,
-                            depthUConfig,
                             assembler,
                             isaInfoMap
                         ) for s in origSolutions]
@@ -505,7 +500,6 @@ class MasterSolutionLibrary:
         splitGSU: bool,
         printSolutionRejectionReason: bool,
         printIndexAssignmentInfo: bool,
-        depthUConfig: DepthUConfig,
         isaInfoMap
     ):
         solutionObjs = list([Contractions.Solution.FromOriginalState(
@@ -513,7 +507,6 @@ class MasterSolutionLibrary:
                                  splitGSU,
                                  printSolutionRejectionReason,
                                  printIndexAssignmentInfo,
-                                 depthUConfig,
                                  assembler,
                                  isaInfoMap)
                             for s in solutions])
@@ -545,14 +538,10 @@ class MasterSolutionLibrary:
             rv["version"] = self.version
         return rv
 
-    def applyNaming(self, splitGSU: bool, naming=None):
-        if naming is None:
-            kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
-            naming = getMinNaming(kernels)
-
+    def applyNaming(self, splitGSU: bool):
         for s in list(self.solutions.values()):
-            s.name = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU)
-            s.kernelName = getNameMin(s.originalSolution.getKernels()[0], naming, splitGSU, True)
+            s.name = getSolutionNameMin(s.originalSolution.getKernels()[0], splitGSU)
+            s.kernelName = getKernelNameMin(s.originalSolution.getKernels()[0], splitGSU)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

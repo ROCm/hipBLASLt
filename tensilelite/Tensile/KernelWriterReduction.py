@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@
 from copy import deepcopy
 
 from .Common import INDEX_CHARS
+from .Common.DataType import DataType
 from .KernelWriterBase import KernelWriterBase
-from .TensileInstructions import DataType
 
 class KernelWriterReduction(KernelWriterBase):
 
@@ -53,13 +53,24 @@ class KernelWriterReduction(KernelWriterBase):
         kStr = ""
         return kStr
 
-
-    def getKernelName(self):
+    @staticmethod
+    def kernelName(solution, btype):
+        state = solution._state if hasattr(solution, "_state") else solution.state
+        # C dimensions
+        indexChars = INDEX_CHARS
+        indicesStr = ""
+        for i in range(0, state["ProblemType"]["NumIndicesC"]):
+            c = indexChars[i].lower()
+            indicesStr += indexChars[i].lower()
         name = "D"
-        name += self.indicesStr
-        name += "_%s%s"%(self.state["ProblemType"]["BiasDataType"].toChar(), self.state["ProblemType"]["ComputeDataType"].toChar())
+        name += indicesStr
+        name += "_%s%s"%(btype.toChar(), state["ProblemType"]["ComputeDataType"].toChar())
         name += "_Reduction"
         return name
+
+
+    def getKernelName(self):
+        return KernelWriterReduction.kernelName(self, self.state["ProblemType"]["BiasDataType"])
 
 
     def getHeaderFileString(self):

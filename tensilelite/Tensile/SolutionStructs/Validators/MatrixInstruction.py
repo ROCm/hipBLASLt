@@ -25,10 +25,10 @@
 import pprint
 from typing import Dict, Optional
 
-from Tensile.Common import IsaVersion, IsaInfo, print1, print2, elineno
+from Tensile.Common import IsaVersion, IsaInfo, print2, elineno
 from Tensile.Common.Architectures import SUPPORTED_ISA
+from Tensile.Common.DataType import DataType
 from Tensile.Common.ValidParameters import makeValidMatrixInstructions, makeValidMFMA, makeValidSMFMA, makeValidWMMA
-from Tensile.TensileInstructions.DataType import DataType
 
 from ..Utilities import reject
 
@@ -273,7 +273,7 @@ def validateMIParameters(
             assert miInputPerThread == mi4[2], elineno()
 
     # If Navi architecture, the input per thread is different
-    if IsaVersion(10, 0, 0) <= isa <= IsaVersion(11, 0, 2):
+    if IsaVersion(10, 0, 0) <= isa <= IsaVersion(11, 5, 1):
         assert miInputPerThread == mi4[2], elineno()
     else:
         assert miInputPerThread == mi4[0] * mi4[2] * mi4[3] // wfsize, f"{elineno()} MIInputPerThread: {miInputPerThread} != {mi4[0]} * {mi4[2]} * {mi4[3]} / {wfsize} = {mi4[0] * mi4[2] * mi4[3] // wfsize}"

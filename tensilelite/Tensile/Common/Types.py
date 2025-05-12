@@ -23,7 +23,7 @@
 ################################################################################
 
 from dataclasses import dataclass
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 @dataclass
 class IsaInfo:
@@ -37,28 +37,13 @@ class SemanticVersion(NamedTuple):
     major: int
     minor: int
     patch: int
-    
+
 IsaVersion = SemanticVersion
-
-
-class DepthUConfig(NamedTuple):
-    deviceLDS: int=65536
-    maxLDS: int=65536
-
-
-def makeDepthUConfig(config: dict) -> DepthUConfig:
-    deviceLDS  = maxLDS = 65536
-    if "DeviceLDS" in config:
-        deviceLDS = config["DeviceLDS"]
-    if "MaxLDS" in config:
-        maxLDS = config["MaxLDS"]
-    return DepthUConfig(deviceLDS, maxLDS)
-
 
 class DebugConfig(NamedTuple):
     """
     Members:
-        debugKernel: assembly only, kernel gets buffer for debug "printing"; 
+        debugKernel: assembly only, kernel gets buffer for debug "printing";
                      kernel writes data to memory, gets coppied to host and printed.
         forceGenerateKernel: Even if error occurs in kernel generation (i.e. due to resource overflow),
                              generate the kernel source anyway. Tensile will also attempt to run

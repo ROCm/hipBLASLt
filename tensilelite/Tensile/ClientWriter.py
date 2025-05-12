@@ -31,7 +31,6 @@ import shutil
 from pathlib import Path
 from enum import Enum
 from glob import glob
-from typing import List
 
 from Tensile.SolutionStructs.Problem import ProblemType, ProblemSizesMock, ProblemSizesMockDummy
 from Tensile.SolutionStructs import ActivationArgs, BiasTypeArgs, FactorDimArgs
@@ -43,7 +42,7 @@ from . import ROOT_PATH
 from . import ClientExecutable
 from . import LibraryIO
 from Tensile.Common import ensurePath, print1, printExit, printWarning, ClientExecutionLock,\
-                           LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR, DepthUConfig
+                           LIBRARY_LOGIC_DIR, LIBRARY_CLIENT_DIR
 from Tensile.Common.Architectures import isaToGfx
 from Tensile.Common.GlobalParameters import globalParameters
 from .TensileCreateLibrary import copyStaticFiles
@@ -88,7 +87,7 @@ class ClientLogLevel(Enum):
 ################################################################################
 # Main
 ################################################################################
-def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: Path, deviceId: int, gfxName: str, useShortNames: bool=False):
+def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: Path, deviceId: int, gfxName: str):
 
   libraryLogicPath = ensurePath(outputPath / LIBRARY_LOGIC_DIR)
   clientLibraryPath = ensurePath(outputPath / LIBRARY_CLIENT_DIR)
@@ -115,7 +114,7 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
   else:
     env["PYTHONPATH"] = module_path
 
-  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]), useShortNames)
+  createLibraryScript = getBuildClientLibraryScript(clientLibraryPath, libraryLogicPath, str(assembler.path), isaToGfx(list(isaInfoMap.keys())[0]))
   subprocess.run(shlex.split(createLibraryScript), env=env, cwd=clientLibraryPath)
   coList = glob(os.path.join(clientLibraryPath, "library/*.co"))
   yamlList = glob(os.path.join(clientLibraryPath, "library/*.yaml"))
@@ -126,12 +125,11 @@ def main(config, assembler: Assembler, cCompiler: str, isaInfoMap, outputPath: P
   printIndexAssignmentInfo = False
   for logicFileName in logicFiles:
     (scheduleName, _, problemType, _, exactLogic, newLibrary) \
-        = LibraryIO.parseLibraryLogicFile(logicFileName, 
-                                          assembler, 
+        = LibraryIO.parseLibraryLogicFile(logicFileName,
+                                          assembler,
                                           splitGSU,
                                           printSolutionRejectionReason,
-                                          printIndexAssignmentInfo, 
-                                          DepthUConfig(),
+                                          printIndexAssignmentInfo,
                                           isaInfoMap,
                                           globalParameters["LazyLibraryLoading"])
     functions.append((scheduleName, problemType))
@@ -230,7 +228,7 @@ def runClient(libraryLogicPath, forBenchmark, enableTileSelection, cxxCompiler: 
 
   return process.returncode
 
-def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, targetGfx, useShortNames: bool=False):
+def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, targetGfx):
   import io
   runScriptFile = io.StringIO()
 
@@ -238,9 +236,6 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath, cxxCompiler, target
 
   if not globalParameters["LazyLibraryLoading"]:
     callCreateLibraryCmd += " --no-lazy-library-loading"
-
-  if useShortNames:
-    callCreateLibraryCmd += " --short-file-names"
 
   if globalParameters.get("AsmDebug", False):
     callCreateLibraryCmd += " --asm-debug"
@@ -539,19 +534,19 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
         param('results-file', resultsFileName)
         param('performance-metric', globalParameters["PerformanceMetric"])
         param('problem-identifier', problemType.operationIdentifier)
-        param('compute-input-type', problemType.computeInputType.toEnum())
-        param('a-type',     problemType.aType.toEnum())
-        param('b-type',     problemType.bType.toEnum())
-        param('c-type',     problemType.cType.toEnum())
-        param('d-type',     problemType.dType.toEnum())
+        param('compute-input-type', problemType.computeInputType.toName())
+        param('a-type',     problemType.aType.toName())
+        param('b-type',     problemType.bType.toName())
+        param('c-type',     problemType.cType.toName())
+        param('d-type',     problemType.dType.toName())
         if problemType.useE:
-            param('e-type',     problemType.eType.toEnum())
+            param('e-type',     problemType.eType.toName())
         if problemType.outputAmaxD:
-            param('amaxD-type',     problemType.amaxDType.toEnum())
-        param('alpha-type', problemType.alphaType.toEnum())
-        param('beta-type',  problemType.betaType.toEnum())
-        param('f32-xdl-math-op', problemType.f32XdlMathOp.toEnum())
-        param('activation-compute-type', problemType.activationComputeDataType.toEnum())
+            param('amaxD-type',     problemType.amaxDType.toName())
+        param('alpha-type', problemType.alphaType.toName())
+        param('beta-type',  problemType.betaType.toName())
+        param('f32-xdl-math-op', problemType.f32XdlMathOp.toName())
+        param('activation-compute-type', problemType.activationComputeDataType.toName())
         param('use-gradient', problemType.useGradient)
         param('use-bias',   problemType.useBias)
         param('bias-source',   problemType.biasSrcWhiteList[0])
@@ -564,7 +559,7 @@ def writeClientConfigIni(forBenchmark, problemSizes, biasTypeArgs, factorDimArgs
         param('swizzle-tensor-b', problemType.swizzleTensorB)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
-            param('bias-type-args',  btype.toEnum())
+            param('bias-type-args',  btype.toName())
         if factorDimArgs:
           for fdim in factorDimArgs.factorDims:
             param('factor-dim-args', fdim)

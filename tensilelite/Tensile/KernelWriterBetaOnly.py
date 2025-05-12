@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@
 from copy import deepcopy
 
 from Tensile.Common import INDEX_CHARS
-from .TensileInstructions import DataType
+from Tensile.Common.DataType import DataType
 from .KernelWriterBase import KernelWriterBase
 
 class KernelWriterBetaOnly(KernelWriterBase):
@@ -250,7 +250,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
     if globalAccum:
       ptrStr = problemType["ComputeDataType"].toDevice(self.language)
       if problemType["DataType"].isHalf() and problemType["HighPrecisionAccumulate"]:
-        ptrStr = DataType('single').toDevice(self.language)
+        ptrStr = DataType('s').toDevice(self.language)
     else:
       ptrStr = problemType["DataType"].toDevice(self.language)
     kStr += "#define SCALAR_ZERO ((%s)(0))%s" % (ptrStr, self.endLine )
@@ -292,22 +292,30 @@ class KernelWriterBetaOnly(KernelWriterBase):
     return kStr
 
 
-  def getKernelName(self):
+  @staticmethod
+  def kernelName(solution, btype=None):
+    state = solution._state if hasattr(solution, "_state") else solution.state
     indexChars = INDEX_CHARS
     # C dimensions
     name = "C"
-    for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
+    for i in range(0, state["ProblemType"]["NumIndicesC"]):
       name += indexChars[i].lower()
     name += "_"
-    name += self.state["ProblemType"]["DestDataType"].toChar()
-    if self.state["ProblemType"]["GroupedGemm"]:
+    name += state["ProblemType"]["DestDataType"].toChar()
+    if state["ProblemType"]["GroupedGemm"]:
       name += "_GG"
     else:
-      name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
-    name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
-    name += "_GA" if self.state["_GlobalAccumulation"] else ""
+      name += "" if state["ProblemType"]["StridedBatched"] else "_GB"
+    if state["ProblemType"]["BetaOnlyUseBias"]:
+      name += "_Bias%s"%btype.toChar()
+    name += "_GA" if state["_GlobalAccumulation"] else ""
 
     return name
+
+
+  def getKernelName(self):
+    btype = self.state["ProblemType"]["BiasDataType"] if self.state["ProblemType"]["BetaOnlyUseBias"] else None
+    return KernelWriterBetaOnly.kernelName(self, btype)
 
 
   def getSourceFileString(self):

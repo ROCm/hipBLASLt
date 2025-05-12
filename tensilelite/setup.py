@@ -29,8 +29,6 @@
 # - installs TensileConfig.cmake so one call find_package(Tensile)
 ################################################################################
 from setuptools import setup
-import os.path
-import re
 
 def readRequirementsFromTxt():
   requirements = []
@@ -53,7 +51,7 @@ setup(
   license="MIT",
   install_requires=readRequirementsFromTxt(),
   python_requires='>=3.5',
-  packages=["Tensile"],
+  packages=["Tensile", "rocisa"],
   package_data={ "Tensile": ["Tensile/cmake/*"] },
   data_files=[ ("cmake", ["Tensile/cmake/TensileConfig.cmake", "Tensile/cmake/TensileConfigVersion.cmake"]) ],
   include_package_data=True,
