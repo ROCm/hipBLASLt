@@ -676,19 +676,20 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
               lenB -= lenBFooter
             numDummy += lenB
             insertDummyTop = swapped
-        for i in range(numDummy):
-            tmpList.append(None)
-        if insertDummyTop:
-          # add dummy at the top of the list
-          itemsLWToSched = tmpList + itemsLWToSched
-        else:
-          # add dummy at the bottom of the list
-          itemsLWToSched = itemsLWToSched + tmpList
     # extend localWrite by inserting empty Module
     # See getNumLocalWritePerMfma for how this work
     itemsLWToSchedTemp = []
-    for i in range(len(itemsLWToSched)-1):
-        item = itemsLWToSched.pop(0)
+    for i in range(len(itemsLWToSched)-1 + numDummy):
+        if insertDummyTop:
+            if i < numDummy:
+                item = None
+            else:
+                item = itemsLWToSched.pop(0)
+        else:
+            if i < len(itemsLWToSched):
+                item = itemsLWToSched.pop(0)
+            else:
+                item = None
         itemsLWToSchedTemp.append(item)
         skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] \
            and item.name.startswith("MetadataWrite") and countVMovB32(item)
