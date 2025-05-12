@@ -4563,18 +4563,14 @@ class KernelWriterAssembly(KernelWriter):
     numG2LMetadata  = 0
     if not kernel["DirectToVgprA"]:
       if ("ULSGRODoubleG2L" in kernel) and kernel["ULSGRODoubleG2L"] == 1:
-        numG2LA = self.states.a.numVgprG2LAllocated*2
-      elif kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]:
-        numG2LA = self.states.a.numVgprG2LTailloopAllocated
+        numG2LA = self.states.a.numVgprG2LTailloopAllocated*2
       else:
-        numG2LA = self.states.a.numVgprG2LAllocated
+        numG2LA = self.states.a.numVgprG2LTailloopAllocated
     if not kernel["DirectToVgprB"]:
       if ("ULSGRODoubleG2L" in kernel) and kernel["ULSGRODoubleG2L"] == 1:
-        numG2LB = self.states.b.numVgprG2LAllocated*2
-      elif kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]:
-        numG2LB = self.states.b.numVgprG2LTailloopAllocated
+        numG2LB = self.states.b.numVgprG2LTailloopAllocated*2
       else:
-        numG2LB = self.states.b.numVgprG2LAllocated
+        numG2LB = self.states.b.numVgprG2LTailloopAllocated
     if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
       numG2LMetadata = self.states.m.numVgprG2LAllocated
 
@@ -4615,9 +4611,9 @@ class KernelWriterAssembly(KernelWriter):
     if numLWA + numLWB > 0:
       vgprBase = self.vgprPool.checkOutAligned(numLWA + numLWB, 2)
       imod.addComment0("Check out VGPR (numLWA,numLWB) = (%d,%d)"%(numLWA,numLWB))
-    if numLWA > 0:
+    if numLWA > 0 and (kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]):
       imod.add(RegSet("v", "vgprLocalWriteAddrA", vgprBase))
-    if numLWB > 0:
+    if numLWB > 0 and (kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]):
       imod.add(RegSet("v", "vgprLocalWriteAddrB", vgprBase + numLWA))
 
     return imod, vgprBase
@@ -9390,7 +9386,10 @@ class KernelWriterAssembly(KernelWriter):
         localWriteCode.add(SBarrier(comment="dump LDS"))
         localWriteCode.add(self.getCmpAssert(self.asmAssert.ne, sgpr("WorkGroup0"),1))
 
-    if (not kernel["DirectToLds%s"%tc]) or (kernel["NonDTLTailLoop"] and self.states.inTailLoop):
+    # Enable local write if not DTL or using nonDTL loads in tail loop
+    if (not kernel["DirectToLds%s"%tc]) or \
+       ((tP["isA"] or tP["isB"]) and kernel["NonDTLTailLoop"] and self.states.inTailLoop):
+      # Skip local write if DTVA or DTVB
       if not ((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]):
         localWriteBody(tP)
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:

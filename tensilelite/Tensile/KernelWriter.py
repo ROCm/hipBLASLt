@@ -84,7 +84,6 @@ class ABMatrixInfo(MatrixInfo):
   numVgprValuPerBlock: int       = -1
   numVgprG2L: int                = -1
   numVgprG2LAllocated: int       = -1
-  numVgprG2LTailLoop: int        = -1
   numVgprG2LTailLoopAllocated: int= -1
   startVgprG2L: Optional[int]    = None
   numVgprLocalReadAddr:int       = -1
@@ -2984,9 +2983,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(moduleMacroG2lVgpr)
 
       # Check out VGPR for LW
-      if (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]) and kernel["NonDTLTailLoop"]:
-        moduleMacroDTLLWVgpr, vgprLW = self.tailLoopAllocDTLLWVgpr(kernel)
-        module.add(moduleMacroDTLLWVgpr)
+      moduleMacroDTLLWVgpr, vgprLW = self.tailLoopAllocDTLLWVgpr(kernel)
+      module.add(moduleMacroDTLLWVgpr)
 
       module.add(self.calculateLoopNumIter(kernel, tensorParametersA, tensorParametersB, -1))
       if self.states.actualSummationLoops==1:
@@ -3017,9 +3015,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
       globalReadMode1st = 3 if tensorParameters1st["isSwizzled"] else globalReadMode1st
       globalReadMode2nd = 3 if tensorParameters2nd["isSwizzled"] else globalReadMode2nd
 
-      if (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]) and kernel["NonDTLTailLoop"]:
-        globalReadMode1st = 2
-        globalReadMode2nd = 2
+      if kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]:
+        if tc1 == 'A':
+          globalReadMode1st = 2
+        elif tc2 == 'A':
+          globalReadMode2nd = 2
+
+      if kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]:
+        if tc1 == 'B':
+          globalReadMode1st = 2
+        elif tc2 == 'B':
+          globalReadMode2nd = 2
 
       module.addComment1("Update M0 for DTLDS")
       moduleTmp = self.directToLdsM0Update(kernel, 1, tensorParameters1st)
@@ -3929,17 +3935,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
       self.states.a.numVgprG2L = statesANumVgprG2L
       self.states.a.numVgprG2LAllocated = statesANumVgprG2LAllocated
-      self.states.a.numVgprG2LTailloop = self.states.a.numVgprG2L
       self.states.a.numVgprG2LTailloopAllocated = self.states.a.numVgprG2LAllocated
     else:
       self.states.a.numVgprG2L = 0
       self.states.a.numVgprG2LAllocated = 0
-      self.states.a.numVgprG2LTailloop = statesANumVgprG2L
       self.states.a.numVgprG2LTailloopAllocated = statesANumVgprG2LAllocated
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersA["localWriteInstruction"].blockWidth == 0.25:
       self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
-      self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2LAllocated + numVgprG2LAllocatedLocal
+      self.states.a.numVgprG2LAllocated += numVgprG2LAllocatedLocal
+      self.states.a.numVgprG2LTailloopAllocated += numVgprG2LAllocatedLocal
     # double numVgprG2L if DirectToVgpr is enabled
     if kernel["DirectToVgprA"]:
       self.states.a.numVgprG2L *= 2
@@ -3970,18 +3975,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
       self.states.b.numVgprG2L = statesBNumVgprG2L
       self.states.b.numVgprG2LAllocated = statesBNumVgprG2LAllocated
-      self.states.b.numVgprG2LTailloop = self.states.b.numVgprG2L
       self.states.b.numVgprG2LTailloopAllocated = self.states.b.numVgprG2LAllocated
     else:
       self.states.b.numVgprG2L = 0
       self.states.b.numVgprG2LAllocated = 0
-      self.states.b.numVgprG2LTailloop = statesBNumVgprG2L
       self.states.b.numVgprG2LTailloopAllocated = statesBNumVgprG2LAllocated
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersB["localWriteInstruction"].blockWidth == 0.25:
       self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
-      self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2LAllocated + numVgprG2LAllocatedLocal
-
+      self.states.b.numVgprG2LAllocated += numVgprG2LAllocatedLocal
+      self.states.b.numVgprG2LTailloopAllocated += numVgprG2LAllocatedLocal
     # double numVgprG2L if DirectToVgpr is enabled
     if kernel["DirectToVgprB"]:
       self.states.b.numVgprG2L *= 2
