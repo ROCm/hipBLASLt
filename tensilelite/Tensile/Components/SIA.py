@@ -652,7 +652,6 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
     itemsLWToSched = list(writer.codes.localWriteA.items()) + list(writer.codes.localWriteB.items())
     if kernel["PrefetchGlobalRead"] == 2:
         # PrefetchGlobalRead + DirectToLds/DirectToVgpr case, need to add dummy list to insert global read
-        tmpList = []
         numDummy = 0
         lenA = len(list(writer.codes.globalReadA.middle.items()))
         lenB = len(list(writer.codes.globalReadB.middle.items()))
@@ -679,33 +678,41 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched, isNGLL=False):
     # extend localWrite by inserting empty Module
     # See getNumLocalWritePerMfma for how this work
     itemsLWToSchedTemp = []
+    counter = 0
     for i in range(len(itemsLWToSched)-1 + numDummy):
         if insertDummyTop:
             if i < numDummy:
                 item = None
             else:
                 item = itemsLWToSched.pop(0)
+                itemsLWToSchedTemp.append([counter, item])
         else:
-            if i < len(itemsLWToSched):
+            if i < len(itemsLWToSched) - 1:
                 item = itemsLWToSched.pop(0)
+                itemsLWToSchedTemp.append([counter, item])
             else:
                 item = None
-        itemsLWToSchedTemp.append(item)
+        counter += 1
         skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] \
            and item.name.startswith("MetadataWrite") and countVMovB32(item)
         if not skip:
-           for j in range(PRECISION-1):
-               itemsLWToSchedTemp.append(None)
+           for _ in range(PRECISION-1):
+               counter += 1
     if itemsLWToSched:
-        itemsLWToSchedTemp.append(itemsLWToSched.pop(0))
-        for i in range(numLocalWritesPerSched + numLocalWritesPerSched % PRECISION - len(itemsLWToSchedTemp) % numLocalWritesPerSched):
-            itemsLWToSchedTemp.append(None)
+        itemsLWToSchedTemp.append([counter, itemsLWToSched.pop(0)])
+        counter += 1
+        for i in range(numLocalWritesPerSched + numLocalWritesPerSched % PRECISION - counter % numLocalWritesPerSched):
+            counter += 1
     itemsLWToSched = itemsLWToSchedTemp
+    if not itemsLWToSched:
+        itemsLWToSched.append([0, None])
+    elif itemsLWToSched[-1][0] != (counter - 1):
+        itemsLWToSched.append([counter - 1, None])  # end of the list if not equal to counter
     # This counts the number of modules which contain a ds_write
     # Scheduler below keeps all writes in the same module in same iteration
     # so this is better match to what it is trying to do
     # numWritesToSched = sum(1 for item in itemsLWToSched if countLocalWrite(item)
-    numWritesToSched = len(itemsLWToSched)
+    numWritesToSched = itemsLWToSched[-1][0]
     return itemsLWToSched, numWritesToSched
 
 def assignLWSchedIndexSIA3(writer, kernel, numLocalWritesPerSched, localWriteEndIter, numWritesToSched):
@@ -752,8 +759,9 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
         for idx in newAdditionalIndexList:
             additionalIndexList[idx - itemPerIter] = newAdditionalIndexList[idx]
 
+        itemsLWToSchedLength = itemsLWToSched[-1][0]
         if u == localWriteEndIter:
-            itemPerIter = len(itemsLWToSched) # schedule all remaining activity
+            itemPerIter = itemsLWToSchedLength # schedule all remaining activity
         else:
             itemPerIter = numLocalWriteModPerIter
             # if localwrite is not multiple of numLocalWriteModPerIter, fill last iteration first.
@@ -762,128 +770,136 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
             if u == startIter and startIterItem:
                 itemPerIter = startIterItem
 
-        itemsLWToSchedIndex = 0
-        for item in itemsLWToSched[:itemPerIter]:
-            # Use a module to ensure these pieces stay together in the sub-iter scheduler
-            imod = Module("LocalWriteMod%u"%u)
-            imodNGLL = Module("LocalWriteMod%u"%u)
-            if item:
-                writesPerItem = countLocalWrite(item)
-                if kernel["ProblemType"]["Sparse"] and not writesPerItem:
-                    writesPerItem = item.name.startswith("MetadataWrite") and countVMovB32(item)
-                if writesPerItem:
+        if itemsLWToSchedLength:
+            itemsLWToSchedIndexLast = itemsLWToSched[0][0] - 1
+            for itemsLWToSchedIndex, item in itemsLWToSched[:itemPerIter]:
+                # Use a module to ensure these pieces stay together in the sub-iter scheduler
+                imod = Module("LocalWriteMod%u"%u)
+                imodNGLL = Module("LocalWriteMod%u"%u)
+                if item:
                     writesPerItem = countLocalWrite(item)
                     if kernel["ProblemType"]["Sparse"] and not writesPerItem:
                         writesPerItem = item.name.startswith("MetadataWrite") and countVMovB32(item)
-                    # Split into several dsStore32
-                    syncEndExpandedNumIndex = len(itemsLWToSched)
+                    if writesPerItem:
+                        writesPerItem = countLocalWrite(item)
+                        if kernel["ProblemType"]["Sparse"] and not writesPerItem:
+                            writesPerItem = item.name.startswith("MetadataWrite") and countVMovB32(item)
+                        # Split into several dsStore32
+                        syncEndExpandedNumIndex = itemsLWToSchedLength
 
-                    if writer.states.numMfmaPerIter and u == (writer.states.lwEndMfmaIndex // writer.states.numMfmaPerIter):
-                        syncEndExpandedNumIndex = numLocalWriteModPerIter
-                        syncEndExpandedNumIndex *= ((writer.states.syncPlrMfmaIndex % writer.states.numMfmaPerIter) / writer.states.numMfmaPerIter)
-                        syncEndExpandedNumIndex = roundUp(syncEndExpandedNumIndex)
+                        if writer.states.numMfmaPerIter and u == (writer.states.lwEndMfmaIndex // writer.states.numMfmaPerIter):
+                            syncEndExpandedNumIndex = numLocalWriteModPerIter
+                            syncEndExpandedNumIndex *= ((writer.states.syncPlrMfmaIndex % writer.states.numMfmaPerIter) / writer.states.numMfmaPerIter)
+                            syncEndExpandedNumIndex = roundUp(syncEndExpandedNumIndex)
 
-                    itemNew, numItemNew, globalReadInstOffset = splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, syncEndExpandedNumIndex, itemsLWToSchedIndex) if writer.do["AutoSplitDsWrite"] else (None, 0, 0)
-                    if itemsLWToSchedIndex + globalReadInstOffset <= len(itemsLWToSched):
-                        additionalIndexList = {}
-                        for i in range(numItemNew):
-                            additionalIndexList[i * numLocalWritesPerSched + itemsLWToSchedIndex] = itemNew[i]
-                    else:
-                        globalReadInstOffset = 0
+                        itemNew, numItemNew, globalReadInstOffset = splitDSInstructionIntoSmaller(writer, kernel, item, numLocalWritesPerSched, syncEndExpandedNumIndex, itemsLWToSchedIndex) if writer.do["AutoSplitDsWrite"] else (None, 0, 0)
+                        if itemsLWToSchedIndex + globalReadInstOffset <= itemsLWToSchedLength:
+                            additionalIndexList = {}
+                            for i in range(numItemNew):
+                                additionalIndexList[i * numLocalWritesPerSched + itemsLWToSchedIndex] = itemNew[i]
+                        else:
+                            globalReadInstOffset = 0
 
-                    imod.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
-                    imodNGLL.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
-                    # if writesPerItem>1 this indicates multiple LocalWrites in the same module
-                    # this happens in some transpose cases.  Here the first write needs to wait
-                    # for the associated global read to finish, then the remaining writes can flow
-                    # TODO - can schedule these writes across iters, should figure this out above
-                    readsToWait = readsToWait - 1
-                    readsToWaitNGLL = readsToWaitNGLL - 1
-                    imod.add(SWaitCnt(lgkmcnt=-1, \
-                        vmcnt=min(maxVmcnt, readsToWait), vscnt=-1, \
-                        comment="wait for global read before writing to local"))
-                    imodNGLL.add(SWaitCnt(lgkmcnt=-1, \
-                        vmcnt=min(maxVmcnt, readsToWaitNGLL), vscnt=-1, \
-                        comment="wait for global read before writing to local"))
-                # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
-                if kernel["PrefetchGlobalRead"]==2:
-                    hasHolder, wcList = hasHolderInWaitCnt(item)
-                    if hasHolder:
-                        readsToWaitAdjust = readsToWait
-                        if kernel["NoLdsWriteCode"] and kernel["PrefetchGlobalRead"]!=2:
-                            # DirectToLds for both A and B case, use  the number of global read for both A and B as vmcnt (only for PGR=1)
-                            readsToWaitAdjust = len(list(writer.codes.globalReadA.middle.items())) + len(list(writer.codes.globalReadB.middle.items()))
-                        for wc in wcList:
-                            replaceHolder(wc, (readsToWaitAdjust))
-
-            if itemsLWToSchedIndex in additionalIndexList:
-                imod.add(additionalIndexList[itemsLWToSchedIndex])
-                additionalIndexList.pop(itemsLWToSchedIndex)
-            else:
-                imod.add(item if item else DummyItem())
-
-            # schedule global instruction that need to be scheduled later
-            numGlobalReadA = kernel["NumLoadsPerpendicularA"] * kernel["NumLoadsCoalescedA"]
-            numGlobalReadB = kernel["NumLoadsPerpendicularB"] * kernel["NumLoadsCoalescedB"]
-            dtvReadNum = numGlobalReadA if kernel["DirectToVgprA"] else numGlobalReadB
-            totalNumGR = numGlobalReadA + numGlobalReadB
-            nondtvReadNum = totalNumGR - dtvReadNum
-
-            readCntA = 1
-            readCntB = 1
-            readCntA = 2 if kernel["DirectToVgprA"] and kernel["reorderGRInstForDTVA"] and \
-                            kernel["NumLoadsCoalescedA"] % 2 == 0 else 1
-            readCntB = 2 if kernel["DirectToVgprB"] and kernel["reorderGRInstForDTVB"] and \
-                            kernel["NumLoadsCoalescedB"] % 2 == 0 else 1
-
-            if kernel["DirectToVgprA"]:  # In loop, load A first
-              readCnt = readCntA if (len(itemsGRToSchedLater) > nondtvReadNum) or isNGLL else readCntB
-            elif kernel["DirectToVgprB"]:  # In loop, load B first
-              readCnt = readCntB if (len(itemsGRToSchedLater) > nondtvReadNum) or isNGLL else readCntA
-            else:  # not kernel["DirectToVgprA"] and not kernel["DirectToVgprB"]
-              readCnt = 1
-
-            if localwriteCnt % PRECISION == ((numLocalWritesPerSched % PRECISION) + globalReadInstOffset):
-              if not skip:
-                globalReadInstOffset = 0
-                reads = 0
-                while itemsGRToSchedLater:
-                    itemGR = itemsGRToSchedLater[0]
-                    readsInc = countGlobalRead(itemGR)
-                    reads = reads + readsInc
-                    if reads > readCnt:
-                        break
-                    if kernel["ExpertSchedulingMode"] > 0:
-                        imod.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+                        imod.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
+                        imodNGLL.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))
+                        # if writesPerItem>1 this indicates multiple LocalWrites in the same module
+                        # this happens in some transpose cases.  Here the first write needs to wait
+                        # for the associated global read to finish, then the remaining writes can flow
+                        # TODO - can schedule these writes across iters, should figure this out above
+                        readsToWait = readsToWait - 1
+                        readsToWaitNGLL = readsToWaitNGLL - 1
+                        imod.add(SWaitCnt(lgkmcnt=-1, \
+                            vmcnt=min(maxVmcnt, readsToWait), vscnt=-1, \
+                            comment="wait for global read before writing to local"))
+                        imodNGLL.add(SWaitCnt(lgkmcnt=-1, \
+                            vmcnt=min(maxVmcnt, readsToWaitNGLL), vscnt=-1, \
+                            comment="wait for global read before writing to local"))
                     # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
-                    hasHolder, wcList = hasHolderInWaitCnt(itemGR)
-                    if hasHolder:
-                        for wc in wcList:
-                            replaceHolder(wc, (readsToWait))
-                        imod.add(itemGR)
+                    if kernel["PrefetchGlobalRead"]==2:
+                        hasHolder, wcList = hasHolderInWaitCnt(item)
+                        if hasHolder:
+                            readsToWaitAdjust = readsToWait
+                            if kernel["NoLdsWriteCode"] and kernel["PrefetchGlobalRead"]!=2:
+                                # DirectToLds for both A and B case, use  the number of global read for both A and B as vmcnt (only for PGR=1)
+                                readsToWaitAdjust = len(list(writer.codes.globalReadA.middle.items())) + len(list(writer.codes.globalReadB.middle.items()))
+                            for wc in wcList:
+                                replaceHolder(wc, (readsToWaitAdjust))
+
+
+                isLast = (itemsLWToSchedIndex == itemsLWToSched[-1][0]) and (not item)
+                for gapIndex in range(itemsLWToSchedIndexLast + 1, itemsLWToSchedIndex + 1):
+                    if gapIndex in additionalIndexList:
+                        imod.add(additionalIndexList[gapIndex])
+                        additionalIndexList.pop(gapIndex)
+                    elif gapIndex < itemsLWToSchedIndex or isLast:
+                        imod.add(DummyItem())
                     else:
-                        imod.add(itemGR)
-                    readsToWait = readsToWait + readsInc # GR instruction increments vmcnt
-                    itemsGRToSchedLater.pop(0)
+                        imod.add(item)
+                    # schedule global instruction that need to be scheduled later
+                    numGlobalReadA = kernel["NumLoadsPerpendicularA"] * kernel["NumLoadsCoalescedA"]
+                    numGlobalReadB = kernel["NumLoadsPerpendicularB"] * kernel["NumLoadsCoalescedB"]
+                    dtvReadNum = numGlobalReadA if kernel["DirectToVgprA"] else numGlobalReadB
+                    totalNumGR = numGlobalReadA + numGlobalReadB
+                    nondtvReadNum = totalNumGR - dtvReadNum
 
-              if readCnt == 2:
-                skip = skip ^ 1
-              else:
-                skip = 0
-            localwriteCnt += 1
-            writer.codes.perIterLocalWrite[u].add(imod)
-            if item is None:
-                imodNGLL.add(DummyItem())
-            else:
-                imodNGLL.add(deepcopy(item))
-            if lastLc:
-                # local write code for NGLL should be updated at the last lc
-                # in init acc opt case, the last inner loop generated is not for the last lc.
-                # in that case, local write code for NGLL is not as expected.
-                writer.codes.perIterLocalWriteCodeNGLL[u].add(imodNGLL)
+                    readCntA = 1
+                    readCntB = 1
+                    readCntA = 2 if kernel["DirectToVgprA"] and kernel["reorderGRInstForDTVA"] and \
+                                    kernel["NumLoadsCoalescedA"] % 2 == 0 else 1
+                    readCntB = 2 if kernel["DirectToVgprB"] and kernel["reorderGRInstForDTVB"] and \
+                                    kernel["NumLoadsCoalescedB"] % 2 == 0 else 1
 
-            itemsLWToSchedIndex += 1
-        itemsLWToSched = itemsLWToSched[itemPerIter:]
+                    if kernel["DirectToVgprA"]:  # In loop, load A first
+                        readCnt = readCntA if (len(itemsGRToSchedLater) > nondtvReadNum) or isNGLL else readCntB
+                    elif kernel["DirectToVgprB"]:  # In loop, load B first
+                        readCnt = readCntB if (len(itemsGRToSchedLater) > nondtvReadNum) or isNGLL else readCntA
+                    else:  # not kernel["DirectToVgprA"] and not kernel["DirectToVgprB"]
+                        readCnt = 1
+
+                    if localwriteCnt % PRECISION == ((numLocalWritesPerSched % PRECISION) + globalReadInstOffset):
+                        if not skip:
+                            globalReadInstOffset = 0
+                            reads = 0
+                            while itemsGRToSchedLater:
+                                itemGR = itemsGRToSchedLater[0]
+                                readsInc = countGlobalRead(itemGR)
+                                reads = reads + readsInc
+                                if reads > readCnt:
+                                    break
+                                if kernel["ExpertSchedulingMode"] > 0:
+                                    imod.add(SWaitAlu(vm_vsrc=0, comment="wait for local read to vgpr complete"))
+                                # PK and StoreCUnroll is removed so you cannot find any HolderContainer in s_waitcnt
+                                hasHolder, wcList = hasHolderInWaitCnt(itemGR)
+                                if hasHolder:
+                                    for wc in wcList:
+                                        replaceHolder(wc, (readsToWait))
+                                    imod.add(itemGR)
+                                else:
+                                    imod.add(itemGR)
+                                readsToWait = readsToWait + readsInc # GR instruction increments vmcnt
+                                itemsGRToSchedLater.pop(0)
+
+                        if readCnt == 2:
+                            skip = skip ^ 1
+                        else:
+                            skip = 0
+                    localwriteCnt += 1
+
+                    if gapIndex < itemsLWToSchedIndex or isLast:
+                        imodNGLL.add(DummyItem())
+                    else:
+                        imodNGLL.add(deepcopy(item))
+                writer.codes.perIterLocalWrite[u].add(imod)
+                if lastLc:
+                    # local write code for NGLL should be updated at the last lc
+                    # in init acc opt case, the last inner loop generated is not for the last lc.
+                    # in that case, local write code for NGLL is not as expected.
+                    writer.codes.perIterLocalWriteCodeNGLL[u].add(imodNGLL)
+
+                itemsLWToSchedIndexLast = itemsLWToSchedIndex
+            itemsLWToSched = itemsLWToSched[itemPerIter:]
+        else:
+            itemsLWToSched = []
 
     # should never run out of items to schedule
     assert not itemsLWToSched # should have scheduled everthing already
