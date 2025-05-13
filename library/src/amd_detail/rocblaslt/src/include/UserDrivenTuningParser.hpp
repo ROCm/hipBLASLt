@@ -195,27 +195,23 @@ namespace TensileLite
 
         int size()
         {
-            std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
             auto                                      size = m_override.size();
             return size;
         }
 
-        auto find(const ProblemOverride& prob_key)
+        auto find_range(const ProblemOverride& prob_key)
         {
-            std::shared_lock<std::shared_timed_mutex> lock(m_mutex);
             auto                                      iter = m_override.equal_range(prob_key);
             return iter;
         }
 
         void add(const std::pair<ProblemOverride, int>& problemSolution)
         {
-            std::lock_guard<std::shared_timed_mutex> lock(m_mutex);
             m_override.insert(problemSolution);
         }
 
         void erase(std::multimap<ProblemOverride, int>::iterator& sol_idx)
         {
-            std::lock_guard<std::shared_timed_mutex> lock(m_mutex);
             m_override.erase(sol_idx);
         }
 
@@ -227,7 +223,6 @@ namespace TensileLite
     private:
         std::multimap<ProblemOverride, int> m_override;
         std::mutex                          m_guard;
-        std::shared_timed_mutex             m_mutex;
     };
 } // namespace Tensile
 

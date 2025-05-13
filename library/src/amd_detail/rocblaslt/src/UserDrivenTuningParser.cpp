@@ -70,7 +70,7 @@ namespace TensileLite
 
                     if(problemSolution.second > 0)
                     {
-                        auto sol_iter = m_override.find(problemSolution.first);
+                        auto sol_iter = m_override.find_range(problemSolution.first);
                         for(auto sol_idx = sol_iter.first; sol_idx != sol_iter.second; sol_idx++)
                         {
                             if(sol_idx->second == problemSolution.second)
