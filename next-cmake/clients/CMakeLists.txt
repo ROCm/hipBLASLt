@@ -80,8 +80,6 @@ if(BUILD_TESTING OR HIPBLASLT_BUILD_TESTING)
         PRIVATE
             hip::device
             hipblaslt-clients-common
-            ${LAPACK_LIBRARIES}
-            ${BLAS_LIBRARIES}
             GTest::gtest
     )
     if(HIPBLASLT_ENABLE_BLIS)
