@@ -4131,7 +4131,7 @@ class KernelWriterAssembly(KernelWriter):
 
     tc = tP["tensorChar"]
     waveSize = kernel["WavefrontSize"]
-    if kernel["DirectToLds%c"%tc] and kernel["NonDTLTailLoop"]:
+    if kernel["DirectToLds%c"%tc] and kernel["NonDTLTailLoop%s"%tc]:
       module.addComment0("Set local write offsets for %c to be same as DTL %uB load"%(tc, kernel["GlobalReadVectorWidth%c"%tc] * tP["bpe"]))
       module.add(VAndB32(dst=vgpr("LocalWriteAddr%c"%tc), src0=(waveSize - 1), src1=vgpr("Serial"), comment="Serial % wavesize"))
       module.add(VLShiftLeftB32(dst=vgpr("LocalWriteAddr%c"%tc), shiftHex=hex(log2(kernel["GlobalReadVectorWidth%c"%tc] * tP["bpe"])), src=vgpr("LocalWriteAddr%c"%tc), comment=""))
@@ -4587,13 +4587,13 @@ class KernelWriterAssembly(KernelWriter):
       imod.addComment0("Check out VGPR (numG2LA,numG2LB,numG2LMetadata) = (%d,%d,%d)"%(numG2LA,numG2LB,numG2LMetadata))
     if numG2LA > 0:
       imod.add(RegSet("v", "vgprG2LA_BASE", vgprBase))
-      if kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]:
+      if kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]:
         imod.add(RegSet("v", "vgprG2LA", "vgprG2LA_BASE", 0))
       else:
         imod.add(self.moduleVgprMacroG2LA)
     if numG2LB > 0:
       imod.add(RegSet("v", "vgprG2LB_BASE", vgprBase + numG2LA))
-      if kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]:
+      if kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]:
         imod.add(RegSet("v", "vgprG2LB", "vgprG2LB_BASE", 0))
       else:
         imod.add(self.moduleVgprMacroG2LB)
@@ -4611,9 +4611,9 @@ class KernelWriterAssembly(KernelWriter):
     if numLWA + numLWB > 0:
       vgprBase = self.vgprPool.checkOutAligned(numLWA + numLWB, 2)
       imod.addComment0("Check out VGPR (numLWA,numLWB) = (%d,%d)"%(numLWA,numLWB))
-    if numLWA > 0 and (kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]):
+    if numLWA > 0 and (kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]):
       imod.add(RegSet("v", "vgprLocalWriteAddrA", vgprBase))
-    if numLWB > 0 and (kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]):
+    if numLWB > 0 and (kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]):
       imod.add(RegSet("v", "vgprLocalWriteAddrB", vgprBase + numLWA))
 
     return imod, vgprBase
@@ -7516,7 +7516,7 @@ class KernelWriterAssembly(KernelWriter):
       isGlc = bool(tP["NonTemporal"] & 0x1)
       isSlc = bool(tP["NonTemporal"] & 0x2)
       isNT  = bool(tP["NonTemporal"] & 0x4)
-      isLds = True if (kernel["DirectToLds%s"%tc] and not kernel["NonDTLTailLoop"]) else False
+      isLds = True if (kernel["DirectToLds%s"%tc] and not kernel["NonDTLTailLoop%s"%tc]) else False
 
       directToLdsLoads = 0
       if doTailOpt == 2 and behavior == "LOAD":
@@ -9388,7 +9388,8 @@ class KernelWriterAssembly(KernelWriter):
 
     # Enable local write if not DTL or using nonDTL loads in tail loop
     if (not kernel["DirectToLds%s"%tc]) or \
-       ((tP["isA"] or tP["isB"]) and kernel["NonDTLTailLoop"] and self.states.inTailLoop):
+       (((tP["isA"] and kernel["NonDTLTailLoopA"]) or \
+        (tP["isB"] and kernel["NonDTLTailLoopB"])) and self.states.inTailLoop):
       # Skip local write if DTVA or DTVB
       if not ((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]):
         localWriteBody(tP)

@@ -3015,13 +3015,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       globalReadMode1st = 3 if tensorParameters1st["isSwizzled"] else globalReadMode1st
       globalReadMode2nd = 3 if tensorParameters2nd["isSwizzled"] else globalReadMode2nd
 
-      if kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]:
+      if kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]:
         if tc1 == 'A':
           globalReadMode1st = 2
         elif tc2 == 'A':
           globalReadMode2nd = 2
 
-      if kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]:
+      if kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]:
         if tc1 == 'B':
           globalReadMode1st = 2
         elif tc2 == 'B':
@@ -3076,13 +3076,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.oriLwaA = None # back up original local write address vgpr
       self.oriLwaB = None
       self.oriLwaM = None
-      if not kernel["NoLdsWriteCode"] or kernel["NonDTLTailLoop"]:
+      if not kernel["NoLdsWriteCode"] or kernel["NonDTLTailLoopA"] or kernel["NonDTLTailLoopB"]:
         # tail: local write
-        if not (kernel["DirectToLdsA"] and not kernel["NonDTLTailLoop"]):
+        if not (kernel["DirectToLdsA"] and not kernel["NonDTLTailLoopA"]):
           module.addComment1("local write a")
           tempLWCodeModA = self.localWriteDo(kernel, tensorParametersA)
           module.add(tempLWCodeModA)
-        if not (kernel["DirectToLdsB"] and not kernel["NonDTLTailLoop"]):
+        if not (kernel["DirectToLdsB"] and not kernel["NonDTLTailLoopB"]):
           module.addComment1("local write b")
           tempLWCodeModB = self.localWriteDo(kernel, tensorParametersB)
           module.add(tempLWCodeModB)
@@ -3098,7 +3098,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # tail: free G2L Vgpr
       module.add(self.tailLoopFreeVgpr(vgprG2L, moduleMacroG2lVgpr))
 
-      if (kernel["DirectToLdsA"] or kernel["DirectToLdsB"]) and kernel["NonDTLTailLoop"]:
+      if (kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]) or (kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]):
         module.add(self.tailLoopFreeVgpr(vgprLW, moduleMacroDTLLWVgpr))
 
       # Check out VGPR for ALU
@@ -4026,9 +4026,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.a.numVgprLocalWriteSwapAddr = 0
     self.states.b.numVgprLocalWriteSwapAddr = 0
     self.states.m.numVgprLocalWriteSwapAddr = 0
-    self.states.a.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsA"] and kernel["NonDTLTailLoop"]) else 1 * self.states.rpla
-    self.states.b.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsB"] and kernel["NonDTLTailLoop"]) else 1 * self.states.rpla
+    self.states.a.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]) else 1 * self.states.rpla
+    self.states.b.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]) else 1 * self.states.rpla
 
+    # TODO: Refactor vgpr multiplier calculation
+    # based on comments here: https://github.com/ROCm/hipBLASLt/pull/2061/files#r2085714139
     if self.states.archCaps["DeviceLDS"] > 65536 and not kernel["StoreSwapAddr"]:
       need128K = kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]
       need64K = kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]

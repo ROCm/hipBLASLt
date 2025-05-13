@@ -372,12 +372,15 @@ class Solution(collections.abc.Mapping):
     state["tailLoopOptB"] = True
 
     # Use nonDTL loads in DTL tail loop
-    state["NonDTLTailLoop"] = False
-    if (((state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()) and \
-        state["AssertSummationElementMultiple"] % 2 != 0) or \
-        ((state["ProblemType"]["DataType"].isInt8() or state["ProblemType"]["DataType"].is8bitFloat()) and \
-         state["AssertSummationElementMultiple"] % 4 != 0)):
-      state["NonDTLTailLoop"] = True
+    state["NonDTLTailLoopA"] = False
+    state["NonDTLTailLoopB"] = False
+    is16bASEM2 = ((state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()) and \
+        state["AssertSummationElementMultiple"] % 2 != 0)
+    is8bASEM4 = ((state["ProblemType"]["DataType"].isInt8() or state["ProblemType"]["DataType"].is8bitFloat()) and \
+         state["AssertSummationElementMultiple"] % 4 != 0)
+    if is16bASEM2 or is8bASEM4:
+      state["NonDTLTailLoopA"] = not state["ProblemType"]["TLUA"]
+      state["NonDTLTailLoopB"] = not state["ProblemType"]["TLUB"]
 
     if (state["ISA"] != (9, 4, 2)) or \
        (state["ProblemType"]["Sparse"]) or \
