@@ -120,7 +120,8 @@ namespace TensileLite
             inputTypeA   = hipDataType_to_tensile_type(string_to_hip_datatype(entries[17]));
             inputTypeB   = hipDataType_to_tensile_type(string_to_hip_datatype(entries[18]));
             outputType   = hipDataType_to_tensile_type(string_to_hip_datatype(entries[19]));
-            computeType  = hipDataType_to_tensile_type(string_to_hip_datatype(entries[21]));
+            // computeType  = hipDataType_to_tensile_type(string_to_hip_datatype(entries[21]));
+            computeType  = (entries[21] == "xf32_r" ? DataType::Float : hipDataType_to_tensile_type(string_to_hip_datatype(entries[21])));
             solution_idx = std::stoi(entries[34]);
         }
         catch(std::invalid_argument const& ex)
