@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,18 @@
 #
 # ########################################################################
 
-set(hipblaslt_source_common  src/hipblaslt_ostream.cpp)
+set(hipblaslt_source_common hipblaslt_ostream.cpp)
 
 if(NOT BUILD_CUDA)
   # hipBLASLt source
-  include(src/amd_detail/rocblaslt/CMakeLists.txt)
-  set(hipblaslt_source src/amd_detail/hipblaslt.cpp
-                       src/amd_detail/hipblaslt-ext.cpp
-                       src/amd_detail/hipblaslt-ext-op.cpp
-                         ${hipblaslt_source_common}
-                         ${rocblaslt_source})
+  add_subdirectory(amd_detail/rocblaslt)
+  target_sources(hipblaslt
+      PRIVATE
+          amd_detail/hipblaslt.cpp
+          amd_detail/hipblaslt-ext.cpp
+          amd_detail/hipblaslt-ext-op.cpp
+          ${hipblaslt_source_common}
+          ${rocblaslt_source}
+  )
+  #set_source_files_properties(${hipblaslt_source} PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
 endif()

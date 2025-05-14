@@ -222,9 +222,54 @@ namespace TensileLite
                 iot::enumCase(io, value, "gfx1100", AMDGPU::Processor::gfx1100);
                 iot::enumCase(io, value, "gfx1101", AMDGPU::Processor::gfx1101);
                 iot::enumCase(io, value, "gfx1102", AMDGPU::Processor::gfx1102);
+                iot::enumCase(io, value, "gfx1103", AMDGPU::Processor::gfx1103);
+                iot::enumCase(io, value, "gfx1150", AMDGPU::Processor::gfx1150);
+                iot::enumCase(io, value, "gfx1151", AMDGPU::Processor::gfx1151);
                 iot::enumCase(io, value, "gfx1200", AMDGPU::Processor::gfx1200);
                 iot::enumCase(io, value, "gfx1201", AMDGPU::Processor::gfx1201);
             }
         };
+
+        template <typename IO>
+        struct SubclassMappingTraits<Predicates::Predicate<Task>, IO>
+            : public DefaultSubclassMappingTraits<
+                  SubclassMappingTraits<Predicates::Predicate<Task>, IO>,
+                  Predicates::Predicate<Task>,
+                  IO>
+        {
+            using Self = SubclassMappingTraits<Predicates::Predicate<Task>, IO>;
+            using Base = DefaultSubclassMappingTraits<
+                SubclassMappingTraits<Predicates::Predicate<Task>, IO>,
+                Predicates::Predicate<Task>,
+                IO>;
+            using SubclassMap = typename Base::SubclassMap;
+            const static SubclassMap subclasses;
+
+            using Generic = PredicateMappingTraits<Task, IO>;
+
+            static SubclassMap GetSubclasses()
+            {
+                SubclassMap rv({Base::template Pair<Predicates::Contraction::WorkspaceCheck>()});
+
+                auto gmap = Generic::GetSubclasses();
+                rv.insert(gmap.begin(), gmap.end());
+
+                return rv;
+            }
+        };
+
+        template <typename IO>
+        using TaskPredicateSMT = SubclassMappingTraits<Predicates::Predicate<Task>, IO>;
+
+        template <typename IO>
+        const typename TaskPredicateSMT<IO>::SubclassMap SubclassMappingTraits<Predicates::Predicate<Task>,IO>::subclasses
+            = TaskPredicateSMT<IO>::GetSubclasses();     
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::WorkspaceCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::WorkspaceCheck, IO>
+        {
+        };
+
     } // namespace Serialization
 } // namespace TensileLite

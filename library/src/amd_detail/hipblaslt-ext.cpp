@@ -24,7 +24,7 @@
  *
  *******************************************************************************/
 
-#include "hipblaslt-ext.hpp"
+#include "hipblaslt/hipblaslt-ext.hpp"
 #include "exceptions.hpp"
 #include "hipblaslt_internal.hpp"
 #include <Debug.hpp>
@@ -199,6 +199,7 @@ namespace hipblaslt_ext
     public:
         hipblasLtEpilogue_t mode           = HIPBLASLT_EPILOGUE_DEFAULT;
         hipDataType         bias_data_type = HIPBLASLT_DATATYPE_INVALID;
+        hipDataType         aux_data_type  = HIPBLASLT_DATATYPE_INVALID;
         int                 aux_ld         = 0;
         int                 aux_stride     = 0;
         int                 scaling_a_type = 0;
@@ -236,6 +237,11 @@ namespace hipblaslt_ext
         pimpl->bias_data_type = bias_data_type;
     }
 
+    void GemmEpilogueV2::setAuxDataType(hipDataType aux_data_type)
+    {
+        pimpl->aux_data_type = aux_data_type;
+    }
+
     void GemmEpilogueV2::setAuxLeadingDimension(int aux_ld)
     {
         pimpl->aux_ld = aux_ld;
@@ -266,6 +272,11 @@ namespace hipblaslt_ext
         return pimpl->bias_data_type;
     }
 
+    hipDataType GemmEpilogueV2::getAuxDataType() const
+    {
+        return pimpl->aux_data_type;
+    }
+
     int GemmEpilogueV2::getAuxLeadingDimension() const
     {
         return pimpl->aux_ld;
@@ -289,7 +300,7 @@ namespace hipblaslt_ext
     class GemmTuningV2::GemmTuningImpl
     {
     public:
-        u_int16_t splitK = 0;
+        uint16_t  splitK = 0;
         int16_t   wgm    = 0;
     };
 
@@ -314,7 +325,7 @@ namespace hipblaslt_ext
     GemmTuningV2::GemmTuningV2(GemmTuningV2&& tuning)            = default;
     GemmTuningV2& GemmTuningV2::operator=(GemmTuningV2&& tuning) = default;
 
-    void GemmTuningV2::setSplitK(u_int16_t splitK)
+    void GemmTuningV2::setSplitK(uint16_t splitK)
     {
         pimpl->splitK = splitK;
     }
@@ -324,7 +335,7 @@ namespace hipblaslt_ext
         pimpl->wgm = wgm;
     }
 
-    u_int16_t GemmTuningV2::getSplitK() const
+    uint16_t GemmTuningV2::getSplitK() const
     {
         return pimpl->splitK;
     }

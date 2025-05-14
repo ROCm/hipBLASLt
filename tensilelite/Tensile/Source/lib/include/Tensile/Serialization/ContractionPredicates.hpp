@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -94,14 +94,13 @@ namespace TensileLite
                          Predicates::Contraction::BufferLoadOffsetLimitCheck_Beta>(),
                      Base::template Pair<Predicates::Contraction::BufferStoreOffsetLimitCheck>(),
                      Base::template Pair<Predicates::Contraction::WorkgroupNumberCheck>(),
-                     Base::template Pair<Predicates::Contraction::WorkspaceCheck>(),
                      Base::template Pair<Predicates::Contraction::PersistentKernelCheck>(),
                      Base::template Pair<Predicates::Contraction::GlobalSplitUCheckMinK>(),
                      Base::template Pair<Predicates::Contraction::CDStridesEqual>(),
                      Base::template Pair<Predicates::Contraction::StridedBatchedEqual>(),
                      Base::template Pair<Predicates::Contraction::GroupedGemmEqual>(),
                      Base::template Pair<Predicates::Contraction::CUEfficiency>(),
-                     Base::template Pair<Predicates::Contraction::ExperimentalDTree>(),
+                     Base::template Pair<Predicates::Contraction::ExperimentalMLP>(),
                      Base::template Pair<Predicates::Contraction::ExperimentalStreamK>(),
                      Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                      Base::template Pair<Predicates::Contraction::FreeSizeMatching>(),
@@ -112,6 +111,7 @@ namespace TensileLite
                      Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                      Base::template Pair<Predicates::Contraction::UseBiasCheck>(),
                      Base::template Pair<Predicates::Contraction::UseEEqual>(),
+                     Base::template Pair<Predicates::Contraction::DataTypeEEqual>(),
                      Base::template Pair<Predicates::Contraction::UseScaleABCheck>(),
                      Base::template Pair<Predicates::Contraction::UseScaleCDCheck>(),
                      Base::template Pair<Predicates::Contraction::UseScaleAlphaVecCheck>(),
@@ -352,12 +352,6 @@ namespace TensileLite
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::WorkspaceCheck, IO>
-            : public AutoMappingTraits<Predicates::Contraction::WorkspaceCheck, IO>
-        {
-        };
-
-        template <typename IO>
         struct MappingTraits<Predicates::Contraction::PersistentKernelCheck, IO>
             : public AutoMappingTraits<Predicates::Contraction::PersistentKernelCheck, IO>
         {
@@ -394,14 +388,14 @@ namespace TensileLite
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ExperimentalDTree, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ExperimentalDTree, IO>
+        struct MappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
         {
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ExperimentalStreamK, IO>
+        struct MappingTraits<Predicates::Contraction::ExperimentalMLP, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ExperimentalMLP, IO>
         {
         };
 
@@ -462,6 +456,12 @@ namespace TensileLite
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseEEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseEEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::DataTypeEEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::DataTypeEEqual, IO>
         {
         };
 

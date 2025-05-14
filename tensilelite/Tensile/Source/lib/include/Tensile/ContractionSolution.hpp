@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +38,7 @@
 #include <Tensile/ContractionProblem_fwd.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/Predicates.hpp>
+#include <Tensile/Task.hpp>
 #include <Tensile/Utils.hpp>
 
 #define TENSILE_COMMON_KERNEL_ARGS_SIZE 16
@@ -119,13 +120,13 @@ namespace TensileLite
         size_t             gwvwC = 1;
         size_t             gwvwD = 1;
 
-        size_t staggerU           = 0;
-        size_t staggerUMapping    = 0;
-        size_t depthU             = 0;
-        size_t globalSplitUPGR    = 0;
-        size_t globalSplitU       = 0;
-        size_t staggerStrideShift = 0;
-        int    workGroupMapping   = 0;
+        size_t  staggerU           = 0;
+        size_t  staggerUMapping    = 0;
+        size_t  depthU             = 0;
+        size_t  globalSplitUPGR    = 0;
+        int16_t globalSplitU       = 0;
+        size_t  staggerStrideShift = 0;
+        int     workGroupMapping   = 0;
 
         size_t packBatchDims              = 0;
         int    packSummationDims          = 0;
@@ -149,6 +150,10 @@ namespace TensileLite
         int  workGroupMappingXCCGroup               = 0;
         bool globalSplitUCoalesced                  = false;
         bool globalSplitUWorkGroupMappingRoundRobin = false;
+
+        int CUOccupancy            = 0;
+        int PrefetchGlobalRead     = 2;
+        int MathClocksUnrolledLoop = 0;
     };
 
     /**
@@ -455,13 +460,6 @@ namespace TensileLite
                                                size_t                   gsu) const;
 
         template <bool T_Debug>
-        KernelInvocation generateActivationOnlyCall(Problem const&           problem,
-                                                    ContractionInputs const& inputs) const;
-
-        std::string activationOnlyKernelName(Problem const&           problem,
-                                             ContractionInputs const& inputs) const;
-
-        template <bool T_Debug>
         KernelInvocation generateReductionCall(Problem const&           problem,
                                                ContractionInputs const& inputs) const;
 
@@ -482,41 +480,43 @@ namespace TensileLite
 
         struct ProblemType
         {
-            std::string           operationIdentifier;
-            bool                  transA                    = false;
-            bool                  transB                    = false;
-            DataType              aType                     = DataType::Float;
-            DataType              bType                     = DataType::Float;
-            DataType              cType                     = DataType::Float;
-            DataType              dType                     = DataType::Float;
-            DataType              eType                     = DataType::Float;
-            DataType              computeInputType          = DataType::Float;
-            DataType              computeType               = DataType::Float;
-            DataType              f32XdlMathOp              = DataType::Float;
-            DataType              activationComputeDataType = DataType::Float;
-            bool                  highPrecisionAccumulate   = false;
-            bool                  useBeta                   = true;
-            bool                  useGradient               = false;
-            int                   useBias                   = 0;
-            bool                  useE                      = false;
-            std::string           useScaleAB                = "";
-            bool                  useScaleCD                = false;
-            int                   useScaleAlphaVec          = 0;
-            bool                  useInitialStridesAB       = false;
-            bool                  useInitialStridesCD       = false;
-            bool                  stridedBatched            = true;
-            bool                  outputAmaxD               = false;
-            bool                  groupedGemm               = false;
-            ActivationType        activationType            = ActivationType::None;
-            int                   activationArgLength       = 0;
-            bool                  activationNoGuard         = false;
-            std::vector<int>      biasSrcWhiteList;
-            std::vector<DataType> biasDataTypeWhiteList;
-            int                   sparse                     = 0;
-            bool                  stochasticRounding         = false;
-            bool                  supportDeviceUserArguments = false;
-            bool                  swizzleTensorA             = false;
-            bool                  swizzleTensorB             = false;
+            std::string      operationIdentifier;
+            bool             transA                    = false;
+            bool             transB                    = false;
+            rocisa::DataType aType                     = rocisa::DataType::Float;
+            rocisa::DataType bType                     = rocisa::DataType::Float;
+            rocisa::DataType cType                     = rocisa::DataType::Float;
+            rocisa::DataType dType                     = rocisa::DataType::Float;
+            rocisa::DataType eType                     = rocisa::DataType::Float;
+            rocisa::DataType computeInputType          = rocisa::DataType::Float;
+            rocisa::DataType computeType               = rocisa::DataType::Float;
+            rocisa::DataType f32XdlMathOp              = rocisa::DataType::Float;
+            rocisa::DataType activationComputeDataType = rocisa::DataType::Float;
+            bool             highPrecisionAccumulate   = false;
+            bool             useBeta                   = true;
+            bool             useGradient               = false;
+            int              useBias                   = 0;
+            bool             useE                      = false;
+            std::string      useScaleAB                = "";
+            bool             useScaleCD                = false;
+            int              useScaleAlphaVec          = 0;
+            bool             useInitialStridesAB       = false;
+            bool             useInitialStridesCD       = false;
+            bool             stridedBatched            = true;
+            bool             outputAmaxD               = false;
+            bool             groupedGemm               = false;
+            ActivationType   activationType            = ActivationType::None;
+            int              activationArgLength       = 0;
+            bool             activationNoGuard         = false;
+
+            std::vector<int>              biasSrcWhiteList;
+            std::vector<rocisa::DataType> biasDataTypeWhiteList;
+
+            int  sparse                     = 0;
+            bool stochasticRounding         = false;
+            bool supportDeviceUserArguments = false;
+            bool swizzleTensorA             = false;
+            bool swizzleTensorB             = false;
         };
 
         struct LinearModel
@@ -532,7 +532,8 @@ namespace TensileLite
         ThreadSafeValue<std::string> codeObjectFilename;
         bool                         debugKernel   = false;
         bool                         kernelArgsLog = false;
-
+        std::shared_ptr<Predicates::Predicate<Task>> taskPredicate
+            = std::make_shared<Predicates::True<Task>>();
         std::shared_ptr<Predicates::Predicate<Problem>> problemPredicate
             = std::make_shared<Predicates::True<Problem>>();
         std::shared_ptr<Predicates::Predicate<Hardware>> hardwarePredicate
@@ -558,6 +559,9 @@ namespace TensileLite
         uint32_t magicNumberAlg2(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumber(int magicDivAlg, uint32_t x, uint32_t* magicShift) const;
         uint32_t smallMagicNumber(uint32_t x) const;
+
+        inline void      calculateAutoGSU(Problem const& problem, Hardware const* hardware) const;
+        mutable uint32_t autoGSU = 0;
     };
 
     template <typename TAct>

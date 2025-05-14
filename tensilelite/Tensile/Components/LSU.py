@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2024-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,9 +20,13 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from ..TensileInstructions import Module, Label, RegisterPoolResource, SCmpEQU32, \
-    SMovB32, log2, ceilDivide, SCBranchSCC0, Instruction, \
-    SAndB32, RegSet, vectorStaticDivide
+from rocisa.code import Module, Label, RegSet
+from rocisa.container import DSModifiers, ContinuousRegister
+from rocisa.instruction import DSLoadB128, DSLoadB32, DSLoadB64, DSStoreB128, \
+    DSStoreB32, DSStoreB64, SAndB32, SCBranchSCC0, SCmpEQU32, SMovB32, SWaitCnt, \
+    VAddF32, VAddI32, VAddU32, VAndB32, VLShiftLeftAddU32, VMovB32, VMulLOU32
+from rocisa.functions import vectorStaticDivide
+from ..Common import log2, ceilDivide
 from ..Component import Component
 from ..KernelWriterModules import *
 from ..AsmStoreState import StoreState, VectorDataTypes
@@ -144,7 +148,7 @@ class LSUOn(LSU):
 
         numAccIdx    = len(self.LSUelementsArchIdx[0])
         numSetAccIdx = ceilDivide(numAccIdx, kernel["LocalSplitUReuseLDS"])
-
+        maxLDSConstOffset = writer.states.regCaps["maxLDSConstOffset"]
         # computeStoreVgprs
         if kernel["EnableMatrixInstruction"]:
             module.add(writer.computeStoreVgprs(kernel))
@@ -176,7 +180,7 @@ class LSUOn(LSU):
         lsu_id = writer.vgprPool.checkOut(1,"lsu_id")
         wave_id = writer.vgprPool.checkOut(1,"wave_id")
         tmpVgpr = writer.vgprPool.checkOutAligned(2, 2, "tmpVgpr")
-        tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+        tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
 
         module.add(vectorStaticDivide(wave_id, "Serial", \
             kernel["WavefrontSize"], tmpVgprRes))
@@ -208,7 +212,7 @@ class LSUOn(LSU):
 
             assert numAccVgpr > 0,"startLSUaccIdxSet=%u,endLSUaccIdxSet=%u,numAccIdx=%u"%(startLSUaccIdxSet,endLSUaccIdxSet,numAccIdx)
             accVgprRes = writer.vgprPool.checkOutAligned(numAccVgpr, 4, "accLSUVgprRes")
-            
+
             destIdx = 0
             for lsu in range(kernel["LocalSplitU"]):
                 for i in range(numVgprPerLSU):
@@ -222,9 +226,6 @@ class LSUOn(LSU):
 
             dataPerWave = numAccVgpr * kernel["WavefrontSize"] * 4
             ldsStride   = dataPerWave * numWaves
-
-            addr = writer.vgprPool.checkOut(1,"addr")
-
             # Prepare Write/Read instruction info
             if bytesPerVector % 16 == 0:
                 DSStoreBX    = DSStoreB128
@@ -242,6 +243,9 @@ class LSUOn(LSU):
                 numInstPerVW = bytesPerVector // 4
                 regsPerStore = 1
 
+            maxOffset = (kernel["LocalSplitU"] -1) * ldsStride + ((numVgprPerLSU // self.LSUfullVw -1) * numInstPerVW + (numInstPerVW -1)) * regsPerStore * (bpr * kernel["WavefrontSize"])
+            numAddr = maxOffset // maxLDSConstOffset + 1
+            addr = writer.vgprPool.checkOut(numAddr,"addr")
             with writer.allocTmpSgpr(1) as tmpSgprInfo:
                 tmpSgpr = tmpSgprInfo.idx
                 module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(dataPerWave), \
@@ -294,6 +298,9 @@ class LSUOn(LSU):
                     comment="lsu offset = lsu_id * LSU Process Offset"))
                 module.add(VAddU32(dst=vgpr(addr), src0=vgpr(addr), src1=vgpr(tmpVgpr), \
                     comment="addr += lsu offset"))
+                for i in range(1,numAddr):
+                    module.add(VAddU32(vgpr(addr+i), maxLDSConstOffset*i, vgpr(addr), \
+                    comment="addr += maxLDSConstOffset*%u"%(i)))
 
             module.add(SWaitCnt(lgkmcnt=0, vscnt=0, comment="wait for all writes"))
             module.add(writer._syncThreads(kernel, "post-lsu local write"))
@@ -308,11 +315,14 @@ class LSUOn(LSU):
                     for r in range(0, kernel["LocalSplitU"]):
                         regIdx = (i * numInstPerVW + v) * regsPerStore
                         offset = r * ldsStride + regIdx * (bpr * kernel["WavefrontSize"])
+                        num = offset // maxLDSConstOffset
+                        offset -= num * maxLDSConstOffset
+                        srcvgpr = vgpr(addr+num)
                         if r == 0:
                             vgprStr = "LsuReduction+%u"%(localReadVgprIdx)
                         else:
                             vgprStr = inLoopTmpVgpr + (numVgprPerLSU * (r - 1) + regIdx)
-                        module.add(DSLoadBX(dst=vgpr(vgprStr, regsPerStore), src=vgpr(addr), \
+                        module.add(DSLoadBX(dst=vgpr(vgprStr, regsPerStore), src=srcvgpr, \
                                     ds=DSModifiers(offset=(offset)), \
                                     comment="r=%u i=%u, from acc[%d]"%(r, (i * numInstPerVW + v), neededAccVGPRIdx[0][(i * numInstPerVW + v)])))
                         # Generate Reduction code at the same time.
@@ -367,7 +377,7 @@ class LSUOn(LSU):
         strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
         wave_id = writer.vgprPool.checkOut(1, "tmpWaveID")
         tmpVgpr1 = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr1")
-        tmpVgpr1Res = RegisterPoolResource(tmpVgpr1, 2)
+        tmpVgpr1Res = ContinuousRegister(tmpVgpr1, 2)
         module.add(vectorStaticDivide(wave_id, "Serial", kernel["WavefrontSize"], tmpVgpr1Res))
         numWaves = kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]
         module.add(vectorStaticDivide(wave_id, wave_id, numWaves, tmpVgpr1Res))
@@ -395,7 +405,7 @@ class LSUOn(LSU):
                 strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(writer.vgprs.coord1InMT), src1=sgpr(strideC1), comment=" offset 1"))
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(writer.vgprs.coord1InMT), src1=sgpr(strideD1), comment=" offset 1"))
-                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitU"] == -1):
                         module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(writer.vgprs.coord1InMT), comment=" save offset 1 for E"))
                 if writer.vgprs.coutRowPtrBias != -1:
                         index = packedC1[0] - 1
@@ -439,7 +449,7 @@ class LSUOn(LSU):
                     src=sgpr("AddressC+1"), \
                     comment="sgpr -> vgpr"))
 
-            if kernel["GlobalSplitU"] > 0:
+            if kernel["GlobalSplitU"] != 0:
                 gsuLabel = Label(label=writer.labels.getNameInc("GSU"), comment="")
                 with writer.allocTmpSgpr(1) as tmpSgprGSU:
                     module.add(SAndB32(dst=sgpr(tmpSgprGSU.idx), src0=sgpr("GSU"), src1=hex(0x3FFF), comment="Restore GSU"))
@@ -494,7 +504,7 @@ class LSUOn(LSU):
                         dst=vgpr(self.vgprs.addrScaleAlphaVec+1), \
                         src=sgpr("AddressScaleAlphaVec+1"), \
                         comment="sgpr -> vgpr"))
-            if kernel["GlobalSplitU"] > 0:
+            if kernel["GlobalSplitU"] != 0:
                 module.add(gsuLabel)
 
         return module

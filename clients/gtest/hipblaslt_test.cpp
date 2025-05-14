@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@
 #include <cstdlib>
 #include <exception>
 #include <regex>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #define strcasecmp(A, B) _stricmp(A, B)
 #else
@@ -69,7 +69,10 @@ thread_pool::thread_pool()
 
 thread_pool::~thread_pool()
 {
-    m_done = true;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_done = true;
+    }
     m_cond.notify_all();
     for(auto& thread : m_threads)
         thread.join();
@@ -132,7 +135,7 @@ static thread_local struct
     volatile sig_atomic_t enabled = false;
 
     // sigjmp_buf describing stack frame to go back to
-#ifndef WIN32
+#ifndef _WIN32
     sigjmp_buf sigjmp_buf_;
 #else
     jmp_buf sigjmp_buf_;
@@ -158,7 +161,7 @@ extern "C" void hipblaslt_test_signal_handler(int sig)
         return;
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     // If this is an alarm timeout, we abort
     if(sig == SIGALRM)
     {
@@ -177,7 +180,7 @@ extern "C" void hipblaslt_test_signal_handler(int sig)
     // it is better than crashing.
     t_handler.signal = sig;
     errno            = saved_errno;
-#ifndef WIN32
+#ifndef _WIN32
     siglongjmp(t_handler.sigjmp_buf_, true);
 #else
     longjmp(t_handler.sigjmp_buf_, true);
@@ -187,7 +190,7 @@ extern "C" void hipblaslt_test_signal_handler(int sig)
 // Set up signal handlers
 void hipblaslt_test_sigaction()
 {
-#ifndef WIN32
+#ifndef _WIN32
     struct sigaction act;
     act.sa_flags = 0;
     sigfillset(&act.sa_mask);
@@ -216,7 +219,7 @@ void catch_signals_and_exceptions_as_failures(std::function<void()> test, bool s
     // Save the current handler (to allow nested calls to this function)
     auto old_handler = t_handler;
 
-#ifndef WIN32
+#ifndef _WIN32
     // Set up the return point, and handle siglongjmp returning back to here
     if(sigsetjmp(t_handler.sigjmp_buf_, true))
     {
@@ -234,7 +237,7 @@ void catch_signals_and_exceptions_as_failures(std::function<void()> test, bool s
 #endif
     else
     {
-#ifndef WIN32
+#ifndef _WIN32
         // Alarm to detect deadlocks or hangs
         if(set_alarm)
             alarm(test_timeout);
@@ -257,7 +260,7 @@ void catch_signals_and_exceptions_as_failures(std::function<void()> test, bool s
         }
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     // Cancel the alarm if it was set
     if(set_alarm)
         alarm(0);

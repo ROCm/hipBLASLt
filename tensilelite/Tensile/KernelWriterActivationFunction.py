@@ -21,20 +21,21 @@
 ################################################################################
 
 from copy import deepcopy
+from typing import List
 
-from .TensileInstructions import TensileInstructions
-from .Common import globalParameters, gfxToIsa, isaToGfx
-from .Activation import ActivationInline, ActivationType
-from .KernelWriterBase import KernelWriterBase
+from rocisa import rocIsa
+
+from Tensile.Activation import ActivationInline, ActivationType
+from Tensile.Common.Architectures import isaToGfx, IsaVersion
+from Tensile.KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
 
-  def __init__(self, state, cxxCompiler: str):
+  def __init__(self, state, cxxCompiler: str, supportedISA: List[IsaVersion]):
     super().__init__()
     self.cxxCompiler = cxxCompiler
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
     self.state["Kernel"] = state["Kernel"]
-    self._tf = TensileInstructions()
 
     self.actGradientPrefix = ""
     self.actExportType =  ActivationType.Export.NORMAL
@@ -46,16 +47,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
     self.enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, \
                                                     self.state["ProblemType"]["ActivationComputeDataType"])
 
-    # Get supported archs
-    if ";" in globalParameters["Architecture"]:
-      self.supportedArchs = globalParameters["Architecture"].split(";")
-    else:
-      self.supportedArchs = globalParameters["Architecture"].split("_")
-    if "all" in self.supportedArchs:
-      self.supportedArchs = deepcopy(globalParameters['SupportedISA'])
-    else:
-      for idx, arch in enumerate(self.supportedArchs):
-        self.supportedArchs[idx] = gfxToIsa(''.join(map(str, arch)))
+    self.supportedArchs = supportedISA
 
     # derive parameter
     self.language = "HIP"
@@ -64,12 +56,18 @@ class KernelWriterActivationFunction(KernelWriterBase):
   def keys(self):
     return self.getKernelName()
 
-  def getKernelName(self):
-    return "Tensile%sActivation%s_%s_%s"%(self.actGradientPrefix, \
-                                          self.gaurdStr, \
-                                          self.state["ProblemType"]["ActivationComputeDataType"].toChar(), \
-                                          self.state["ProblemType"]["ActivationType"])
+  @staticmethod
+  def kernelName(solution):
+    state = solution._state if hasattr(solution, "_state") else solution.state
+    actGradientPrefix = "Gradient" if state["ProblemType"]["Gradient"] else ""
+    gaurdStr = "NG" if state["ProblemType"]["ActivationNoGuard"] else ""
+    return "Tensile%sActivation%s_%s_%s"%(actGradientPrefix, \
+                                          gaurdStr, \
+                                          state["ProblemType"]["ActivationComputeDataType"].toChar(), \
+                                          state["ProblemType"]["ActivationType"])
 
+  def getKernelName(self):
+    return KernelWriterActivationFunction.kernelName(self)
 
   def getSourceFileString(self):
     fileString = "// This is a dummy file."
@@ -94,13 +92,14 @@ class KernelWriterActivationFunction(KernelWriterBase):
     activationStrList = []
 
     isa = tuple(self.state["Kernel"]["ISA"])
-    if not self._tf.isInit():
-      self._tf.init(isa, self.cxxCompiler)
-    self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
+    tf  = rocIsa.getInstance()
+    if not tf.isInit():
+      tf.init(isa, self.cxxCompiler)
+    tf.setKernel(isa, self.state["Kernel"]["WavefrontSize"])
 
     for arch in self.supportedArchs:
-      self._tf.init(arch, self.cxxCompiler)
-      self._tf.setKernelInfo(arch, self.state["Kernel"]["WavefrontSize"])
+      tf.init(arch, self.cxxCompiler)
+      tf.setKernel(arch, self.state["Kernel"]["WavefrontSize"])
       activationStrList.append(activation.generateInlineAssemblyBody(spaces, activationType))
 
     activationStrSetList = list(set(activationStrList))
@@ -140,12 +139,13 @@ class KernelWriterActivationFunction(KernelWriterBase):
       return fileString
 
     isa = tuple(self.state["Kernel"]["ISA"])
-    self._tf.init(isa, self.cxxCompiler)
-    self._tf.setKernelInfo(isa, self.state["Kernel"]["WavefrontSize"])
+    tf  = rocIsa.getInstance()
+    tf.init(isa, self.cxxCompiler)
+    tf.setKernel(isa, self.state["Kernel"]["WavefrontSize"])
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     activationType = self.state["ProblemType"]["ActivationType"]
-    self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
+    tf.setKernel(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,14 +22,15 @@
 #
 ################################################################################
 
+from rocisa.code import RegSet, Module
+from rocisa.container import EXEC, vgpr, sgpr, SDWAModifiers, DSModifiers, ContinuousRegister
+from rocisa.enum import SelectBit
+from rocisa.instruction import DSStoreB16, DSStoreB32, DSStoreB64, SBarrier, \
+    SMovB32, SSetMask, VAddF32, VAddU32, VCmpXEqU32, VCvtPkBF8toF32, VCvtPkFP8toF32, \
+    VDot2F32BF16, VDot2F32F16, VLShiftLeftB32, VMovB32, VCvtBF16toFP32
+from rocisa.functions import vectorStaticDivide, vectorStaticRemainder, vectorStaticMultiply
 from ..Component import SumUnroll
-from ..Common import printExit
-from ..TensileInstructions.ExtInstructions import VCvtBF16toFP32
-from ..TensileInstructions import Module, VDot2F32F16, SMovB32, VAddU32, VCmpXEqU32, \
-    VLShiftLeftB32, VMovB32, VAddF32, SBarrier, SDWAModifiers, SelectBit, VCvtPkFP8toF32, VCvtPkBF8toF32, \
-    staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
-    DSModifiers, SSetMask, DSStoreB16, DSStoreB32, DSStoreB64, \
-    RegSet, EXEC, vgpr, sgpr, RegisterPoolResource, log2
+from ..Common import printExit, log2
 
 class SumUnrollMfma(SumUnroll):
     kernel = {"EnableMatrixInstruction": True}
@@ -55,6 +56,10 @@ class SumUnrollMfma(SumUnroll):
                 writer.defineSgpr("SumUnrollConstOne", 1)
                 imod.add(RegSet("s", "sgprSumUnrollConstOne", writer.sgprs["SumUnrollConstOne"]))
                 imod.add(SMovB32(dst=sgpr("SumUnrollConstOne"), src=hex(0x3c003c00), comment="packed 1.0"))
+            elif kernel["ProblemType"]["DataType"].isBFloat16() and writer.states.asmCaps['v_dot2_f32_bf16']:
+                writer.defineSgpr("SumUnrollConstOne", 1)
+                imod.add(RegSet("s", "sgprSumUnrollConstOne", writer.sgprs["SumUnrollConstOne"]))
+                imod.add(SMovB32(dst=sgpr("SumUnrollConstOne"), src=hex(0x3F803F80), comment="packed 1.0"))
             else:
                 assert "[initSumUnroll] Unsupported data type"
         return imod
@@ -119,10 +124,13 @@ class SumUnrollMfma(SumUnroll):
                     tmpVgpr = writer.vgprPool.checkOutAligned(2,2)
                     if vgprPerInput > 1 and (vgprPerInput % 2 == 0):
                         for inputIdx in range(0, vgprPerInput):
-                            imod.add(VCvtBF16toFP32(dst=(tmpVgpr), src=("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=None, vi=0))
-                            imod.add(VCvtBF16toFP32(dst=(tmpVgpr+1), src=("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=hiBitsMaskVgpr, vi=1))
-                            imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr), src1=vgpr(valuSumStr), comment="sum K"))
-                            imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr+1), src1=vgpr(valuSumStr), comment="sum K"))
+                            if writer.states.asmCaps['v_dot2_f32_bf16']:
+                                imod.add(VDot2F32BF16(dst=vgpr(valuSumStr), src0=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), src1=sgpr("SumUnrollConstOne"), src2=vgpr(valuSumStr), comment="sum K"))
+                            else:
+                                imod.add(VCvtBF16toFP32(dst=vgpr(tmpVgpr), src=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=None, vi=0))
+                                imod.add(VCvtBF16toFP32(dst=vgpr(tmpVgpr+1), src=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=vgpr(hiBitsMaskVgpr), vi=1))
+                                imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr), src1=vgpr(valuSumStr), comment="sum K"))
+                                imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr+1), src1=vgpr(valuSumStr), comment="sum K"))
                     else:
                         printExit("Currently unsupported vgprPerInput %u"%vgprPerInput)
                     writer.vgprPool.checkIn(tmpVgpr)
@@ -190,7 +198,7 @@ class SumUnrollMfma(SumUnroll):
         tReg    = writer.vgprPool.checkOut(1,"tReg") # remainder
         kReg    = writer.vgprPool.checkOut(1,"kReg") # remainder
         tmpVgpr = writer.vgprPool.checkOutAligned(2,2,"tmpVgpr")
-        tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+        tmpVgprRes = ContinuousRegister(tmpVgpr, 2)
         ldsVgpr = writer.vgprPool.checkOut(1,"ldsVgpr")
         ldsVgpr1 = writer.vgprPool.checkOut(1,"ldsVgpr1")
         dummy   = writer.vgprPool.checkOut(1,"dummy")
@@ -220,7 +228,7 @@ class SumUnrollMfma(SumUnroll):
                 "0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
             imod.add(vectorStaticRemainder(dummy, tReg, kReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
                 "1. N offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstN"]))
-            imod.add(staticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
+            imod.add(vectorStaticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
                 "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
             # block offset
             # Here we calculate the coordinate of the block offset, and remove the duplicated blocks.
@@ -237,16 +245,16 @@ class SumUnrollMfma(SumUnroll):
                 "2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
             imod.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
                 "2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
-            imod.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideBlock, tmpSgprInfo, \
+            imod.add(vectorStaticMultiply(vgpr(wReg), vgpr(wReg), strideBlock, tmpSgprInfo, \
                 "2. block offset: bnOffset = bnIdx * strideBlock(%u)" % strideBlock))
             imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
                 comment="3. add N and block offset: bnOffset = block and N offset"))
-            imod.add(staticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
+            imod.add(vectorStaticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
                 "3. apply VectorWidth: bnOffset = bnOffset * vw(%u)" % vectorWidth))
             # unroll offset
             imod.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
                 "4. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
-            imod.add(staticMultiply(vgpr(kReg), vgpr(kReg), 1, tmpSgprInfo, \
+            imod.add(vectorStaticMultiply(vgpr(kReg), vgpr(kReg), 1, tmpSgprInfo, \
                 "4. K offset: lrKOffset = kIdx * mStride(1)"))
 
             imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \
@@ -268,7 +276,7 @@ class SumUnrollMfma(SumUnroll):
                 imod.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(dummy), src1=0, comment="6-1. True if ans = 0"))
                 imod.add(vectorStaticRemainder(dummy, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo, \
                     "6. wave offset in M dimen: wtid0 = wtid %% num1DWaves(%u)" % num1DWaves))
-                imod.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo, \
+                imod.add(vectorStaticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo, \
                     "6. wave offset in M dimen: wOffset = wtid0 * W0Stride(%u)" % strideWave))
                 imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
                     comment="7. final local read offset: flrOffset = lrOffset + WOffset"))

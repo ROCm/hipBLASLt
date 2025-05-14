@@ -38,6 +38,10 @@
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
 
+#ifdef USE_ROCROLLER
+#include "rocroller_host.hpp"
+#endif
+
 #include <Tensile/Contractions.hpp>
 #include <Tensile/EmbeddedLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
@@ -48,23 +52,21 @@
 #include <Tensile/hip/HipHardware.hpp>
 #include <Tensile/hip/HipSolutionAdapter.hpp>
 #include <Tensile/hip/HipUtils.hpp>
+
 #include <atomic>
 #include <complex>
 #include <exception>
+#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
-
-#include <glob.h>
-#include <libgen.h>
-#include <link.h>
-#include <regex>
-#include <string_view>
-#include <unistd.h>
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/lib"
 
@@ -74,35 +76,211 @@
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
 
+RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     trans_a,
+                                                         hipblasOperation_t     trans_b,
+                                                         int64_t                m,
+                                                         int64_t                n,
+                                                         int64_t                k,
+                                                         const void*            alpha,
+                                                         hipDataType            a_type,
+                                                         const void*            A,
+                                                         const void* const*     batch_A,
+                                                         int64_t                ld_a,
+                                                         int64_t                batch_stride_a,
+                                                         hipDataType            b_type,
+                                                         const void*            B,
+                                                         const void* const*     batch_B,
+                                                         int64_t                ld_b,
+                                                         int64_t                batch_stride_b,
+                                                         const void*            beta,
+                                                         hipDataType            c_type,
+                                                         const void*            C,
+                                                         const void* const*     batch_C,
+                                                         int64_t                ld_c,
+                                                         int64_t                batch_stride_c,
+                                                         hipDataType            d_type,
+                                                         void*                  D,
+                                                         void* const*           batch_D,
+                                                         int64_t                ld_d,
+                                                         int64_t                batch_stride_d,
+                                                         void*                  E,
+                                                         void* const*           batch_E,
+                                                         int64_t                ld_e,
+                                                         int64_t                batch_stride_e,
+                                                         int64_t                batch_count,
+                                                         bool                   strided_batch,
+                                                         bool                   grouped_gemm,
+                                                         bool                   gradient,
+                                                         rocblaslt_compute_type compute_type,
+                                                         hipDataType            scale_type,
+                                                         const void*            bias,
+                                                         const void*            scaleA,
+                                                         const void*            scaleB,
+                                                         const void*            scaleC,
+                                                         const void*            scaleD,
+                                                         const void*            scaleE,
+                                                         const void*            scaleAlphaVec,
+                                                         ScalingFormat          scaleAType,
+                                                         ScalingFormat          scaleBType,
+                                                         size_t                 scaleABlockRowSize,
+                                                         size_t                 scaleABlockColSize,
+                                                         size_t                 scaleBBlockRowSize,
+                                                         size_t                 scaleBBlockColSize,
+                                                         hipDataType            bias_type,
+                                                         hipDataType            aux_type,
+                                                         rocblaslt_epilogue     epilogue,
+                                                         void*                  amaxD,
+                                                         void*                  workspace,
+                                                         size_t                 workspaceSize,
+                                                         hipStream_t            stream,
+                                                         void*                  Synchronizer,
+                                                         bool                   swizzleA,
+                                                         bool                   swizzleB)
+    : trans_a(trans_a)
+    , trans_b(trans_b)
+    , m(m)
+    , n(n)
+    , k(k)
+    , alpha(alpha)
+    , a_type(a_type)
+    , A(A)
+    , batch_A(batch_A)
+    , row_stride_a(1)
+    , col_stride_a(ld_a)
+    , batch_stride_a(batch_stride_a)
+    , b_type(b_type)
+    , B(B)
+    , batch_B(batch_B)
+    , row_stride_b(1)
+    , col_stride_b(ld_b)
+    , batch_stride_b(batch_stride_b)
+    , beta(beta)
+    , c_type(c_type)
+    , C(C)
+    , batch_C(batch_C)
+    , row_stride_c(1)
+    , col_stride_c(ld_c)
+    , batch_stride_c(batch_stride_c)
+    , d_type(d_type)
+    , D(D)
+    , batch_D(batch_D)
+    , row_stride_d(1)
+    , col_stride_d(ld_d)
+    , batch_stride_d(batch_stride_d)
+    , E(E)
+    , batch_E(batch_E)
+    , row_stride_e(1)
+    , col_stride_e(ld_e)
+    , batch_stride_e(batch_stride_e)
+    , batch_count(batch_count)
+    , strided_batch(strided_batch)
+    , grouped_gemm(grouped_gemm)
+    , gradient(gradient)
+    , compute_type(compute_type)
+    , bias(bias)
+    , scaleA(scaleA)
+    , scaleB(scaleB)
+    , scaleC(scaleC)
+    , scaleD(scaleD)
+    , scaleE(scaleE)
+    , scaleAlphaVec(scaleAlphaVec)
+    , scaleAType(scaleAType)
+    , scaleBType(scaleBType)
+    , scaleABlockRowSize(scaleABlockRowSize)
+    , scaleABlockColSize(scaleABlockColSize)
+    , scaleBBlockRowSize(scaleBBlockRowSize)
+    , scaleBBlockColSize(scaleBBlockColSize)
+    , bias_type(bias_type)
+    , aux_type(aux_type)
+    , epilogue(epilogue)
+    , amaxD(amaxD)
+    , workspace(workspace)
+    , workspaceSize(workspaceSize)
+    , stream(stream)
+    , Synchronizer(Synchronizer)
+    , swizzleA(swizzleA)
+    , swizzleB(swizzleB)
+{
+    if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
+    {
+        // FIXME: Currently the default bias_type is set to match the yamls' configuration, should add the default type when the yamls are fixed.
+        if(this->compute_type == rocblaslt_compute_i32)
+        {
+            this->bias_type = HIP_R_32I;
+        }
+        else if(this->compute_type == rocblaslt_compute_f32_fast_xf32)
+        {
+            this->bias_type = HIP_R_32F;
+        }
+        else if((this->a_type == HIP_R_8F_E4M3_FNUZ || this->a_type == HIP_R_8F_E5M2_FNUZ)
+                && (this->b_type == HIP_R_8F_E4M3_FNUZ || this->b_type == HIP_R_8F_E5M2_FNUZ))
+        {
+            if(this->d_type == HIP_R_32F || this->d_type == HIP_R_16BF)
+                this->bias_type = HIP_R_16BF;
+            else if(this->d_type == HIP_R_16F)
+                this->bias_type = HIP_R_16F;
+            else //more default cases once support C != D
+                this->bias_type = HIP_R_16F;
+        }
+#ifdef ROCM_USE_FLOAT8
+        else if((this->a_type == HIP_R_8F_E4M3 || this->a_type == HIP_R_8F_E5M2)
+                && (this->b_type == HIP_R_8F_E4M3 || this->b_type == HIP_R_8F_E5M2))
+        {
+            if(this->d_type == HIP_R_32F || this->d_type == HIP_R_16BF)
+                this->bias_type = HIP_R_16BF;
+            else if(this->d_type == HIP_R_16F)
+                this->bias_type = HIP_R_16F;
+            else //more default cases once support C != D
+                this->bias_type = HIP_R_16F;
+        }
+#endif
+        else
+        {
+            this->bias_type = this->d_type;
+        }
+
+        if(this->aux_type == HIPBLASLT_DATATYPE_INVALID)
+        {
+            this->aux_type = this->d_type;
+        }
+
+        if(this->trans_a == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->a_type))
+                this->trans_a = HIPBLAS_OP_T;
+        }
+        if(this->trans_b == HIPBLAS_OP_C)
+        {
+            if(rocblaslt_is_complex_datatype(this->b_type))
+                this->trans_b = HIPBLAS_OP_T;
+        }
+    }
+}
+
 namespace
 {
-    std::string getHipblasltSoPath()
-    {
-        return rocblaslt_internal_get_so_path("libhipblaslt");
-    }
-
-    static void assignAlphaBeta(TensileLite::DataType type,
-                                const void*           alphaPtr,
-                                const void*           betaPtr,
-                                double*               alpha,
-                                double*               beta)
+    static void assignAlphaBeta(rocisa::DataType type,
+                                const void*      alphaPtr,
+                                const void*      betaPtr,
+                                double*          alpha,
+                                double*          beta)
     {
         switch(type)
         {
-        case TensileLite::DataType::Half:
+        case rocisa::DataType::Half:
             *alpha = *(hipblasLtHalf*)alphaPtr;
             *beta  = *(hipblasLtHalf*)betaPtr;
             break;
-        case TensileLite::DataType::Float:
-        case TensileLite::DataType::XFloat32:
+        case rocisa::DataType::Float:
+        case rocisa::DataType::XFloat32:
             *alpha = *(float*)alphaPtr;
             *beta  = *(float*)betaPtr;
             break;
-        case TensileLite::DataType::Double:
+        case rocisa::DataType::Double:
             *alpha = *(double*)alphaPtr;
             *beta  = *(double*)betaPtr;
             break;
-        case TensileLite::DataType::Int32:
+        case rocisa::DataType::Int32:
             *alpha = *(int32_t*)alphaPtr;
             *beta  = *(int32_t*)betaPtr;
             break;
@@ -191,63 +369,69 @@ namespace
         return false;
     }
 
-    TensileLite::DataType hip2TensileType(hipDataType type)
+    rocisa::DataType hip2TensileType(hipDataType type)
     {
         switch(type)
         {
         case HIP_R_32F:
-            return TensileLite::DataType::Float;
+            return rocisa::DataType::Float;
         case HIP_R_16F:
-            return TensileLite::DataType::Half;
+            return rocisa::DataType::Half;
         case HIP_R_64F:
-            return TensileLite::DataType::Double;
+            return rocisa::DataType::Double;
         case HIP_R_16BF:
-            return TensileLite::DataType::BFloat16;
+            return rocisa::DataType::BFloat16;
         case HIP_R_8F_E4M3_FNUZ:
-            return TensileLite::DataType::Float8_fnuz;
+            return rocisa::DataType::Float8_fnuz;
         case HIP_R_8F_E5M2_FNUZ:
-            return TensileLite::DataType::BFloat8_fnuz;
+            return rocisa::DataType::BFloat8_fnuz;
 #ifdef ROCM_USE_FLOAT8
         case HIP_R_8F_E4M3:
-            return TensileLite::DataType::Float8;
+            return rocisa::DataType::Float8;
         case HIP_R_8F_E5M2:
-            return TensileLite::DataType::BFloat8;
+            return rocisa::DataType::BFloat8;
 #endif
         case HIP_R_8I:
-            return TensileLite::DataType::Int8;
+            return rocisa::DataType::Int8;
         case HIP_R_32I:
-            return TensileLite::DataType::Int32;
+            return rocisa::DataType::Int32;
+        case HIP_R_6F_E2M3_EXT: // FIXME: fix this when tensile provide FP6 type
+            return rocisa::DataType::Float8;
+        case HIP_R_6F_E3M2_EXT: // FIXME: fix this when tensile provide BF6 type
+            return rocisa::DataType::Float8;
+        case HIP_R_4F_E2M1_EXT: // FIXME: fix this when tensile provide FP4 type
+            return rocisa::DataType::Float8;
         default:
             throw std::runtime_error("Unsupported type.");
         }
-        return TensileLite::DataType::None;
+        return rocisa::DataType::None;
     }
 
-    hipDataType tensile2HipType(TensileLite::DataType type)
+    hipDataType tensile2HipType(rocisa::DataType type)
     {
         switch(type)
         {
-        case TensileLite::DataType::Float:
+        case rocisa::DataType::Float:
             return HIP_R_32F;
-        case TensileLite::DataType::Half:
+        case rocisa::DataType::Half:
             return HIP_R_16F;
-        case TensileLite::DataType::Double:
+        case rocisa::DataType::Double:
             return HIP_R_64F;
-        case TensileLite::DataType::BFloat16:
+        case rocisa::DataType::BFloat16:
             return HIP_R_16BF;
-        case TensileLite::DataType::Float8_fnuz:
+        case rocisa::DataType::Float8_fnuz:
             return HIP_R_8F_E4M3_FNUZ;
-        case TensileLite::DataType::BFloat8_fnuz:
+        case rocisa::DataType::BFloat8_fnuz:
             return HIP_R_8F_E5M2_FNUZ;
 #ifdef ROCM_USE_FLOAT8
-        case TensileLite::DataType::Float8:
+        case rocisa::DataType::Float8:
             return HIP_R_8F_E4M3;
-        case TensileLite::DataType::BFloat8:
+        case rocisa::DataType::BFloat8:
             return HIP_R_8F_E5M2;
 #endif
-        case TensileLite::DataType::Int8:
+        case rocisa::DataType::Int8:
             return HIP_R_8I;
-        case TensileLite::DataType::Int32:
+        case rocisa::DataType::Int32:
             return HIP_R_32I;
         default:
             throw std::runtime_error("Unsupported type.");
@@ -255,12 +439,12 @@ namespace
         return HIP_R_32F;
     }
 
-    TensileLite::DataType roc2TensileType(rocblaslt_compute_type type, bool fallback = true)
+    rocisa::DataType roc2TensileType(rocblaslt_compute_type type, bool fallback = true)
     {
         switch(type)
         {
         case rocblaslt_compute_f16: // setting compute_type to f16_r will fallback to f32_r
-            return fallback ? TensileLite::DataType::Float : TensileLite::DataType::Half;
+            return fallback ? rocisa::DataType::Float : rocisa::DataType::Half;
         case rocblaslt_compute_f32:
         case rocblaslt_compute_f32_fast_xf32:
         case rocblaslt_compute_f32_fast_f16:
@@ -275,68 +459,66 @@ namespace
         case rocblaslt_compute_f32_fast_f8bf8:
         case rocblaslt_compute_f32_fast_bf8f8:
 #endif
-            return TensileLite::DataType::Float;
+            return rocisa::DataType::Float;
         case rocblaslt_compute_f64:
-            return TensileLite::DataType::Double;
+            return rocisa::DataType::Double;
         case rocblaslt_compute_i32:
-            return TensileLite::DataType::Int32;
+            return rocisa::DataType::Int32;
         default:
             throw std::runtime_error("Unsupported type.");
         }
-        return TensileLite::DataType::None;
+        return rocisa::DataType::None;
     }
 
-    inline const TensileLite::DataType
-        roc2TensileComputeInputType(const TensileLite::DataType&  typeA,
-                                    const TensileLite::DataType&  typeB,
+    inline const rocisa::DataType
+        roc2TensileComputeInputType(const rocisa::DataType&       typeA,
+                                    const rocisa::DataType&       typeB,
                                     const rocblaslt_compute_type& typeCompute)
     {
         switch(typeCompute)
         {
         case rocblaslt_compute_f32_fast_f16:
-            return TensileLite::DataType::Half;
+            return rocisa::DataType::Half;
         case rocblaslt_compute_f32_fast_bf16:
-            return TensileLite::DataType::BFloat16;
+            return rocisa::DataType::BFloat16;
         case rocblaslt_compute_f32_fast_f8_fnuz:
-            return TensileLite::DataType::Float8_fnuz;
+            return rocisa::DataType::Float8_fnuz;
         case rocblaslt_compute_f32_fast_bf8_fnuz:
-            return TensileLite::DataType::BFloat8_fnuz;
+            return rocisa::DataType::BFloat8_fnuz;
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
-            return TensileLite::DataType::Float8BFloat8_fnuz;
+            return rocisa::DataType::Float8BFloat8_fnuz;
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-            return TensileLite::DataType::BFloat8Float8_fnuz;
+            return rocisa::DataType::BFloat8Float8_fnuz;
 #ifdef ROCM_USE_FLOAT8
         case rocblaslt_compute_f32_fast_f8:
-            return TensileLite::DataType::Float8;
+            return rocisa::DataType::Float8;
         case rocblaslt_compute_f32_fast_bf8:
-            return TensileLite::DataType::BFloat8;
+            return rocisa::DataType::BFloat8;
         case rocblaslt_compute_f32_fast_f8bf8:
-            return TensileLite::DataType::Float8BFloat8;
+            return rocisa::DataType::Float8BFloat8;
         case rocblaslt_compute_f32_fast_bf8f8:
-            return TensileLite::DataType::BFloat8Float8;
+            return rocisa::DataType::BFloat8Float8;
 #endif
         default:;
         }
 
-        if(typeA == TensileLite::DataType::Float8_fnuz
-           && typeB == TensileLite::DataType::BFloat8_fnuz)
+        if(typeA == rocisa::DataType::Float8_fnuz && typeB == rocisa::DataType::BFloat8_fnuz)
         {
-            return TensileLite::DataType::Float8BFloat8_fnuz;
+            return rocisa::DataType::Float8BFloat8_fnuz;
         }
-        else if(typeA == TensileLite::DataType::BFloat8_fnuz
-                && typeB == TensileLite::DataType::Float8_fnuz)
+        else if(typeA == rocisa::DataType::BFloat8_fnuz && typeB == rocisa::DataType::Float8_fnuz)
         {
-            return TensileLite::DataType::BFloat8Float8_fnuz;
+            return rocisa::DataType::BFloat8Float8_fnuz;
         }
 
 #ifdef ROCM_USE_FLOAT8
-        if(typeA == TensileLite::DataType::Float8 && typeB == TensileLite::DataType::BFloat8)
+        if(typeA == rocisa::DataType::Float8 && typeB == rocisa::DataType::BFloat8)
         {
-            return TensileLite::DataType::Float8BFloat8;
+            return rocisa::DataType::Float8BFloat8;
         }
-        else if(typeA == TensileLite::DataType::BFloat8 && typeB == TensileLite::DataType::Float8)
+        else if(typeA == rocisa::DataType::BFloat8 && typeB == rocisa::DataType::Float8)
         {
-            return TensileLite::DataType::BFloat8Float8;
+            return rocisa::DataType::BFloat8Float8;
         }
 #endif
 
@@ -373,10 +555,10 @@ namespace
                                      bool                   isGroupedGemm,
                                      size_t                 maxWorkspaceBytes)
     {
-        auto                               typeATensile = hip2TensileType(typeA);
-        auto                               typeBTensile = hip2TensileType(typeB);
-        std::vector<TensileLite::DataType> biasDataTypeWhiteList; // dummy
-        std::vector<int>                   biasSrcWhiteList; // dummy
+        auto                          typeATensile = hip2TensileType(typeA);
+        auto                          typeBTensile = hip2TensileType(typeB);
+        std::vector<rocisa::DataType> biasDataTypeWhiteList; // dummy
+        std::vector<int>              biasSrcWhiteList; // dummy
         return TensileLite::ContractionProblemGemm::createDefaultProblem(
             (opA != HIPBLAS_OP_N),
             (opB != HIPBLAS_OP_N),
@@ -398,40 +580,38 @@ namespace
             maxWorkspaceBytes);
     }
 
-    const char* tensileComputeInputType_to_bench_string(TensileLite::DataType typeCompute,
-                                                        TensileLite::DataType F32XdlMathOp,
-                                                        TensileLite::DataType typeComputeInput,
-                                                        TensileLite::DataType typeA,
-                                                        TensileLite::DataType typeB)
+    const char* tensileComputeInputType_to_bench_string(rocisa::DataType typeCompute,
+                                                        rocisa::DataType F32XdlMathOp,
+                                                        rocisa::DataType typeComputeInput,
+                                                        rocisa::DataType typeA,
+                                                        rocisa::DataType typeB)
     {
         switch(typeCompute)
         {
-        case TensileLite::DataType::Float:
+        case rocisa::DataType::Float:
             break;
-        case TensileLite::DataType::Double:
+        case rocisa::DataType::Double:
             return "f64_r";
             break;
-        case TensileLite::DataType::Int32:
+        case rocisa::DataType::Int32:
             return "i32_r";
             break;
         default:
             throw std::runtime_error("Unsupported type.");
         }
 
-        if(F32XdlMathOp == TensileLite::DataType::XFloat32)
+        if(F32XdlMathOp == rocisa::DataType::XFloat32)
         {
             return "xf32_r";
         }
-        else if(typeComputeInput == TensileLite::DataType::BFloat16
-                && typeA == TensileLite::DataType::Half && typeB == TensileLite::DataType::Half)
+        else if(typeComputeInput == rocisa::DataType::BFloat16 && typeA == rocisa::DataType::Half
+                && typeB == rocisa::DataType::Half)
         {
             return "f32_bf16_r";
         }
-        else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8_fnuz
-                        && typeB == TensileLite::DataType::Half
-                    || typeA == TensileLite::DataType::Half
-                           && typeB == TensileLite::DataType::Float8_fnuz))
+        else if(typeComputeInput == rocisa::DataType::Half
+                && (typeA == rocisa::DataType::Float8_fnuz && typeB == rocisa::DataType::Half
+                    || typeA == rocisa::DataType::Half && typeB == rocisa::DataType::Float8_fnuz))
         {
             return "f32_f16_r";
         }
@@ -441,40 +621,38 @@ namespace
         }
     }
 
-    const char* tensileComputeInputType_to_profile_string(TensileLite::DataType typeCompute,
-                                                          TensileLite::DataType F32XdlMathOp,
-                                                          TensileLite::DataType typeComputeInput,
-                                                          TensileLite::DataType typeA,
-                                                          TensileLite::DataType typeB)
+    const char* tensileComputeInputType_to_profile_string(rocisa::DataType typeCompute,
+                                                          rocisa::DataType F32XdlMathOp,
+                                                          rocisa::DataType typeComputeInput,
+                                                          rocisa::DataType typeA,
+                                                          rocisa::DataType typeB)
     {
         switch(typeCompute)
         {
-        case TensileLite::DataType::Float:
+        case rocisa::DataType::Float:
             break;
-        case TensileLite::DataType::Double:
+        case rocisa::DataType::Double:
             return "c_f64_r";
             break;
-        case TensileLite::DataType::Int32:
+        case rocisa::DataType::Int32:
             return "c_i32_r";
             break;
         default:
             throw std::runtime_error("Unsupported type.");
         }
 
-        if(F32XdlMathOp == TensileLite::DataType::XFloat32)
+        if(F32XdlMathOp == rocisa::DataType::XFloat32)
         {
             return "c_xf32_r";
         }
-        else if(typeComputeInput == TensileLite::DataType::BFloat16
-                && typeA == TensileLite::DataType::Half && typeB == TensileLite::DataType::Half)
+        else if(typeComputeInput == rocisa::DataType::BFloat16 && typeA == rocisa::DataType::Half
+                && typeB == rocisa::DataType::Half)
         {
             return "c_f32_fast_bf16_r";
         }
-        else if(typeComputeInput == TensileLite::DataType::Half
-                && (typeA == TensileLite::DataType::Float8_fnuz
-                        && typeB == TensileLite::DataType::Half
-                    || typeA == TensileLite::DataType::Half
-                           && typeB == TensileLite::DataType::Float8_fnuz))
+        else if(typeComputeInput == rocisa::DataType::Half
+                && (typeA == rocisa::DataType::Float8_fnuz && typeB == rocisa::DataType::Half
+                    || typeA == rocisa::DataType::Half && typeB == rocisa::DataType::Float8_fnuz))
         {
             return "c_f32_fast_f16_r";
         }
@@ -537,7 +715,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
+                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -552,7 +730,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
+                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -588,6 +766,9 @@ namespace
             hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
             "--bias_type",
             hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
+            problem.useE() ? "--aux_type" : "",
+            problem.useE() ? hipDataType_to_bench_string(tensile2HipType(problem.e().dataType()))
+                           : "",
             problem.getParams().gsu() ? "--splitk" : "",
             problem.getParams().gsu() ? std::to_string(problem.getParams().gsu()) : "",
             problem.getParams().wgm() ? "--wgm" : "",
@@ -611,7 +792,7 @@ namespace
             coldIterations,
             "--iters",
             hotIterations);
-        
+
         if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
             log_bench_from_str(s);
         if(rocblaslt::Debug::Instance().printLogAsMarker())
@@ -688,6 +869,8 @@ namespace
                     hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
                     "bias_type",
                     hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
+                    "aux_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.e().dataType())),
                     "compute_type",
                     tensileComputeInputType_to_profile_string(problem.computeType(),
                                                               problem.f32XdlMathOp(),
@@ -777,6 +960,8 @@ namespace
                     hipDataType_to_bench_string(tensile2HipType(problem.alphaType())),
                     "bias_type",
                     hipDataType_to_bench_string(tensile2HipType(problem.bias().dataType())),
+                    "aux_type",
+                    hipDataType_to_bench_string(tensile2HipType(problem.e().dataType())),
                     "compute_type",
                     tensileComputeInputType_to_profile_string(problem.computeType(),
                                                               problem.f32XdlMathOp(),
@@ -892,6 +1077,10 @@ namespace
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].alphaType())),
             "--bias_type",
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].bias().dataType())),
+            problem.gemms[0].useE() ? "--aux_type" : "",
+            problem.gemms[0].useE()
+                ? hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].e().dataType()))
+                : "",
             problem.gemms[0].getParams().gsu() ? "--splitk" : "",
             problem.gemms[0].getParams().gsu() ? std::to_string(problem.gemms[0].getParams().gsu())
                                                : "",
@@ -1040,6 +1229,8 @@ namespace
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].alphaType())),
             "bias_type",
             hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].bias().dataType())),
+            "aux_type",
+            hipDataType_to_bench_string(tensile2HipType(problem.gemms[0].e().dataType())),
             "compute_type",
             tensileComputeInputType_to_profile_string(problem.gemms[0].computeType(),
                                                       problem.gemms[0].f32XdlMathOp(),
@@ -1223,8 +1414,9 @@ namespace
         if(is_e_enabled(prob.epilogue))
         {
             bool isOutput = prob.gradient ? false : true;
+            auto aux_type = hipDataType_to_tensile_type(prob.aux_type);
             tensileProblem.setUseE(true);
-            tensileProblem.setE(d_type,
+            tensileProblem.setE(aux_type,
                                 {prob.m, prob.n, prob.batch_count},
                                 {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
                                 isOutput);
@@ -1238,11 +1430,14 @@ namespace
         auto biasType = hipDataType_to_tensile_type(prob.bias_type);
         tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
         tensileProblem.setParams().setBiasEnum(
-            tensileUseBias(prob.epilogue) ? biasType : TensileLite::DataType::None);
+            tensileUseBias(prob.epilogue) ? biasType : rocisa::DataType::None);
 
-        tensileProblem.setUseScaleAB((prob.scaleA == nullptr && prob.scaleB == nullptr)
-                                         ? ""
-                                         : (prob.isScaleAVec ? "Vector" : "Scalar"));
+        tensileProblem.setUseScaleAB(
+            (prob.scaleA == nullptr && prob.scaleB == nullptr)
+                ? ""
+                : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector)
+                       ? "Vector"
+                       : "Scalar"));
         tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
         tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
         tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
@@ -1265,7 +1460,7 @@ namespace
         tensileProblem.setAmaxD(compute_type, true);
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
-            tensileProblem.setF32XdlMathOp(TensileLite::DataType::XFloat32);
+            tensileProblem.setF32XdlMathOp(rocisa::DataType::XFloat32);
 
         tensileProblem.setSwizzleTensorA(prob.swizzleA);
         tensileProblem.setSwizzleTensorB(prob.swizzleB);
@@ -1408,11 +1603,14 @@ namespace
         auto biasType = hipDataType_to_tensile_type(prob.bias_type);
         tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
         tensileProblem.setParams().setBiasEnum(
-            tensileUseBias(prob.epilogue) ? biasType : TensileLite::DataType::None);
+            tensileUseBias(prob.epilogue) ? biasType : rocisa::DataType::None);
 
-        tensileProblem.setUseScaleAB((prob.scaleA == nullptr && prob.scaleB == nullptr)
-                                         ? ""
-                                         : (prob.isScaleAVec ? "Vector" : "Scalar"));
+        tensileProblem.setUseScaleAB(
+            (prob.scaleA == nullptr && prob.scaleB == nullptr)
+                ? ""
+                : ((prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Vector)
+                       ? "Vector"
+                       : "Scalar"));
         tensileProblem.setUseScaleCD(prob.scaleC != nullptr || prob.scaleD != nullptr);
         tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec != nullptr);
         tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
@@ -1432,8 +1630,9 @@ namespace
         if(is_e_enabled(prob.epilogue))
         {
             bool isOutput = prob.gradient ? false : true;
+            auto aux_type = hipDataType_to_tensile_type(prob.aux_type);
             tensileProblem.setUseE(true);
-            tensileProblem.setE(d_type,
+            tensileProblem.setE(aux_type,
                                 {prob.m, prob.n, prob.batch_count},
                                 {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
                                 isOutput);
@@ -1447,7 +1646,9 @@ namespace
         tensileProblem.setAmaxD(compute_type, true);
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
-            tensileProblem.setF32XdlMathOp(TensileLite::DataType::XFloat32);
+            tensileProblem.setF32XdlMathOp(rocisa::DataType::XFloat32);
+        else
+            tensileProblem.setF32XdlMathOp(rocisa::DataType::Float);
 
         tensileProblem.setSwizzleTensorA(prob.swizzleA);
         tensileProblem.setSwizzleTensorB(prob.swizzleB);
@@ -1476,7 +1677,8 @@ namespace
         inputs.batchD = reinterpret_cast<void* const*>(prob.batch_D);
 
         // Set the GSU workspace
-        inputs.ws = prob.workspace;
+        inputs.ws            = prob.workspace;
+        inputs.workspaceSize = prob.workspaceSize;
 
         inputs.Synchronizer = prob.Synchronizer;
 
@@ -1492,12 +1694,12 @@ namespace
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
         inputs.amaxD         = reinterpret_cast<void*>(prob.amaxD);
 
-        static const std::map<TensileLite::DataType, TensileLite::ConstantVariant> argument_vals = {
-            {TensileLite::DataType::Float, 0.0f},
-            {TensileLite::DataType::XFloat32, 0.0f},
-            {TensileLite::DataType::Half, (hipblasLtHalf)0.0},
-            {TensileLite::DataType::Int32, (int32_t)0},
-            {TensileLite::DataType::Double, (double)0.0},
+        static const std::map<rocisa::DataType, TensileLite::ConstantVariant> argument_vals = {
+            {rocisa::DataType::Float, 0.0f},
+            {rocisa::DataType::XFloat32, 0.0f},
+            {rocisa::DataType::Half, (hipblasLtHalf)0.0},
+            {rocisa::DataType::Int32, (int32_t)0},
+            {rocisa::DataType::Double, (double)0.0},
         };
 
         if(argument_vals.find(compute_type) == argument_vals.end())
@@ -1594,6 +1796,18 @@ namespace
         {
             return TensileLite::LazyLoadingInit::gfx1102;
         }
+        else if(deviceString.find("gfx1103") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1103;
+        }
+        else if(deviceString.find("gfx1150") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1150;
+        }
+        else if(deviceString.find("gfx1151") != std::string::npos)
+        {
+            return TensileLite::LazyLoadingInit::gfx1151;
+        }
         else if(deviceString.find("gfx1200") != std::string::npos)
         {
             return TensileLite::LazyLoadingInit::gfx1200;
@@ -1675,7 +1889,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto&                            get_device_property() const
+        auto& get_device_property() const
         {
             return m_deviceProp;
         }
@@ -1685,24 +1899,23 @@ namespace
             return m_adapters;
         }
 
-        /*******************************************************
-   * Testpath() tests that a path exists and is readable *
-   *******************************************************/
-        static bool TestPath(const std::string& path)
-        {
-            return rocblaslt_internal_test_path(path);
-        }
-
         /*********************************************************************
    * Initialize adapter and library according to environment variables *
    * and default paths based on librocblaslt.so location and GPU         *
    *********************************************************************/
         void initialize(TensileLite::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
-            std::string path;
-#ifndef WIN32
-            path.reserve(PATH_MAX);
+            bool enableYaml = false;
+            bool staticLib  = false;
+            bool lazyLoad   = ROCBLASLT_TENSILE_LAZY_LOAD;
+#ifdef TENSILE_YAML
+            enableYaml = true;
 #endif
+#ifdef HIPBLASLT_STATIC_LIB
+            staticLib = true;
+#endif
+
+            std::filesystem::path path;
 
             // The name of the current GPU platform
             std::string processor = rocblaslt_internal_get_arch_name();
@@ -1710,91 +1923,66 @@ namespace
             const char* env = getenv("HIPBLASLT_TENSILE_LIBPATH");
             if(env)
             {
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "Using HIPBLASLT_TENSILE_LIBPATH=" << env << std::endl;
+                    log_info(__func__, msg.str());
+                }
                 path = env;
             }
             else
             {
-                path = HIPBLASLT_LIB_PATH;
-
                 // Find the location of librocblaslt.so
                 // Fall back on hard-coded path if static library or not found
-
-#ifndef HIPBLASLT_STATIC_LIB
-                auto hipblaslt_so_path = getHipblasltSoPath();
-
-                if(hipblaslt_so_path.size())
-                    path = std::string{dirname(&hipblaslt_so_path[0])};
-#endif // ifndef HIPBLASLT_STATIC_LIB
-
-                // Find the location of the libraries
-                if(TestPath(path + "/../Tensile/library"))
-                    path += "/../Tensile/library";
-                else if(TestPath(path + "library"))
-                    path += "/library";
-                else
-                    path += "/hipblaslt/library";
-
-                if(TestPath(path + "/" + processor))
-                    path += "/" + processor;
-            }
-
-            // only load modules for the current architecture
-            auto dir = path + "/*" + processor + "*co";
-#if ROCBLASLT_TENSILE_LAZY_LOAD == 0
-            bool no_match = false;
-#ifdef WIN32
-            std::replace(dir.begin(), dir.end(), '/', '\\');
-            WIN32_FIND_DATAA finddata;
-            HANDLE           hfine = FindFirstFileA(dir.c_str(), &finddata);
-            if(hfine != INVALID_HANDLE_VALUE)
-            {
-                do
+                std::optional<std::filesystem::path> default_lib_path;
+                if(staticLib)
                 {
-                    std::string codeObjectFile = path + "\\" + finddata.cFileName;
-                    static_cast<void>(adapter.loadCodeObjectFile(codeObjectFile.c_str()));
-                } while(FindNextFileA(hfine, &finddata));
+                    default_lib_path = HIPBLASLT_LIB_PATH;
+                }
+                if(auto maybe_path = rocblaslt_find_library_relative_path(
+                       /*relpath=*/std::nullopt, default_lib_path))
+                    path = std::move(*maybe_path);
+                // Optionally, look for a `processor` sub-directory under the library path.
+                {
+                    auto processor_path = path / processor;
+                    if(std::filesystem::exists(processor_path))
+                        path = std::move(processor_path);
+                }
+
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "HIPBLASLT_TENSILE_LIBPATH not set: Using " << path << std::endl;
+                    log_info(__func__, msg.str());
+                }
             }
-            else
+
+            // only load modules for the current architecture (contains the processor
+            // string and ends in "co").
+            if(!lazyLoad)
             {
-                no_match = true;
+                bool no_match = true;
+                for(const auto& entry : std::filesystem::directory_iterator(path))
+                {
+                    auto filename = entry.path().filename();
+                    if(filename.string().find(processor) != std::string::npos
+                       && filename.extension().string() == ".co")
+                    {
+                        static_cast<void>(adapter.loadCodeObjectFile(entry.path().string()));
+                        no_match = false;
+                    }
+                }
+                if(no_match)
+                {
+                    // static rocblaslt_internal_ostream& once
+                    //    = rocblaslt_cerr
+                    std::cerr << "\nrocblaslt warning: No paths matched " << path
+                              << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
+                              << std::endl;
+                }
             }
-            FindClose(hfine);
-#else
-            glob_t glob_result{};
-            int    g = glob(dir.c_str(), GLOB_NOSORT, nullptr, &glob_result);
-            if(!g)
-            {
-                for(size_t i = 0; i < glob_result.gl_pathc; ++i)
-                    static_cast<void>(adapter.loadCodeObjectFile(glob_result.gl_pathv[i]));
-            }
-            else if(g == GLOB_NOMATCH)
-            {
-                no_match = true;
-            }
-            else
-            {
-#if 0
-                // clang-format off
-                static std::ostream& once = std::cerr
-                                    << "\nrocblaslt warning: glob(\"" << dir << "\", ...) returned "
-                                    << (g == GLOB_ABORTED ? "GLOB_ABORTED"
-                                                          : g == GLOB_NOSPACE ? "GLOB_NOSPACE"
-                                                                              : "an unknown error")
-                                    << "." << std::endl;
-                // clang-format on
-#endif
-            }
-            globfree(&glob_result);
-#endif
-            if(no_match)
-            {
-                // static rocblaslt_internal_ostream& once
-                //    = rocblaslt_cerr
-                std::cerr << "\nrocblaslt warning: No paths matched " << dir
-                          << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
-                          << std::endl;
-            }
-#endif
+
             // We initialize a local static variable with a lambda function call to
             // avoid race conditions when multiple threads with different device IDs try
             // to initialize library. This ensures that only one thread initializes
@@ -1802,21 +1990,34 @@ namespace
             // complete.
             static int once = [&] {
                 // Determine library path
-                std::string tensileLibPath;
-#if ROCBLASLT_TENSILE_LAZY_LOAD
-#ifdef TENSILE_YAML
-                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".yaml";
-#else
-                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".dat";
-#endif
-#else
-#ifdef TENSILE_YAML
-                tensileLibPath = path + "/TensileLibrary_" + processor + ".yaml";
-#else
-                tensileLibPath = path + "/TensileLibrary_" + processor + ".dat";
-#endif
-#endif
-                if(!TestPath(tensileLibPath))
+                std::filesystem::path tensileLibPath;
+                if(lazyLoad)
+                {
+                    if(enableYaml)
+                    {
+                        tensileLibPath
+                            = path / (std::string("TensileLibrary_lazy_") + processor + ".yaml");
+                    }
+                    else
+                    {
+                        tensileLibPath
+                            = path / (std::string("TensileLibrary_lazy_") + processor + ".dat");
+                    }
+                }
+                else
+                {
+                    if(enableYaml)
+                    {
+                        tensileLibPath
+                            = path / (std::string("TensileLibrary_") + processor + ".yaml");
+                    }
+                    else
+                    {
+                        tensileLibPath
+                            = path / (std::string("TensileLibrary_") + processor + ".dat");
+                    }
+                }
+                if(!std::filesystem::exists(tensileLibPath))
                 {
                     std::cerr << "\nrocblaslt error: Cannot read " << tensileLibPath << ": "
                               << strerror(errno) << std::endl;
@@ -1847,7 +2048,7 @@ namespace
 
                 // Load library
                 auto lib = TensileLite::LoadLibraryFilePreload<TensileLite::ContractionProblemGemm>(
-                    tensileLibPath, std::vector<TensileLite::LazyLoadingInit>{});
+                    tensileLibPath.string(), std::vector<TensileLite::LazyLoadingInit>{});
 #else
                 // Get device prop
                 hipDeviceProp_t prop;
@@ -1856,7 +2057,7 @@ namespace
 
                 // Load library
                 auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(
-                    tensileLibPath);
+                    tensileLibPath.string());
 #endif
                 if(!lib)
                     std::cerr << "\nrocblaslt error: Could not load " << tensileLibPath
@@ -1866,12 +2067,12 @@ namespace
                     using MSL
                         = TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>;
                     m_library        = std::dynamic_pointer_cast<MSL>(lib);
-                    m_tensileLibPath = tensileLibPath;
+                    m_tensileLibPath = tensileLibPath.string();
                 }
                 return 0;
             }();
 
-            static_cast<void>(adapter.initializeLazyLoading(processor, path));
+            static_cast<void>(adapter.initializeLazyLoading(processor, path.string()));
 
             if(!m_library && once != 0)
             {
@@ -2025,7 +2226,7 @@ TensileLite::ProblemOverride
                                         problem.trans_b == HIPBLAS_OP_N ? false : true,
                                         hipDataType_to_tensile_type(problem.a_type),
                                         hipDataType_to_tensile_type(problem.b_type),
-                                        roc2TensileType(problem.compute_type),
+                                        rocComputeType_to_tensile_type(problem.compute_type),
                                         hipDataType_to_tensile_type(problem.c_type),
                                         problem.m,
                                         problem.n,
@@ -2036,17 +2237,40 @@ TensileLite::ProblemOverride
 TensileLite::ProblemOverride TensileDataGemm2ProblemOverride(std::shared_ptr<void> gemmData)
 {
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+    rocisa::DataType                 computeType      = rocisa::DataType::None;
+    rocisa::DataType                 computeInputType = data->problem.computeInputType();
+
+    if(data->problem.f32XdlMathOp() == rocisa::DataType::XFloat32)
+    {
+        computeType = rocisa::DataType::XFloat32;
+    }
+    else if(computeInputType == rocisa::DataType::BFloat16
+            || computeInputType == rocisa::DataType::Half)
+    {
+        computeType = computeInputType;
+    }
+    else
+    {
+        computeType = data->problem.computeType();
+    }
 
     return TensileLite::ProblemOverride(data->problem.transA(),
                                         data->problem.transB(),
                                         data->problem.a().dataType(),
                                         data->problem.b().dataType(),
-                                        data->problem.computeInputType(),
+                                        computeType,
                                         data->problem.c().dataType(),
                                         data->problem.freeSizeA(0),
                                         data->problem.freeSizeB(0),
                                         data->problem.boundSize(0),
                                         data->problem.batchSize(0));
+}
+
+TensileLite::ContractionProblemGemm* ExtractProblemGemm(std::shared_ptr<void> gemmData)
+{
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+
+    return &data->problem;
 }
 
 void initTensileGemmData(rocblaslt_handle       handle,
@@ -2112,6 +2336,16 @@ void initTensileGemmData(rocblaslt_handle       handle,
     throw std::runtime_error("Gemm problem type initialization not implemented.");
 }
 
+#ifdef USE_ROCROLLER
+bool useRocRoller(rocblaslt_handle handle, const RocblasltContractionProblem& prob)
+{
+    return handle->useRocRoller == 1
+           || (handle->useRocRoller == -1
+               && (prob.scaleAType == RocblasltContractionProblem::ScalingFormat::Block
+                   || prob.scaleBType == RocblasltContractionProblem::ScalingFormat::Block));
+}
+#endif
+
 /******************************************************************************
  * runContractionProblem calls Tensile to run a contraction problem described *
  * by RocblasltContractionProblem *
@@ -2124,6 +2358,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
+#ifdef USE_ROCROLLER
+        if(useRocRoller(handle, prob))
+            return runRocRollerContractionProblem(handle, algo, prob);
+#endif
         std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
                                                library;
         std::shared_ptr<hipDeviceProp_t>       deviceProp;
@@ -2162,7 +2400,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         data->algoIndex    = *solutionIndex;
         data->inputs       = GetTensileInputs(prob);
 
-        if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+        if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+           || rocblaslt::Debug::Instance().printLogAsMarker())
         {
             logBenchFromTensileDataGemm(data->problem,
                                         data->inputs,
@@ -2203,6 +2442,42 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
+
+        if(getenv("HIPBLASLT_BENCH_PERF") != nullptr
+           || getenv("HIPBLASLT_BENCH_PERF_ALL") != nullptr)
+        {
+            auto Granularity = solution->computeGranularities(
+                *hardware,
+                data->problem.c().sizes()[0],
+                data->problem.c().sizes()[1],
+                data->problem.a().sizes()[data->problem.boundIndices()[0].a],
+                data->problem.batchSize(0));
+
+            hipblasltClientPerformanceArgs::totalGranularity = Granularity.totalGranularity;
+            hipblasltClientPerformanceArgs::tilesPerCu       = Granularity.tilesPerCu;
+            hipblasltClientPerformanceArgs::tile0Granularity
+                = Granularity.tile0Granularity; // loss due to tile0
+            hipblasltClientPerformanceArgs::tile1Granularity = Granularity.tile1Granularity;
+            hipblasltClientPerformanceArgs::cuGranularity    = Granularity.cuGranularity;
+            hipblasltClientPerformanceArgs::waveGranularity  = Granularity.waveGranularity;
+            hipblasltClientPerformanceArgs::CUs              = Granularity.CUs;
+
+            auto staticPerformanceModel = solution->staticPerformanceModel(
+                data->problem.c().sizes()[0],
+                data->problem.c().sizes()[1],
+                data->problem.a().sizes()[data->problem.boundIndices()[0].a],
+                data->problem.batchSize(0),
+                Granularity.MT0,
+                Granularity.MT1,
+                Granularity.CUs,
+                Granularity.totalGranularity,
+                solution->sizeMapping.globalSplitU);
+
+            hipblasltClientPerformanceArgs::memWriteBytesD
+                = staticPerformanceModel.memWriteBytesD; //! Estimated memory writes D
+            hipblasltClientPerformanceArgs::memReadBytes = staticPerformanceModel.memReadBytes;
+        }
+
         if(!solution)
         {
 #if 0
@@ -2602,7 +2877,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+               || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -2635,7 +2911,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) || rocblaslt::Debug::Instance().printLogAsMarker())
+            if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+               || rocblaslt::Debug::Instance().printLogAsMarker())
             {
                 logBenchFromTensileDataGemm(data->problem,
                                             data->inputs,
@@ -2704,7 +2981,7 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto  solution = library->getSolutionByIndex(*hardware, data->algoIndex);
             auto& problem  = data->problem.gemms[0];
-            if(problem.activationComputeType() == TensileLite::DataType::Float)
+            if(problem.activationComputeType() == rocisa::DataType::Float)
             {
                 setDeviceUserArgs(data->problem.gemms,
                                   data->inputs,
@@ -2953,7 +3230,7 @@ std::vector<std::shared_ptr<TensileLite::ContractionSolution>>
     if(solutions.size() == 0 && prob.compute_type == rocblaslt_compute_f32_fast_xf32)
     {
         log_api(__func__, "no solutions found, try to fallback");
-        data->problem.setF32XdlMathOp(TensileLite::DataType::Float);
+        data->problem.setF32XdlMathOp(rocisa::DataType::Float);
         solutions = getSolutions(
             prob, library, hardware, data->problem, enableEpilogue, requestedAlgoCount);
     }
@@ -2969,6 +3246,11 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                   int*                               returnAlgoCount,
                                   size_t                             maxWorkSpaceBytes)
 {
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
+        return getRocRollerBestSolutions(
+            handle, prob, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
+#endif
     std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
                                            library;
     std::shared_ptr<hipDeviceProp_t>       deviceProp;
@@ -2996,7 +3278,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
     if(solutions.size() == 0 && prob.compute_type == rocblaslt_compute_f32_fast_xf32)
     {
         log_api(__func__, "no xf32 solutions found, try to fallback fp32");
-        data->problem.setF32XdlMathOp(TensileLite::DataType::Float);
+        data->problem.setF32XdlMathOp(rocisa::DataType::Float);
         solutions = getSolutions(
             prob, library, hardware, data->problem, enableEpilogue, requestedAlgoCount);
     }
@@ -3054,9 +3336,9 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     log_api(__func__, "Found hardware solutions: ", solutions.size());
 
     // when there is no solution for xfloat32, fallback comput_type to fp32
-    if(solutions.size() == 0 && prob.f32XdlMathOp() == TensileLite::DataType::XFloat32)
+    if(solutions.size() == 0 && prob.f32XdlMathOp() == rocisa::DataType::XFloat32)
     {
-        prob.setF32XdlMathOp(TensileLite::DataType::Float);
+        prob.setF32XdlMathOp(rocisa::DataType::Float);
         if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGemm>::value)
         {
             solutions = library->findAllSolutions(
@@ -3106,6 +3388,10 @@ rocblaslt_status getAllSolutions(RocblasltContractionProblem&                   
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes)
 {
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
+        return getAllSolutionsRocRoller(prob, handle, heuristicResults, maxWorkSpaceBytes);
+#endif
     auto tensile_prob = ConstructTensileProblem(prob);
     return getAllSolutions(tensile_prob, handle, heuristicResults, maxWorkSpaceBytes);
 }
@@ -3180,6 +3466,15 @@ rocblaslt_status
     int  i                 = 0;
     for(auto index : solutionIndex)
     {
+#ifdef USE_ROCROLLER
+        if(index < 0)
+        {
+            isOutOfBound = false;
+            getRocRollerSolutionsFromIndex(handle, index, heuristicResults, maxWorkSpaceBytes);
+            continue;
+        }
+
+#endif
         isOutOfBound  = isOutOfBound && (index > lastSolutionIndex);
         auto solution = library->getSolutionByIndex(*hardware, index);
         if(!solution)
@@ -3251,7 +3546,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         {
             tensile_prob.setParams().resetInternalArgs();
         }
-
+        
+        TensileLite::Task task(*hardware, tensile_prob, *solution);
         tensile_prob.setWorkspaceSize(algo->max_workspace_bytes);
         if(!(*solution->hardwarePredicate)(*hardware))
         {
@@ -3273,6 +3569,20 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 std::ostringstream msg;
                 msg << "Software match: " << solution->description();
                 solution->problemPredicate->debugEval(tensile_prob, msg);
+                msg << std::endl;
+                log_info(__func__, msg.str());
+            }
+
+            log_error(__func__, "Solution is not supported");
+            return rocblaslt_status_invalid_value;
+        }
+        if(!(*solution->taskPredicate)(task))
+        {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "Software match: " << solution->description();
+                solution->taskPredicate->debugEval(task, msg);
                 msg << std::endl;
                 log_info(__func__, msg.str());
             }
@@ -3332,8 +3642,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
                     std::ostringstream msg;
-                    msg << "Match "
-                        << "[" << i << "]: " << solution->description();
+                    msg << "Match " << "[" << i << "]: " << solution->description();
                     solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
                     msg << std::endl;
                     log_info(__func__, msg.str());
@@ -3357,6 +3666,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
                                      rocblaslt_matmul_algo*       algo,
                                      size_t*                      workspaceSizeInBytes)
 {
+#ifdef USE_ROCROLLER
+    if(useRocRoller(handle, prob))
+        return isRocRollerSolutionSupported(handle, prob, algo, workspaceSizeInBytes);
+#endif
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(prob, data->problem);
     rocblaslt::RocTuningV2* tuning = nullptr;
@@ -3383,7 +3696,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
-        if(data->problem.computeType() == TensileLite::DataType::Float)
+        if(data->problem.computeType() == rocisa::DataType::Float)
         {
             setRestrictions<float>(data->problem,
                                    std::get_if<float>(&data->inputs.alpha),
@@ -3400,7 +3713,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
     {
         std::shared_ptr<TensileDataGroupedGemm> data
             = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
-        if(data->problem.gemms[0].computeType() == TensileLite::DataType::Float)
+        if(data->problem.gemms[0].computeType() == rocisa::DataType::Float)
         {
             for(int i = 0; i < data->problem.gemms.size(); i++)
             {
@@ -3454,9 +3767,9 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                       requestedAlgoCount);
 
         // when there is no solution for xfloat32, fallback comput_type to fp32
-        if(solutions.size() == 0 && data->problem.f32XdlMathOp() == TensileLite::DataType::XFloat32)
+        if(solutions.size() == 0 && data->problem.f32XdlMathOp() == rocisa::DataType::XFloat32)
         {
-            data->problem.setF32XdlMathOp(TensileLite::DataType::Float);
+            data->problem.setF32XdlMathOp(rocisa::DataType::Float);
             solutions = getSolutions(data->inputs,
                                      library,
                                      hardware,

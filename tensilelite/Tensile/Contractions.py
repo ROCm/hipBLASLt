@@ -22,14 +22,20 @@
 #
 ################################################################################
 
+from typing import Dict
+
 from .Activation import ActivationType
-from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
-from .SolutionStructs import getBiasDataTypeListDefault
-from .SolutionStructs import Solution as OriginalSolution
-from .Common import gfxToIsa, internalParameters, globalParameters, state, state_key_ordering
+from Tensile.Common import state, state_key_ordering, IsaInfo
+from Tensile.Common.Architectures import gfxToIsa
+from Tensile.Common.DataType import DataType
+from Tensile.Common.GlobalParameters import internalParameters
+from Tensile.SolutionStructs import Solution as OriginalSolution
+from Tensile.SolutionStructs.Problem import getBiasDataTypeListDefault
+from Tensile.Toolchain.Component import Assembler
 
+MIN_K_FOR_GSU = 32
 @state_key_ordering
 class FreeIndex:
     StateKeys = ['isA', 'i', 'c', 'd']
@@ -371,6 +377,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("UseE", value=self.useE))
+            predicates.append(ProblemPredicate("DataTypeE", value=self.eType))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleAB", value=self.useScaleAB))
@@ -396,6 +403,19 @@ def extractDimPredicate(cls, key, value, predicateName):
     if len(predicates) == 1:
         return predicates[0]
     elif len(predicates) > 1:
+        return cls.And(predicates)
+
+class TaskPredicate(Properties.Predicate):
+    @classmethod
+    def FromOriginalKeyPair(cls, pair):
+        (key, value) = pair
+        if key == "_WorkspaceSizePerElemC" and value > 0:
+            return cls("WorkspaceCheck")
+        return None
+
+    @classmethod
+    def FromOriginalState(cls, d, problemType, morePreds=[]):
+        predicates = [p for p in map(cls.FromOriginalKeyPair, d.items()) if p is not None]
         return cls.And(predicates)
 
 class ProblemPredicate(Properties.Predicate):
@@ -425,9 +445,6 @@ class ProblemPredicate(Properties.Predicate):
                 raise RuntimeError("Unknown Multiple Value: {}".format(key))
 
             return cls(tag, index=index, value=value)
-
-        if key == "WorkspaceCheck" and (not all(val == 0 for val in value)):
-            return cls("WorkspaceCheck", index=0, value=value)
 
         if key.startswith('Assert'):
             raise RuntimeError("Unknown assertion key: {}".format(key))
@@ -477,7 +494,7 @@ class ProblemPredicate(Properties.Predicate):
         if "KernelLanguage" in state:
             rv += [cls("KernelLanguageCompatible", value=state["KernelLanguage"])]
 
-        if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1):
+        if ('GlobalSplitU' in state) and (state['GlobalSplitU'] > 1 or state['GlobalSplitU'] == -1):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
 
@@ -514,7 +531,7 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None and not state["StreamK"]:
-            value = globalParameters['MinKForGSU']
+            value = MIN_K_FOR_GSU
             rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
         if ('WorkGroupMappingXCC' in state) and ('WorkGroupMappingXCCGroup' in state):
@@ -567,7 +584,10 @@ class SizeMapping:
                  'workGroupMappingXCC',
                  'workGroupMappingXCCGroup',
                  'globalSplitUCoalesced',
-                 'globalSplitUWorkGroupMappingRoundRobin'
+                 'globalSplitUWorkGroupMappingRoundRobin',
+                 'CUOccupancy',
+                 'PrefetchGlobalRead',
+                 'MathClocksUnrolledLoop'
                  ]
 
     @classmethod
@@ -581,6 +601,7 @@ class SizeMapping:
             globalAccum = 3
         if d['_GlobalAccumulation'] == 'PartialsBuffer':
             globalAccum = 4
+        pgr = int(d['PrefetchGlobalRead'])
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
@@ -610,7 +631,10 @@ class SizeMapping:
                    workGroupMappingXCC      = d['WorkGroupMappingXCC'],
                    workGroupMappingXCCGroup = d['WorkGroupMappingXCCGroup'],
                    globalSplitUCoalesced    = d['GlobalSplitUCoalesced'],
-                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin']
+                   globalSplitUWorkGroupMappingRoundRobin = d['GlobalSplitUWorkGroupMappingRoundRobin'],
+                   CUOccupancy              = d['CUOccupancy'],
+                   PrefetchGlobalRead       = pgr,
+                   MathClocksUnrolledLoop   = d['MathClocksUnrolledLoop']
                    )
 
     @classmethod
@@ -649,6 +673,7 @@ class Solution:
                 'problemType',
                 'hardwarePredicate',
                 'problemPredicate',
+                'taskPredicate',
                 'sizeMapping',
                 'internalArgsSupport',
                 'debugKernel',
@@ -659,13 +684,39 @@ class Solution:
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, cxxCompiler: str):
-        return cls.FromOriginalState(solution._state, cxxCompiler, solution.srcName)
+    def FromSolutionStruct(
+        cls,
+        solution,
+        splitGSU: bool,
+        printSolutionRejectionReason: bool,
+        printIndexAssignmentInfo: bool,
+        assembler: Assembler,
+        isaInfoMap: Dict[str, IsaInfo]
+    ):
+        return cls.FromOriginalState(
+                   solution._state,
+                   splitGSU,
+                   printSolutionRejectionReason,
+                   printIndexAssignmentInfo,
+                   assembler,
+                   isaInfoMap,
+                   solution.srcName
+               )
 
     @classmethod
-    def FromOriginalState(cls, d, cxxCompiler, srcName = "", deviceInfo=None):
+    def FromOriginalState(
+            cls,
+            d,
+            splitGSU: bool,
+            printSolutionRejectionReason: bool,
+            printIndexAssignmentInfo: bool,
+            #mink
+            assembler,
+            isaInfoMap,
+            srcName = "",
+            deviceInfo=None
+        ):
         rv = cls()
-
 
         if 'SolutionNameMin' in d:
             rv.name = d['SolutionNameMin']
@@ -676,6 +727,7 @@ class Solution:
         rv.problemType = ProblemType.FromOriginalState(d['ProblemType'])
 
         rv.problemPredicate = ProblemPredicate.FromOriginalState(d, rv.problemType)
+        rv.taskPredicate = TaskPredicate.FromOriginalState(d, rv.problemType)
 
         if 'DebugKernel' in d:
             rv.debugKernel = d['DebugKernel']
@@ -703,14 +755,20 @@ class Solution:
         if 'ISA' not in d:
             if d['KernelLanguage'] == 'Assembly':
                 d['ISA'] = gfxToIsa(deviceInfo[1])
-            else:
-                d['ISA'] = [0,0,0]
 
         if 'CUCount' not in d:
             d['CUCount'] = None
 
         rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
-        rv.originalSolution = OriginalSolution(d, cxxCompiler, srcName)
+        rv.originalSolution = OriginalSolution(
+                                  d,
+                                  splitGSU,
+                                  printSolutionRejectionReason,
+                                  printIndexAssignmentInfo,
+                                  assembler,
+                                  isaInfoMap,
+                                  srcName
+                              )
         rv.srcName = srcName
 
         return rv
@@ -724,6 +782,7 @@ class Solution:
         self.problemType = None
         self.hardwarePredicate = Hardware.HardwarePredicate('TruePred')
         self.problemPredicate = ProblemPredicate('TruePred')
+        self.taskPredicate = TaskPredicate('TruePred')
         self.sizeMapping = None
         self.debugKernel = False
         self.libraryLogicIndex = {}

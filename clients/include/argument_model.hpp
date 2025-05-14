@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 
 #pragma once
 
+#include "efficiency_monitor.hpp"
 #include "hipblaslt_arguments.hpp"
 #include <fstream>
 #include <string>
@@ -38,8 +39,13 @@ namespace ArgumentLogging
 void ArgumentModel_set_log_function_name(bool f);
 bool ArgumentModel_get_log_function_name();
 
-void ArgumentModel_log_frequencies(hipblaslt_internal_ostream& name_line,
+void ArgumentModel_log_performance(hipblaslt_internal_ostream& name_line,
                                    hipblaslt_internal_ostream& val_line);
+
+void ArgumentModel_log_efficiency(hipblaslt_internal_ostream& name_line,
+                                  hipblaslt_internal_ostream& val_line,
+                                  const Arguments&            arg,
+                                  double                      hipblaslt_gflops);
 
 // ArgumentModel template has a variadic list of argument enums
 template <hipblaslt_argument... Args>
@@ -69,7 +75,7 @@ public:
                   double                      rtol)
     {
         // requires enablement for frequency logging
-        ArgumentModel_log_frequencies(name_line, val_line);
+        ArgumentModel_log_performance(name_line, val_line);
 
         constexpr bool has_batch_count = has(e_batch_count);
         int64_t        batch_count     = has_batch_count ? arg.batch_count : 1;
@@ -93,6 +99,7 @@ public:
         {
             name_line << ",hipblaslt-Gflops";
             val_line << "," << hipblaslt_gflops;
+            ArgumentModel_log_efficiency(name_line, val_line, arg, hipblaslt_gflops);
         }
 
         if(gbytes != ArgumentLogging::NA_value)
@@ -259,13 +266,27 @@ public:
         if(archName != "")
         {
             auto delim = ",";
-            name_list << delim << "soulution_index";
+            name_list << delim << "solution_index";
             value_list << delim << solution_index;
 
             const char*   tuningEnv  = getenv("HIPBLASLT_TUNING_FILE");
             std::string   tuningPath = tuningEnv;
             std::ofstream file(tuningPath, std::ios::app);
-            file << value_list << delim << archName << delim << cuNum << std::endl;
+
+            std::string name_list_str  = name_list.str();
+            std::string value_list_str = value_list.str();
+
+            name_list_str.erase(0, std::string("[" + std::to_string(index) + "]:").length());
+
+            if(ArgumentModel_get_log_function_name())
+            {
+                name_list_str.erase(0, std::string("function,").length());
+                value_list_str.erase(0, std::string(arg.function).length() + 1);
+            }
+
+            file << "    " << name_list_str << delim << "gcnArchName" << delim << "CUs"
+                 << std::endl;
+            file << value_list_str << delim << archName << delim << cuNum << std::endl;
         }
 
         str << name_list << "\n" << value_list << std::endl;

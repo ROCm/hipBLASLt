@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +29,6 @@
 # - installs TensileConfig.cmake so one call find_package(Tensile)
 ################################################################################
 from setuptools import setup
-import os.path
-import re
 
 def readRequirementsFromTxt():
   requirements = []
@@ -53,7 +51,7 @@ setup(
   license="MIT",
   install_requires=readRequirementsFromTxt(),
   python_requires='>=3.5',
-  packages=["Tensile"],
+  packages=["Tensile", "rocisa"],
   package_data={ "Tensile": ["Tensile/cmake/*"] },
   data_files=[ ("cmake", ["Tensile/cmake/TensileConfig.cmake", "Tensile/cmake/TensileConfigVersion.cmake"]) ],
   include_package_data=True,
@@ -76,5 +74,5 @@ setup(
     "TensileBenchmarkCluster = Tensile.TensileBenchmarkCluster:main",
     # Retune library logic file
     "TensileRetuneLibrary = Tensile.TensileRetuneLibrary:main"
-    ]}
+    ]},
   )

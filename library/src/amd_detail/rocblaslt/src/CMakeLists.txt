@@ -22,7 +22,6 @@
 # ########################################################################
 
 # Set up Tensile Dependency
-if( BUILD_WITH_TENSILE )
   # If we want to build a shared rocblaslt lib, force Tensile to build as a static lib to absorb into rocblaslt
   if( BUILD_SHARED_LIBS )
     set( ROCBLASLT_SHARED_LIBS ON )
@@ -71,8 +70,9 @@ if( BUILD_WITH_TENSILE )
   if(Tensile_CPU_THREADS MATCHES "^[0-9]+$")
     # only including threads argument if number
     TensileCreateLibraryFiles(
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile/Logic/${Tensile_LOGIC}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/Tensile/Logic/${Tensile_LOGIC}"
       "${PROJECT_BINARY_DIR}/Tensile"
+      "TENSILE_LIBRARY_TARGET"
       ARCHITECTURE        ${Tensile_ARCHITECTURE}
       CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
       COMPILER            ${Tensile_COMPILER}
@@ -82,8 +82,9 @@ if( BUILD_WITH_TENSILE )
     )
   else()
     TensileCreateLibraryFiles(
-      "${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile/Logic/${Tensile_LOGIC}"
+      "${CMAKE_CURRENT_SOURCE_DIR}/Tensile/Logic/${Tensile_LOGIC}"
       "${PROJECT_BINARY_DIR}/Tensile"
+      "TENSILE_LIBRARY_TARGET"
       ARCHITECTURE        ${Tensile_ARCHITECTURE}
       CODE_OBJECT_VERSION ${Tensile_CODE_OBJECT_VERSION}
       COMPILER            ${Tensile_COMPILER}
@@ -92,16 +93,21 @@ if( BUILD_WITH_TENSILE )
     )
   endif()
 
-  TensileCreateExtOpLibraries("${PROJECT_BINARY_DIR}/Tensile/library" "${Tensile_ARCHITECTURE}")
+  add_dependencies(TENSILE_LIBRARY_TARGET rocisa)
+
+  if(NOT Tensile_SKIP_BUILD)
+    add_subdirectory(extops)
+  endif()
 
   # Create a unique name for TensileHost compiled for rocBLAS
   set_target_properties( TensileHost PROPERTIES OUTPUT_NAME rocblaslt-tensile CXX_EXTENSIONS NO )
-
   set_target_properties( TensileHost PROPERTIES CXX_VISIBILITY_PRESET hidden)
   set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
 
   # Tensile host depends on libs build target
-  add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  if(NOT Tensile_SKIP_BUILD)
+    add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  endif()
 
   if( ROCBLASLT_SHARED_LIBS )
     set( BUILD_SHARED_LIBS ON )
@@ -122,36 +128,35 @@ string(REGEX MATCH "([0-9]+\\.[0-9]+\\.[0-9]+)" GCC_VERSION "${GCC_OUTPUT}")
 message(STATUS "Extracted GCC Version: ${GCC_VERSION}")
 
 # Compare GCC version and set the flag conditionally if it's 7.5.0 or less
-if(${GCC_VERSION} VERSION_LESS "7.6.0")    
+if(${GCC_VERSION} VERSION_LESS "7.6.0")
     # Apply -ftemplate-depth=2048 to tensile_host.cpp if GCC_VERSION is less than 7.6.0 to avoid template recursion
     set_source_files_properties(src/amd_detail/rocblaslt/src/tensile_host.cpp PROPERTIES COMPILE_FLAGS "-ftemplate-depth=2048")
 endif()
 
-  set( Tensile_SRC
-    src/amd_detail/rocblaslt/src/tensile_host.cpp
+set_source_files_properties(tensile_host.cpp PROPERTIES LANGUAGE CXX COMPILE_OPTIONS "-std=c++17")
+
+if(USE_ROCROLLER)
+  target_sources(hipblaslt
+    PRIVATE
+      rocroller_host.cpp
   )
+endif()
 
-  set( Tensile_INC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/Tensile
-  )
-
-endif( ) # BUILD_WITH_TENSILE
-
-include(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/CompileSourceKernel.cmake)
-
-CompileSourceKernel(${CMAKE_CURRENT_SOURCE_DIR}/src/amd_detail/rocblaslt/src/kernels/matrix_transform.cpp "${Tensile_ARCHITECTURE}" "${Tensile_BUILD_ID}" ${PROJECT_BINARY_DIR}/Tensile/library)
-
-set(DL_LIB dl)
+if(NOT Tensile_SKIP_BUILD)
+    add_subdirectory(kernels)
+endif()
 
 # rocBLASLt source
-set(rocblaslt_source
-  src/amd_detail/rocblaslt/src/Debug.cpp
-  src/amd_detail/rocblaslt/src/handle.cpp
-  src/amd_detail/rocblaslt/src/status.cpp
-  src/amd_detail/rocblaslt/src/rocblaslt_auxiliary.cpp
-  src/amd_detail/rocblaslt/src/rocblaslt_mat.cpp
-  src/amd_detail/rocblaslt/src/utility.cpp
-  src/amd_detail/rocblaslt/src/rocblaslt_transform.cpp
-  src/amd_detail/rocblaslt/src/UserDrivenTuningParser.cpp
-  ${Tensile_SRC}
+target_sources(
+  hipblaslt
+      PRIVATE
+          Debug.cpp
+          handle.cpp
+          status.cpp
+          rocblaslt_auxiliary.cpp
+          rocblaslt_mat.cpp
+          utility.cpp
+          rocblaslt_transform.cpp
+          UserDrivenTuningParser.cpp
+          tensile_host.cpp
 )

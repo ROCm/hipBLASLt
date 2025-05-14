@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@
 
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/ContractionProblem.hpp>
+#include <Tensile/Task.hpp>
 #include <Tensile/Utils.hpp>
 
 #include <algorithm>
@@ -61,7 +62,6 @@ namespace TensileLite
             }
         } // namespace math
 
-
         constexpr size_t num_iters_total(size_t output_tiles, size_t iters_per_tile)
         {
             return output_tiles * iters_per_tile;
@@ -91,11 +91,12 @@ namespace TensileLite
                                             size_t iters_per_cta)
         {
             // If tiles don't evenly divide there are always at least 2 fixup peers, and more if iters_per_tile > iters_per_cta
-            size_t hasFixup = (iters_total % g == 0 && // Check if some WGs have more iters than others
-                            iters_per_cta % iters_per_tile
-                                == 0) // Check if WGs have an even number of full tiles
-                                ? 0
-                                : 1;
+            size_t hasFixup
+                = (iters_total % g == 0 && // Check if some WGs have more iters than others
+                   iters_per_cta % iters_per_tile
+                       == 0) // Check if WGs have an even number of full tiles
+                      ? 0
+                      : 1;
             return math::safe_ceil_div(iters_per_tile, iters_per_cta) + hasFixup;
         }
 
@@ -105,17 +106,17 @@ namespace TensileLite
         }
 
         std::tuple<double, size_t, size_t> predicted_runtime(size_t BLK_M,
-                                                            size_t BLK_N,
-                                                            size_t BLK_K,
-                                                            size_t m,
-                                                            size_t n,
-                                                            size_t k,
-                                                            size_t batch,
-                                                            int    g,
-                                                            double a,
-                                                            double b,
-                                                            double c,
-                                                            double d)
+                                                             size_t BLK_N,
+                                                             size_t BLK_K,
+                                                             size_t m,
+                                                             size_t n,
+                                                             size_t k,
+                                                             size_t batch,
+                                                             int    g,
+                                                             double a,
+                                                             double b,
+                                                             double c,
+                                                             double d)
         {
             size_t output_tiles   = number_of_output_tiles(BLK_M, BLK_N, m, n, batch);
             size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
@@ -146,7 +147,7 @@ namespace TensileLite
             size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
             size_t iters_total    = num_iters_total(output_tiles, iters_per_tile);
             size_t iters_per_cta  = num_iters_per_cta(iters_total, g);
-            size_t fixup_peers    = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
+            size_t fixup_peers = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
 
             size_t remainder_tiles = output_tiles % g;
             double k_split_ratio   = remainder_tiles / static_cast<double>(g);
@@ -165,22 +166,22 @@ namespace TensileLite
             }
 
             // Include the cache penalty in the runtime prediction
-            double runtime = a + (b * (fixup_peers > 1)) + (c * iters_per_cta) + (d * (fixup_peers - 1))
-                            + cache_penalty;
+            double runtime = a + (b * (fixup_peers > 1)) + (c * iters_per_cta)
+                             + (d * (fixup_peers - 1)) + cache_penalty;
 
             return std::make_tuple(runtime, iters_per_cta, fixup_peers, cache_penalty);
         }
 
         int best_predicted_grid_size(size_t BLK_M,
-                                    size_t BLK_N,
-                                    size_t BLK_K,
-                                    size_t m,
-                                    size_t n,
-                                    size_t k,
-                                    size_t batch,
-                                    int    grid_start,
-                                    int    grid_end,
-                                    bool   verbose = false)
+                                     size_t BLK_N,
+                                     size_t BLK_K,
+                                     size_t m,
+                                     size_t n,
+                                     size_t k,
+                                     size_t batch,
+                                     int    grid_start,
+                                     int    grid_end,
+                                     bool   verbose = false)
         {
 
             // Fixed overhead alpha (a), fixed-size cost incurred by
@@ -221,20 +222,19 @@ namespace TensileLite
                 if(verbose)
                 {
                     std::cout << "[original] "
-                            << "grid size: " << g << ", runtime: " << runtime
-                            << ", iters_per_cta: " << iters_per_cta << ", fixup_peers: "
-                            << fixup_peers
-                            // << ", cache_penalty: " << cache_penalty
-                            << ", m: " << m << ", n: " << n << ", k: " << k << ", a: " << a
-                            << ", b: " << b << ", c: " << c << ", d: " << d << std::endl;
+                              << "grid size: " << g << ", runtime: " << runtime
+                              << ", iters_per_cta: " << iters_per_cta
+                              << ", fixup_peers: " << fixup_peers << ", m: " << m << ", n: " << n
+                              << ", k: " << k << ", a: " << a << ", b: " << b << ", c: " << c
+                              << ", d: " << d << std::endl;
 
                     std::cout << "[cache-offset] "
-                            << "grid size: " << g << ", runtime: " << runtime_v2
-                            << ", iters_per_cta: " << iters_per_cta_v2
-                            << ", fixup_peers: " << fixup_peers_v2
-                            << ", cache_penalty: " << cache_penalty << ", m: " << m << ", n: " << n
-                            << ", k: " << k << ", a: " << a << ", b: " << b << ", c: " << c
-                            << ", d: " << d << std::endl;
+                              << "grid size: " << g << ", runtime: " << runtime_v2
+                              << ", iters_per_cta: " << iters_per_cta_v2
+                              << ", fixup_peers: " << fixup_peers_v2
+                              << ", cache_penalty: " << cache_penalty << ", m: " << m
+                              << ", n: " << n << ", k: " << k << ", a: " << a << ", b: " << b
+                              << ", c: " << c << ", d: " << d << std::endl;
                 }
 
                 if(min_grid_runtime.second > runtime)
@@ -253,14 +253,14 @@ namespace TensileLite
             if(verbose)
             {
                 std::cout << "[original] Number of Output Tiles: "
-                        << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
+                          << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
                 std::cout << "[original] Minimum runtime: " << min_grid_runtime.second
-                        << " @ grid size: " << min_grid_runtime.first << std::endl;
+                          << " @ grid size: " << min_grid_runtime.first << std::endl;
 
                 std::cout << "[cache-offset] Number of Output Tiles: "
-                        << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
+                          << number_of_output_tiles(BLK_M, BLK_N, m, n, batch) << std::endl;
                 std::cout << "[cache-offset] Minimum runtime: " << min_grid_runtime_v2.second
-                        << " @ grid size: " << min_grid_runtime_v2.first << std::endl;
+                          << " @ grid size: " << min_grid_runtime_v2.first << std::endl;
             }
 
             return min_grid_runtime_v2.first;
@@ -278,41 +278,41 @@ namespace TensileLite
     void setVariantToBuffer(ConstantVariant const& value,
                             void*                  buffer,
                             size_t                 bufferLength,
-                            DataType               type)
+                            rocisa::DataType       type)
     {
         switch(type)
         {
-        case DataType::Float:
+        case rocisa::DataType::Float:
         {
             float* f_buffer = (float*)buffer;
             *f_buffer       = *std::get_if<float>(&value);
         }
         break;
-        case DataType::Double:
+        case rocisa::DataType::Double:
         {
             double* d_buffer = (double*)buffer;
             *d_buffer        = *std::get_if<double>(&value);
         }
         break;
-        case DataType::Half:
+        case rocisa::DataType::Half:
         {
             Half* fp16_buffer = (Half*)buffer;
             *fp16_buffer      = *std::get_if<Half>(&value);
         }
         break;
-        case DataType::Int32:
+        case rocisa::DataType::Int32:
         {
             int32_t* i32_buffer = (int32_t*)buffer;
             *i32_buffer         = *std::get_if<int32_t>(&value);
         }
         break;
-        case DataType::BFloat16:
+        case rocisa::DataType::BFloat16:
         {
             BFloat16* bf16_buffer = (BFloat16*)buffer;
             *bf16_buffer          = *std::get_if<BFloat16>(&value);
         }
         break;
-        case DataType::Int8:
+        case rocisa::DataType::Int8:
         {
             int8_t* i8_buffer = (int8_t*)buffer;
             *i8_buffer        = *std::get_if<int8_t>(&value);
@@ -322,13 +322,13 @@ namespace TensileLite
         {
             if(bufferLength >= 16) // For complex
             {
-                if(type == DataType::ComplexFloat)
+                if(type == rocisa::DataType::ComplexFloat)
                 {
                     std::complex<float>* c_buffer = (std::complex<float>*)buffer;
                     *c_buffer                     = *std::get_if<std::complex<float>>(&value);
                     return;
                 }
-                else if(type == DataType::ComplexDouble)
+                else if(type == rocisa::DataType::ComplexDouble)
                 {
                     std::complex<double>* z_buffer = (std::complex<double>*)buffer;
                     *z_buffer                      = *std::get_if<std::complex<double>>(&value);
@@ -343,7 +343,7 @@ namespace TensileLite
     class PrintBufferValueClass
     {
     public:
-        explicit PrintBufferValueClass(void* buffer, size_t bufferLength, DataType type)
+        explicit PrintBufferValueClass(void* buffer, size_t bufferLength, rocisa::DataType type)
             : m_buffer(buffer)
             , m_bufferLength(bufferLength)
             , m_type(type)
@@ -361,37 +361,37 @@ namespace TensileLite
         {
             switch(m_type)
             {
-            case DataType::Float:
+            case rocisa::DataType::Float:
             {
                 float* f_buffer = (float*)m_buffer;
                 os << *f_buffer;
             }
             break;
-            case DataType::Double:
+            case rocisa::DataType::Double:
             {
                 double* d_buffer = (double*)m_buffer;
                 os << *d_buffer;
             }
             break;
-            case DataType::Half:
+            case rocisa::DataType::Half:
             {
                 Half* fp16_buffer = (Half*)m_buffer;
                 os << *fp16_buffer;
             }
             break;
-            case DataType::Int32:
+            case rocisa::DataType::Int32:
             {
                 int32_t* i32_buffer = (int32_t*)m_buffer;
                 os << *i32_buffer;
             }
             break;
-            case DataType::BFloat16:
+            case rocisa::DataType::BFloat16:
             {
                 BFloat16* bf16_buffer = (BFloat16*)m_buffer;
                 os << *bf16_buffer;
             }
             break;
-            case DataType::Int8:
+            case rocisa::DataType::Int8:
             {
                 int8_t* i8_buffer = (int8_t*)m_buffer;
                 os << *i8_buffer;
@@ -401,12 +401,12 @@ namespace TensileLite
             {
                 if(m_bufferLength >= 16) // For complex
                 {
-                    if(m_type == DataType::ComplexFloat)
+                    if(m_type == rocisa::DataType::ComplexFloat)
                     {
                         std::complex<float>* c_buffer = (std::complex<float>*)m_buffer;
                         os << *c_buffer;
                     }
-                    else if(m_type == DataType::ComplexDouble)
+                    else if(m_type == rocisa::DataType::ComplexDouble)
                     {
                         std::complex<double>* z_buffer = (std::complex<double>*)m_buffer;
                         os << *z_buffer;
@@ -416,9 +416,9 @@ namespace TensileLite
             }
             }
         }
-        void*    m_buffer;
-        size_t   m_bufferLength;
-        DataType m_type;
+        void*            m_buffer;
+        size_t           m_bufferLength;
+        rocisa::DataType m_type;
     };
 
     template <typename TAct>
@@ -492,58 +492,32 @@ namespace TensileLite
                 PrintBufferValueClass betaPrint(
                     (void*)args[i].beta, sizeof(args[i].beta), problems[i].betaType());
                 std::cout << "Gemm " << i << ":" << std::endl;
-                std::cout << "   "
-                          << "m: " << args[i].m << std::endl;
-                std::cout << "   "
-                          << "n: " << args[i].n << std::endl;
-                std::cout << "   "
-                          << "batch: " << args[i].batch << std::endl;
-                std::cout << "   "
-                          << "k: " << args[i].k << std::endl;
-                std::cout << "   "
-                          << "D: " << args[i].d << std::endl;
-                std::cout << "   "
-                          << "C: " << args[i].c << std::endl;
-                std::cout << "   "
-                          << "A: " << args[i].a << std::endl;
-                std::cout << "   "
-                          << "B: " << args[i].b << std::endl;
-                std::cout << "   "
-                          << "strideD1: " << args[i].strideD1 << std::endl;
-                std::cout << "   "
-                          << "strideD2: " << args[i].strideD2 << std::endl;
-                std::cout << "   "
-                          << "strideC1: " << args[i].strideC1 << std::endl;
-                std::cout << "   "
-                          << "strideC2: " << args[i].strideC2 << std::endl;
-                std::cout << "   "
-                          << "strideA1: " << args[i].strideA1 << std::endl;
-                std::cout << "   "
-                          << "strideA2: " << args[i].strideA2 << std::endl;
-                std::cout << "   "
-                          << "strideB1: " << args[i].strideB1 << std::endl;
-                std::cout << "   "
-                          << "strideB2: " << args[i].strideB2 << std::endl;
-                std::cout << "   "
-                          << "Alpha: " << alphaPrint << std::endl;
-                std::cout << "   "
-                          << "Beta: " << betaPrint << std::endl;
-                std::cout << "   "
-                          << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
-                std::cout << "   "
-                          << "bias: " << args[i].bias << std::endl;
-                std::cout << "   "
-                          << "e: " << args[i].e << std::endl;
-                std::cout << "   "
-                          << "strideE1: " << args[i].strideE1 << std::endl;
-                std::cout << "   "
-                          << "strideE2: " << args[i].strideE2 << std::endl;
-                std::cout << "   "
-                          << "act0: " << args[i].act0 << std::endl;
-                std::cout << "   "
-                          << "act1: " << args[i].act1 << std::endl;
-                std::cout << "   "
-                          << "activationType: " << args[i].activationType << std::endl;
+                std::cout << "   " << "m: " << args[i].m << std::endl;
+                std::cout << "   " << "n: " << args[i].n << std::endl;
+                std::cout << "   " << "batch: " << args[i].batch << std::endl;
+                std::cout << "   " << "k: " << args[i].k << std::endl;
+                std::cout << "   " << "D: " << args[i].d << std::endl;
+                std::cout << "   " << "C: " << args[i].c << std::endl;
+                std::cout << "   " << "A: " << args[i].a << std::endl;
+                std::cout << "   " << "B: " << args[i].b << std::endl;
+                std::cout << "   " << "strideD1: " << args[i].strideD1 << std::endl;
+                std::cout << "   " << "strideD2: " << args[i].strideD2 << std::endl;
+                std::cout << "   " << "strideC1: " << args[i].strideC1 << std::endl;
+                std::cout << "   " << "strideC2: " << args[i].strideC2 << std::endl;
+                std::cout << "   " << "strideA1: " << args[i].strideA1 << std::endl;
+                std::cout << "   " << "strideA2: " << args[i].strideA2 << std::endl;
+                std::cout << "   " << "strideB1: " << args[i].strideB1 << std::endl;
+                std::cout << "   " << "strideB2: " << args[i].strideB2 << std::endl;
+                std::cout << "   " << "Alpha: " << alphaPrint << std::endl;
+                std::cout << "   " << "Beta: " << betaPrint << std::endl;
+                std::cout << "   " << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
+                std::cout << "   " << "bias: " << args[i].bias << std::endl;
+                std::cout << "   " << "e: " << args[i].e << std::endl;
+                std::cout << "   " << "strideE1: " << args[i].strideE1 << std::endl;
+                std::cout << "   " << "strideE2: " << args[i].strideE2 << std::endl;
+                std::cout << "   " << "act0: " << args[i].act0 << std::endl;
+                std::cout << "   " << "act1: " << args[i].act1 << std::endl;
+                std::cout << "   " << "activationType: " << args[i].activationType << std::endl;
             }
         }
     }
@@ -762,8 +736,7 @@ namespace TensileLite
         TensorDescriptor const& compressed = problem.compressed();
         TensorDescriptor const& metadata   = problem.metadata();
 
-        uint32_t gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
 
         {
             int idx = 0;
@@ -879,13 +852,13 @@ namespace TensileLite
         }
 
         args.append("alpha", inputs.alpha, problem.alphaType());
-        if(problem.alphaType() == DataType::Half)
+        if(problem.alphaType() == rocisa::DataType::Half)
             args.append("alpha_2", inputs.alpha, problem.alphaType());
 
         if(problemType.useBeta)
         {
             args.append("beta", inputs.beta, problem.betaType());
-            if(problem.betaType() == DataType::Half)
+            if(problem.betaType() == rocisa::DataType::Half)
                 args.append("beta_2", inputs.beta, problem.betaType());
         }
 
@@ -893,13 +866,14 @@ namespace TensileLite
         {
             uint32_t magicShift;
             args.template append<uint32_t>("magicNumberProblemNumGroupTiles0",
-                                     magicNumber(2, problemNumGroupTiles.x, &magicShift));
+                                           magicNumber(2, problemNumGroupTiles.x, &magicShift));
             args.template append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
         }
 
         if(sizeMapping.streamK != 0)
         {
-            auto tiles = problem.getNumTiles(sizeMapping);
+            assert(gsu == 1);
+            auto tiles = problem.getNumTiles(sizeMapping, gsu);
 
             // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
             // In this case no actual iterations will be run, but workgroups will be mapped correctly for beta*C
@@ -919,9 +893,9 @@ namespace TensileLite
             magicNumProblemNumGroupTiles0By1
                 = magicNumber(2, numGroupTiles0x1, &magicShiftProblemNumGroupTiles0By1);
             args.template append<uint32_t>("magicNumProblemNumGroupTiles0By1",
-                                     magicNumProblemNumGroupTiles0By1);
+                                           magicNumProblemNumGroupTiles0By1);
             args.template append<uint32_t>("magicShiftProblemNumGroupTiles0By1",
-                                     magicShiftProblemNumGroupTiles0By1);
+                                           magicShiftProblemNumGroupTiles0By1);
 
             args.template append<uint32_t>("totalIters", totalIters);
             if(sizeMapping.streamK == 1) // Basic SK
@@ -1044,7 +1018,7 @@ namespace TensileLite
                 std::string name = "activation_" + std::to_string(i);
                 if(inputs.activationArgs.size() < problemType.activationArgLength)
                 {
-                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    if(problemType.activationComputeDataType == rocisa::DataType::BFloat16)
                     {
                         args.template append<float>(name.c_str(), 0.f);
                     }
@@ -1055,7 +1029,7 @@ namespace TensileLite
                 }
                 else
                 {
-                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    if(problemType.activationComputeDataType == rocisa::DataType::BFloat16)
                     {
                         args.template append<float>(name.c_str(),
                                                     static_cast<float>((*std::get_if<BFloat16>(
@@ -1126,6 +1100,105 @@ namespace TensileLite
         return numWorkGroupsX * numWorkGroupsY * numWorkGroupsZ;
     }
 
+    inline double calculateGranularity(
+        uint32_t m, uint32_t n, uint32_t mt0, uint32_t mt1, uint32_t gsu, uint32_t cuCount)
+    {
+        return (double)(std::ceil(m / mt0) * std::ceil(n / mt1) * gsu / cuCount)
+               / std::ceil(std::ceil(m / mt0) * std::ceil(n / mt1) * gsu / cuCount);
+    }
+
+    inline void ContractionSolution::calculateAutoGSU(Problem const&  problem,
+                                                      Hardware const* hardware) const
+    {
+        // autoGSU is already calculated
+        if(autoGSU != 0)
+        {
+            return;
+        }
+
+        // original GSU is not -1
+        if(sizeMapping.globalSplitU != -1)
+        {
+            autoGSU = sizeMapping.globalSplitU;
+            return;
+        }
+
+        AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
+        assert(pAMDGPU);
+        uint32_t numCUs    = pAMDGPU->computeUnitCount;
+        uint32_t numWGs    = getNumWorkGroups(problem, sizeMapping);
+        uint32_t MT0       = sizeMapping.macroTile.x;
+        uint32_t MT1       = sizeMapping.macroTile.y;
+        uint32_t MT2       = sizeMapping.depthU;
+        uint32_t M         = problem.freeSizeA(0);
+        uint32_t N         = problem.freeSizeB(0);
+        uint32_t B         = problem.batchSize(0);
+        uint32_t K         = problem.boundSize(0);
+        uint32_t GSULimit1 = max(1, (uint32_t)std::floor(numCUs / numWGs));
+        uint32_t GSULimit2 = max(1, (uint32_t)std::ceil((float)K / (float)MT2 / 2.0));
+        autoGSU            = min(GSULimit2, max(1, GSULimit1));
+
+        // WorkspaceCheck
+        if(autoGSU > 1)
+        {
+#define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
+            int    elemC    = sizeMapping.workspaceSizePerElemC * autoGSU;
+            int    elemBias = sizeMapping.workspaceSizePerElemBias * autoGSU;
+            size_t rs       = 0;
+            // 2d reduction
+            if(problem.useGradient() && problem.useBias()
+               && problem.getParams().biasEnum() != rocisa::DataType::None)
+            {
+                if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (elemC == 0))
+                    rs += problem.d().totalLogicalElements() * problem.computeTypeElementSize();
+                else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
+                {
+                    rs += M * elemBias;
+                }
+                else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                {
+                    rs += N * elemBias;
+                }
+            }
+            autoGSU = min(autoGSU,
+                          (MAX_GSU_WORKSPACE_SIZE - rs) / sizeMapping.workspaceSizePerElemC
+                              / problem.d().totalLogicalElements());
+            if(problem.groupedGemm())
+            {
+                assert(problem.workspaceSizeGroupedGemm() <= problem.workspaceSize());
+                autoGSU = min(autoGSU,
+                              (problem.workspaceSizeGroupedGemm() - rs)
+                                  / sizeMapping.workspaceSizePerElemC
+                                  / problem.d().totalLogicalElements());
+            }
+            else
+                autoGSU = min(autoGSU,
+                              (problem.workspaceSize() - rs) / sizeMapping.workspaceSizePerElemC
+                                  / problem.d().totalLogicalElements());
+        }
+
+        // WorkgroupNumberCheck
+#define MAX_WORKGROUP_NUMBER 16777216
+        autoGSU = min(autoGSU,
+                      MAX_WORKGROUP_NUMBER / std::ceil(static_cast<float>(M) / MT0)
+                          / std::ceil(static_cast<float>(N) / MT1) / B);
+
+        // GlobalSplitUCheckMinK
+        if(autoGSU > 1)
+        {
+            autoGSU = min(autoGSU, (uint32_t)std::ceil(K / MT2));
+        }
+
+        // avoid gsu < 1
+        autoGSU = max(autoGSU, 1);
+
+        static const char* envStr = std::getenv("TENSILE_AUTO_GSU_ALGO");
+        if(envStr != NULL)
+            std::cout << "autoGSU is calculated: " << autoGSU << std::endl;
+
+        return;
+    }
+
     template <bool T_Debug, bool Legacy, typename KA>
     void ContractionSolution::kernelArgs(uint32_t                            gemmCount,
                                          uint32_t                            argType,
@@ -1142,7 +1215,7 @@ namespace TensileLite
             args.template append<uint32_t>("gemm_count", gemmCount);
         }
 
-        uint32_t       gsu          = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        uint32_t       gsu          = param.gsu() > 0 ? param.gsu() : autoGSU;
         bool           gsuc         = false; // initialized false
         bool           gsuwgmrr     = false; // initialized false
         int32_t        wgm          = param.wgm() != 0 ? param.wgm() : sizeMapping.workGroupMapping;
@@ -1269,20 +1342,19 @@ namespace TensileLite
 
         dim3 problemNumGroupTiles = rv.numWorkGroups;
 
-        uint32_t gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
         if(gsu > 0)
             rv.numWorkGroups.y *= gsu;
 
         size_t skGrid    = 0;
-        auto   tiles     = problem.getNumTiles(sizeMapping);
+        auto   tiles     = problem.getNumTiles(sizeMapping, gsu);
         if(sizeMapping.streamK != 0 || sizeMapping.persistentKernel != 0)
         {
             AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
             assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
             if(sizeMapping.streamK != 0)
             {
-                skGrid             = getSKGrid(problem, hardware, tiles);
+                skGrid = getSKGrid(problem, hardware, tiles);
                 rv.numWorkGroups.x = skGrid;
                 rv.numWorkGroups.y = 1;
                 rv.numWorkGroups.z = 1;
@@ -1326,7 +1398,8 @@ namespace TensileLite
             kernelArgs<T_Debug, false>(
                 1, 0, rv.args, getNumWorkGroups(rv), &hardware, problem.getParams());
         }
-        singleCallArgs<T_Debug, true>(problem, inputs, 0, &hardware, problemNumGroupTiles, rv.numWorkGroups, rv.args);
+        singleCallArgs<T_Debug, true>(
+            problem, inputs, 0, &hardware, problemNumGroupTiles, rv.numWorkGroups, rv.args);
 
         if(sizeMapping.globalAccumulation == 3)
         {
@@ -1396,8 +1469,7 @@ namespace TensileLite
                 numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
                 numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
 
-                uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                             : sizeMapping.globalSplitU;
+                uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
                 if(gsu > 0)
                     numWorkGroups.y *= gsu;
 
@@ -1457,8 +1529,13 @@ namespace TensileLite
             for(int idx = 0; idx < problems.size(); idx++)
             {
                 auto problem = problems[idx];
-                singleCallArgs<T_Debug, false>(
-                    problem, inputs.grouped[idx], workspaceOffsetInByte, nullptr, rv.numWorkGroups, rv.numWorkGroups, h_args);
+                singleCallArgs<T_Debug, false>(problem,
+                                               inputs.grouped[idx],
+                                               workspaceOffsetInByte,
+                                               nullptr,
+                                               rv.numWorkGroups,
+                                               rv.numWorkGroups,
+                                               h_args);
 
                 if(sizeMapping.globalAccumulation == 3)
                 {
@@ -1696,7 +1773,7 @@ namespace TensileLite
         }
         if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
-            auto s = TypeAbbrev(problem.bias().dataType());
+            auto s = rocisa::TypeAbbrev(problem.bias().dataType());
             name += ("_Bias" + s);
         }
         if(factorDim == 2)
@@ -1804,7 +1881,7 @@ namespace TensileLite
                 std::string name = "activation_" + std::to_string(i);
                 if(inputs.activationArgs.size() < problemType.activationArgLength)
                 {
-                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    if(problemType.activationComputeDataType == rocisa::DataType::BFloat16)
                     {
                         args.template append<float>(name.c_str(), 0.f);
                     }
@@ -1815,7 +1892,7 @@ namespace TensileLite
                 }
                 else
                 {
-                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    if(problemType.activationComputeDataType == rocisa::DataType::BFloat16)
                     {
                         args.template append<float>(name.c_str(),
                                                     static_cast<float>((*std::get_if<BFloat16>(
@@ -1871,8 +1948,7 @@ namespace TensileLite
         }
         uint32_t gsu = sizeMapping.globalAccumulation == 1
                            ? 1
-                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                            : sizeMapping.globalSplitU);
+                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU);
         args.template append<uint32_t>(concatenate_if<T_Debug>("gsu"), gsu);
         if((useBias && problemType.useBias == 3) || problemType.useScaleAlphaVec)
         {
@@ -1911,7 +1987,7 @@ namespace TensileLite
             //reach threashhold to trigger wider load
             if(problem.freeSizeA(0) % 4 == 0
                && DataTypeInfo::Get(problemType.aType).elementSize
-                      < DataTypeInfo::Get(DataType::Double).elementSize)
+                      < DataTypeInfo::Get(rocisa::DataType::Double).elementSize)
                 vw = 4;
             else if(problem.freeSizeA(0) % 2 == 0)
                 vw = 2;
@@ -1919,8 +1995,7 @@ namespace TensileLite
 
         uint32_t gsu = sizeMapping.globalAccumulation == 1
                            ? 1
-                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                            : sizeMapping.globalSplitU);
+                           : (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU);
 
         rv.kernelName = outputConversionKernelName(problem, inputs, vw, gsu);
 
@@ -1988,7 +2063,7 @@ namespace TensileLite
                     auto problem = problems[idx];
                     if(problem.freeSizeA(0) % 4 != 0
                        && DataTypeInfo::Get(problemType.aType).elementSize
-                              < DataTypeInfo::Get(DataType::Double).elementSize)
+                              < DataTypeInfo::Get(rocisa::DataType::Double).elementSize)
                         not4 = true;
                     if(problem.freeSizeA(0) % 2 != 0)
                         not2 = true;
@@ -2074,10 +2149,10 @@ namespace TensileLite
         calculateConversionCallWorkGroupItems(
             problems, vw, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
-        uint32_t gsu = sizeMapping.globalAccumulation == 1
-                           ? 1
-                           : (problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
-                                                                : sizeMapping.globalSplitU);
+        uint32_t gsu
+            = sizeMapping.globalAccumulation == 1
+                  ? 1
+                  : (problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu() : autoGSU);
 
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
@@ -2155,12 +2230,12 @@ namespace TensileLite
                                                                 size_t                   vw,
                                                                 size_t                   gsu) const
     {
-        auto inputTypeStr = (problem.a().dataType() == DataType::Int8
-                             || problem.a().dataType() == DataType::Int32)
-                                ? DataTypeInfo::Get(DataType::Int32).abbrev
-                            : problem.a().dataType() == DataType::Double
-                                ? DataTypeInfo::Get(DataType::Double).abbrev
-                                : DataTypeInfo::Get(DataType::Float).abbrev;
+        auto inputTypeStr = (problem.a().dataType() == rocisa::DataType::Int8
+                             || problem.a().dataType() == rocisa::DataType::Int32)
+                                ? DataTypeInfo::Get(rocisa::DataType::Int32).abbrev
+                            : problem.a().dataType() == rocisa::DataType::Double
+                                ? DataTypeInfo::Get(rocisa::DataType::Double).abbrev
+                                : DataTypeInfo::Get(rocisa::DataType::Float).abbrev;
 
         std::string name = concatenate("C",
                                        problem.cNames(),
@@ -2179,11 +2254,11 @@ namespace TensileLite
 
         if(problemType.useBias)
         {
-            auto s = TypeAbbrev(problem.bias().dataType());
+            auto s = rocisa::TypeAbbrev(problem.bias().dataType());
             if(problemType.useGradient)
             {
                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
-                    s = TypeAbbrev(problem.computeType());
+                    s = rocisa::TypeAbbrev(problem.computeType());
                 if(inputs.bias != nullptr)
                 {
                     const char* alpha[5] = {"A", "B", "C", "D", "E"};
@@ -2216,7 +2291,8 @@ namespace TensileLite
 
         if(problemType.useE)
         {
-            auto s = TypeAbbrev(problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType());
+            auto s = rocisa::TypeAbbrev(
+                problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType());
             if(problemType.useGradient)
             {
                 name += ("_Grad" + s);
@@ -2244,7 +2320,7 @@ namespace TensileLite
                 name += actName;
             }
 
-            name += TypeAbbrev(problemType.activationComputeDataType);
+            name += rocisa::TypeAbbrev(problemType.activationComputeDataType);
 
             if(problemType.activationNoGuard)
             {
@@ -2279,135 +2355,11 @@ namespace TensileLite
         gsuTemp++;
 
         name += "_PostGSU"
-                + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
+                + std::to_string(
+                    std::min(static_cast<decltype(sizeMapping.globalSplitUPGR)>(gsuTemp),
+                             sizeMapping.globalSplitUPGR));
 
         name += "_VW" + std::to_string(vw);
-
-        return name;
-    }
-
-    template <bool T_Debug>
-    KernelInvocation
-        ContractionSolution::generateActivationOnlyCall(Problem const&           problem,
-                                                        ContractionInputs const& inputs) const
-    {
-        TensorDescriptor const& d = problem.d();
-
-        KernelInvocation rv;
-
-        rv.args = KernelArguments(T_Debug);
-
-        rv.args.reserve(512, 64);
-
-        rv.kernelName = activationOnlyKernelName(problem, inputs);
-
-        rv.workGroupSize.x = 256;
-        rv.workGroupSize.y = 1;
-        rv.workGroupSize.z = 1;
-
-        size_t wiX = 1;
-        size_t wiY = 1;
-        size_t wiZ = 1;
-        for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
-            wiX *= problem.freeSizeA(i);
-        for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
-            wiY *= problem.freeSizeB(i);
-        for(size_t i = 0; i < problem.batchIndices().size(); i++)
-            wiZ *= problem.batchSize(i);
-
-        rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x);
-        rv.numWorkGroups.y = 1;
-        rv.numWorkGroups.z = 1;
-
-        rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
-        rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
-        rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
-
-        if(problemType.stridedBatched)
-            rv.args.append<void*>("D", inputs.d);
-        else
-            rv.args.append<void const* const*>("batchD", inputs.batchD);
-
-        if(problemType.activationType != ActivationType::None)
-        {
-            if(problemType.activationType == ActivationType::All
-               || problemType.activationType == ActivationType::Hipblaslt_all)
-            {
-                rv.args.append<uint32_t>(
-                    "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
-            }
-            for(int i = 0; i < inputs.activationArgs.size(); i++)
-            {
-                std::string name = "activation_" + std::to_string(i);
-                if(problemType.activationComputeDataType == DataType::BFloat16)
-                {
-                    rv.args.append<float>(
-                        name.c_str(),
-                        static_cast<float>(*std::get_if<BFloat16>(&inputs.activationArgs[i])));
-                }
-                else
-                {
-                    rv.args.append(name.c_str(),
-                                   inputs.activationArgs[i],
-                                   problemType.activationComputeDataType);
-                }
-            }
-        }
-
-        if(sizeMapping.globalAccumulation)
-        {
-            size_t stride = d.sizes()[0];
-            for(size_t i = 1; i < d.dimensions(); i++)
-            {
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideW", i),
-                                         d.sizes()[i] == 1 ? 0 : stride);
-                stride *= d.sizes()[i];
-            }
-        }
-        else
-        {
-            for(size_t i = 1; i < d.dimensions(); i++)
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i),
-                                         d.sizes()[i] == 1 ? 0 : d.strides()[i]);
-        }
-
-        int idx = 0;
-        for(auto size : problem.d().sizes())
-        {
-            rv.args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
-            idx++;
-        }
-
-        return rv;
-    }
-
-    std::string ContractionSolution::activationOnlyKernelName(Problem const&           problem,
-                                                              ContractionInputs const& inputs) const
-    {
-        std::string name = concatenate(
-            "D", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
-        if(problemType.activationType != ActivationType::None)
-        {
-            if(problemType.activationType == ActivationType::All)
-            {
-                name += "_A";
-            }
-            else if(problemType.activationType == ActivationType::Hipblaslt_all)
-            {
-                name += "_HA";
-            }
-            else
-            {
-                std::string actName = ToString(problemType.activationType);
-                std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
-                name += actName;
-            }
-        }
-        if((problemType.activationComputeDataType == problemType.computeType)
-           && problemType.highPrecisionAccumulate)
-        {
-            name += "h";
-        }
 
         return name;
     }
@@ -2536,7 +2488,8 @@ namespace TensileLite
                                              hipStream_t               stream) const
     {
         // Since we now use universal args, we block globalSplitU here if using UserArgs
-        if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 3)
+        if((sizeMapping.globalSplitU > 1 || sizeMapping.globalSplitU == -1)
+           && sizeMapping.globalAccumulation != 3)
         {
             KernelInvocation dummyrv;
             dummyrv.kernelName = "";
@@ -2578,6 +2531,7 @@ namespace TensileLite
                                    ContractionSolution::Inputs const&  inputs,
                                    Hardware const&                     hardware) const
     {
+        calculateAutoGSU(problem, &hardware);
         if(Debug::Instance().printWinningKernelName())
             std::cout << "Running kernel: " << this->KernelName() << std::endl;
 
@@ -2589,12 +2543,12 @@ namespace TensileLite
         // alpha/beta type (alphaType and betaType remain None).
         // Until we fix those gtests, we need to keep this condition to adjust the missing
         // alpha/beta data types.
-        if(alphaType == DataType::None)
+        if(alphaType == rocisa::DataType::None)
         {
-            alphaType
-                = problemType.aType == DataType::BFloat16 ? DataType::Float : problemType.dType;
+            alphaType = problemType.aType == rocisa::DataType::BFloat16 ? rocisa::DataType::Float
+                                                                        : problemType.dType;
         }
-        if(betaType == DataType::None)
+        if(betaType == rocisa::DataType::None)
         {
             betaType = alphaType;
         }
@@ -2647,8 +2601,7 @@ namespace TensileLite
 
         std::vector<KernelInvocation> rv;
 
-        auto gsu
-            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        auto gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
         if(gsu > 1 && sizeMapping.globalAccumulation != 2 && sizeMapping.globalAccumulation != 3)
         {
             if(debug)
@@ -2668,15 +2621,6 @@ namespace TensileLite
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
             else
                 rv.push_back(generateOutputConversionCall<false>(problem, inputs));
-        }
-
-        if((!sizeMapping.activationFused) && (gsu > 1)
-           && (problemType.activationType != ActivationType::None))
-        {
-            if(debug)
-                rv.push_back(generateActivationOnlyCall<true>(problem, inputs));
-            else
-                rv.push_back(generateActivationOnlyCall<false>(problem, inputs));
         }
 
         // The reduction of A is done in ConversionKernel when GSU > 1 in MultipleBuffer mode
@@ -2708,6 +2652,7 @@ namespace TensileLite
         size_t                                           hipHostMemorySize,
         hipStream_t                                      stream) const
     {
+        calculateAutoGSU(problems[0], &hardware);
         if(Debug::Instance().printWinningKernelName())
             std::cout << "Running kernel: " << this->KernelName() << std::endl;
 
@@ -2719,12 +2664,12 @@ namespace TensileLite
         // alpha/beta type (alphaType and betaType remain None).
         // Until we fix those gtests, we need to keep this condition to adjust the missing
         // alpha/beta data types.
-        if(alphaType == DataType::None)
+        if(alphaType == rocisa::DataType::None)
         {
-            alphaType
-                = problemType.aType == DataType::BFloat16 ? DataType::Float : problemType.dType;
+            alphaType = problemType.aType == rocisa::DataType::BFloat16 ? rocisa::DataType::Float
+                                                                        : problemType.dType;
         }
-        if(betaType == DataType::None)
+        if(betaType == rocisa::DataType::None)
         {
             betaType = alphaType;
         }
@@ -2787,10 +2732,9 @@ namespace TensileLite
         }
         h_args.reserve(32768, 8192);
 
-        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
-                                                     : sizeMapping.globalSplitU;
+        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu() : autoGSU;
 
-        // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
+        // if((sizeMapping.globalSplitU > 1 || sizeMapping.globalSplitU == -1) && sizeMapping.globalAccumulation != 2)
         // {
         //     if(debug)
         //         rv.push_back(generateBetaOnlyCallGroupedGemm<true>(problems, inputs));
@@ -2843,6 +2787,7 @@ namespace TensileLite
                                                  const void*                 workspace,
                                                  hipStream_t                 stream) const
     {
+        calculateAutoGSU(problems[0], &hardware);
         if(!problemType.supportDeviceUserArguments)
         {
             throw std::runtime_error("Currently this solution does not support user args.");
@@ -2860,8 +2805,7 @@ namespace TensileLite
             rv.push_back(
                 generateSingleCallGroupedGemm<false>(problems, inputs, hardware, h_args, dUA));
 
-        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
-                                                     : sizeMapping.globalSplitU;
+        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu() : autoGSU;
 
         if((sizeMapping.globalAccumulation && gsu > 1) && (sizeMapping.globalAccumulation != 3))
         {
@@ -2887,10 +2831,11 @@ namespace TensileLite
                                                         size_t      hipHostMemorySize,
                                                         hipStream_t stream) const
     {
+        calculateAutoGSU(problems[0], &hardware);
         // Allocate and copy data to dUA
         if(problems[0].activationType() == ActivationType::None
            || (problems[0].activationType() != ActivationType::None
-               && problems[0].activationComputeType() == DataType::Float))
+               && problems[0].activationComputeType() == rocisa::DataType::Float))
         {
             auto requiredSize = sizeof(DeviceUserArguments<float>) * problems.size();
             static_cast<void>(hipHostMalloc(dUAHost, requiredSize, 0));
@@ -3031,25 +2976,32 @@ namespace TensileLite
                                                       Hardware const& hardware) const
     {
         size_t size = 0;
+        // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
+        size_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
 
         if(sizeMapping.streamK > 0 && sizeMapping.streamKAtomic == 0)
         {
-            auto   tiles  = problem.getNumTiles(sizeMapping);
+            const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
+            assert(gsu == 1);
+            auto   tiles  = problem.getNumTiles(sizeMapping, gsu);
             size_t skGrid = getSKGrid(problem, hardware, tiles);
             // Get space required for partial tiles
-            size += partialTileSize(skGrid);
+            if(tiles % skGrid != 0 && !streamKDP)
+                size += partialTileSize(skGrid);
         }
         else
         {
             // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
-            size_t gsu           = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
-                                                                 : sizeMapping.globalSplitU;
+            calculateAutoGSU(problem, &hardware);
+            size_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
             size_t gsuMultiplier = gsu > 1 ? gsu : 0;
+            size_t tiles = problem.getNumTiles(sizeMapping, gsu);
+            size_t tileSize = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
+            size_t bufSize = gsu > 1 ? tiles * tileSize : 0;
+            size += bufSize;
 
-            size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC
-                    * gsuMultiplier;
             if(problemType.useGradient && problemType.useBias
-               && problem.getParams().biasEnum() != DataType::None)
+               && problem.getParams().biasEnum() != rocisa::DataType::None)
             {
                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
                 {
@@ -3065,7 +3017,7 @@ namespace TensileLite
                         && (gsuMultiplier == 0))
                 {
                     size += problem.d().totalLogicalElements()
-                            * sizeMapping.workspaceSizePerElemBias * gsu;
+                            * problem.computeTypeElementSize() * gsu;
                 }
             }
 
@@ -3130,6 +3082,10 @@ namespace TensileLite
                                           Hardware const& hardware,
                                           size_t          tiles) const
     {
+        const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
+        if(streamKDP)
+            return tiles;
+
         // If K==0, run kernel as DP with Alpha=0 to skip main loop and apply beta*c
         size_t z = 1;
         for(size_t i = 0; i < problem.boundIndices().size(); ++i)
@@ -3186,8 +3142,8 @@ namespace TensileLite
         // Architecture dependent.
         else if(pAMDGPU->skDynamicGrid == 3)
         {
-            size_t x = 1;
-            size_t y = 1;
+            size_t x     = 1;
+            size_t y     = 1;
             size_t batch = 1;
             for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
             {
@@ -3211,6 +3167,30 @@ namespace TensileLite
                                                      batch,
                                                      1,
                                                      cuCount);
+        }
+
+        // Fix Stream-K algorithm to function like a Data-parallel schedule
+        // where grid size is equal to the number of output tiles.
+        else if(pAMDGPU->skDynamicGrid == 4)
+        {
+            size_t x     = 1;
+            size_t y     = 1;
+            size_t batch = 1;
+            for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+            {
+                x *= problem.freeSizeA(i);
+            }
+            for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+            {
+                y *= problem.freeSizeB(i);
+            }
+            for(size_t i = 0; i < problem.batchIndices().size(); ++i)
+            {
+                batch *= problem.batchSize(i);
+            }
+
+            return streamk::number_of_output_tiles(
+                sizeMapping.macroTile.x, sizeMapping.macroTile.y, x, y, batch);
         }
 
         // Limit the CUs Stream-K is launched on either max or the specified,
@@ -3267,7 +3247,7 @@ namespace TensileLite
         double wavefrontSize = pAMDGPU->wavefrontSize;
         double simdPerCu     = pAMDGPU->simdPerCu;
 
-        double GlobalSplitU = sizeMapping.globalSplitU;
+        double GlobalSplitU = autoGSU;
         double LocalSplitU  = sizeMapping.workGroupSize.z;
 
         granularities.MT0 = MT0;
