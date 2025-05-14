@@ -3969,7 +3969,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if (self.states.archCaps["HasEccHalf"] or not self.states.asmCaps["HasWMMA_V1"]) and (bpeMax * vwb < self.states.bpr):
       # This check is to reserve porential usage of VGPRs for gfx12 8-bit code gen
       # We should optimize the usage for better performance.
-      statesBNumVgprG2LAllocated = statesBNumVgprG2LAllocated * (int)(self.states.bpr/(bpeMax * vwb))
+      statesBNumVgprG2LAllocated = statesBNumVgprG2L * (int)(self.states.bpr/(bpeMax * vwb))
     else:
       statesBNumVgprG2LAllocated = statesBNumVgprG2L
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:

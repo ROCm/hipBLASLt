@@ -374,10 +374,8 @@ class Solution(collections.abc.Mapping):
     # Use nonDTL loads in DTL tail loop
     state["NonDTLTailLoopA"] = False
     state["NonDTLTailLoopB"] = False
-    is16bASEM2 = ((state["ProblemType"]["DataType"].isHalf() or state["ProblemType"]["DataType"].isBFloat16()) and \
-        state["AssertSummationElementMultiple"] % 2 != 0)
-    is8bASEM4 = ((state["ProblemType"]["DataType"].isInt8() or state["ProblemType"]["DataType"].is8bitFloat()) and \
-         state["AssertSummationElementMultiple"] % 4 != 0)
+    is16bASEM2 = (state["ProblemType"]["DataTypeA"].numBytes() == 2) and state["AssertSummationElementMultiple"] % 2 != 0
+    is8bASEM4  = (state["ProblemType"]["DataTypeB"].numBytes() == 1) and state["AssertSummationElementMultiple"] % 4 != 0
     if is16bASEM2 or is8bASEM4:
       state["NonDTLTailLoopA"] = not state["ProblemType"]["TLUA"]
       state["NonDTLTailLoopB"] = not state["ProblemType"]["TLUB"]
@@ -814,9 +812,6 @@ class Solution(collections.abc.Mapping):
       if state["LSC%c"%tc] * state["LSP%c"%tc] * numBytesAB != state["NumThreads"] * state["GlobalReadVectorWidth%c"%tc] * numBytesAB:
         reject(state, printRejectionReason, "can't use DirectToLds for LSC%c and LSP%c * bpe != NumThreads * GlobalReadVectorWidth%c * bpe%c > 4"%(tc, tc, tc, tc))
         return False
-
-    # so far, DirectToLds does not work well with PGR=2
-    # performance is not good and a lot of ds_read for DTL can cause scheduling issue(TODO: need fix)
 
     # so far, DirectToLds does not work with LRVW=2
     if state["LocalReadVectorWidth"] == 2:
@@ -2332,6 +2327,16 @@ class Solution(collections.abc.Mapping):
     # LDS (load size coalesced) * LSPA must load some multiple of 256 bytes.
     # No longer support loadX2/loadx4 .
     if state["DirectToLds"]:
+
+      bpeA = state["ProblemType"]["DataTypeA"].numBytes()
+      bpeB = state["ProblemType"]["DataTypeB"].numBytes()
+
+      # TODO: Currently DTL with input types of different size is not support. There are functional issues
+      # This needs to be fixed.
+      if bpeA != bpeB:
+        reject(state, printRejectionReason, "DirectToLds with inputs of different sized data types is not supported")
+        return False
+
       if (not state["DirectToVgprA"]) and Solution.isDirectToLdsDoable(state, 'A', isaInfoMap, printRejectionReason):
         state["DirectToLdsA"] = True
         state["LocalWriteUseSgprA"] = True
