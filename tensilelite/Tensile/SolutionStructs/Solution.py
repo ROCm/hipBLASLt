@@ -845,6 +845,12 @@ class Solution(collections.abc.Mapping):
       reject(state, printRejectionReason, "DirectToLds%c does not work with TLU=False and bpe > bpr and DepthU//NumLoadsCoalesced%c < 8"%(tc, tc))
       return False
 
+    # TODO: Currently DTL with input types of different size is not support. There are functional issues
+    # This needs to be fixed.
+    if state["ProblemType"]["DataType%s"%tc].numBytes() != state["ProblemType"]["DataType"].numBytes():
+      reject(state, printRejectionReason, "DirectToLds%s with conversion to different sized data types is not supported"%tc)
+      return False
+
     # DTL + input type conversion
     if state["ProblemType"]["DataType%s"%tc] != state["ProblemType"]["DataType"]:
       if not state["ConvertAfterDS"]:
@@ -2334,15 +2340,6 @@ class Solution(collections.abc.Mapping):
     # LDS (load size coalesced) * LSPA must load some multiple of 256 bytes.
     # No longer support loadX2/loadx4 .
     if state["DirectToLds"]:
-
-      bpeA = state["ProblemType"]["DataTypeA"].numBytes()
-      bpeB = state["ProblemType"]["DataTypeB"].numBytes()
-
-      # TODO: Currently DTL with input types of different size is not support. There are functional issues
-      # This needs to be fixed.
-      if bpeA != bpeB:
-        reject(state, printRejectionReason, "DirectToLds with inputs of different sized data types is not supported")
-        return False
 
       if (not state["DirectToVgprA"]) and Solution.isDirectToLdsDoable(state, 'A', isaInfoMap, printRejectionReason):
         state["DirectToLdsA"] = True

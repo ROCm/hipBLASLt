@@ -3078,14 +3078,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.oriLwaM = None
       if not kernel["NoLdsWriteCode"] or kernel["NonDTLTailLoopA"] or kernel["NonDTLTailLoopB"]:
         # tail: local write
-        if not (kernel["DirectToLdsA"] and not kernel["NonDTLTailLoopA"]):
-          module.addComment1("local write a")
-          tempLWCodeModA = self.localWriteDo(kernel, tensorParametersA)
-          module.add(tempLWCodeModA)
-        if not (kernel["DirectToLdsB"] and not kernel["NonDTLTailLoopB"]):
-          module.addComment1("local write b")
-          tempLWCodeModB = self.localWriteDo(kernel, tensorParametersB)
-          module.add(tempLWCodeModB)
+        module.addComment1("local write a")
+        tempLWCodeModA = self.localWriteDo(kernel, tensorParametersA)
+        module.add(tempLWCodeModA)
+        module.addComment1("local write b")
+        tempLWCodeModB = self.localWriteDo(kernel, tensorParametersB)
+        module.add(tempLWCodeModB)
       # change local read policy from wider local read to one unit of K at a time
       # DirectToVgpr case, use original wider local read instead of recalculating local read address
       if not (kernel["DirectToVgprA"] or kernel["DirectToVgprB"]):
@@ -3098,8 +3096,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # tail: free G2L Vgpr
       module.add(self.tailLoopFreeVgpr(vgprG2L, moduleMacroG2lVgpr))
 
-      if (kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]) or (kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]):
-        module.add(self.tailLoopFreeVgpr(vgprLW, moduleMacroDTLLWVgpr))
+      # tail: free Vgpr for local writes
+      module.add(self.tailLoopFreeVgpr(vgprLW, moduleMacroDTLLWVgpr))
 
       # Check out VGPR for ALU
       valuResources = self.tailLoopAllocValuVgpr(kernel, tensorParametersA, tensorParametersB, tPM)
