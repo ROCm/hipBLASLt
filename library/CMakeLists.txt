@@ -155,7 +155,7 @@ endif()
 # Target link libraries
 if(NOT BUILD_CUDA)
 # Target link libraries
-  target_link_libraries(hipblaslt PRIVATE hip::device ${CMAKE_DL_LIBS})
+  target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
 endif()
 
 if(HIPBLASLT_ENABLE_MARKER)

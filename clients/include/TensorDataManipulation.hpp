@@ -29,10 +29,6 @@
 #include <iosfwd>
 #include <memory>
 #include <vector>
-#ifdef _WIN32
-#include <BaseTsd.h>
-typedef SSIZE_T ssize_t;
-#endif
 
 namespace Tensor
 {

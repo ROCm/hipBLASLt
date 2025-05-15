@@ -32,9 +32,8 @@
 #include <Tensile/MasterSolutionLibrary.hpp>
 #include <Tensile/PlaceholderLibrary.hpp>
 //Replace std::regex, as it crashes when matching long lines(GCC Bug #86164).
-#ifdef _WIN32
+#ifdef WIN32
 #include "shlwapi.h"
-#pragma comment(lib, "shlwapi.lib")
 #else
 #include <fnmatch.h>
 #endif
@@ -74,7 +73,7 @@ namespace TensileLite
                     for(auto condition : ctx->preloaded)
                     {
                         std::string pattern = RegexPattern(condition);
-#ifdef _WIN32
+#ifdef WIN32
                         if(PathMatchSpecA(lib.filePrefix.c_str(), pattern.c_str()))
 #else
                         if(fnmatch(pattern.c_str(), lib.filePrefix.c_str(), 0) == 0)

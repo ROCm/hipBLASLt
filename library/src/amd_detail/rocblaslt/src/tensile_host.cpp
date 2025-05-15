@@ -56,17 +56,20 @@
 #include <atomic>
 #include <complex>
 #include <exception>
-#include <filesystem>
 #include <iomanip>
 #include <memory>
 #include <mutex>
-#include <optional>
-#include <regex>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <vector>
+
+#include <glob.h>
+#include <libgen.h>
+#include <link.h>
+#include <regex>
+#include <string_view>
+#include <unistd.h>
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/lib"
 
@@ -259,6 +262,11 @@ RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     
 
 namespace
 {
+    std::string getHipblasltSoPath()
+    {
+        return rocblaslt_internal_get_so_path("libhipblaslt");
+    }
+
     static void assignAlphaBeta(rocisa::DataType type,
                                 const void*      alphaPtr,
                                 const void*      betaPtr,
@@ -715,7 +723,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -730,7 +738,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -1883,7 +1891,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto& get_device_property() const
+        auto&                            get_device_property() const
         {
             return m_deviceProp;
         }
@@ -1893,23 +1901,24 @@ namespace
             return m_adapters;
         }
 
+        /*******************************************************
+   * Testpath() tests that a path exists and is readable *
+   *******************************************************/
+        static bool TestPath(const std::string& path)
+        {
+            return rocblaslt_internal_test_path(path);
+        }
+
         /*********************************************************************
    * Initialize adapter and library according to environment variables *
    * and default paths based on librocblaslt.so location and GPU         *
    *********************************************************************/
         void initialize(TensileLite::hip::SolutionAdapter& adapter, int32_t deviceId)
         {
-            bool enableYaml = false;
-            bool staticLib  = false;
-            bool lazyLoad   = ROCBLASLT_TENSILE_LAZY_LOAD;
-#ifdef TENSILE_YAML
-            enableYaml = true;
+            std::string path;
+#ifndef WIN32
+            path.reserve(PATH_MAX);
 #endif
-#ifdef HIPBLASLT_STATIC_LIB
-            staticLib = true;
-#endif
-
-            std::filesystem::path path;
 
             // The name of the current GPU platform
             std::string processor = rocblaslt_internal_get_arch_name();
@@ -1927,36 +1936,28 @@ namespace
             }
             else
             {
+                path = HIPBLASLT_LIB_PATH;
+
                 // Find the location of librocblaslt.so
                 // Fall back on hard-coded path if static library or not found
-                if(staticLib)
-                {
-                    path = HIPBLASLT_LIB_PATH;
-                }
-                else
-                {
-                    auto hipblaslt_so_path
-                        = std::filesystem::path(rocblaslt_internal_get_so_path());
-                    path = hipblaslt_so_path.parent_path();
-                }
 
-                auto pathIfExists
-                    = [](std::filesystem::path p) -> std::optional<std::filesystem::path> {
-                    if(std::filesystem::exists(p))
-                        return p;
-                    return {};
-                };
+#ifndef HIPBLASLT_STATIC_LIB
+                auto hipblaslt_so_path = getHipblasltSoPath();
+
+                if(hipblaslt_so_path.size())
+                    path = std::string{dirname(&hipblaslt_so_path[0])};
+#endif // ifndef HIPBLASLT_STATIC_LIB
 
                 // Find the location of the libraries
-                if(auto p = pathIfExists(path / ".." / "Tensile" / "library"))
-                    path = *p;
-                else if(auto p = pathIfExists(path / "library"))
-                    path = *p;
+                if(TestPath(path + "/../Tensile/library"))
+                    path += "/../Tensile/library";
+                else if(TestPath(path + "library"))
+                    path += "/library";
                 else
-                    path = path / "hipblaslt" / "library";
+                    path += "/hipblaslt/library";
 
-                if(auto p = pathIfExists(path / processor))
-                    path = *p;
+                if(TestPath(path + "/" + processor))
+                    path += "/" + processor;
 
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
@@ -1966,31 +1967,63 @@ namespace
                 }
             }
 
-            // only load modules for the current architecture (contains the processor
-            // string and ends in "co").
-            if(!lazyLoad)
+            // only load modules for the current architecture
+            auto dir = path + "/*" + processor + "*co";
+#if ROCBLASLT_TENSILE_LAZY_LOAD == 0
+            bool no_match = false;
+#ifdef WIN32
+            std::replace(dir.begin(), dir.end(), '/', '\\');
+            WIN32_FIND_DATAA finddata;
+            HANDLE           hfine = FindFirstFileA(dir.c_str(), &finddata);
+            if(hfine != INVALID_HANDLE_VALUE)
             {
-                bool no_match = true;
-                for(const auto& entry : std::filesystem::directory_iterator(path))
+                do
                 {
-                    auto filename = entry.path().filename();
-                    if(filename.string().find(processor) != std::string::npos
-                       && filename.extension().string() == ".co")
-                    {
-                        static_cast<void>(adapter.loadCodeObjectFile(entry.path().string()));
-                        no_match = false;
-                    }
-                }
-                if(no_match)
-                {
-                    // static rocblaslt_internal_ostream& once
-                    //    = rocblaslt_cerr
-                    std::cerr << "\nrocblaslt warning: No paths matched " << path
-                              << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
-                              << std::endl;
-                }
+                    std::string codeObjectFile = path + "\\" + finddata.cFileName;
+                    static_cast<void>(adapter.loadCodeObjectFile(codeObjectFile.c_str()));
+                } while(FindNextFileA(hfine, &finddata));
             }
-
+            else
+            {
+                no_match = true;
+            }
+            FindClose(hfine);
+#else
+            glob_t glob_result{};
+            int    g = glob(dir.c_str(), GLOB_NOSORT, nullptr, &glob_result);
+            if(!g)
+            {
+                for(size_t i = 0; i < glob_result.gl_pathc; ++i)
+                    static_cast<void>(adapter.loadCodeObjectFile(glob_result.gl_pathv[i]));
+            }
+            else if(g == GLOB_NOMATCH)
+            {
+                no_match = true;
+            }
+            else
+            {
+#if 0
+                // clang-format off
+                static std::ostream& once = std::cerr
+                                    << "\nrocblaslt warning: glob(\"" << dir << "\", ...) returned "
+                                    << (g == GLOB_ABORTED ? "GLOB_ABORTED"
+                                                          : g == GLOB_NOSPACE ? "GLOB_NOSPACE"
+                                                                              : "an unknown error")
+                                    << "." << std::endl;
+                // clang-format on
+#endif
+            }
+            globfree(&glob_result);
+#endif
+            if(no_match)
+            {
+                // static rocblaslt_internal_ostream& once
+                //    = rocblaslt_cerr
+                std::cerr << "\nrocblaslt warning: No paths matched " << dir
+                          << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
+                          << std::endl;
+            }
+#endif
             // We initialize a local static variable with a lambda function call to
             // avoid race conditions when multiple threads with different device IDs try
             // to initialize library. This ensures that only one thread initializes
@@ -1998,34 +2031,21 @@ namespace
             // complete.
             static int once = [&] {
                 // Determine library path
-                std::filesystem::path tensileLibPath;
-                if(lazyLoad)
-                {
-                    if(enableYaml)
-                    {
-                        tensileLibPath
-                            = path / (std::string("TensileLibrary_lazy_") + processor + ".yaml");
-                    }
-                    else
-                    {
-                        tensileLibPath
-                            = path / (std::string("TensileLibrary_lazy_") + processor + ".dat");
-                    }
-                }
-                else
-                {
-                    if(enableYaml)
-                    {
-                        tensileLibPath
-                            = path / (std::string("TensileLibrary_") + processor + ".yaml");
-                    }
-                    else
-                    {
-                        tensileLibPath
-                            = path / (std::string("TensileLibrary_") + processor + ".dat");
-                    }
-                }
-                if(!std::filesystem::exists(tensileLibPath))
+                std::string tensileLibPath;
+#if ROCBLASLT_TENSILE_LAZY_LOAD
+#ifdef TENSILE_YAML
+                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".yaml";
+#else
+                tensileLibPath = path + "/TensileLibrary_lazy_" + processor + ".dat";
+#endif
+#else
+#ifdef TENSILE_YAML
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".yaml";
+#else
+                tensileLibPath = path + "/TensileLibrary_" + processor + ".dat";
+#endif
+#endif
+                if(!TestPath(tensileLibPath))
                 {
                     std::cerr << "\nrocblaslt error: Cannot read " << tensileLibPath << ": "
                               << strerror(errno) << std::endl;
@@ -2056,7 +2076,7 @@ namespace
 
                 // Load library
                 auto lib = TensileLite::LoadLibraryFilePreload<TensileLite::ContractionProblemGemm>(
-                    tensileLibPath.string(), std::vector<TensileLite::LazyLoadingInit>{});
+                    tensileLibPath, std::vector<TensileLite::LazyLoadingInit>{});
 #else
                 // Get device prop
                 hipDeviceProp_t prop;
@@ -2065,7 +2085,7 @@ namespace
 
                 // Load library
                 auto lib = TensileLite::LoadLibraryFile<TensileLite::ContractionProblemGemm>(
-                    tensileLibPath.string());
+                    tensileLibPath);
 #endif
                 if(!lib)
                     std::cerr << "\nrocblaslt error: Could not load " << tensileLibPath
@@ -2075,12 +2095,12 @@ namespace
                     using MSL
                         = TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>;
                     m_library        = std::dynamic_pointer_cast<MSL>(lib);
-                    m_tensileLibPath = tensileLibPath.string();
+                    m_tensileLibPath = tensileLibPath;
                 }
                 return 0;
             }();
 
-            static_cast<void>(adapter.initializeLazyLoading(processor, path.string()));
+            static_cast<void>(adapter.initializeLazyLoading(processor, path));
 
             if(!m_library && once != 0)
             {

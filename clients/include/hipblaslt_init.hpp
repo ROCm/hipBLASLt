@@ -36,14 +36,14 @@
 #include <omp.h>
 #include <vector>
 
-enum class ABC_dims
+enum class ABC
 {
     A,
     B,
     C
 };
 
-void hipblaslt_init_device(ABC_dims                 ABC_dims,
+void hipblaslt_init_device(ABC                      abc,
                            hipblaslt_initialization init,
                            bool                     is_nan,
                            void*                    A,

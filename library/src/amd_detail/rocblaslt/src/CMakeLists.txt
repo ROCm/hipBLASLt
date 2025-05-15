@@ -146,6 +146,8 @@ if(NOT Tensile_SKIP_BUILD)
     add_subdirectory(kernels)
 endif()
 
+set(DL_LIB dl)
+
 # rocBLASLt source
 target_sources(
   hipblaslt

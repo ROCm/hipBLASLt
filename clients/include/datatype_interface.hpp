@@ -27,8 +27,6 @@
 #pragma once
 #include <hipblaslt/hipblaslt.h>
 
-#include <map>
-
 union computeTypeInterface
 {
     float         f32;

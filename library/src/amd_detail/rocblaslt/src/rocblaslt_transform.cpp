@@ -32,45 +32,37 @@
 #include <Tensile/hip/HipUtils.hpp>
 #include <functional>
 #include <hipblaslt/hipblaslt-types.h>
-
-#include <filesystem>
+#include <libgen.h>
 #include <map>
 #include <memory>
-#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
 
 namespace
 {
-    std::filesystem::path transformCodeObjectPath()
+    std::string transformCodeObjectPath()
     {
-#ifdef _WIN32
-        constexpr char DEFAULT_CO_PATH[]
-            = "C:\\opt\\rocm\\bin\\hipblaslt\\library\\hipblasltTransform.hsaco";
-#else
         constexpr char DEFAULT_CO_PATH[]
             = "/opt/rocm/lib/hipblaslt/library/hipblasltTransform.hsaco";
-#endif
+        auto        soPath = rocblaslt_internal_get_so_path("hipblaslt");
+        std::string libPath(dirname(&soPath[0]));
 
-        std::string           soPath = rocblaslt_internal_get_so_path();
-        std::filesystem::path libPath(std::filesystem::path(soPath).parent_path());
+        if(rocblaslt_internal_test_path(libPath + "/../Tensile/library"))
+            libPath += "/../Tensile/library";
+        else if(rocblaslt_internal_test_path(libPath + "library"))
+            libPath += "/library";
+        else
+            libPath += "/hipblaslt/library";
 
-        auto pathIfExists = [](std::filesystem::path p) -> std::optional<std::filesystem::path> {
-            if(std::filesystem::exists(p))
-                return p;
-            return {};
-        };
+        libPath += "/hipblasltTransform.hsaco";
 
-        if(auto p
-           = pathIfExists(libPath / ".." / "Tensile" / "library" / "hipblasltTransform.hsaco"))
-            return *p;
-        if(auto p = pathIfExists(libPath / "library" / "hipblasltTransform.hsaco"))
-            return *p;
-        if(auto p = pathIfExists(libPath / "hipblaslt" / "library" / "hipblasltTransform.hsaco"))
-            return *p;
+        if(rocblaslt_internal_test_path(libPath))
+        {
+            return libPath;
+        }
 
-        return std::filesystem::path(DEFAULT_CO_PATH);
+        return DEFAULT_CO_PATH;
     }
 
     TensileLite::hip::SolutionAdapter& transformAdapter()
@@ -85,7 +77,7 @@ namespace
                 adapters.emplace_back(new TensileLite::hip::SolutionAdapter);
             }
             auto              coPath   = transformCodeObjectPath();
-            const std::string coFolder = coPath.parent_path().string();
+            const std::string coFolder = dirname(&coPath[0]);
             try
             {
                 for(auto& adp : adapters)
@@ -101,7 +93,7 @@ namespace
             return adapters;
         }();
 
-        int deviceId{};
+        int        deviceId{};
         HIP_CHECK_EXC(hipGetDevice(&deviceId));
         return *adapter.at(deviceId);
     }
@@ -145,10 +137,10 @@ namespace
                                      hipStream_t        stream,
                                      const std::string& kernelName)
     {
-        constexpr auto TileM        = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
-        constexpr auto TileN        = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
-        const auto     numWg        = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
-        constexpr auto numWorkitems = NumThreadsM * NumThreadsN;
+        constexpr auto           TileM = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
+        constexpr auto           TileN = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
+        const auto               numWg = (m / TileM + !!(m % TileM)) * (n / TileN + !!(n % TileN));
+        constexpr auto           numWorkitems = NumThreadsM * NumThreadsN;
         TensileLite::KernelArguments kArgs(false);
 
         if(scalarInDevice)
@@ -200,16 +192,16 @@ namespace
             kArgs.appendAligned("transB", transB);
         }
 
-        constexpr auto                NUM_WORKITEMS{NumThreadsM * NumThreadsN};
+        constexpr auto            NUM_WORKITEMS{NumThreadsM * NumThreadsN};
         TensileLite::KernelInvocation invocation{kernelName,
-                                                 "hipblasltTransform.hsaco",
-                                                 false,
-                                                 {NUM_WORKITEMS, 1, 1},
-                                                 {numWg, 1, batchSize},
-                                                 {numWg * NUM_WORKITEMS, 1, batchSize},
-                                                 0,
-                                                 kArgs};
-        auto&                         adapter = transformAdapter();
+                                             "hipblasltTransform.hsaco",
+                                             false,
+                                             {NUM_WORKITEMS, 1, 1},
+                                             {numWg, 1, batchSize},
+                                             {numWg * NUM_WORKITEMS, 1, batchSize},
+                                             0,
+                                             kArgs};
+        auto&                     adapter = transformAdapter();
         return adapter.launchKernel(invocation, stream, nullptr, nullptr);
     }
 

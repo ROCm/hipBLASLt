@@ -2285,9 +2285,7 @@ namespace TensileLite
         gsuTemp++;
 
         name += "_PostGSU"
-                + std::to_string(
-                    std::min(static_cast<decltype(sizeMapping.globalSplitUPGR)>(gsuTemp),
-                             sizeMapping.globalSplitUPGR));
+                + std::to_string(std::min((unsigned long)gsuTemp, sizeMapping.globalSplitUPGR));
 
         name += "_VW" + std::to_string(vw);
 
