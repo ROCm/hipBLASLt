@@ -22,7 +22,7 @@
 
 from rocisa import countInstruction, countGlobalRead, countLocalWrite, \
                    countDSStoreB128, countVMovB32
-from rocisa.base import Item
+from rocisa.base import Item, DummyItem
 from rocisa.code import Module
 from rocisa.container import DSModifiers, HolderContainer, replaceHolder
 
@@ -852,7 +852,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                     imod.add(additionalIndexList[gapIndex])
                     additionalIndexList.pop(gapIndex)
                 elif gapIndex < itemsLWToSchedIndex or (not item):
-                    pass
+                    imod.add(DummyItem())
                 else:
                     imod.add(item)
                 # schedule global instruction that need to be scheduled later
@@ -905,7 +905,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
                         skip = 0
                 localwriteCnt += 1
                 if gapIndex < itemsLWToSchedIndex or (not item):
-                    pass
+                    imodNGLL.add(DummyItem())
                 else:
                     imodNGLL.add(deepcopy(item))
                 writer.codes.perIterLocalWrite[u].add(imod)
