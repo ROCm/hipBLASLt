@@ -62,6 +62,7 @@ from Tensile.KernelWriterAssembly import KernelWriterAssembly
 from Tensile.KernelWriterBase import (
     KERNEL_HELPER_FILENAME_CPP,
     KERNEL_HELPER_FILENAME_H,
+    KernelWriterBase
 )
 from Tensile.SolutionLibrary import MasterSolutionLibrary
 from Tensile.SolutionStructs import Solution
@@ -71,7 +72,7 @@ from Tensile.Toolchain.Validators import (
     ToolchainDefaults,
     validateToolchain,
 )
-from Tensile.Toolchain.Component import Assembler
+from Tensile.Toolchain.Component import Assembler, Compiler
 from Tensile.Utilities.Decorators.Profile import profile
 from Tensile.Utilities.Decorators.Timing import timing
 
@@ -186,6 +187,94 @@ def writeAssembly(asmPath: Union[Path, str], result: KernelCodeGenResult):
     return path, isa, wfsize
 
 
+def writeHelper(outputPath: Path, kernelHelperObj: KernelWriterBase, khoNames: List[str]) -> str:
+    """
+    Write kernel helper source and header files.
+
+    Args:
+        outputPath: Base path where files will be written
+        kernelHelperObj: Kernel helper object with source and header content
+        khoNames: List of all kernel helper object names for dependency resolution
+
+    Returns:
+        The path to the generated source file
+    """
+    name = kernelHelperObj.getKernelName()
+    sourceFilename = f"{name}.cpp"
+    headerFilename = f"{name}.h"
+    kernelsDir = Path(outputPath) / "Kernels"
+
+    if not kernelsDir.exists():
+        kernelsDir.mkdir(parents=True, exist_ok=True)
+
+    kernelSourcePath = str(kernelsDir / sourceFilename)
+    kernelHeaderPath = str(kernelsDir / headerFilename)
+
+    includes = _getRequiredIncludes(name, kernelHelperObj, khoNames)
+
+    with open(kernelHeaderPath, "w", encoding="utf-8") as kernelHeaderFile, \
+         open(kernelSourcePath, "w", encoding="utf-8") as kernelSourceFile:
+
+        for file in (kernelSourceFile, kernelHeaderFile):
+            file.write(CHeader)
+
+        kernelSourceFile.write(f"#include \"{name}.h\"\n")
+
+        kernelHeaderFile.write("#pragma once\n")
+        kernelHeaderFile.write("#include <hip/hip_runtime.h>\n")
+        kernelHeaderFile.write("#include <hip/hip_ext.h>\n\n")
+        kernelHeaderFile.write("#include \"KernelHeader.h\"\n\n")
+
+        for include in includes:
+            kernelHeaderFile.write(f"#include \"Kernels/{include}.h\"\n")
+
+        err, src = kernelHelperObj.getSourceFileString()
+        if err:
+            printWarning(f"Invalid kernel: {name} (error code {err})")
+
+        kernelSourceFile.write(src)
+        kernelHeaderFile.write(kernelHelperObj.getHeaderFileString())
+
+    return kernelSourcePath
+
+
+def _getRequiredIncludes(name: str, kernelHelperObj: KernelWriterBase, khoNames: List[str]) -> set:
+    """
+    Determine the required includes for a kernel helper.
+
+    Args:
+        name: Kernel helper name
+        khoNames: List of all kernel helper object names
+        kernelHelperObj: The kernel helper object to analyze
+
+    Returns:
+        List of kernel helper names to include
+    """
+    includes = set()
+
+    # Add enum includes for non-enum helpers
+    if "Enum" not in name:
+        includes.update(n for n in khoNames if "Enum" in n)
+
+        # Include gradient activation enums for gradient helpers
+        hasGradient = hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient"
+        if hasGradient:
+            includes.update(n for n in khoNames if "TensileGradientActivation_" in n)
+
+    # Include activation helpers
+    hasActivation = ("TensileActivation_S" in name or "TensileActivation_I" in name)
+    if not hasActivation and "Enum" not in name:
+        includes.update(n for n in khoNames if "TensileActivation_" in n)
+
+    # Include gradient activation helpers
+    hasGradientActivation = "TensileGradientActivation_S" in name
+    if not hasGradientActivation and "Enum" not in name:
+        if hasattr(kernelHelperObj, "actGradientPrefix") and kernelHelperObj.actGradientPrefix == "Gradient":
+            includes.update(n for n in khoNames if "TensileGradientActivation_" in n)
+
+    return includes
+
+
 def writeHelpers(
     outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H
 ):
@@ -241,6 +330,8 @@ def writeSolutionsAndKernels(
     objectTmpPath = ensurePath(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
+    kernelsIncludePath = outputPath / "Kernels"
+    kernelsIncludePath.mkdir(parents=True, exist_ok=True)
 
     asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
 
@@ -287,8 +378,8 @@ def writeSolutionsAndKernels(
         multiArg=False,
     )
 
-    writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-    srcKernelFile = Path(outputPath) / "Kernels.cpp"
+    khoNames = [kho.getKernelName() for kho in kernelHelperObjs]
+    srcFiles = [writeHelper(outputPath, helper, khoNames) for helper in kernelHelperObjs]
 
     if not generateSourcesAndExit:
         codeObjectFiles += buildAssemblyCodeObjectFiles(
@@ -300,15 +391,15 @@ def writeSolutionsAndKernels(
             assemblyTmpPath,
             compress,
         )
-        buildSourceCodeObjectFiles(
-            srcToolchain.compiler,
-            srcToolchain.bundler,
-            destLibPath,
-            objectTmpPath,
-            outputPath,
-            srcKernelFile,
-            cmdlineArchs,
+        compile = functools.partial(srcToolchain.Compiler.__call__, str(kernelsIncludePath))
+        ret = ParallelMap2(
+            [(arch, f, str(Path(f).with_suffix("")) + f"{arch}") for f in srcFiles for arch in cmdlineArchs],
+            "Building kernel helpers",
+            return_as="list",
+            multiArg=False,
         )
+        for arch in cmdlineArchs:
+            srcToolchain.compiler.link([str(Path(s + "_{arch}").with_suffix("o")) for s in srcFiles], f"Kernels_{arch}.hsaco")
 
     return codeObjectFiles, numKernels
 
@@ -334,6 +425,10 @@ def writeSolutionsAndKernelsTCL(
     objectTmpPath = ensurePath(
         buildTmpPath / "code_object_tmp"
     )  # Temp path for HSA code object files (.hsaco)
+    kernelsIncludePath = outputPath / "Kernels"
+    kernelsIncludePath.mkdir(parents=True, exist_ok=True)
+    khoNames = [kho.getKernelName() for kho in kernelHelperObjs]
+    srcFiles = [writeHelper(outputPath, helper, khoNames) for helper in kernelHelperObjs]
 
     asmKernels = [k for k in kernels if k["KernelLanguage"] == "Assembly"]
 
@@ -371,27 +466,19 @@ def writeSolutionsAndKernelsTCL(
         multiArg=False,
         return_as="list"
     )
-    buildAssemblyCodeObjectFiles(
-        asmToolchain.linker,
-        asmToolchain.bundler,
-        globalParameters["ROCmLdPath"],
-        asmKernels,
-        destLibPath,
-        assemblyTmpPath,
-        compress,
+    khoNames = [kho.getKernelName() for kho in kernelHelperObjs]
+    srcFiles = [writeHelper(outputPath, helper, khoNames) for helper in kernelHelperObjs]
+    unaryCompile = functools.partial(srcToolchain.compiler.compile, str(kernelsIncludePath))
+    state = [(arch, f, str(Path(f + "_{arch}").with_suffix(".o"))) for f in srcFiles for arch in cmdlineArchs]
+    ret = ParallelMap2(
+        unaryCompile,
+        state,
+        "Building kernel helpers",
+        return_as="list",
+        multiArg=False,
     )
-
-    writeHelpers(outputPath, kernelHelperObjs, KERNEL_HELPER_FILENAME_CPP, KERNEL_HELPER_FILENAME_H)
-    srcKernelFile = Path(outputPath) / "Kernels.cpp"
-    buildSourceCodeObjectFiles(
-        srcToolchain.compiler,
-        srcToolchain.bundler,
-        destLibPath,
-        objectTmpPath,
-        outputPath,
-        srcKernelFile,
-        cmdlineArchs,
-    )
+    for arch in cmdlineArchs:
+        srcToolchain.compiler.link([str(Path(s + "_{arch}").with_suffix(".o")) for s in srcFiles], f"Kernels_{arch}.hsaco")
 
     return len(uniqueAsmKernels)
 
@@ -581,9 +668,10 @@ def run():
     arguments = parseArguments()
     setVerbosity(arguments["PrintLevel"])
     outputPath = Path(ensurePath(os.path.abspath(arguments["OutputPath"])))
-    cxxCompiler, _, offloadBundler, _, _ = validateToolchain(
+    cxxCompiler, _, ldLld, offloadBundler, _, _ = validateToolchain(
         arguments["CxxCompiler"],
         arguments["CCompiler"],
+        ToolchainDefaults.LD_LLD,
         arguments["OffloadBundler"],
         arguments["Assembler"],
         ToolchainDefaults.HIP_CONFIG,
@@ -608,6 +696,7 @@ def run():
     srcToolchain = makeSourceToolchain(
         cxxCompiler,
         offloadBundler,
+        ldLld,
         arguments["AsanBuild"],
         arguments["BuildIdKind"],
         save_temps=False
@@ -662,7 +751,6 @@ def run():
     )
     stop_glds = timer()
     print(f"Time to load yaml files (s): {(stop_glds-start_glds):3.2f}")
-
 
     kernels = generateKernelObjectsFromSolutions(solutions)
     kernelHelperObjs = generateKernelHelperObjects(kernels, str(asmToolchain.assembler.path), isaInfoMap)

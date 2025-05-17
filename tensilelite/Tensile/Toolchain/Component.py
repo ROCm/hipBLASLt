@@ -43,7 +43,7 @@ def _invoke(args: List[str], desc: str=""):
   Return:
       subprocess output
   """
-  #print1(f"{desc}: {' '.join(args)}")
+  print(f"{desc}: {' '.join(args)}")
   try:
       out = check_output(args, stderr=STDOUT)
   except CalledProcessError as err:
@@ -87,7 +87,10 @@ def get_rocm_version() -> str:
     Return:
         ROCm version string
     """
-    return _getVersion(ToolchainDefaults.HIP_CONFIG, "--version", r'(.+)')
+    try:
+        return _getVersion(ToolchainDefaults.HIP_CONFIG, "--version", r'(.+)')
+    except:
+        return None
 
 
 class Component:
@@ -204,29 +207,33 @@ class Compiler(Component):
         Invokes the compiler on the provided arguments
     """
 
-    def __init__(self, compiler_path: Path, build_id_kind: str, asan_build: bool=False, save_temps: bool=False):
+    def __init__(self, compiler_path: Path, ldlld_path: Path, build_id_kind: str, asan_build: bool=False, save_temps: bool=False):
         """Constructs and instance of a Compiler."""
         super(Compiler, self).__init__(compiler_path)
 
-        self.default_args = [
+        self.default_args_hip = [
             *split(environ.get("Tensile_CXX_COMPILER_LAUNCHER", "")),
              compiler_path,
-            "-D__HIP_HCC_COMPAT_MODE__=1",
-            "--offload-device-only",
-            "-x", "hip", "-O3",
-            "-Xoffload-linker", f"--build-id={build_id_kind}",
-            "-std=c++17",
+             "-x", "hip", "-D__HIP_HCC_COMPAT_MODE__", "-fgpu-rdc", "-O3", "-std=c++17", "--offload-device-only", "-emit-llvm"
+        ]
+        self.default_args_cc1 = [
+            *split(environ.get("Tensile_CXX_COMPILER_LAUNCHER", "")),
+             compiler_path,
+            "-cc1", "-triple", "amdgcn-amd-amdhsa", "-fcuda-is-device", "-fgpu-rdc", "-O3", "-emit-obj"
         ]
 
+        self.default_args_ldlld = [str(ldlld_path), "-shared"]
+
         if asan_build:
-            self.default_args.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
+            self.default_args_hip.extend(["-fsanitize=address", "-shared-libasan", "-fuse-ld=lld"])
         if save_temps:
-            self.default_args.append("--save-temps")
-        if os_name == "nt":                                                    # should we use fPIIC on all arches?
-            self.default_args.extend(["-fms-extensions", "-fms-compatibility", "-fPIC", "-Wno-deprecated-declarations"])
+            self.default_args_hip.append("--save-temps")
 
+    def compile(self, include_path: str, args: tuple):
+        """Helper to dispatch to call operator"""
+        return self(include_path, *args)
 
-    def __call__(self, include_path: str, target_list: List[str], srcPath: str, destPath: str):
+    def __call__(self, include_path: str, target: str, srcPath: str, destPath: str):
         """Compiles a source file into an object file.
 
         Args:
@@ -237,11 +244,37 @@ class Compiler(Component):
         Raises:
             RuntimeError: If the compilation command fails.
         """
-        archFlags = [f"--offload-arch={gfx}" for gfx in target_list]
+
         args = [
-            *(self.default_args), "-I", include_path, *archFlags, srcPath, "-c", "-o", destPath
+            *(self.default_args_hip), "-I", f"{include_path}/..", f"--offload-arch={target}", "-c", srcPath, "-o", f"{destPath}.bc"
         ]
-        return _invoke(args, f"Compiling HIP source kernels into objects (.cpp -> .o)")
+
+        _invoke(args, f"Compiling HIP source kernels into byte code (.cpp -> .bc)")
+
+        args = [
+            *(self.default_args_cc1), "-target-cpu", target, "-o", destPath, "-x", "ir", f"{destPath}.bc"
+        ]
+
+        return _invoke(args, f"Compiling HIP byte code into objects (.bc -> .o)")
+
+    def link(self, srcPaths: List[str], destPath: str):
+        """Links object files into a code object file.
+
+        Args:
+            srcPaths: A list of paths to object files.
+            destPath: A destination path for the generated code object file.
+        Raises:
+            RuntimeError: If linker invocation fails.
+        """
+        if os_name == "nt":
+            # Use args file on Windows b/c the command may exceed the limit of 8191 characters
+            with open(Path.cwd() / "clang_args.txt", "wt") as file:
+                file.write(" ".join(srcPaths).replace('\\', '\\\\'))
+            args = [*(self.default_args_ldlld), "-o", destPath, "@clang_args.txt"]
+        else:
+            args = [*(self.default_args_ldlld), *srcPaths, "-o", destPath]
+        return _invoke(args, "Linking kernel helper objects into hsa code object (*.o -> .hsaco)")
+
 
 
 class Bundler(Component):
@@ -365,7 +398,6 @@ class Linker(Component):
         else:
             args = [*(self.default_args), *srcPaths, "-o", destPath]
         return _invoke(args, "Linking assembly object files into code object (*.o -> .co)")
-
 
 # class DeviceEnumerator(Component):
 #     """

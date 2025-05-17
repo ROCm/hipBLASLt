@@ -110,6 +110,7 @@ def _posixSearchPaths() -> List[Path]:
 class ToolchainDefaults(NamedTuple):
     CXX_COMPILER = osSelect(linux="amdclang++", windows="clang++.exe")
     C_COMPILER = osSelect(linux="amdclang", windows="clang.exe")
+    LD_LLD = osSelect(linux="ld.lld", windows="ld.lld")
     OFFLOAD_BUNDLER = osSelect(linux="clang-offload-bundler", windows="clang-offload-bundler.exe")
     DEVICE_ENUMERATOR = osSelect(linux="rocm_agent_enumerator" if isRhel8() else "amdgpu-arch", windows="hipinfo")
     ASSEMBLER = osSelect(linux="amdclang++", windows="clang++.exe")
@@ -135,6 +136,17 @@ def supportedCCompiler(compiler: str) -> bool:
     """
     return _supportedComponent(compiler, ["amdclang", "clang"])
 
+def supportedLdLld(ldlld: str) -> bool:
+    """
+    Determine if ld.lld is supported by Tensile.
+
+    Args:
+        compiler: The name of a compiler to test for support.
+
+    Return:
+        If supported True; otherwise, False.
+    """
+    return _supportedComponent(ldlld, ["ld.lld"])
 
 def supportedCxxCompiler(compiler: str) -> bool:
     """
@@ -217,6 +229,7 @@ def _validateExecutable(file: str, searchPaths: List[Path]) -> str:
     if not any((
         supportedCxxCompiler(file),
         supportedCCompiler(file),
+        supportedLdLld(file),
         supportedOffloadBundler(file),
         supportedHip(file),
         supportedDeviceEnumerator(file)

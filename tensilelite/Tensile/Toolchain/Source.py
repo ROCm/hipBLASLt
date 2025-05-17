@@ -38,8 +38,8 @@ class SourceToolchain(NamedTuple):
    bundler: Bundler
 
 
-def makeSourceToolchain(compiler_path, bundler_path, asan_build=False, build_id_kind="sha1", save_temps=False):
-   compiler = Compiler(compiler_path, build_id_kind, asan_build, save_temps)
+def makeSourceToolchain(compiler_path, bundler_path, ldlld_path, asan_build=False, build_id_kind="sha1", save_temps=False):
+   compiler = Compiler(compiler_path, ldlld_path, build_id_kind, asan_build, save_temps)
    bundler = Bundler(bundler_path)
    return SourceToolchain(compiler, bundler)
 
