@@ -490,14 +490,6 @@ def Ductile(userArgs):
 
     executeStepsInConfig(config, outputPath, asmToolchain, srcToolchain, isaInfoMap, cCompiler, debugConfig, device_id)
 
-def TensileConfigPath(*args):
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)
-
-
-def TensileTestPath(*args):
-    return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Tests", *args)
-
-
 # installed "tensile" command
 def main():
     Ductile(sys.argv[1:])

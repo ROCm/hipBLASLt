@@ -89,9 +89,10 @@ class GeneticAlgorithm:
                 self.stats[k] = [v]
         if self.period and 'f_avg' in self.stats and len(self.stats["f_avg"]) > self.period:
             w = slice(-self.period - 1, -1)
-            ma = np.mean(self.stats["f_avg"][w])
-            if (ma + self.tol) >= self.stats["f_avg"][-1]:
-                raise StopIteration(f"f_avg did not increase for the last {self.period} generations.")
+            ma_fa = np.mean(self.stats["f_avg"][w])
+            ma_fm = np.mean(self.stats["f_max"][w])
+            if ((ma_fa + self.tol) >= self.stats["f_avg"][-1]) and ((ma_fm + self.tol) >= self.stats["f_max"][-1]):
+                raise StopIteration(f"Termination criteria reached.")
             
         self.pop_size = self.decay(self.pop_size) if hasattr(self, "decay") else self.pop_size
 
@@ -127,4 +128,4 @@ class GeneticAlgorithm:
         return X, best.F
 
     def __repr__(self):
-        return f"GeneticAlgorithm(pop_size={self.pop_size}, n_gen={self.n_gen})\n{self.mating}\n{self.space}"
+        return f"GeneticAlgorithm(pop_size={self.pop_size}, n_gen={self.n_gen}, period={self.period})\n{self.mating}\n{self.space}"

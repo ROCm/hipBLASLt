@@ -314,19 +314,6 @@ def _benchmarkProblemType(ductileConfig, problemTypeConfig, problemSizeGroupConf
             cols = [c for c in df.columns.tolist() if c.lstrip().startswith("Cijk_")]
             assert len(cols) == len(solutions)
             
-            # M, N, K = benchmarkStep.problemSizes.problems[0].sizes[0], benchmarkStep.problemSizes.problems[0].sizes[1], benchmarkStep.problemSizes.problems[0].sizes[3]
-            # granularity = lambda M, N, MT0, MT1, GSU: (math.ceil(M/MT0) * math.ceil(N/MT1) * GSU) / 304
-            
-            
-            # MTD = 128 + 128 
-            # weights = []
-            # C = math.e - 1
-            # for sol in solutions:
-            #     g = granularity(M, N, sol["MacroTile0"], sol["MacroTile1"], sol["GlobalSplitU"])
-            #     # p = math.log(1 / (1 + abs(1-g)) + C) * math.log((sol["MacroTile0"] + sol["MacroTile1"]) / MTD + C)                
-            #     p = math.log(1 / (1 + abs(1-g)) + C) 
-            #     weights.append(p)
-            # weights = np.array(weights)
             n_sizes = df.shape[0]
             scores = df[cols].values.astype(np.float32)
             if n_sizes > 1:

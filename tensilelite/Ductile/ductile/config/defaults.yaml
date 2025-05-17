@@ -1,8 +1,8 @@
 algorithm: GA
 pop_size: 512
-n_gen: 20
+n_gen: 50
 tol: 0.0001
-period: 0 # 0 disables it
+period: 5 # 0 disables it
 max_iters: 100
 seed: 0
 verbose: 1
