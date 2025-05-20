@@ -1098,7 +1098,7 @@
     WorkGroup: [16, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 32
@@ -1365,7 +1365,7 @@
     WorkGroup: [16, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64

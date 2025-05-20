@@ -346,7 +346,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -631,7 +631,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -916,7 +916,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -1201,7 +1201,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -1486,7 +1486,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -1771,7 +1771,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -2056,7 +2056,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -2341,7 +2341,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -2626,7 +2626,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -2911,7 +2911,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -3196,7 +3196,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -3481,7 +3481,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -3766,7 +3766,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -4051,7 +4051,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -4336,7 +4336,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -4621,7 +4621,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -4906,7 +4906,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -5191,7 +5191,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -5476,7 +5476,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -5761,7 +5761,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -6046,7 +6046,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -6331,7 +6331,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -6616,7 +6616,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -6901,7 +6901,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -7186,7 +7186,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -7471,7 +7471,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -7756,7 +7756,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -8041,7 +8041,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -8326,7 +8326,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -8611,7 +8611,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -8896,7 +8896,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -9181,7 +9181,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -9466,7 +9466,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -9751,7 +9751,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -10036,7 +10036,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -10321,7 +10321,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -10606,7 +10606,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -10891,7 +10891,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -11176,7 +11176,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -11461,7 +11461,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -11746,7 +11746,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -12031,7 +12031,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -12316,7 +12316,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -12601,7 +12601,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -12886,7 +12886,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -13171,7 +13171,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -13456,7 +13456,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -13741,7 +13741,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -14026,7 +14026,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -14311,7 +14311,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -14596,7 +14596,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -14881,7 +14881,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -15166,7 +15166,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -15451,7 +15451,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -15736,7 +15736,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -16021,7 +16021,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -16306,7 +16306,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -16591,7 +16591,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -16876,7 +16876,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -17161,7 +17161,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -17446,7 +17446,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -17731,7 +17731,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -18016,7 +18016,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -18301,7 +18301,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -18586,7 +18586,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -18871,7 +18871,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -19156,7 +19156,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -19441,7 +19441,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -19726,7 +19726,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -20011,7 +20011,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -20296,7 +20296,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -20581,7 +20581,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -20866,7 +20866,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -21160,7 +21160,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -21455,7 +21455,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -21750,7 +21750,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -22045,7 +22045,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -22340,7 +22340,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -22635,7 +22635,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -22930,7 +22930,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -23225,7 +23225,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -23520,7 +23520,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -23815,7 +23815,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -24110,7 +24110,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -24405,7 +24405,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -24700,7 +24700,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -24995,7 +24995,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -25290,7 +25290,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -25585,7 +25585,7 @@
     WorkGroup: [32, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 1024
@@ -25880,7 +25880,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -26175,7 +26175,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -26470,7 +26470,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -26765,7 +26765,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -27060,7 +27060,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -27355,7 +27355,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -27650,7 +27650,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -27946,7 +27946,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -28241,7 +28241,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -28536,7 +28536,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -28831,7 +28831,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -29126,7 +29126,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -29421,7 +29421,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -29716,7 +29716,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -30011,7 +30011,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -30306,7 +30306,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -30601,7 +30601,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -30896,7 +30896,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -31191,7 +31191,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -31486,7 +31486,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -31781,7 +31781,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -32077,7 +32077,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -32372,7 +32372,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -32668,7 +32668,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -32963,7 +32963,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -33259,7 +33259,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -33554,7 +33554,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -33849,7 +33849,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -34144,7 +34144,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -34439,7 +34439,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -34734,7 +34734,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -35029,7 +35029,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -35325,7 +35325,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -35621,7 +35621,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -35916,7 +35916,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -36211,7 +36211,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -36507,7 +36507,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -36802,7 +36802,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -37097,7 +37097,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -37393,7 +37393,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -37688,7 +37688,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -37983,7 +37983,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -38279,7 +38279,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -38574,7 +38574,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -38869,7 +38869,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -39164,7 +39164,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -39460,7 +39460,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -39755,7 +39755,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -40050,7 +40050,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -40345,7 +40345,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -40640,7 +40640,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -40935,7 +40935,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -41230,7 +41230,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -41525,7 +41525,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -41821,7 +41821,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -42117,7 +42117,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -42412,7 +42412,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -42707,7 +42707,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -43002,7 +43002,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -43298,7 +43298,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -43593,7 +43593,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -43888,7 +43888,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -44183,7 +44183,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -44479,7 +44479,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -44774,7 +44774,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -45070,7 +45070,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -45365,7 +45365,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -45660,7 +45660,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -45955,7 +45955,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -46250,7 +46250,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -46545,7 +46545,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -46840,7 +46840,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -47135,7 +47135,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -47430,7 +47430,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -47725,7 +47725,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -48020,7 +48020,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -48317,7 +48317,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -48614,7 +48614,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -48911,7 +48911,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -49208,7 +49208,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -49505,7 +49505,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -49802,7 +49802,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -50099,7 +50099,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -50396,7 +50396,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -50693,7 +50693,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -50990,7 +50990,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -51287,7 +51287,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -51584,7 +51584,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -51881,7 +51881,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -52178,7 +52178,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -52475,7 +52475,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -52772,7 +52772,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -53069,7 +53069,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -53366,7 +53366,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -53663,7 +53663,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -53960,7 +53960,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -54257,7 +54257,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -54554,7 +54554,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -54851,7 +54851,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -55148,7 +55148,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -55445,7 +55445,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -55742,7 +55742,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -56039,7 +56039,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -56336,7 +56336,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -56633,7 +56633,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -56930,7 +56930,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -57227,7 +57227,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -57524,7 +57524,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -57821,7 +57821,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -58118,7 +58118,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -58415,7 +58415,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -58712,7 +58712,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -59009,7 +59009,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -59306,7 +59306,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -59603,7 +59603,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -59900,7 +59900,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -60197,7 +60197,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -60494,7 +60494,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -60791,7 +60791,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -61088,7 +61088,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -61385,7 +61385,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -61682,7 +61682,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -61979,7 +61979,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -62276,7 +62276,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -62573,7 +62573,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -62870,7 +62870,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -63167,7 +63167,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -63464,7 +63464,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -63761,7 +63761,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -64058,7 +64058,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -64355,7 +64355,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -64652,7 +64652,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -64949,7 +64949,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -65246,7 +65246,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -65543,7 +65543,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -65840,7 +65840,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -66137,7 +66137,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -66434,7 +66434,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -66731,7 +66731,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -67029,7 +67029,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -67326,7 +67326,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -67623,7 +67623,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -67920,7 +67920,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -68217,7 +68217,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 512
@@ -68514,7 +68514,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -68811,7 +68811,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -69108,7 +69108,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -69405,7 +69405,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -69702,7 +69702,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -69999,7 +69999,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -70296,7 +70296,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -70593,7 +70593,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -70890,7 +70890,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -71187,7 +71187,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -71484,7 +71484,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -71781,7 +71781,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -72078,7 +72078,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -72375,7 +72375,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -72672,7 +72672,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -72969,7 +72969,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -73266,7 +73266,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -73563,7 +73563,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -73860,7 +73860,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -74157,7 +74157,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -74454,7 +74454,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -74751,7 +74751,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -75049,7 +75049,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -75347,7 +75347,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -75645,7 +75645,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -75942,7 +75942,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -76240,7 +76240,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -76538,7 +76538,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -76836,7 +76836,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -77134,7 +77134,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -77431,7 +77431,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -77728,7 +77728,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -78025,7 +78025,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -78322,7 +78322,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -78619,7 +78619,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -78917,7 +78917,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -79214,7 +79214,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -79511,7 +79511,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -79808,7 +79808,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -80105,7 +80105,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -80402,7 +80402,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -80699,7 +80699,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -80996,7 +80996,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -81293,7 +81293,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -81590,7 +81590,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -81887,7 +81887,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -82185,7 +82185,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -82482,7 +82482,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -82779,7 +82779,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -83076,7 +83076,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -83373,7 +83373,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -83670,7 +83670,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -83967,7 +83967,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -84264,7 +84264,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -84561,7 +84561,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -84858,7 +84858,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -85155,7 +85155,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -85452,7 +85452,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -85749,7 +85749,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -86046,7 +86046,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -86343,7 +86343,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -86640,7 +86640,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -86937,7 +86937,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -87234,7 +87234,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -87531,7 +87531,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -87828,7 +87828,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -88126,7 +88126,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -88423,7 +88423,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -88720,7 +88720,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -89017,7 +89017,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -89314,7 +89314,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -89612,7 +89612,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -89910,7 +89910,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -90208,7 +90208,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -90505,7 +90505,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -90802,7 +90802,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -91099,7 +91099,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -91397,7 +91397,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -91694,7 +91694,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -91991,7 +91991,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -92288,7 +92288,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -92585,7 +92585,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -92882,7 +92882,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -93179,7 +93179,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -93476,7 +93476,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -93773,7 +93773,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -94070,7 +94070,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -94367,7 +94367,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -94664,7 +94664,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -94961,7 +94961,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -95258,7 +95258,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -95555,7 +95555,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -95852,7 +95852,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -96149,7 +96149,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -96446,7 +96446,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -96743,7 +96743,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -97040,7 +97040,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -97337,7 +97337,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -97634,7 +97634,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -97931,7 +97931,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -98228,7 +98228,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -98525,7 +98525,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -98823,7 +98823,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -99121,7 +99121,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -99418,7 +99418,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -99715,7 +99715,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -100012,7 +100012,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -100309,7 +100309,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -100606,7 +100606,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -100903,7 +100903,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -101200,7 +101200,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -101497,7 +101497,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -101794,7 +101794,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -102091,7 +102091,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -102388,7 +102388,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -102685,7 +102685,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -102982,7 +102982,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -103279,7 +103279,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -103576,7 +103576,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -103873,7 +103873,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -104170,7 +104170,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -104467,7 +104467,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -104764,7 +104764,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -105061,7 +105061,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -105358,7 +105358,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -105655,7 +105655,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -105952,7 +105952,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -106249,7 +106249,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -106546,7 +106546,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -106843,7 +106843,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -107140,7 +107140,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -107437,7 +107437,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -107734,7 +107734,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -108031,7 +108031,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -108329,7 +108329,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -108626,7 +108626,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -108923,7 +108923,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -109220,7 +109220,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -109517,7 +109517,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -109814,7 +109814,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -110111,7 +110111,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -110408,7 +110408,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -110705,7 +110705,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -111002,7 +111002,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -111299,7 +111299,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -111596,7 +111596,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -111893,7 +111893,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -112190,7 +112190,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -112487,7 +112487,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -112784,7 +112784,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -113081,7 +113081,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -113379,7 +113379,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -113676,7 +113676,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -113973,7 +113973,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -114270,7 +114270,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -114567,7 +114567,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -114864,7 +114864,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -115161,7 +115161,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -115458,7 +115458,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -115755,7 +115755,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -116052,7 +116052,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -116349,7 +116349,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -116646,7 +116646,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -116943,7 +116943,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -117240,7 +117240,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -117537,7 +117537,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -117834,7 +117834,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -118131,7 +118131,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -118428,7 +118428,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -118725,7 +118725,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -119022,7 +119022,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -119319,7 +119319,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -119616,7 +119616,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -119914,7 +119914,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -120211,7 +120211,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -120509,7 +120509,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -120807,7 +120807,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -121104,7 +121104,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 256
@@ -121401,7 +121401,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -121698,7 +121698,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -121995,7 +121995,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -122293,7 +122293,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -122590,7 +122590,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -122887,7 +122887,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -123184,7 +123184,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -123481,7 +123481,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -123779,7 +123779,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -124076,7 +124076,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -124373,7 +124373,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -124670,7 +124670,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -124968,7 +124968,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -125265,7 +125265,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -125562,7 +125562,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -125859,7 +125859,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -126157,7 +126157,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -126454,7 +126454,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -126751,7 +126751,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -127049,7 +127049,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -127346,7 +127346,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -127643,7 +127643,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -127940,7 +127940,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -128237,7 +128237,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -128534,7 +128534,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -128831,7 +128831,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -129129,7 +129129,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -129426,7 +129426,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -129723,7 +129723,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -130020,7 +130020,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -130317,7 +130317,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -130615,7 +130615,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -130912,7 +130912,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -131209,7 +131209,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -131506,7 +131506,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -131803,7 +131803,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -132100,7 +132100,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -132397,7 +132397,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -132694,7 +132694,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -132991,7 +132991,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -133288,7 +133288,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -133585,7 +133585,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -133882,7 +133882,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -134180,7 +134180,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -134477,7 +134477,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -134775,7 +134775,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -135072,7 +135072,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -135370,7 +135370,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -135667,7 +135667,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -135965,7 +135965,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -136262,7 +136262,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -136559,7 +136559,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -136856,7 +136856,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -137153,7 +137153,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -137450,7 +137450,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -137747,7 +137747,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -138045,7 +138045,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -138343,7 +138343,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -138640,7 +138640,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -138937,7 +138937,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -139234,7 +139234,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -139531,7 +139531,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -139828,7 +139828,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -140125,7 +140125,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -140422,7 +140422,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -140719,7 +140719,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -141016,7 +141016,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -141313,7 +141313,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -141610,7 +141610,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -141907,7 +141907,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -142204,7 +142204,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -142501,7 +142501,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -142798,7 +142798,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -143095,7 +143095,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -143392,7 +143392,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -143689,7 +143689,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -143986,7 +143986,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -144283,7 +144283,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -144580,7 +144580,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -144877,7 +144877,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -145174,7 +145174,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -145471,7 +145471,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -145768,7 +145768,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -146065,7 +146065,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -146362,7 +146362,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -146659,7 +146659,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -146956,7 +146956,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -147253,7 +147253,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -147550,7 +147550,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -147847,7 +147847,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -148144,7 +148144,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -148441,7 +148441,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -148738,7 +148738,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -149035,7 +149035,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -149332,7 +149332,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -149629,7 +149629,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -149926,7 +149926,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -150223,7 +150223,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -150520,7 +150520,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -150817,7 +150817,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -151114,7 +151114,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -151412,7 +151412,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -151709,7 +151709,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -152007,7 +152007,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -152304,7 +152304,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -152601,7 +152601,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -152898,7 +152898,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -153195,7 +153195,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -153492,7 +153492,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -153789,7 +153789,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -154086,7 +154086,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -154384,7 +154384,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -154681,7 +154681,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -154978,7 +154978,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -155275,7 +155275,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -155572,7 +155572,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -155869,7 +155869,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -156166,7 +156166,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -156463,7 +156463,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
@@ -156760,7 +156760,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -157057,7 +157057,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -157354,7 +157354,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -157651,7 +157651,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -157948,7 +157948,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -158245,7 +158245,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -158542,7 +158542,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -158839,7 +158839,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -159136,7 +159136,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 6
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -159433,7 +159433,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 128
@@ -159730,7 +159730,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 8
-    WorkGroupMappingXCCGroup: -1
+    WorkGroupMappingXCCGroup: 304
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 1]
     _DepthU: 64
