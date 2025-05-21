@@ -618,7 +618,8 @@ def run():
         cxxCompiler,
         offloadBundler,
         arguments["CodeObjectVersion"],
-        arguments["BuildIdKind"]
+        arguments["BuildIdKind"],
+        arguments["AsmDebug"],
     )
     srcToolchain = makeSourceToolchain(
         cxxCompiler,
