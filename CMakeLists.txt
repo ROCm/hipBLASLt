@@ -121,9 +121,29 @@ cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt
 option(USE_ROCROLLER "Build with the rocRoller library" ON)
 
 if(BUILD_CODE_COVERAGE)
-  set(BUILD_SHARED_LIBS ON)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build coverage reports" FORCE)
+  set(LLVM_DIR /opt/rocm/llvm/lib/cmake/llvm)
+  find_package(LLVM REQUIRED CONFIG)
+  message(STATUS "LLVM found: ${LLVM_DIR}")
+  include_directories(${LLVM_INCLUDE_DIRS})
+  link_directories(${LLVM_LIBRARY_DIRS})
   add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
   add_link_options(-fprofile-instr-generate)
+
+  add_custom_target(coverage
+    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/hipblaslt-test --output-on-failure
+    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_amax --output-on-failure
+    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale --output-on-failure
+    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_layernorm --output-on-failure
+    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_weight_swizzle_padding --output-on-failure
+    COMMAND sh -c "ls *.profraw 1>/dev/null 2>&1 && llvm-profdata merge -sparse *.profraw -o coverage_test.profdata || echo 'No .profraw files found'"
+    COMMAND sh -c "export PATH=/usr/lib/llvm-19/bin:\$PATH && llvm-cov report -instr-profile=./coverage_test.profdata ./clients/staging/sample_hipblaslt_ext_op_amax --ignore-filename-regex='.*/samples/.*|.*/build/debug/.*'"
+    COMMAND sh -c "export PATH=/usr/lib/llvm-19/bin:\$PATH && llvm-cov show ./clients/staging/sample_hipblaslt_ext_op_amax -instr-profile=./coverage_test.profdata -format=html -output-dir=coverage_report --ignore-filename-regex='.*/samples/.*|.*/build/debug/.*'"
+    COMMAND sh -c "cd ../../tensilelite && tox -v --workdir /tmp/.tensile-tox -e py3 -- Tensile/Tests -m common --cov=. --cov-report=html"
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+
+    VERBATIM
+  )
 endif()
 
 if(BUILD_ADDRESS_SANITIZER)
@@ -409,61 +429,3 @@ rocm_create_package(
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
 )
 
-
-#
-# ADDITIONAL TARGETS FOR CODE COVERAGE
-#
-if(BUILD_CODE_COVERAGE)
-  #
-  # > make coverage_cleanup (clean coverage related files.)
-  # > make coverage GTEST_FILTER=<>
-  # will run:
-  #  > make coverage_analysis GTEST_FILTER=<> (analyze tests)
-  #  > make coverage_output (generate html documentation)
-  #
-
-  #
-  # Run coverage analysis
-  #
-  set(coverage_test ./clients/staging/hipblaslt-test)
-
-  add_custom_target(coverage_analysis
-    COMMAND echo Coverage GTEST_FILTER=\${GTEST_FILTER}
-    COMMAND ./clients/staging/hipblaslt-test --gtest_filter=\"\${GTEST_FILTER}\"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-
-  add_dependencies(coverage_analysis hipblaslt)
-
-  #
-  # Prepare coverage output
-  # This little script is generated because the option '--gcov-tool <program name>' of lcov cannot take arguments.
-  #
-  add_custom_target(coverage_output
-    DEPENDS coverage_analysis
-    COMMAND mkdir -p lcoverage
-    COMMAND echo "\\#!/bin/bash" > llvm-gcov.sh
-    COMMAND echo "\\# THIS FILE HAS BEEN GENERATED" >> llvm-gcov.sh
-    COMMAND printf "exec /opt/rocm/llvm/bin/llvm-cov gcov $$\\@" >> llvm-gcov.sh
-    COMMAND chmod +x llvm-gcov.sh
-    )
-
-  #
-  # Generate coverage output.
-  #
-  add_custom_command(TARGET coverage_output
-    COMMAND lcov --directory . --base-directory . --gcov-tool ${CMAKE_BINARY_DIR}/llvm-gcov.sh --capture -o lcoverage/raw_main_coverage.info
-    COMMAND lcov --remove lcoverage/raw_main_coverage.info "'/opt/*'" "'/usr/*'" -o lcoverage/main_coverage.info
-    COMMAND genhtml lcoverage/main_coverage.info --output-directory lcoverage
-    )
-
-  add_custom_target(coverage DEPENDS coverage_output)
-
-  #
-  # Coverage cleanup
-  #
-  add_custom_target(coverage_cleanup
-    COMMAND find ${CMAKE_BINARY_DIR} -name *.gcda -delete
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
-endif()
