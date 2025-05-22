@@ -3562,6 +3562,23 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
+
+        bool fallbackCU = solution->isFallbackForHW(*hardware);
+        if(fallbackCU)
+        {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "Testing solution is a CU-Fallback for current Hardware. SetXCC to 1."
+                    << std::endl;
+                // msg << "\tCurrent HW: " << hardware->description() << std::endl;
+                log_info(__func__, msg.str());
+            }
+            // TODO- restore if this solution is eventually not supported (or we do an init everytime)
+            tensile_prob.setParams().setFallbackStatus(true);
+            tensile_prob.setParams().setWGMXCC(1);
+        }
+
         if(!(*solution->problemPredicate)(tensile_prob))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
