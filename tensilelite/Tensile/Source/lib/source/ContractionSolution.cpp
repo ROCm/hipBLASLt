@@ -779,8 +779,8 @@ namespace TensileLite
 
         if(problemType.stridedBatched)
         {
-            args.template append<void const*>("a", inputs.a);
-            args.template append<void const*>("b", inputs.b);
+            args.template append<void const*>("a", problemType.sparse==1 ? inputs.compressed : inputs.a);
+            args.template append<void const*>("b", problemType.sparse==2 ? inputs.compressed : inputs.b);
         }
         else
         {
@@ -2995,7 +2995,8 @@ namespace TensileLite
             calculateAutoGSU(problem, &hardware);
             size_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : autoGSU;
             size_t gsuMultiplier = gsu > 1 ? gsu : 0;
-            size_t tiles = problem.getNumTiles(sizeMapping, gsu);
+            size_t batch = problem.d().sizes()[2];
+            size_t tiles = problem.getNumTiles(sizeMapping, gsu) * batch;
             size_t tileSize = sizeMapping.macroTile.x * sizeMapping.macroTile.y * sizeMapping.workspaceSizePerElemC;
             size_t bufSize = gsu > 1 ? tiles * tileSize : 0;
             size += bufSize;
