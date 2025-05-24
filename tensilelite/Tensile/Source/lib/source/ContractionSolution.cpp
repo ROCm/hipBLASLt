@@ -3102,6 +3102,17 @@ namespace TensileLite
         return h_args.size();
     }
 
+    size_t ContractionSolution::requiredSynchronizerSize(Problem const& problem, Hardware const& hardware) const
+    {
+        if(sizeMapping.globalAccumulation == 3)
+        {
+            size_t batch = problem.d().sizes()[2];
+            size_t tiles = problem.getNumTiles(sizeMapping, 1) * batch;
+            return tiles * sizeMapping.synchronizerSizePerWG;
+        }
+        return 0;
+    }
+
     size_t ContractionSolution::getSKGrid(Problem const&  problem,
                                           Hardware const& hardware,
                                           size_t          tiles) const
