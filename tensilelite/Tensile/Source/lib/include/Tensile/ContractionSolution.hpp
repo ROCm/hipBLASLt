@@ -154,6 +154,8 @@ namespace TensileLite
         int CUOccupancy            = 0;
         int PrefetchGlobalRead     = 2;
         int MathClocksUnrolledLoop = 0;
+
+        size_t synchronizerSizePerWG = 0;
     };
 
     /**
@@ -286,6 +288,8 @@ namespace TensileLite
                                                 Hardware const&             hardware) const;
         size_t requiredHostSizeGroupedGemmSingle(Problem const&  problem,
                                                  Hardware const& hardware) const;
+
+        size_t requiredSynchronizerSize(Problem const& problem, Hardware const& hardware) const;                                         
 
         size_t getSKGrid(Problem const& problem, Hardware const& hardware, size_t tiles) const;
         size_t partialTileSize(size_t skGrid) const;
