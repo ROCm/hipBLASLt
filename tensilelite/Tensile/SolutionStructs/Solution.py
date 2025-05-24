@@ -3212,8 +3212,6 @@ class Solution(collections.abc.Mapping):
         reject(state, printRejectionReason, "MultipleBufferSingleKernel not support BiasSrc not D yet")
       if state["ProblemType"]["DataType"].isDouble():
         reject(state, printRejectionReason, "MultipleBufferSingleKernel not support " + str(state["ProblemType"]["DataType"])  + " yet")
-      if state["ProblemType"]["Sparse"] != 0:
-        reject(state, printRejectionReason, "MultipleBufferSingleKernel not support sparse yet")
 
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
