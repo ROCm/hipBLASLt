@@ -469,7 +469,7 @@ class ProblemPredicate(Properties.Predicate):
                 valuepredicates.append(int((state["NumElementsPerThread"])/state["NumElementsPerBatchStore"]))
             else:
                 valuepredicates.append(1)
-            valuepredicates.append(state["NumThreads"])
+            valuepredicates.append(ceil(state["NumThreads"] / state["WavefrontSize"]))
             rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
 
         if state["InternalSupportParams"]["KernArgsVersion"] >= 1 and \
@@ -605,8 +605,8 @@ class SizeMapping:
             globalAccum = 4
         pgr = int(d['PrefetchGlobalRead'])
         synchronizerSizePerWG = ceil((d['MIWaveTile'][0]*d['MIWaveTile'][1] if d['EnableMatrixInstruction'] else d['ThreadTile0']*d['ThreadTile1']        \
-                                    * ceil((d['NumElementsPerThread'])/d['NumElementsPerBatchStore']) if d['NumElementsPerBatchStore'] != 0 else 1            \
-                                    * ceil(d["NumThreads"] / 64)))
+                                    * ceil((d['NumElementsPerThread'])/d['NumElementsPerBatchStore']) if d['NumElementsPerBatchStore'] != 0 else 1        \
+                                    * ceil(d["NumThreads"] / d["WavefrontSize"])))
 
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
