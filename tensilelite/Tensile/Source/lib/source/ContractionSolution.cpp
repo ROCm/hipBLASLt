@@ -532,15 +532,18 @@ namespace TensileLite
     // check if this solution is a CU-Fallback solution for current hardware
     bool ContractionSolution::isFallbackForHW(Hardware const& hardware) const
     {
+        // return the result if we already tested it.
+        if(isFallbackCUSol != -1)
+            return (isFallbackCUSol == 1);
+
         auto hw_pred
             = static_pointer_cast<Predicates::IsSubclass<Hardware, AMDGPU>>(hardwarePredicate);
-        // TODO: need to check if the CU count is not a general CU
-        if(hw_pred->value->type() == "Processor")
-        {
-            return true;
-        }
+        auto amdGPU = static_cast<AMDGPU const*>(&hardware);
+        // if solution is from a standard cu lib, but current HW is not, then this is a Fallback sol.
+        isFallbackCUSol
+            = (hw_pred->value->type() == "Processor" && !(amdGPU->isStandardCU())) ? 1 : 0;
 
-        return false;
+        return (isFallbackCUSol == 1);
     }
 
     // Return magic number.  If magicShift is 0, compute and return it.
@@ -1271,7 +1274,6 @@ namespace TensileLite
                     assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
                     wgmxccg = pAMDGPU->computeUnitCount;
                 }
-                // std::cout << "\tDEBUG_TEST: [XCC,XCCG] = [" << wgmxcc << "," << wgmxccg << "]\n";
                 internalArg1 = internalArg1 | (wgmxccg << 22) | (wgmxcc << 16) | (mask16 & wgm);
             }
         }

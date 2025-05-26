@@ -2728,25 +2728,28 @@ namespace TensileLite
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    // NB: If this solution is a cu-fallback for this problem.
+                    // NB: If this solution is a cu-fallback for current hardware.
                     // We overwrite the XCC to 1 to make sure this can pass.
-                    // But we also have to notice we are passing the correct XCC/XCCG to kernel.
-                    // (i.e. Remember to do setParams().setWGMXCC(1))
-                    size_t XCC     = (problem.getParams().fallbackStatus()) ? 1 : value[0];
-                    size_t WGMXCCG = (value[1] == -1) ? cuCount : value[1];
-                    return ((XCC & (XCC - 1)) == 0) && WGMXCCG % XCC == 0;
+                    // But we also have to notice we are passing the correct XCC to kernel.
+                    // (i.e. Remember to do param.setWGMXCC(1) when running the kernel)
+
+                    size_t XCC  = (problem.getParams().fallbackStatus()) ? 1 : value[0];
+                    size_t XCCG = (value[1] == -1) ? cuCount : value[1];
+                    return ((XCC & (XCC - 1)) == 0) && XCCG % XCC == 0;
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
+                    size_t XCC  = (problem.getParams().fallbackStatus()) ? 1 : value[0];
+                    size_t XCCG = (value[1] == -1) ? cuCount : value[1];
                     return debugEvalCmp(problem,
                                         stream,
-                                        "cuCount",
-                                        (value[1] == -1) ? cuCount : value[1],
+                                        "WGMXCCG",
+                                        XCCG,
                                         "%",
                                         "WGMXCC",
-                                        value[0],
+                                        XCC,
                                         "==",
                                         0);
                 }

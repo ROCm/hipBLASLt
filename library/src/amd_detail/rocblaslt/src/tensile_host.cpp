@@ -2488,6 +2488,20 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
+            data->problem.setParams().setWGMXCC(0);
+            if(solution->isFallbackForHW(*hardware))
+            {
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "The solution is a cu-fallback for current HW. Use XCC=1 kernelArg."
+                        << std::endl;
+                    log_info(__func__, msg.str());
+                }
+                // set XCC=1 to param when this is a fallback solution
+                data->problem.setParams().setWGMXCC(1);
+            }
+
             auto kernels = solution->solve(data->problem, GetTensileInputs(prob), *hardware);
             // Remove this after supports getting comgr buffers from hip.
             bool isPreloaded = false;
@@ -2749,6 +2763,20 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             else
             {
                 data->problem.setParams().resetInternalArgs();
+            }
+
+            data->problem.setParams().setWGMXCC(0);
+            if(solution->isFallbackForHW(*hardware))
+            {
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "The solution is a cu-fallback for current HW. Use XCC=1 kernelArg."
+                        << std::endl;
+                    log_info(__func__, msg.str());
+                }
+                // set XCC=1 to param when this is a fallback solution
+                data->problem.setParams().setWGMXCC(1);
             }
 
             data->inputs.ws = workspace;
@@ -3563,21 +3591,19 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             return rocblaslt_status_invalid_value;
         }
 
-        bool fallbackCU = solution->isFallbackForHW(*hardware);
-        if(fallbackCU)
+        tensile_prob.setParams().setFallbackStatus(false);
+        if(solution->isFallbackForHW(*hardware))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
             {
                 std::ostringstream msg;
-                msg << "Testing solution is a CU-Fallback for current Hardware. SetXCC to 1."
+                msg << "The solution is a cu-fallback for current HW. Use XCC=1 for predicate."
                     << std::endl;
-                // msg << "\tCurrent HW: " << hardware->description() << std::endl;
                 log_info(__func__, msg.str());
             }
-            // TODO- restore if this solution is eventually not supported (or we do an init everytime)
-            tensile_prob.setParams().setFallbackStatus(true);
-            tensile_prob.setParams().setWGMXCC(1);
-        }
+            // set this flag for SW predicate
+            tensile_prob.setParams().setFallbackStatus(true);            
+        }        
 
         if(!(*solution->problemPredicate)(tensile_prob))
         {
