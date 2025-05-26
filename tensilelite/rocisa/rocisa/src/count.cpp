@@ -23,9 +23,11 @@
 #include "code.hpp"
 #include "instruction/common.hpp"
 #include "instruction/mem.hpp"
+#include "instruction/mfma.hpp"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
+#include <nanobind/stl/vector.h>
 
 namespace nb = nanobind;
 
@@ -94,6 +96,27 @@ namespace rocisa
     {
         return item->countExactType(typeid(VMovB32));
     }
+
+    // Helper functions
+    std::vector<std::shared_ptr<Item>> getMFMAs(const std::shared_ptr<Item>& item)
+    {
+        std::vector<std::shared_ptr<Item>> mfmaList;
+        if(auto module = std::dynamic_pointer_cast<Module>(item))
+        {
+            for(const auto& i : module->itemList)
+            {
+                auto mfm = getMFMAs(i);
+                mfmaList.insert(mfmaList.end(), mfm.begin(), mfm.end());
+            }
+        }
+        else if(std::dynamic_pointer_cast<MFMAInstruction>(item)
+                || std::dynamic_pointer_cast<SMFMAInstruction>(item))
+        {
+            mfmaList.push_back(item);
+        }
+        return std::move(mfmaList);
+    }
+
 }
 
 void init_count(nb::module_ m)
@@ -109,4 +132,6 @@ void init_count(nb::module_ m)
     m.def("countDSStoreB128", &rocisa::countDSStoreB128);
     m.def("countDSStoreB256", &rocisa::countDSStoreB256);
     m.def("countVMovB32", &rocisa::countVMovB32);
+
+    m.def("getMFMAs", &rocisa::getMFMAs, "Get all MFMA instructions in the item tree.");
 }
