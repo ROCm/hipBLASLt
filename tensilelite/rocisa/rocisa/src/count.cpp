@@ -26,6 +26,7 @@
 #include "instruction/mfma.hpp"
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/vector.h>
 
@@ -117,6 +118,35 @@ namespace rocisa
         return std::move(mfmaList);
     }
 
+    // Recursively find the index (count) of targetItem in the module tree.
+    // Returns a pair: {count, found}
+    std::pair<int, bool> findInstCount(const std::shared_ptr<Item>& module,
+                                       const std::shared_ptr<Item>& targetItem,
+                                       int                          count)
+    {
+        if(auto mod = std::dynamic_pointer_cast<Module>(module))
+        {
+            for(const auto& inst : mod->itemList)
+            {
+                if(auto submod = std::dynamic_pointer_cast<Module>(inst))
+                {
+                    auto [subCount, found] = findInstCount(submod, targetItem, count);
+                    if(found)
+                        return {subCount, true};
+                    count = subCount;
+                }
+                else if(inst == targetItem)
+                {
+                    return {count, true};
+                }
+                else if(!std::dynamic_pointer_cast<TextBlock>(inst))
+                {
+                    count += 1;
+                }
+            }
+        }
+        return {count, false};
+    }
 }
 
 void init_count(nb::module_ m)
@@ -134,4 +164,8 @@ void init_count(nb::module_ m)
     m.def("countVMovB32", &rocisa::countVMovB32);
 
     m.def("getMFMAs", &rocisa::getMFMAs, "Get all MFMA instructions in the item tree.");
+    m.def(
+        "findInstCount",
+        &rocisa::findInstCount,
+        "Find the index (count) of targetItem in the module tree. Returns a pair: {count, found}");
 }
