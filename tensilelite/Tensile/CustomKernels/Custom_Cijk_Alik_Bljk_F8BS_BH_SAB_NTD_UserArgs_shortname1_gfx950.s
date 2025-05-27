@@ -4,13 +4,13 @@
 /******************************************/
 .amdgcn_target "amdgcn-amd-amdhsa--gfx950"
 .text
-.protected Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950
-.globl Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950
+.protected Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950
+.globl Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950
 .p2align 8
-.type Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950,@function
+.type Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950,@function
 .section .rodata,#alloc
 .p2align 6
-.amdhsa_kernel Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950
+.amdhsa_kernel Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950
   .amdhsa_user_sgpr_kernarg_segment_ptr 1
   .amdhsa_accum_offset 256 // accvgpr offset
   .amdhsa_next_free_vgpr 512 // vgprs
@@ -50,7 +50,7 @@ custom.config:
     KernArgsVersion: 2
   ProblemType:  
       OperationType: GEMM
-      DataType: f8b8
+      DataType: f8
       DestDataType: b
       ComputeDataType: s
       HighPrecisionAccumulate: True
@@ -63,8 +63,8 @@ amdhsa.version:
   - 1
   - 1
 amdhsa.kernels:
-  - .name: Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950
-    .symbol: 'Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950.kd'
+  - .name: Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950
+    .symbol: 'Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950.kd'
     .language:                   OpenCL C
     .language_version:
       - 2
@@ -132,7 +132,7 @@ amdhsa.kernels:
         .size:            8
         .offset:          56
         .value_kind:      global_buffer
-        .value_type:      bf8
+        .value_type:      fp8
         .address_space:   generic
       - .name:            strideD0
         .size:            4
@@ -208,7 +208,7 @@ amdhsa.kernels:
     .wavefront_size:             64
 ...
 .end_amdgpu_metadata
-Custom_Cijk_Alik_Bljk_F8B8BS_BH_SAB_NTD_UserArgs_shortname0_gfx950:
+Custom_Cijk_Alik_Bljk_F8BS_BH_SAB_NTD_UserArgs_shortname1_gfx950:
 label_ASM_Start:  /// Main body of the asm kernel
 .macro V_MAGIC_DIV vgprDstIdx:req, dividend:req, magicNumber:req, magicShift:req, magicA:req
     v_mul_hi_u32 v[\vgprDstIdx+1], \dividend, \magicNumber
@@ -1675,7 +1675,7 @@ ds_read_b128 v[vgprValuA_X0_I0+28:vgprValuA_X0_I0+28+3], v[vgprLocalReadAddrA] o
 
 s_waitcnt vmcnt(16)
 s_barrier  
-
+  
 ds_read_b128 v[vgprValuB_X0_I0+0:vgprValuB_X0_I0+0+3], v[vgprLocalReadAddrB] offset:0 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+4:vgprValuB_X0_I0+4+3], v[vgprLocalReadAddrB] offset:64 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=1 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+8:vgprValuB_X0_I0+8+3], v[vgprLocalReadAddrB] offset:128 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=0 oIdx=0 buffer=0 iui=0
@@ -1686,6 +1686,7 @@ ds_read_b128 v[vgprValuB_X0_I0+24:vgprValuB_X0_I0+24+3], v[vgprLocalReadAddrB] o
 ds_read_b128 v[vgprValuB_X0_I0+28:vgprValuB_X0_I0+28+3], v[vgprLocalReadAddrB] offset:448 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=1 oIdx=0 buffer=0 iui=0
 
 s_waitcnt lgkmcnt(0)
+
   
 /******************************************/
 /* Unrolled Loop(s) - Begin               */
@@ -1704,293 +1705,294 @@ label_LoopBeginL:
 // B0 A0
 
 /*  mfmaIndex:0  */
-v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:1 blgp:0 // left value = acc[0+0:3+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:0 blgp:0 // left value = acc[0+0:3+0]
 ds_read_b128 v[vgprValuA_X0_I0+32:vgprValuA_X0_I0+32+3], v[vgprLocalReadAddrA] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+36:vgprValuA_X0_I0+36+3], v[vgprLocalReadAddrA] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
-  
+
 /*  mfmaIndex:1  */
-v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:1 blgp:0 // left value = acc[4+0:7+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:0 blgp:0 // left value = acc[4+0:7+0]
 ds_read_b128 v[vgprValuA_X0_I0+40:vgprValuA_X0_I0+40+3], v[vgprLocalReadAddrA] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+44:vgprValuA_X0_I0+44+3], v[vgprLocalReadAddrA] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
-  
+
 /*  mfmaIndex:2  */
-v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:1 blgp:0 // left value = acc[8+0:11+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:0 blgp:0 // left value = acc[8+0:11+0]
 ds_read_b128 v[vgprValuA_X0_I0+48:vgprValuA_X0_I0+48+3], v[vgprLocalReadAddrA] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+52:vgprValuA_X0_I0+52+3], v[vgprLocalReadAddrA] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:3  */
-v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:1 blgp:0 // left value = acc[12+0:15+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:0 blgp:0 // left value = acc[12+0:15+0]
 ds_read_b128 v[vgprValuA_X0_I0+56:vgprValuA_X0_I0+56+3], v[vgprLocalReadAddrA] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+60:vgprValuA_X0_I0+60+3], v[vgprLocalReadAddrA] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:8  */
-v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:1 blgp:0 // left value = acc[32+0:35+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:0 blgp:0 // left value = acc[32+0:35+0]
 /* global read inc A loopL */
 s_cmp_eq_u32 s[sgprLoopCounterL], s[sgprStaggerUIter] // Is this the wrapIter?
 s_cselect_b32 s28, s[sgprWrapUA+0], s[sgprGlobalReadIncsA+0] // incLower <- ?
 s_cselect_b32 s29, s[sgprWrapUA+1], 0              // incUpper <- ?
 s_add_u32 s[sgprSrdA+0], s[sgprSrdA+0], s28        // gra SRD += inc(lower)
 s_addc_u32 s[sgprSrdA+1], s[sgprSrdA+1], s29       // gra SRD += inc(upper)
-  
-/*  mfmaIndex:9  */
-v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:1 blgp:0 // left value = acc[36+0:39+0]
 s_sub_u32 s[sgprShadowLimitA+0], s[sgprShadowLimitA+0], s28 // limit -= inc)
 s_subb_u32 s[sgprShadowLimitA+1], s[sgprShadowLimitA+1], s29 // limit -= inc)
+
+/*  mfmaIndex:9  */
+v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:0 blgp:0 // left value = acc[36+0:39+0]
 s_cmp_eq_u32 s[sgprShadowLimitA+1], 0              // are we within 2^32?
 s_cselect_b32 s[sgprSrdA+2], s[sgprShadowLimitA+0], BufferLimit // Move shadow to real if we are within 2^32
-s_mov_b32 m0, s[sgprLocalWriteAddrA]               // m0 <- LDS write address
-s_waitcnt lgkmcnt(0)  
-  
-/*  mfmaIndex:10  */
-v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:1 blgp:0 // left value = acc[40+0:43+0]
-s_barrier
-
-
-/*  mfmaIndex:11  */
-v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:1 blgp:0 // left value = acc[44+0:47+0]
 /* global read inc B loopL */
 s_cmp_eq_u32 s[sgprLoopCounterL], s[sgprStaggerUIter] // Is this the wrapIter?
 s_cselect_b32 s28, s[sgprWrapUB+0], s[sgprGlobalReadIncsB+0] // incLower <- ?
 s_cselect_b32 s29, s[sgprWrapUB+1], 0              // incUpper <- ?
+s_mov_b32 m0, s[sgprLocalWriteAddrA]               // m0 <- LDS write address
+s_waitcnt lgkmcnt(0)
+
+/*  mfmaIndex:10  */
+v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:0 blgp:0 // left value = acc[40+0:43+0]
+s_barrier
+
+/*  mfmaIndex:11  */
+v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:0 blgp:0 // left value = acc[44+0:47+0]
 s_add_u32 s[sgprSrdB+0], s[sgprSrdB+0], s28        // gra SRD += inc(lower)
 s_addc_u32 s[sgprSrdB+1], s[sgprSrdB+1], s29       // gra SRD += inc(upper)
+s_sub_u32 s[sgprShadowLimitB+0], s[sgprShadowLimitB+0], s28 // limit -= inc)
+s_subb_u32 s[sgprShadowLimitB+1], s[sgprShadowLimitB+1], s29 // limit -= inc)
+s_cmp_eq_u32 s[sgprShadowLimitB+1], 0              // are we within 2^32?
+s_cselect_b32 s[sgprSrdB+2], s[sgprShadowLimitB+0], BufferLimit // Move shadow to real if we are within 2^32
 
 /*  mfmaIndex:16  */
-v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:1 blgp:0 // left value = acc[64+0:67+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], 0 offen offset:0, lds // G -> Reg 0_0_0_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:0 blgp:0 // left value = acc[64+0:67+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], 0 offen offset:0, lds  // G -> Reg 0_0_0_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 1 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:17  */
-v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:1 blgp:0 // left value = acc[68+0:71+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+0] offen offset:0, lds // G -> Reg 0_0_1_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:0 blgp:0 // left value = acc[68+0:71+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+0] offen offset:0, lds  // G -> Reg 0_0_1_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 2 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:18  */
-v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:1 blgp:0 // left value = acc[72+0:75+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+1] offen offset:0, lds // G -> Reg 0_0_2_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:0 blgp:0 // left value = acc[72+0:75+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+1] offen offset:0, lds  // G -> Reg 0_0_2_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 3 * 4224                             // Move LDS write address to next line
 
   /*  mfmaIndex:19  */
-v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:1 blgp:0 // left value = acc[76+0:79+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+2] offen offset:0, lds // G -> Reg 0_0_3_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:0 blgp:0 // left value = acc[76+0:79+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+2] offen offset:0, lds  // G -> Reg 0_0_3_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 4 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:24  */
-v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:1 blgp:0 // left value = acc[96+0:99+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+3] offen offset:0, lds // G -> Reg 0_0_4_0
+v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:0 blgp:0 // left value = acc[96+0:99+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+3] offen offset:0, lds  // G -> Reg 0_0_4_0
 
 /*  mfmaIndex:25  */
-v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:1 blgp:0 // left value = acc[100+0:103+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:0 blgp:0 // left value = acc[100+0:103+0]
 ds_read_b128 v[vgprValuB_X0_I0+32:vgprValuB_X0_I0+32+3], v[vgprLocalReadAddrB] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+36:vgprValuB_X0_I0+36+3], v[vgprLocalReadAddrB] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:26  */
-v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:1 blgp:0 // left value = acc[104+0:107+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:0 blgp:0 // left value = acc[104+0:107+0]
 ds_read_b128 v[vgprValuB_X0_I0+40:vgprValuB_X0_I0+40+3], v[vgprLocalReadAddrB] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+44:vgprValuB_X0_I0+44+3], v[vgprLocalReadAddrB] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:27  */
-v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:1 blgp:0 // left value = acc[108+0:111+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:0 blgp:0 // left value = acc[108+0:111+0]
 ds_read_b128 v[vgprValuB_X0_I0+48:vgprValuB_X0_I0+48+3], v[vgprLocalReadAddrB] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+52:vgprValuB_X0_I0+52+3], v[vgprLocalReadAddrB] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 // B0 A1
 
 /*  mfmaIndex:4  */
-v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:1 blgp:0 // left value = acc[16+0:19+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:0 blgp:0 // left value = acc[16+0:19+0]
 ds_read_b128 v[vgprValuB_X0_I0+56:vgprValuB_X0_I0+56+3], v[vgprLocalReadAddrB] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+60:vgprValuB_X0_I0+60+3], v[vgprLocalReadAddrB] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:5  */
-v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:1 blgp:0 // left value = acc[20+0:23+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:0 blgp:0 // left value = acc[20+0:23+0]
 /* local read swap offsets a */
 v_xor_b32 v[vgprLocalReadAddrA], v[vgprLocalReadSwapAddrA], v[vgprLocalReadAddrA] // swap Red Blk
 /* local read swap offsets b */
 v_xor_b32 v[vgprLocalReadAddrB], v[vgprLocalReadSwapAddrB], v[vgprLocalReadAddrB] // swap Red Blk
 
 /*  mfmaIndex:6  */
-v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:1 blgp:0 // left value = acc[24+0:27+0]
-s_sub_u32 s[sgprShadowLimitB+0], s[sgprShadowLimitB+0], s28 // limit -= inc)
-s_subb_u32 s[sgprShadowLimitB+1], s[sgprShadowLimitB+1], s29 // limit -= inc)
-s_cmp_eq_u32 s[sgprShadowLimitB+1], 0              // are we within 2^32?
-s_cselect_b32 s[sgprSrdB+2], s[sgprShadowLimitB+0], BufferLimit // Move shadow to real if we are within 2^32
-
-  /*  mfmaIndex:7  */
-v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:1 blgp:0 // left value = acc[28+0:31+0]
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:0 blgp:0 // left value = acc[24+0:27+0]
+s_mov_b32 m0, s[sgprLocalWriteAddrB]               // m0 <- LDS write address
+  
+/*  mfmaIndex:7  */
+v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:0 blgp:0 // left value = acc[28+0:31+0]
 
 /*  mfmaIndex:12  */
-v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:1 blgp:0 // left value = acc[48+0:51+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:0 blgp:0 // left value = acc[48+0:51+0]
 s_waitcnt lgkmcnt(0)
-  
+
 /*  mfmaIndex:13  */
-v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:1 blgp:0 // left value = acc[52+0:55+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:0 blgp:0 // left value = acc[52+0:55+0]
 s_barrier
 
 /*  mfmaIndex:14  */
-v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:1 blgp:0 // left value = acc[56+0:59+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:0 blgp:0 // left value = acc[56+0:59+0]
 /*  mfmaIndex:15  */
-v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:1 blgp:0 // left value = acc[60+0:63+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+4] offen offset:0, lds // G -> Reg 0_0_5_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:0 blgp:0 // left value = acc[60+0:63+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], 0 offen offset:0, lds  // G -> Reg 0_0_0_0
+s_add_u32 m0, s[sgprLocalWriteAddrB], 1 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:20  */
-v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:1 blgp:0 // left value = acc[80+0:83+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+5] offen offset:0, lds // G -> Reg 0_0_6_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:0 blgp:0 // left value = acc[80+0:83+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+0] offen offset:0, lds  // G -> Reg 0_0_1_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 5 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:21  */
-v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:1 blgp:0 // left value = acc[84+0:87+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+6] offen offset:0, lds // G -> Reg 0_0_7_0
-s_mov_b32 m0, s[sgprLocalWriteAddrB]               // m0 <- LDS write address
+v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:0 blgp:0 // left value = acc[84+0:87+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+4] offen offset:0, lds  // G -> Reg 0_0_5_0
+s_add_u32 m0, s[sgprLocalWriteAddrB], 3 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:22  */
-v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:1 blgp:0 // left value = acc[88+0:91+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], 0 offen offset:0, lds // G -> Reg 0_0_0_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:0 blgp:0 // left value = acc[88+0:91+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+2] offen offset:0, lds  // G -> Reg 0_0_3_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 6 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:23  */
-v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:1 blgp:0 // left value = acc[92+0:95+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+0] offen offset:0, lds // G -> Reg 0_0_1_0
+v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:0 blgp:0 // left value = acc[92+0:95+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+5] offen offset:0, lds  // G -> Reg 0_0_6_0
+
 
 /*  mfmaIndex:28  */
-v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:1 blgp:0 // left value = acc[112+0:115+0]
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
-  
+v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:0 blgp:0 // left value = acc[112+0:115+0]
+s_add_u32 m0, s[sgprLocalWriteAddrB], 2 * 4224                             // Move LDS write address to next line
+
 /*  mfmaIndex:29  */
-v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:1 blgp:0 // left value = acc[116+0:119+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:0 blgp:0 // left value = acc[116+0:119+0]
 /*  mfmaIndex:30  */
-v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:1 blgp:0 // left value = acc[120+0:123+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:0 blgp:0 // left value = acc[120+0:123+0]
 /*  mfmaIndex:31  */
-v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:1 blgp:0 // left value = acc[124+0:127+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:0 blgp:0 // left value = acc[124+0:127+0]
 
 
 // B1 A0
 
 /*  mfmaIndex:32  */
-v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:1 blgp:0 // left value = acc[128+0:131+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:0 blgp:0 // left value = acc[128+0:131+0]
 /*  mfmaIndex:33  */
-v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:1 blgp:0 // left value = acc[132+0:135+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:0 blgp:0 // left value = acc[132+0:135+0]
 /*  mfmaIndex:34  */
-v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:1 blgp:0 // left value = acc[136+0:139+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:0 blgp:0 // left value = acc[136+0:139+0]
 /*  mfmaIndex:35  */
-v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:1 blgp:0 // left value = acc[140+0:143+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:0 blgp:0 // left value = acc[140+0:143+0]
 
 /*  mfmaIndex:40  */
-v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:1 blgp:0 // left value = acc[160+0:163+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:0 blgp:0 // left value = acc[160+0:163+0]
 /*  mfmaIndex:41  */
-v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:1 blgp:0 // left value = acc[164+0:167+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:0 blgp:0 // left value = acc[164+0:167+0]
 /*  mfmaIndex:42  */
-v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:1 blgp:0 // left value = acc[168+0:171+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:0 blgp:0 // left value = acc[168+0:171+0]
 /*  mfmaIndex:43  */
-v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:1 blgp:0 // left value = acc[172+0:175+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+1] offen offset:0, lds // G -> Reg 0_0_2_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:0 blgp:0 // left value = acc[172+0:175+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+1] offen offset:0, lds  // G -> Reg 0_0_2_0
+s_add_u32 m0, s[sgprLocalWriteAddrA], 7 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:48  */
-v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:1 blgp:0 // left value = acc[192+0:195+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+2] offen offset:0, lds // G -> Reg 0_0_3_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:0 blgp:0 // left value = acc[192+0:195+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetA+0], s[sgprSrdA:sgprSrdA+3], s[sgprScalarGlobalReadOffsetA+6] offen offset:0, lds  // G -> Reg 0_0_7_0
+s_add_u32 m0, s[sgprLocalWriteAddrB], 4 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:49  */
-v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:1 blgp:0 // left value = acc[196+0:199+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+3] offen offset:0, lds // G -> Reg 0_0_4_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:0 blgp:0 // left value = acc[196+0:199+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+3] offen offset:0, lds  // G -> Reg 0_0_4_0
+s_add_u32 m0, s[sgprLocalWriteAddrB], 5 * 4224                             // Move LDS write address to next line
 
 /*  mfmaIndex:50  */
-v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:1 blgp:0 // left value = acc[200+0:203+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+4] offen offset:0, lds // G -> Reg 0_0_5_0
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
+v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:0 blgp:0 // left value = acc[200+0:203+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+4] offen offset:0, lds  // G -> Reg 0_0_5_0
+s_add_u32 m0, s[sgprLocalWriteAddrB], 6 * 4224                             // Move LDS write address to next line
 
   /*  mfmaIndex:51  */
-v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:1 blgp:0 // left value = acc[204+0:207+0]
-buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+5] offen offset:0, lds // G -> Reg 0_0_6_0
+v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:0 blgp:0 // left value = acc[204+0:207+0]
+buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+5] offen offset:0, lds  // G -> Reg 0_0_6_0
+
 
 /*  mfmaIndex:56  */
-v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:1 blgp:0 // left value = acc[224+0:227+0]
-s_add_u32 m0, m0, 4224                             // Move LDS write address to next line
-  /*  mfmaIndex:57  */
-v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:1 blgp:0 // left value = acc[228+0:231+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:0 blgp:0 // left value = acc[224+0:227+0]
+s_add_u32 m0, s[sgprLocalWriteAddrB], 7 * 4224                             // Move LDS write address to next line
+  
+/*  mfmaIndex:57  */
+v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:0 blgp:0 // left value = acc[228+0:231+0]
 
   /*  mfmaIndex:58  */
-v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:1 blgp:0 // left value = acc[232+0:235+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:0 blgp:0 // left value = acc[232+0:235+0]
 s_waitcnt vmcnt(15)
   /*  mfmaIndex:59  */
-v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:1 blgp:0 // left value = acc[236+0:239+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:0 blgp:0 // left value = acc[236+0:239+0]
 s_barrier
 
 // B1 A1 + LR A0 B0
 
 
 /*  mfmaIndex:36  */
-v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:1 blgp:0 // left value = acc[144+0:147+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:0 blgp:0 // left value = acc[144+0:147+0]
 ds_read_b128 v[vgprValuA_X0_I0+0:vgprValuA_X0_I0+0+3], v[vgprLocalReadAddrA] offset:0 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+4:vgprValuA_X0_I0+4+3], v[vgprLocalReadAddrA] offset:64 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=1 oIdx=0 buffer=0 iui=0
 
   /*  mfmaIndex:37  */
-v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:1 blgp:0 // left value = acc[148+0:151+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:0 blgp:0 // left value = acc[148+0:151+0]
 ds_read_b128 v[vgprValuA_X0_I0+8:vgprValuA_X0_I0+8+3], v[vgprLocalReadAddrA] offset:128 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+12:vgprValuA_X0_I0+12+3], v[vgprLocalReadAddrA] offset:192 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:38  */
-v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:1 blgp:0 // left value = acc[152+0:155+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:0 blgp:0 // left value = acc[152+0:155+0]
 ds_read_b128 v[vgprValuA_X0_I0+16:vgprValuA_X0_I0+16+3], v[vgprLocalReadAddrA] offset:256 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+20:vgprValuA_X0_I0+20+3], v[vgprLocalReadAddrA] offset:320 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:39  */
-v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:1 blgp:0 // left value = acc[156+0:159+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:0 blgp:0 // left value = acc[156+0:159+0]
 ds_read_b128 v[vgprValuA_X0_I0+24:vgprValuA_X0_I0+24+3], v[vgprLocalReadAddrA] offset:384 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+28:vgprValuA_X0_I0+28+3], v[vgprLocalReadAddrA] offset:448 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:44  */
-v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:1 blgp:0 // left value = acc[176+0:179+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:0 blgp:0 // left value = acc[176+0:179+0]
 ds_read_b128 v[vgprValuB_X0_I0+0:vgprValuB_X0_I0+0+3], v[vgprLocalReadAddrB] offset:0 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+4:vgprValuB_X0_I0+4+3], v[vgprLocalReadAddrB] offset:64 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:45  */
-v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:1 blgp:0 // left value = acc[180+0:183+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:0 blgp:0 // left value = acc[180+0:183+0]
 buffer_load_dwordx4 v[vgprGlobalReadOffsetB+0], s[sgprSrdB:sgprSrdB+3], s[sgprScalarGlobalReadOffsetB+6] offen offset:0, lds // G -> Reg 0_0_7_0
 
 /*  mfmaIndex:46  */
-v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:1 blgp:0 // left value = acc[184+0:187+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:0 blgp:0 // left value = acc[184+0:187+0]
 ds_read_b128 v[vgprValuB_X0_I0+8:vgprValuB_X0_I0+8+3], v[vgprLocalReadAddrB] offset:128 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+12:vgprValuB_X0_I0+12+3], v[vgprLocalReadAddrB] offset:192 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:47  */
-v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:1 blgp:0 // left value = acc[188+0:191+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:0 blgp:0 // left value = acc[188+0:191+0]
 ds_read_b128 v[vgprValuB_X0_I0+16:vgprValuB_X0_I0+16+3], v[vgprLocalReadAddrB] offset:256 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+20:vgprValuB_X0_I0+20+3], v[vgprLocalReadAddrB] offset:320 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:52  */
-v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:1 blgp:0 // left value = acc[208+0:211+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:0 blgp:0 // left value = acc[208+0:211+0]
 ds_read_b128 v[vgprValuB_X0_I0+24:vgprValuB_X0_I0+24+3], v[vgprLocalReadAddrB] offset:384 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+28:vgprValuB_X0_I0+28+3], v[vgprLocalReadAddrB] offset:448 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:53  */
-v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:1 blgp:0 // left value = acc[212+0:215+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:0 blgp:0 // left value = acc[212+0:215+0]
 /* local write swap offsets a */
 s_xor_b32 s[sgprLocalWriteAddrA], s[sgprSwapA], s[sgprLocalWriteAddrA] // swap Red Blk SGPR
 /* local write swap offsets b */
 s_xor_b32 s[sgprLocalWriteAddrB], s[sgprSwapB], s[sgprLocalWriteAddrB] // swap Red Blk SGPR
 
-
   /*  mfmaIndex:54  */
-v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:1 blgp:0 // left value = acc[216+0:219+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:0 blgp:0 // left value = acc[216+0:219+0]
 /*  mfmaIndex:55  */
-v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:1 blgp:0 // left value = acc[220+0:223+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:0 blgp:0 // left value = acc[220+0:223+0]
 
 /*  mfmaIndex:60  */
-v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:1 blgp:0 // left value = acc[240+0:243+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:0 blgp:0 // left value = acc[240+0:243+0]
 s_sub_u32 s[sgprLoopCounterL], s[sgprLoopCounterL], 1 // dec counterL
 s_cmp_eq_i32 s[sgprLoopCounterL], 0x2              // counterL==2
 /*  mfmaIndex:61  */
-v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:1 blgp:0 // left value = acc[244+0:247+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:0 blgp:0 // left value = acc[244+0:247+0]
 s_waitcnt lgkmcnt(0)
 /*  mfmaIndex:62  */
-v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:1 blgp:0 // left value = acc[248+0:251+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:0 blgp:0 // left value = acc[248+0:251+0]
 
 /*  mfmaIndex:63  */
-v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:1 blgp:0 // left value = acc[252+0:255+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:0 blgp:0 // left value = acc[252+0:255+0]
 
 /******************************************/
 /* Unrolled Loop - End                    */
@@ -2006,242 +2008,242 @@ label_LoopEndL:
 /* Ord. NoGlobalLoadLoop - Begin          */
 /******************************************/
 s_waitcnt vmcnt(16)                                // 10wait for global read
+// Skip force waitcnt0
 
 /* iter 0 (reset local read pointers iteration)  (swap and reset local write pointers iteration)  (swap local read pointers iteration)  */
 /*  grEndMfmaIndex:6, lwStartMfmaIndex:37, lwEndMfmaIndex:63  */
 /*  numMfmaForLR:36, syncPlrMfmaIndex:0  */
 /*  mfmaIndex:0  */
-v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:1 blgp:0 // left value = acc[0+0:3+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:0 blgp:0 // left value = acc[0+0:3+0]
 s_barrier
 
 /*  mfmaIndex:1  */
-v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:1 blgp:0 // left value = acc[4+0:7+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:0 blgp:0 // left value = acc[4+0:7+0]
 ds_read_b128 v[vgprValuA_X0_I0+32:vgprValuA_X0_I0+32+3], v[vgprLocalReadAddrA] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+36:vgprValuA_X0_I0+36+3], v[vgprLocalReadAddrA] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:2  */
-v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:1 blgp:0 // left value = acc[8+0:11+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:0 blgp:0 // left value = acc[8+0:11+0]
 ds_read_b128 v[vgprValuA_X0_I0+40:vgprValuA_X0_I0+40+3], v[vgprLocalReadAddrA] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+44:vgprValuA_X0_I0+44+3], v[vgprLocalReadAddrA] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:3  */
-v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:1 blgp:0 // left value = acc[12+0:15+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:0 blgp:0 // left value = acc[12+0:15+0]
 ds_read_b128 v[vgprValuA_X0_I0+48:vgprValuA_X0_I0+48+3], v[vgprLocalReadAddrA] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+52:vgprValuA_X0_I0+52+3], v[vgprLocalReadAddrA] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:8  */
-v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:1 blgp:0 // left value = acc[32+0:35+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:0 blgp:0 // left value = acc[32+0:35+0]
 ds_read_b128 v[vgprValuA_X0_I0+56:vgprValuA_X0_I0+56+3], v[vgprLocalReadAddrA] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+60:vgprValuA_X0_I0+60+3], v[vgprLocalReadAddrA] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 /*  mfmaIndex:9  */
-v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:1 blgp:0 // left value = acc[36+0:39+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:0 blgp:0 // left value = acc[36+0:39+0]
 ds_read_b128 v[vgprValuB_X0_I0+32:vgprValuB_X0_I0+32+3], v[vgprLocalReadAddrB] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+36:vgprValuB_X0_I0+36+3], v[vgprLocalReadAddrB] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:10  */
-v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:1 blgp:0 // left value = acc[40+0:43+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:0 blgp:0 // left value = acc[40+0:43+0]
 ds_read_b128 v[vgprValuB_X0_I0+40:vgprValuB_X0_I0+40+3], v[vgprLocalReadAddrB] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+44:vgprValuB_X0_I0+44+3], v[vgprLocalReadAddrB] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:11  */
-v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:1 blgp:0 // left value = acc[44+0:47+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:0 blgp:0 // left value = acc[44+0:47+0]
 ds_read_b128 v[vgprValuB_X0_I0+48:vgprValuB_X0_I0+48+3], v[vgprLocalReadAddrB] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+52:vgprValuB_X0_I0+52+3], v[vgprLocalReadAddrB] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:16  */
-v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:1 blgp:0 // left value = acc[64+0:67+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:0 blgp:0 // left value = acc[64+0:67+0]
 ds_read_b128 v[vgprValuB_X0_I0+56:vgprValuB_X0_I0+56+3], v[vgprLocalReadAddrB] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+60:vgprValuB_X0_I0+60+3], v[vgprLocalReadAddrB] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:17  */
-v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:1 blgp:0 // left value = acc[68+0:71+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:0 blgp:0 // left value = acc[68+0:71+0]
 /* local read swap offsets a */
 v_xor_b32 v[vgprLocalReadAddrA], v[vgprLocalReadSwapAddrA], v[vgprLocalReadAddrA] // swap Red Blk
 /* local read swap offsets b */
 v_xor_b32 v[vgprLocalReadAddrB], v[vgprLocalReadSwapAddrB], v[vgprLocalReadAddrB] // swap Red Blk
 
 /*  mfmaIndex:18  */
-v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:1 blgp:0 // left value = acc[72+0:75+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:0 blgp:0 // left value = acc[72+0:75+0]
 
   /*  mfmaIndex:19  */
-v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:1 blgp:0 // left value = acc[76+0:79+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:0 blgp:0 // left value = acc[76+0:79+0]
 
 /*  mfmaIndex:24  */
-v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:1 blgp:0 // left value = acc[96+0:99+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:0 blgp:0 // left value = acc[96+0:99+0]
 
 /*  mfmaIndex:25  */
-v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:1 blgp:0 // left value = acc[100+0:103+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:0 blgp:0 // left value = acc[100+0:103+0]
 
 
 /*  mfmaIndex:26  */
-v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:1 blgp:0 // left value = acc[104+0:107+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:0 blgp:0 // left value = acc[104+0:107+0]
 
 
 /*  mfmaIndex:27  */
-v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:1 blgp:0 // left value = acc[108+0:111+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:0 blgp:0 // left value = acc[108+0:111+0]
 s_waitcnt lgkmcnt(0)
 
 // B0 A1
 
 /*  mfmaIndex:4  */
-v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:1 blgp:0 // left value = acc[16+0:19+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:0 blgp:0 // left value = acc[16+0:19+0]
 
 /*  mfmaIndex:5  */
-v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:1 blgp:0 // left value = acc[20+0:23+0]
-
+v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:0 blgp:0 // left value = acc[20+0:23+0]
 
 /*  mfmaIndex:6  */
-v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:1 blgp:0 // left value = acc[24+0:27+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:0 blgp:0 // left value = acc[24+0:27+0]
 /*  mfmaIndex:7  */
-v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:1 blgp:0 // left value = acc[28+0:31+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:0 blgp:0 // left value = acc[28+0:31+0]
 
 
 /*  mfmaIndex:12  */
-v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:1 blgp:0 // left value = acc[48+0:51+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:0 blgp:0 // left value = acc[48+0:51+0]
 
 
 /*  mfmaIndex:13  */
-v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:1 blgp:0 // left value = acc[52+0:55+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:0 blgp:0 // left value = acc[52+0:55+0]
 
 
 /*  mfmaIndex:14  */
-v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:1 blgp:0 // left value = acc[56+0:59+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:0 blgp:0 // left value = acc[56+0:59+0]
 /*  mfmaIndex:15  */
-v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:1 blgp:0 // left value = acc[60+0:63+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:0 blgp:0 // left value = acc[60+0:63+0]
 
 /*  mfmaIndex:20  */
-v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:1 blgp:0 // left value = acc[80+0:83+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:0 blgp:0 // left value = acc[80+0:83+0]
 
 /*  mfmaIndex:21  */
-v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:1 blgp:0 // left value = acc[84+0:87+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:0 blgp:0 // left value = acc[84+0:87+0]
 
 /*  mfmaIndex:22  */
-v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:1 blgp:0 // left value = acc[88+0:91+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:0 blgp:0 // left value = acc[88+0:91+0]
 
 /*  mfmaIndex:23  */
-v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:1 blgp:0 // left value = acc[92+0:95+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:0 blgp:0 // left value = acc[92+0:95+0]
 
 /*  mfmaIndex:28  */
-v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:1 blgp:0 // left value = acc[112+0:115+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:0 blgp:0 // left value = acc[112+0:115+0]
 /*  mfmaIndex:29  */
-v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:1 blgp:0 // left value = acc[116+0:119+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:0 blgp:0 // left value = acc[116+0:119+0]
 /*  mfmaIndex:30  */
-v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:1 blgp:0 // left value = acc[120+0:123+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:0 blgp:0 // left value = acc[120+0:123+0]
 /*  mfmaIndex:31  */
-v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:1 blgp:0 // left value = acc[124+0:127+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:0 blgp:0 // left value = acc[124+0:127+0]
 
 
 // B1 A0
 
 /*  mfmaIndex:32  */
-v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:1 blgp:0 // left value = acc[128+0:131+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:0 blgp:0 // left value = acc[128+0:131+0]
 /*  mfmaIndex:33  */
-v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:1 blgp:0 // left value = acc[132+0:135+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:0 blgp:0 // left value = acc[132+0:135+0]
 /*  mfmaIndex:34  */
-v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:1 blgp:0 // left value = acc[136+0:139+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:0 blgp:0 // left value = acc[136+0:139+0]
 /*  mfmaIndex:35  */
-v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:1 blgp:0 // left value = acc[140+0:143+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:0 blgp:0 // left value = acc[140+0:143+0]
 
 /*  mfmaIndex:40  */
-v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:1 blgp:0 // left value = acc[160+0:163+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:0 blgp:0 // left value = acc[160+0:163+0]
 /*  mfmaIndex:41  */
-v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:1 blgp:0 // left value = acc[164+0:167+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:0 blgp:0 // left value = acc[164+0:167+0]
 /*  mfmaIndex:42  */
-v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:1 blgp:0 // left value = acc[168+0:171+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:0 blgp:0 // left value = acc[168+0:171+0]
 /*  mfmaIndex:43  */
-v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:1 blgp:0 // left value = acc[172+0:175+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:0 blgp:0 // left value = acc[172+0:175+0]
 
 /*  mfmaIndex:48  */
-v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:1 blgp:0 // left value = acc[192+0:195+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:0 blgp:0 // left value = acc[192+0:195+0]
 
 /*  mfmaIndex:49  */
-v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:1 blgp:0 // left value = acc[196+0:199+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:0 blgp:0 // left value = acc[196+0:199+0]
 
 /*  mfmaIndex:50  */
-v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:1 blgp:0 // left value = acc[200+0:203+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:0 blgp:0 // left value = acc[200+0:203+0]
 
   /*  mfmaIndex:51  */
-v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:1 blgp:0 // left value = acc[204+0:207+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:0 blgp:0 // left value = acc[204+0:207+0]
 
 /*  mfmaIndex:56  */
-v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:1 blgp:0 // left value = acc[224+0:227+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:0 blgp:0 // left value = acc[224+0:227+0]
 
 /*  mfmaIndex:57  */
-v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:1 blgp:0 // left value = acc[228+0:231+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:0 blgp:0 // left value = acc[228+0:231+0]
 
 /*  mfmaIndex:58  */
-v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:1 blgp:0 // left value = acc[232+0:235+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:0 blgp:0 // left value = acc[232+0:235+0]
 s_waitcnt vmcnt(0)                                // 10wait for global read
 /*  mfmaIndex:59  */
-v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:1 blgp:0 // left value = acc[236+0:239+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:0 blgp:0 // left value = acc[236+0:239+0]
 s_barrier
 
 // B1 A1
 
 
 /*  mfmaIndex:36  */
-v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:1 blgp:0 // left value = acc[144+0:147+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:0 blgp:0 // left value = acc[144+0:147+0]
 ds_read_b128 v[vgprValuA_X0_I0+0:vgprValuA_X0_I0+0+3], v[vgprLocalReadAddrA] offset:0 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+4:vgprValuA_X0_I0+4+3], v[vgprLocalReadAddrA] offset:64 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=1 oIdx=0 buffer=0 iui=0
 
   /*  mfmaIndex:37  */
-v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:1 blgp:0 // left value = acc[148+0:151+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:0 blgp:0 // left value = acc[148+0:151+0]
 ds_read_b128 v[vgprValuA_X0_I0+8:vgprValuA_X0_I0+8+3], v[vgprLocalReadAddrA] offset:128 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+12:vgprValuA_X0_I0+12+3], v[vgprLocalReadAddrA] offset:192 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:38  */
-v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:1 blgp:0 // left value = acc[152+0:155+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:0 blgp:0 // left value = acc[152+0:155+0]
 ds_read_b128 v[vgprValuA_X0_I0+16:vgprValuA_X0_I0+16+3], v[vgprLocalReadAddrA] offset:256 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+20:vgprValuA_X0_I0+20+3], v[vgprLocalReadAddrA] offset:320 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:39  */
-v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:1 blgp:0 // left value = acc[156+0:159+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:0 blgp:0 // left value = acc[156+0:159+0]
 ds_read_b128 v[vgprValuA_X0_I0+24:vgprValuA_X0_I0+24+3], v[vgprLocalReadAddrA] offset:384 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+28:vgprValuA_X0_I0+28+3], v[vgprLocalReadAddrA] offset:448 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:44  */
-v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:1 blgp:0 // left value = acc[176+0:179+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:0 blgp:0 // left value = acc[176+0:179+0]
 ds_read_b128 v[vgprValuB_X0_I0+0:vgprValuB_X0_I0+0+3], v[vgprLocalReadAddrB] offset:0 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+4:vgprValuB_X0_I0+4+3], v[vgprLocalReadAddrB] offset:64 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=0 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:45  */
-v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:1 blgp:0 // left value = acc[180+0:183+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:0 blgp:0 // left value = acc[180+0:183+0]
 ds_read_b128 v[vgprValuB_X0_I0+8:vgprValuB_X0_I0+8+3], v[vgprLocalReadAddrB] offset:128 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+12:vgprValuB_X0_I0+12+3], v[vgprLocalReadAddrB] offset:192 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=1 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:46  */
-v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:1 blgp:0 // left value = acc[184+0:187+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:0 blgp:0 // left value = acc[184+0:187+0]
 ds_read_b128 v[vgprValuB_X0_I0+16:vgprValuB_X0_I0+16+3], v[vgprLocalReadAddrB] offset:256 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+20:vgprValuB_X0_I0+20+3], v[vgprLocalReadAddrB] offset:320 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=2 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:47  */
-v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:1 blgp:0 // left value = acc[188+0:191+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:0 blgp:0 // left value = acc[188+0:191+0]
 ds_read_b128 v[vgprValuB_X0_I0+24:vgprValuB_X0_I0+24+3], v[vgprLocalReadAddrB] offset:384 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+28:vgprValuB_X0_I0+28+3], v[vgprLocalReadAddrB] offset:448 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=3 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:52  */
-v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:1 blgp:0 // left value = acc[208+0:211+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:0 blgp:0 // left value = acc[208+0:211+0]
 
 
 /*  mfmaIndex:53  */
-v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:1 blgp:0 // left value = acc[212+0:215+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:0 blgp:0 // left value = acc[212+0:215+0]
 
   /*  mfmaIndex:54  */
-v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:1 blgp:0 // left value = acc[216+0:219+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:0 blgp:0 // left value = acc[216+0:219+0]
 /*  mfmaIndex:55  */
-v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:1 blgp:0 // left value = acc[220+0:223+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:0 blgp:0 // left value = acc[220+0:223+0]
 
 /*  mfmaIndex:60  */
-v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:1 blgp:0 // left value = acc[240+0:243+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:0 blgp:0 // left value = acc[240+0:243+0]
 
 /*  mfmaIndex:61  */
-v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:1 blgp:0 // left value = acc[244+0:247+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:0 blgp:0 // left value = acc[244+0:247+0]
 s_waitcnt lgkmcnt(0)
 /*  mfmaIndex:62  */
-v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:1 blgp:0 // left value = acc[248+0:251+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:0 blgp:0 // left value = acc[248+0:251+0]
 
 /*  mfmaIndex:63  */
-v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:1 blgp:0 // left value = acc[252+0:255+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:0 blgp:0 // left value = acc[252+0:255+0]
 /* numPrefetchIter=0 */
 /* dataAtIterA=0 numReadsIterA=1 skipReadsIterA=0 readsPerIterA=16 */
 /* dataAtIterB=0 numReadsIterB=1 skipReadsIterB=0 readsPerIterB=16 */
@@ -2257,213 +2259,213 @@ label_GSU_3:
 s_waitcnt vmcnt(0)                                 // 10wait for global read
 
 /*  mfmaIndex:0  */
-v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:1 blgp:0 // left value = acc[0+0:3+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[0:3], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[0:3] cbsz:0 blgp:0 // left value = acc[0+0:3+0]
 s_barrier
 
 /*  mfmaIndex:1  */
-v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:1 blgp:0 // left value = acc[4+0:7+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[4:7], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[4:7] cbsz:0 blgp:0 // left value = acc[4+0:7+0]
 ds_read_b128 v[vgprValuA_X0_I0+32:vgprValuA_X0_I0+32+3], v[vgprLocalReadAddrA] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+36:vgprValuA_X0_I0+36+3], v[vgprLocalReadAddrA] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:2  */
-v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:1 blgp:0 // left value = acc[8+0:11+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[8:11], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[8:11] cbsz:0 blgp:0 // left value = acc[8+0:11+0]
 ds_read_b128 v[vgprValuA_X0_I0+40:vgprValuA_X0_I0+40+3], v[vgprLocalReadAddrA] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+44:vgprValuA_X0_I0+44+3], v[vgprLocalReadAddrA] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:3  */
-v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:1 blgp:0 // left value = acc[12+0:15+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[12:15], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[12:15] cbsz:0 blgp:0 // left value = acc[12+0:15+0]
 ds_read_b128 v[vgprValuA_X0_I0+48:vgprValuA_X0_I0+48+3], v[vgprLocalReadAddrA] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+52:vgprValuA_X0_I0+52+3], v[vgprLocalReadAddrA] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:8  */
-v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:1 blgp:0 // left value = acc[32+0:35+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[32:35], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[32:35] cbsz:0 blgp:0 // left value = acc[32+0:35+0]
 ds_read_b128 v[vgprValuA_X0_I0+56:vgprValuA_X0_I0+56+3], v[vgprLocalReadAddrA] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuA_X0_I0+60:vgprValuA_X0_I0+60+3], v[vgprLocalReadAddrA] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 /*  mfmaIndex:9  */
-v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:1 blgp:0 // left value = acc[36+0:39+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[36:39], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[36:39] cbsz:0 blgp:0 // left value = acc[36+0:39+0]
 ds_read_b128 v[vgprValuB_X0_I0+32:vgprValuB_X0_I0+32+3], v[vgprLocalReadAddrB] offset:512 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+36:vgprValuB_X0_I0+36+3], v[vgprLocalReadAddrB] offset:576 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=4 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:10  */
-v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:1 blgp:0 // left value = acc[40+0:43+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[40:43], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[40:43] cbsz:0 blgp:0 // left value = acc[40+0:43+0]
 ds_read_b128 v[vgprValuB_X0_I0+40:vgprValuB_X0_I0+40+3], v[vgprLocalReadAddrB] offset:640 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+44:vgprValuB_X0_I0+44+3], v[vgprLocalReadAddrB] offset:704 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=5 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:11  */
-v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:1 blgp:0 // left value = acc[44+0:47+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[44:47], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[44:47] cbsz:0 blgp:0 // left value = acc[44+0:47+0]
 ds_read_b128 v[vgprValuB_X0_I0+48:vgprValuB_X0_I0+48+3], v[vgprLocalReadAddrB] offset:768 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+52:vgprValuB_X0_I0+52+3], v[vgprLocalReadAddrB] offset:832 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=6 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:16  */
-v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:1 blgp:0 // left value = acc[64+0:67+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[64:67], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[64:67] cbsz:0 blgp:0 // left value = acc[64+0:67+0]
 ds_read_b128 v[vgprValuB_X0_I0+56:vgprValuB_X0_I0+56+3], v[vgprLocalReadAddrB] offset:896 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=0 oIdx=0 buffer=0 iui=0
 ds_read_b128 v[vgprValuB_X0_I0+60:vgprValuB_X0_I0+60+3], v[vgprLocalReadAddrB] offset:960 // L -> Reg lro=0 swapByteOffset=0 ti=256 vIdx=0 eIdx=7 rIdx=1 oIdx=0 buffer=0 iui=0
 
 /*  mfmaIndex:17  */
-v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:1 blgp:0 // left value = acc[68+0:71+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[68:71], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[68:71] cbsz:0 blgp:0 // left value = acc[68+0:71+0]
 
 /*  mfmaIndex:18  */
-v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:1 blgp:0 // left value = acc[72+0:75+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[72:75], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[72:75] cbsz:0 blgp:0 // left value = acc[72+0:75+0]
 
   /*  mfmaIndex:19  */
-v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:1 blgp:0 // left value = acc[76+0:79+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[76:79], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[76:79] cbsz:0 blgp:0 // left value = acc[76+0:79+0]
 
 /*  mfmaIndex:24  */
-v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:1 blgp:0 // left value = acc[96+0:99+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[96:99], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[96:99] cbsz:0 blgp:0 // left value = acc[96+0:99+0]
 
 /*  mfmaIndex:25  */
-v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:1 blgp:0 // left value = acc[100+0:103+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[100:103], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[100:103] cbsz:0 blgp:0 // left value = acc[100+0:103+0]
 
 
 /*  mfmaIndex:26  */
-v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:1 blgp:0 // left value = acc[104+0:107+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[104:107], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[104:107] cbsz:0 blgp:0 // left value = acc[104+0:107+0]
 
 /*  mfmaIndex:27  */
-v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:1 blgp:0 // left value = acc[108+0:111+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[108:111], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[108:111] cbsz:0 blgp:0 // left value = acc[108+0:111+0]
 s_waitcnt lgkmcnt(0)
 
 // B0 A1
 
 /*  mfmaIndex:4  */
-v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:1 blgp:0 // left value = acc[16+0:19+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[16:19], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[16:19] cbsz:0 blgp:0 // left value = acc[16+0:19+0]
 
 /*  mfmaIndex:5  */
-v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:1 blgp:0 // left value = acc[20+0:23+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[20:23], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[20:23] cbsz:0 blgp:0 // left value = acc[20+0:23+0]
 
 /*  mfmaIndex:6  */
-v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:1 blgp:0 // left value = acc[24+0:27+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[24:27], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[24:27] cbsz:0 blgp:0 // left value = acc[24+0:27+0]
 
 /*  mfmaIndex:7  */
-v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:1 blgp:0 // left value = acc[28+0:31+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[28:31], v[vgprValuB_X0_I0+0+0+0:vgprValuB_X0_I0+0+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[28:31] cbsz:0 blgp:0 // left value = acc[28+0:31+0]
 
 /*  mfmaIndex:12  */
-v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:1 blgp:0 // left value = acc[48+0:51+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[48:51], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[48:51] cbsz:0 blgp:0 // left value = acc[48+0:51+0]
 
 /*  mfmaIndex:13  */
-v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:1 blgp:0 // left value = acc[52+0:55+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[52:55], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[52:55] cbsz:0 blgp:0 // left value = acc[52+0:55+0]
 
 /*  mfmaIndex:14  */
-v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:1 blgp:0 // left value = acc[56+0:59+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[56:59], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[56:59] cbsz:0 blgp:0 // left value = acc[56+0:59+0]
 /*  mfmaIndex:15  */
-v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:1 blgp:0 // left value = acc[60+0:63+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[60:63], v[vgprValuB_X0_I0+8+0+0:vgprValuB_X0_I0+8+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[60:63] cbsz:0 blgp:0 // left value = acc[60+0:63+0]
 
 /*  mfmaIndex:20  */
-v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:1 blgp:0 // left value = acc[80+0:83+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[80:83], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[80:83] cbsz:0 blgp:0 // left value = acc[80+0:83+0]
 
 /*  mfmaIndex:21  */
-v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:1 blgp:0 // left value = acc[84+0:87+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[84:87], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[84:87] cbsz:0 blgp:0 // left value = acc[84+0:87+0]
 
 /*  mfmaIndex:22  */
-v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:1 blgp:0 // left value = acc[88+0:91+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[88:91], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[88:91] cbsz:0 blgp:0 // left value = acc[88+0:91+0]
 
 /*  mfmaIndex:23  */
-v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:1 blgp:0 // left value = acc[92+0:95+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[92:95], v[vgprValuB_X0_I0+16+0+0:vgprValuB_X0_I0+16+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[92:95] cbsz:0 blgp:0 // left value = acc[92+0:95+0]
 
 /*  mfmaIndex:28  */
-v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:1 blgp:0 // left value = acc[112+0:115+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[112:115], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[112:115] cbsz:0 blgp:0 // left value = acc[112+0:115+0]
 /*  mfmaIndex:29  */
-v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:1 blgp:0 // left value = acc[116+0:119+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[116:119], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[116:119] cbsz:0 blgp:0 // left value = acc[116+0:119+0]
 /*  mfmaIndex:30  */
-v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:1 blgp:0 // left value = acc[120+0:123+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[120:123], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[120:123] cbsz:0 blgp:0 // left value = acc[120+0:123+0]
 /*  mfmaIndex:31  */
-v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:1 blgp:0 // left value = acc[124+0:127+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[124:127], v[vgprValuB_X0_I0+24+0+0:vgprValuB_X0_I0+24+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[124:127] cbsz:0 blgp:0 // left value = acc[124+0:127+0]
 
 
 // B1 A0
 
 /*  mfmaIndex:32  */
-v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:1 blgp:0 // left value = acc[128+0:131+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[128:131], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[128:131] cbsz:0 blgp:0 // left value = acc[128+0:131+0]
 /*  mfmaIndex:33  */
-v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:1 blgp:0 // left value = acc[132+0:135+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[132:135], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[132:135] cbsz:0 blgp:0 // left value = acc[132+0:135+0]
 /*  mfmaIndex:34  */
-v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:1 blgp:0 // left value = acc[136+0:139+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[136:139], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[136:139] cbsz:0 blgp:0 // left value = acc[136+0:139+0]
 /*  mfmaIndex:35  */
-v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:1 blgp:0 // left value = acc[140+0:143+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[140:143], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[140:143] cbsz:0 blgp:0 // left value = acc[140+0:143+0]
 
 /*  mfmaIndex:40  */
-v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:1 blgp:0 // left value = acc[160+0:163+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[160:163], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[160:163] cbsz:0 blgp:0 // left value = acc[160+0:163+0]
 /*  mfmaIndex:41  */
-v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:1 blgp:0 // left value = acc[164+0:167+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[164:167], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[164:167] cbsz:0 blgp:0 // left value = acc[164+0:167+0]
 /*  mfmaIndex:42  */
-v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:1 blgp:0 // left value = acc[168+0:171+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[168:171], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[168:171] cbsz:0 blgp:0 // left value = acc[168+0:171+0]
 /*  mfmaIndex:43  */
-v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:1 blgp:0 // left value = acc[172+0:175+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[172:175], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[172:175] cbsz:0 blgp:0 // left value = acc[172+0:175+0]
 
 /*  mfmaIndex:48  */
-v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:1 blgp:0 // left value = acc[192+0:195+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[192:195], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[192:195] cbsz:0 blgp:0 // left value = acc[192+0:195+0]
 
 /*  mfmaIndex:49  */
-v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:1 blgp:0 // left value = acc[196+0:199+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[196:199], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[196:199] cbsz:0 blgp:0 // left value = acc[196+0:199+0]
 
 /*  mfmaIndex:50  */
-v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:1 blgp:0 // left value = acc[200+0:203+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[200:203], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[200:203] cbsz:0 blgp:0 // left value = acc[200+0:203+0]
 
   /*  mfmaIndex:51  */
-v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:1 blgp:0 // left value = acc[204+0:207+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[204:207], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[204:207] cbsz:0 blgp:0 // left value = acc[204+0:207+0]
 
 /*  mfmaIndex:56  */
-v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:1 blgp:0 // left value = acc[224+0:227+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[224:227], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+0+0+0:vgprValuA_X0_I0+0+0+0+7], acc[224:227] cbsz:0 blgp:0 // left value = acc[224+0:227+0]
 
 /*  mfmaIndex:57  */
-v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:1 blgp:0 // left value = acc[228+0:231+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[228:231], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+8+0+0:vgprValuA_X0_I0+8+0+0+7], acc[228:231] cbsz:0 blgp:0 // left value = acc[228+0:231+0]
 
 /*  mfmaIndex:58  */
-v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:1 blgp:0 // left value = acc[232+0:235+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[232:235], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+16+0+0:vgprValuA_X0_I0+16+0+0+7], acc[232:235] cbsz:0 blgp:0 // left value = acc[232+0:235+0]
 
 /*  mfmaIndex:59  */
-v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:1 blgp:0 // left value = acc[236+0:239+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[236:239], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+24+0+0:vgprValuA_X0_I0+24+0+0+7], acc[236:239] cbsz:0 blgp:0 // left value = acc[236+0:239+0]
 
 
 // B1 A1
 
 
 /*  mfmaIndex:36  */
-v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:1 blgp:0 // left value = acc[144+0:147+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[144:147], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[144:147] cbsz:0 blgp:0 // left value = acc[144+0:147+0]
 
   /*  mfmaIndex:37  */
-v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:1 blgp:0 // left value = acc[148+0:151+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[148:151], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[148:151] cbsz:0 blgp:0 // left value = acc[148+0:151+0]
 
 /*  mfmaIndex:38  */
-v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:1 blgp:0 // left value = acc[152+0:155+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[152:155], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[152:155] cbsz:0 blgp:0 // left value = acc[152+0:155+0]
 
 /*  mfmaIndex:39  */
-v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:1 blgp:0 // left value = acc[156+0:159+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[156:159], v[vgprValuB_X0_I0+32+0+0:vgprValuB_X0_I0+32+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[156:159] cbsz:0 blgp:0 // left value = acc[156+0:159+0]
 
 /*  mfmaIndex:44  */
-v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:1 blgp:0 // left value = acc[176+0:179+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[176:179], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[176:179] cbsz:0 blgp:0 // left value = acc[176+0:179+0]
 
 /*  mfmaIndex:45  */
-v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:1 blgp:0 // left value = acc[180+0:183+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[180:183], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[180:183] cbsz:0 blgp:0 // left value = acc[180+0:183+0]
 
 /*  mfmaIndex:46  */
-v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:1 blgp:0 // left value = acc[184+0:187+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[184:187], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[184:187] cbsz:0 blgp:0 // left value = acc[184+0:187+0]
 
 /*  mfmaIndex:47  */
-v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:1 blgp:0 // left value = acc[188+0:191+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[188:191], v[vgprValuB_X0_I0+40+0+0:vgprValuB_X0_I0+40+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[188:191] cbsz:0 blgp:0 // left value = acc[188+0:191+0]
 
 /*  mfmaIndex:52  */
-v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:1 blgp:0 // left value = acc[208+0:211+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[208:211], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[208:211] cbsz:0 blgp:0 // left value = acc[208+0:211+0]
 
 
 /*  mfmaIndex:53  */
-v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:1 blgp:0 // left value = acc[212+0:215+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[212:215], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[212:215] cbsz:0 blgp:0 // left value = acc[212+0:215+0]
 
   /*  mfmaIndex:54  */
-v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:1 blgp:0 // left value = acc[216+0:219+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[216:219], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[216:219] cbsz:0 blgp:0 // left value = acc[216+0:219+0]
 /*  mfmaIndex:55  */
-v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:1 blgp:0 // left value = acc[220+0:223+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[220:223], v[vgprValuB_X0_I0+48+0+0:vgprValuB_X0_I0+48+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[220:223] cbsz:0 blgp:0 // left value = acc[220+0:223+0]
 
 /*  mfmaIndex:60  */
-v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:1 blgp:0 // left value = acc[240+0:243+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[240:243], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+32+0+0:vgprValuA_X0_I0+32+0+0+7], acc[240:243] cbsz:0 blgp:0 // left value = acc[240+0:243+0]
 
 /*  mfmaIndex:61  */
-v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:1 blgp:0 // left value = acc[244+0:247+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[244:247], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+40+0+0:vgprValuA_X0_I0+40+0+0+7], acc[244:247] cbsz:0 blgp:0 // left value = acc[244+0:247+0]
 
 /*  mfmaIndex:62  */
-v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:1 blgp:0 // left value = acc[248+0:251+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[248:251], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+48+0+0:vgprValuA_X0_I0+48+0+0+7], acc[248:251] cbsz:0 blgp:0 // left value = acc[248+0:251+0]
 
 /*  mfmaIndex:63  */
-v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:1 blgp:0 // left value = acc[252+0:255+0]
+v_mfma_f32_16x16x128_f8f6f4 acc[252:255], v[vgprValuB_X0_I0+56+0+0:vgprValuB_X0_I0+56+0+0+7], v[vgprValuA_X0_I0+56+0+0:vgprValuA_X0_I0+56+0+0+7], acc[252:255] cbsz:0 blgp:0 // left value = acc[252+0:255+0]
 /* numPrefetchIter=0 */
 /* dataAtIterA=0 numReadsIterA=1 skipReadsIterA=0 readsPerIterA=16 */
 /* dataAtIterB=0 numReadsIterB=1 skipReadsIterB=0 readsPerIterB=16 */
