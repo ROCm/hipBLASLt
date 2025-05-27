@@ -2488,8 +2488,9 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
-            data->problem.setParams().setWGMXCC(0);
-            if(solution->isFallbackForHW(*hardware))
+            // cu-fallback detection
+            bool isCUFallback = solution->isFallbackForHW(*hardware);
+            if(isCUFallback)
             {
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
@@ -2498,9 +2499,9 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
                         << std::endl;
                     log_info(__func__, msg.str());
                 }
-                // set XCC=1 to param when this is a fallback solution
-                data->problem.setParams().setWGMXCC(1);
             }
+            // set XCC=1 to param when this is a fallback solution
+            data->problem.setParams().setWGMXCC((isCUFallback ? 1 : 0));
 
             auto kernels = solution->solve(data->problem, GetTensileInputs(prob), *hardware);
             // Remove this after supports getting comgr buffers from hip.
@@ -2765,8 +2766,9 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                 data->problem.setParams().resetInternalArgs();
             }
 
-            data->problem.setParams().setWGMXCC(0);
-            if(solution->isFallbackForHW(*hardware))
+            // cu-fallback detection
+            bool isCUFallback = solution->isFallbackForHW(*hardware);
+            if(isCUFallback)
             {
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
@@ -2775,9 +2777,9 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                         << std::endl;
                     log_info(__func__, msg.str());
                 }
-                // set XCC=1 to param when this is a fallback solution
-                data->problem.setParams().setWGMXCC(1);
             }
+            // set XCC=1 to param when this is a fallback solution
+            data->problem.setParams().setWGMXCC((isCUFallback ? 1 : 0));
 
             data->inputs.ws = workspace;
 
@@ -2815,6 +2817,25 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                 {
                     data->problem.gemms[i].setParams().resetInternalArgs();
                 }
+            }
+
+            // cu-fallback detection
+            bool isCUFallback = solution->isFallbackForHW(*hardware);
+            if(isCUFallback)
+            {
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "The solution is a cu-fallback for current HW. Use XCC=1 kernelArg."
+                        << std::endl;
+                    log_info(__func__, msg.str()); // set xcc to 1 in the for-loop below
+                }
+            }
+            uint16_t xcc_param = isCUFallback ? 1 : 0;
+            for(size_t i = 0; i < data->problem.gemms.size(); i++)
+            {
+                // set XCC=1 to param when this is a fallback solution
+                data->problem.gemms[i].setParams().setWGMXCC(xcc_param);
             }
 
             for(int i = 0; i < data->inputs.grouped.size(); i++)
@@ -3574,7 +3595,22 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         {
             tensile_prob.setParams().resetInternalArgs();
         }
-        
+
+        // cu-fallback detection
+        bool isCUFallback = solution->isFallbackForHW(*hardware);
+        if(isCUFallback)
+        {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "The solution is a cu-fallback for current HW. Use XCC=1 for predicate."
+                    << std::endl;
+                log_info(__func__, msg.str());
+            }
+        }
+        // set this flag for SW predicate
+        tensile_prob.setParams().setFallbackStatus(isCUFallback);
+
         TensileLite::Task task(*hardware, tensile_prob, *solution);
         tensile_prob.setWorkspaceSize(algo->max_workspace_bytes);
         if(!(*solution->hardwarePredicate)(*hardware))
@@ -3590,21 +3626,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
-
-        tensile_prob.setParams().setFallbackStatus(false);
-        if(solution->isFallbackForHW(*hardware))
-        {
-            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
-            {
-                std::ostringstream msg;
-                msg << "The solution is a cu-fallback for current HW. Use XCC=1 for predicate."
-                    << std::endl;
-                log_info(__func__, msg.str());
-            }
-            // set this flag for SW predicate
-            tensile_prob.setParams().setFallbackStatus(true);            
-        }        
-
         if(!(*solution->problemPredicate)(tensile_prob))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
@@ -3670,12 +3691,26 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
 
         bool isSupported  = true;
         bool isNormalGemm = true;
+        // cu-fallback detection
+        bool isCUFallback = solution->isFallbackForHW(*hardware);
+        if(isCUFallback)
+        {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "The solution is a cu-fallback for current HW. Use XCC=1 for predicate."
+                    << std::endl;
+                log_info(__func__, msg.str()); // will set status in the for-loop below
+            }
+        }
         auto problemWs = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms, *hardware);
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
             tensile_prob.gemms[i].setWorkspaceSizeGroupedGemm(problemWs);
             tensile_prob.gemms[i].setGroupedGemmCount(tensile_prob.gemms.size());
+            // set this flag for SW predicate
+            tensile_prob.gemms[i].setParams().setFallbackStatus(isCUFallback);
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
