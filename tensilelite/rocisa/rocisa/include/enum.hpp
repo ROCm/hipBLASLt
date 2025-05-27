@@ -25,6 +25,14 @@
 
 namespace rocisa
 {
+    enum class RegisterType : int
+    {
+        Vgpr,
+        Sgpr,
+        Accvgpr,
+        mgpr
+    };
+
     enum class DataType : int
     {
         Float,
