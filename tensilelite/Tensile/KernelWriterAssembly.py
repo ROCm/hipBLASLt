@@ -10253,6 +10253,8 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(self.vgprs.storeRemapCoord0)
       self.vgprPool.checkIn(self.vgprs.storeRemapCoord1)
       self.vgprPool.checkIn(self.vgprs.storeRemapOffsetCoord1)
+      for v in self.vgprs.storeRemapAS:
+        self.vgprPool.checkIn(v)
     if kernel["BufferStore"]:
       self.vgprPool.checkIn(self.vgprs.cinRowPtr)
       self.vgprPool.checkIn(self.vgprs.coutRowPtrD)
@@ -10374,10 +10376,7 @@ class KernelWriterAssembly(KernelWriter):
     rpe = self.states.bpeCexternal / self.states.bpr
     rpv = rpe * gwvw
 
-    # num registers to check out
-    storeRegs = []
-    for i in range(0, nElements, gwvw):
-      storeRegs.append(self.vgprPool.checkOutAligned(int(rpv), int(rpv), "store element d"))
+    storeRegs = self.vgprs.storeRemapAS
     src = vgpr(self.vgprs.storeRemapLR)
     for rIdx, i in enumerate(range(0, nElements, gwvw)):
       offset = self.storeRemapLrOffset * bpe * (i//gwvw)
@@ -10482,8 +10481,6 @@ class KernelWriterAssembly(KernelWriter):
 
     module.addSpaceLine()
     self.vgprPool.checkIn(vTmp)
-    for v in storeRegs:
-      self.vgprPool.checkIn(v)
 
     #Data exchange between different waves
     #Make sure LDS reads are finished of all waves
@@ -10628,6 +10625,12 @@ class KernelWriterAssembly(KernelWriter):
 
       self.vgprPool.checkIn(tmpV0)
 
+      nElements = kernel["MacroTile0"]*kernel["MatrixInstN"]//kernel["MIWaveGroup"][0]//self.states.kernel["WavefrontSize"]
+      rpe = self.states.bpeCexternal / self.states.bpr
+      rpv = rpe * gwvw
+      self.vgprs.storeRemapAS = []
+      for i in range(0, nElements, gwvw):
+        self.vgprs.storeRemapAS.append(self.vgprPool.checkOutAligned(int(rpv), int(rpv), "store element d"))
     return module
 
   ##############################################################################
@@ -11620,6 +11623,142 @@ class KernelWriterAssembly(KernelWriter):
     GSUtotal = max(2,GSUtotal)
     return GSUtotal
 
+  def setOccupancy(self, kernel):
+    # Use VGPR up to next occupancy threshold:
+    maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
+                                                      self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
+    # Set occupancy limit for register pools
+    # TODO: Support gfx12
+    if kernel["ISA"][0] != 12:
+      self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
+      self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
+    return maxVgprs, occupancy
+
+  def refineOccupancy(self, kernel, atomic, elements, actPCMaxTempSgpr, \
+                      edgeI, gwvw, maxVgprs, ss):
+    # Get estimated numVgprAvailable
+    # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
+    numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
+
+    # Grow the register pool if needed - we need enough regs for at least one element
+    # Unfortunate since this means the write logic is setting the VGPR requirement
+    # for the entire kernel but at least we have a functional kernel.
+    # Before growing the pool, see if we can shrink the write vector width instead?
+    # TODO : the vgprSerial is needed for-ever and if we grow here will split the
+    # range of the tmps.  Maybe want to move vgprSerial to first vgpr?
+
+    # TODO: Minimum elems for StoreRemap
+    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
+    minElements = 2 if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) else 1
+    if numVgprAvailable < minElements*ss.numVgprsPerElement:
+      self.vgprPool.resetOccupancyLimit()
+      print2("info: growing pool += %d * %d for GlobalWrite\n" \
+          % (minElements,ss.numVgprsPerElement))
+      self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
+        "grow-pool for GlobalWrite")
+      maxVgprsN, occupancy = self.setOccupancy(kernel)
+      if maxVgprs != maxVgprsN:
+        #print("refineOccupancy maxVgprs, new", maxVgprsN, "old", maxVgprs)
+        return self.refineOccupancy(kernel, atomic, elements, actPCMaxTempSgpr, edgeI, gwvw, maxVgprsN, ss)
+      numVgprAvailable = self.vgprPool.available()
+
+    # print("NumVgprAvailable", numVgprAvailable)
+    if ss.numVgprsPerElement:
+      numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
+    else:
+      numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
+
+    assert(self.states.c.numVgprValu % gwvw == 0) # sanity check
+
+    numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
+
+    # print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
+    #     "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
+    if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
+      numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
+
+    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
+    if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
+      # only do an even number of halves - since these share hi/lo pieces of some registers?
+      if numElementsPerBatch > 1:
+        numElementsPerBatch = int(numElementsPerBatch/2)*2
+      # dot2: no this constraint
+      elif not kernel["EnableMatrixInstruction"] and not kernel["UseDotInstruction"]:
+        # The globalWriteBatch routine below can't handle odd elements per batch
+        # and 0 elements per batch is illegal.
+        # so if we don't have *GPR resources to handle a larger batch then need
+        # to mark overflowedResources rather than generate a kernel that won't work.
+        # It might be possible to fix globalWriteBatch to handle this case but these
+        # are likely to be low-performing so likely not worth optimizing.
+        print2("WARNING: half requires at least two elements per batch")
+        self.states.overflowedResources = 3
+
+    assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
+
+    #numElementsPerBatch=min(2,numElementsPerBatch) # hack to control number of batches
+    if atomic and (ss.optSingleColVgpr or ss.optSharedColVgpr):
+      # hack to avoid re-using address vgpr across rows
+      # atomics need to perform several memory operations
+      # if the batch spans multiple rows, need multiple address vgpr
+      # which is not currently supported in the two opt*ColVgpr modes
+      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0]
+      numElementsPerBatch=min(len(firstRow),numElementsPerBatch)
+
+    # check best numElementsPerBatch to handle a column block
+    # elements of column block must be multiple size of numElementsPerBatch
+    nBatchesPerRow = 0
+    if kernel["StoreRemapVectorWidth"]:
+      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0] # format for element = (tt1, tt0, vc1, vc0)
+      # find the largest factor and smaller than numElementPerBatch
+      nBatchesPerRow = 1
+      for d in range(1, len(firstRow)+1):
+        largestFactor = len(firstRow)//d
+        if len(firstRow)%d == 0 and largestFactor <= numElementsPerBatch:
+          numElementsPerBatch = largestFactor
+          nBatchesPerRow = d
+          break
+
+    # if no atomics and no edge, then write whole vectors
+    #if not atomic and not edge:
+    #  numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
+    #  #print "  NumVectorsPerBatch", numVectorsPerBatch
+    #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
+    numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
+
+    # Grow pool if needed
+    # Get true numVgprAvailable
+    numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
+    totalNeededVgpr = ss.numVgprsPerElement * numElementsPerBatch
+    # print("Available vgprs =", numVgprAvailable, "Needed vgprs =", totalNeededVgpr, "pool size =", self.vgprPool.size())
+    if numVgprAvailable < totalNeededVgpr:
+      self.vgprPool.resetOccupancyLimit()
+      print2("info: growing pool += %d * %d for GlobalWrite\n" \
+          % (numBatches,ss.numVgprsPerElement))
+      availableBlock = min(0, self.vgprPool.available() - numVgprAvailable)
+      self.vgprPool.growPool(0, totalNeededVgpr + availableBlock, 1, "grow-pool for GlobalWrite")
+      maxVgprsN, occupancy = self.setOccupancy(kernel)
+      if maxVgprs != maxVgprsN:
+        #print("refineOccupancy maxVgprs, new", maxVgprsN, "old", maxVgprs)
+        return self.refineOccupancy(kernel, atomic, elements, actPCMaxTempSgpr, edgeI, gwvw, maxVgprsN, ss)
+  
+    # # Get true numVgprAvailable
+    # numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
+    # print("Available vgprs =", numVgprAvailable, "pool size =", self.vgprPool.size())
+
+    numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
+
+    if actPCMaxTempSgpr:
+      numSgprs = max(actPCMaxTempSgpr, numSgprs)
+
+    self.sgprPool.resetOccupancyLimit()
+    self.sgprPool.checkIn(self.sgprPool.checkOutAligned(numSgprs, 2, preventOverflow=False))
+    maxVgprsN, occupancy = self.setOccupancy(kernel)
+    if maxVgprs != maxVgprsN:
+      #print("refineOccupancy maxVgprs, new", maxVgprsN, "old", maxVgprs)
+      return self.refineOccupancy(kernel, atomic, elements, actPCMaxTempSgpr, edgeI, gwvw, maxVgprsN, ss)
+    return numElementsPerBatch, nBatchesPerRow, numBatches, numSgprs
+    
+
   ##############################################################################
   # globalWriteElementBatch :
   ##############################################################################
@@ -11677,127 +11816,21 @@ class KernelWriterAssembly(KernelWriter):
     if tmpVgprDynamicSize > 0:
       tmpVgprDynamic = ContinuousRegister(idx=self.vgprPool.checkOutAligned(tmpVgprDynamicSize, tmpVgprDynamicAlign), size=tmpVgprDynamicSize)
 
+    maxVgprs, occupancy = self.setOccupancy(kernel)
+
     ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI], vectorDataTypes, dim=factorDim)
 
-    def setOccupancy():
-      # Use VGPR up to next occupancy threshold:
-      maxVgprs, occupancy = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), self.sgprPool.size(), \
-                                                        self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
-      # Set occupancy limit for register pools
-      # TODO: Support gfx12
-      if kernel["ISA"][0] != 12:
-        self.vgprPool.setOccupancyLimit(self.states.regCaps["MaxVgpr"], self.states.regCaps["PhysicalMaxVgpr"] // occupancy)
-        self.sgprPool.setOccupancyLimit(self.states.regCaps["MaxSgpr"], self.states.regCaps["PhysicalMaxSgpr"] // occupancy)
-      return maxVgprs, occupancy
+    actPCMaxTempSgpr_ = None
+    if activationLabelList and isInsertActFunctionCallAddrCalc:
+      assert activationSetPCStruct, activationEnumStrList and activationLabelList and toActModuleList
+      actPCMaxTempSgpr_ = actPCMaxTempSgpr
 
-    maxVgprs, occupancy = setOccupancy()
-    # Get estimated numVgprAvailable
-    # print("Max vgprs =", maxVgprs, self.vgprPool.size(), self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align))
-    numVgprAvailable = self.vgprPool.availableBlockMaxVgpr(maxVgprs, ss.numVgprsPerElement, ss.align)
-
-    # Grow the register pool if needed - we need enough regs for at least one element
-    # Unfortunate since this means the write logic is setting the VGPR requirement
-    # for the entire kernel but at least we have a functional kernel.
-    # Before growing the pool, see if we can shrink the write vector width instead?
-    # TODO : the vgprSerial is needed for-ever and if we grow here will split the
-    # range of the tmps.  Maybe want to move vgprSerial to first vgpr?
-
-    # TODO: Minimum elems for StoreRemap
-    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-    minElements = 2 if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) else 1
-    if numVgprAvailable < minElements*ss.numVgprsPerElement:
-      self.vgprPool.resetOccupancyLimit()
-      print2("info: growing pool += %d * %d for GlobalWrite\n" \
-          % (minElements,ss.numVgprsPerElement))
-      self.vgprPool.growPool(0, minElements, ss.numVgprsPerElement, \
-        "grow-pool for GlobalWrite")
-      maxVgprs, occupancy = setOccupancy()
-      numVgprAvailable = self.vgprPool.available()
+    numElementsPerBatch, nBatchesPerRow, numBatches, numSgprs = self.refineOccupancy(kernel, atomic, elements, actPCMaxTempSgpr_, edgeI, gwvw, maxVgprs, ss)
 
     # set atomicW after we potentially resize GWVW
     atomicW = min(gwvw, self.getVectorAtomicWidth(kernel))
 
-    # print("NumVgprAvailable", numVgprAvailable)
-    if ss.numVgprsPerElement:
-      numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
-    else:
-      numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
-
-    assert(self.states.c.numVgprValu % gwvw == 0) # sanity check
-
-    numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
-
-    # print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
-    #     "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
-    if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
-      numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
-
-    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-    if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
-      # only do an even number of halves - since these share hi/lo pieces of some registers?
-      if numElementsPerBatch > 1:
-        numElementsPerBatch = int(numElementsPerBatch/2)*2
-      # dot2: no this constraint
-      elif not kernel["EnableMatrixInstruction"] and not kernel["UseDotInstruction"]:
-        # The globalWriteBatch routine below can't handle odd elements per batch
-        # and 0 elements per batch is illegal.
-        # so if we don't have *GPR resources to handle a larger batch then need
-        # to mark overflowedResources rather than generate a kernel that won't work.
-        # It might be possible to fix globalWriteBatch to handle this case but these
-        # are likely to be low-performing so likely not worth optimizing.
-        print2("WARNING: half requires at least two elements per batch")
-        self.states.overflowedResources = 3
-
-    assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
-
-    #numElementsPerBatch=min(2,numElementsPerBatch) # hack to control number of batches
-    if atomic and (ss.optSingleColVgpr or ss.optSharedColVgpr):
-      # hack to avoid re-using address vgpr across rows
-      # atomics need to perform several memory operations
-      # if the batch spans multiple rows, need multiple address vgpr
-      # which is not currently supported in the two opt*ColVgpr modes
-      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0]
-      numElementsPerBatch=min(len(firstRow),numElementsPerBatch)
-
-    # check best numElementsPerBatch to handle a column block
-    # elements of column block must be multiple size of numElementsPerBatch
-    if kernel["StoreRemapVectorWidth"]:
-      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0] # format for element = (tt1, tt0, vc1, vc0)
-      # find the largest factor and smaller than numElementPerBatch
-      nBatchesPerRow = 1
-      for d in range(1, len(firstRow)+1):
-        largestFactor = len(firstRow)//d
-        if len(firstRow)%d == 0 and largestFactor <= numElementsPerBatch:
-          numElementsPerBatch = largestFactor
-          nBatchesPerRow = d
-          break
-
-    # if no atomics and no edge, then write whole vectors
-    #if not atomic and not edge:
-    #  numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
-    #  #print "  NumVectorsPerBatch", numVectorsPerBatch
-    #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
-    numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
-
-    # Grow pool if needed
-    # Get true numVgprAvailable
-    numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
-    totalNeededVgpr = ss.numVgprsPerElement * numElementsPerBatch
-    # print("Available vgprs =", numVgprAvailable, "Needed vgprs =", totalNeededVgpr, "pool size =", self.vgprPool.size())
-    if numVgprAvailable < totalNeededVgpr:
-      print2("info: growing pool += %d * %d for GlobalWrite\n" \
-          % (numBatches,ss.numVgprsPerElement))
-      availableBlock = min(0, self.vgprPool.available() - numVgprAvailable)
-      self.vgprPool.growPool(0, totalNeededVgpr + availableBlock, 1, "grow-pool for GlobalWrite")
-    # # Get true numVgprAvailable
-    # numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
-    # print("Available vgprs =", numVgprAvailable, "pool size =", self.vgprPool.size())
-
-    numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
-
     if activationLabelList and isInsertActFunctionCallAddrCalc:
-      assert activationSetPCStruct, activationEnumStrList and activationLabelList and toActModuleList
-      numSgprs = max(actPCMaxTempSgpr, numSgprs)
       edgeModule.add(self.insertActFunctionCallAddrCalc(activationSetPCStruct.sgprOffsetActivation, \
         gwvw, toActModuleList, activationEnumStrList, activationLabelList, \
         idx0, idx1))
