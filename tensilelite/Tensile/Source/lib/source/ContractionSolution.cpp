@@ -273,32 +273,58 @@ namespace TensileLite
                 PrintBufferValueClass betaPrint(
                     (void*)args[i].beta, sizeof(args[i].beta), problems[i].betaType());
                 std::cout << "Gemm " << i << ":" << std::endl;
-                std::cout << "   " << "m: " << args[i].m << std::endl;
-                std::cout << "   " << "n: " << args[i].n << std::endl;
-                std::cout << "   " << "batch: " << args[i].batch << std::endl;
-                std::cout << "   " << "k: " << args[i].k << std::endl;
-                std::cout << "   " << "D: " << args[i].d << std::endl;
-                std::cout << "   " << "C: " << args[i].c << std::endl;
-                std::cout << "   " << "A: " << args[i].a << std::endl;
-                std::cout << "   " << "B: " << args[i].b << std::endl;
-                std::cout << "   " << "strideD1: " << args[i].strideD1 << std::endl;
-                std::cout << "   " << "strideD2: " << args[i].strideD2 << std::endl;
-                std::cout << "   " << "strideC1: " << args[i].strideC1 << std::endl;
-                std::cout << "   " << "strideC2: " << args[i].strideC2 << std::endl;
-                std::cout << "   " << "strideA1: " << args[i].strideA1 << std::endl;
-                std::cout << "   " << "strideA2: " << args[i].strideA2 << std::endl;
-                std::cout << "   " << "strideB1: " << args[i].strideB1 << std::endl;
-                std::cout << "   " << "strideB2: " << args[i].strideB2 << std::endl;
-                std::cout << "   " << "Alpha: " << alphaPrint << std::endl;
-                std::cout << "   " << "Beta: " << betaPrint << std::endl;
-                std::cout << "   " << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
-                std::cout << "   " << "bias: " << args[i].bias << std::endl;
-                std::cout << "   " << "e: " << args[i].e << std::endl;
-                std::cout << "   " << "strideE1: " << args[i].strideE1 << std::endl;
-                std::cout << "   " << "strideE2: " << args[i].strideE2 << std::endl;
-                std::cout << "   " << "act0: " << args[i].act0 << std::endl;
-                std::cout << "   " << "act1: " << args[i].act1 << std::endl;
-                std::cout << "   " << "activationType: " << args[i].activationType << std::endl;
+                std::cout << "   "
+                          << "m: " << args[i].m << std::endl;
+                std::cout << "   "
+                          << "n: " << args[i].n << std::endl;
+                std::cout << "   "
+                          << "batch: " << args[i].batch << std::endl;
+                std::cout << "   "
+                          << "k: " << args[i].k << std::endl;
+                std::cout << "   "
+                          << "D: " << args[i].d << std::endl;
+                std::cout << "   "
+                          << "C: " << args[i].c << std::endl;
+                std::cout << "   "
+                          << "A: " << args[i].a << std::endl;
+                std::cout << "   "
+                          << "B: " << args[i].b << std::endl;
+                std::cout << "   "
+                          << "strideD1: " << args[i].strideD1 << std::endl;
+                std::cout << "   "
+                          << "strideD2: " << args[i].strideD2 << std::endl;
+                std::cout << "   "
+                          << "strideC1: " << args[i].strideC1 << std::endl;
+                std::cout << "   "
+                          << "strideC2: " << args[i].strideC2 << std::endl;
+                std::cout << "   "
+                          << "strideA1: " << args[i].strideA1 << std::endl;
+                std::cout << "   "
+                          << "strideA2: " << args[i].strideA2 << std::endl;
+                std::cout << "   "
+                          << "strideB1: " << args[i].strideB1 << std::endl;
+                std::cout << "   "
+                          << "strideB2: " << args[i].strideB2 << std::endl;
+                std::cout << "   "
+                          << "Alpha: " << alphaPrint << std::endl;
+                std::cout << "   "
+                          << "Beta: " << betaPrint << std::endl;
+                std::cout << "   "
+                          << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
+                std::cout << "   "
+                          << "bias: " << args[i].bias << std::endl;
+                std::cout << "   "
+                          << "e: " << args[i].e << std::endl;
+                std::cout << "   "
+                          << "strideE1: " << args[i].strideE1 << std::endl;
+                std::cout << "   "
+                          << "strideE2: " << args[i].strideE2 << std::endl;
+                std::cout << "   "
+                          << "act0: " << args[i].act0 << std::endl;
+                std::cout << "   "
+                          << "act1: " << args[i].act1 << std::endl;
+                std::cout << "   "
+                          << "activationType: " << args[i].activationType << std::endl;
             }
         }
     }
@@ -579,8 +605,10 @@ namespace TensileLite
 
         if(problemType.stridedBatched)
         {
-            args.template append<void const*>("a", problemType.sparse==1 ? inputs.compressed : inputs.a);
-            args.template append<void const*>("b", problemType.sparse==2 ? inputs.compressed : inputs.b);
+            args.template append<void const*>(
+                "a", problemType.sparse == 1 ? inputs.compressed : inputs.a);
+            args.template append<void const*>(
+                "b", problemType.sparse == 2 ? inputs.compressed : inputs.b);
         }
         else
         {
@@ -2826,14 +2854,21 @@ namespace TensileLite
     {
         size_t size = 0;
         // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
-        size_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        size_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
 
         if(sizeMapping.streamK > 0 && sizeMapping.streamKAtomic == 0)
         {
+            // SK doesn't care gsu
+            if(gsu > 1)
+            {
+                std::cerr << "Warning: Stream-K Data Parallel does not support GSU > 1, "
+                          << "setting GSU to 1." << std::endl;
+                gsu = 1;
+            }
             const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
-            assert(gsu == 1);
-            auto   tiles  = problem.getNumTiles(sizeMapping, gsu);
-            size_t skGrid = getSKGrid(problem, hardware, tiles);
+            auto       tiles     = problem.getNumTiles(sizeMapping, gsu);
+            size_t     skGrid    = getSKGrid(problem, hardware, tiles);
             // Get space required for partial tiles
             if(tiles % skGrid != 0 && !streamKDP)
                 size += partialTileSize(skGrid);

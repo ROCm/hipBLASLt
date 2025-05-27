@@ -464,7 +464,7 @@ class KernelWriterAssembly(KernelWriter):
   def defineSgprIdx(self, name, numSgprs, align=1):
     if numSgprs == 0: return
 
-    sgprIdx = self.sgprPool.checkOutAligned(numSgprs, align, tag=name, preventOverflow=0)
+    sgprIdx = self.sgprPool.checkOutAligned(numSgprs, align, tag=name, preventOverflow=False)
     #self.sgprIdx = roundUpToNearestMultiple(self.sgprIdx,align)
     #print (name, "->", self.sgprIdx, "+", numSgprs)
     self.sgprs[name] = sgprIdx
@@ -1618,25 +1618,25 @@ class KernelWriterAssembly(KernelWriter):
     if self.do["PreLoop"]:
       ### temp sgpr for groupedgemm ###
       # can be start from sgpr_preload_end
-      sgprNumsOfGemm = self.sgprPool.checkOut(1, preventOverflow=0)
+      sgprNumsOfGemm = self.sgprPool.checkOut(1, preventOverflow=False)
 
       self.kernArgOffset = 0
       self.argLoader = ArgumentLoader()
       self.externalArgLoader = ArgumentLoader()
       ########################################
       # Common parameters
-      sgprArgType = self.sgprPool.checkOut(1, preventOverflow=0)
+      sgprArgType = self.sgprPool.checkOut(1, preventOverflow=False)
       commonArgs = Module("load arguments")
       commonArgs.addComment1("Load num of Gemms")
       commonArgs.add(self.argLoader.loadKernArg(sgprNumsOfGemm, "KernArgAddress", 0, dword=1))
 
-      sgprPackedArgs = self.sgprPool.checkOut(1, preventOverflow=0)
+      sgprPackedArgs = self.sgprPool.checkOut(1, preventOverflow=False)
       # Load combined internal arguments
       commonArgs.addComment1("Load packed kernel args (StaggerU/GSU)")
       commonArgs.add(self.argLoader.loadKernArg(sgprPackedArgs, "KernArgAddress", 4, dword=1))
       commonArgs.addComment1("Load WGM data")
       commonArgs.add(self.argLoader.loadKernArg("WGM", "KernArgAddress", 8, dword=1))
-      tmpSgprNumWorkGroups = self.sgprPool.checkOut(1, preventOverflow=0)
+      tmpSgprNumWorkGroups = self.sgprPool.checkOut(1, preventOverflow=False)
       commonArgs.addComment1("Load num of WGs")
       commonArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", 12, dword=1))
       ########################################
@@ -4761,12 +4761,13 @@ class KernelWriterAssembly(KernelWriter):
     tagList = ["AddressA", "AddressB", "WrapUA", "WrapUB", "StaggerU", "WGM", \
                "StaggerUIter", "GlobalReadIncsA", "GlobalReadIncsB"]
     lastRegTag = None
+    spool = self.sgprPool.getPool()
     for i in range(0, self.sgprPool.size()):
-      regTag = self.sgprPool.pool[i].tag
+      regTag = spool[i].tag
       if regTag != lastRegTag:
         lastRegTag = regTag
         if (lastRegTag not in self.states.nonPostLoopSgpr) and \
-           (self.sgprPool.pool[i].status == RegisterPool.Status.InUse) and \
+           (spool[i].status == RegisterPool.Status.InUse) and \
            (lastRegTag in tagList):
           imod.add(self.undefineSgpr(regTag))
 
@@ -5825,11 +5826,12 @@ class KernelWriterAssembly(KernelWriter):
 
     lastRegTag=None
 
+    spool = self.sgprPool.getPool()
     for i in range(0, self.sgprPool.size()):
-      regTag = self.sgprPool.pool[i].tag
+      regTag = spool[i].tag
       if regTag != lastRegTag:
         lastRegTag = regTag
-        if (lastRegTag not in self.states.nonPostLoopSgpr) and (self.sgprPool.pool[i].status == RegisterPool.Status.InUse):
+        if (lastRegTag not in self.states.nonPostLoopSgpr) and (spool[i].status == RegisterPool.Status.InUse):
           if label == "Summation_End_OptNLL":
             self.undefineSgpr(regTag)
           else:
@@ -7179,27 +7181,17 @@ class KernelWriterAssembly(KernelWriter):
             module.add(Label("PrefetchGlobalLastIterEnd", ""))
 
     # swap back vgpr pool if any
-    if self.savedVgprPool != None and (not isNotLast):
-      # in case pool size in current path is larger than pool size in main path
-      # and it will miss allocate vgpr since allocating vgpr is based on pool size in main path
-      oldSize = self.savedVgprPool.size()
-      newSize = self.vgprPool.size()
-      if newSize > self.savedVgprPool.size():
-        for i in range(oldSize,newSize):
-          self.savedVgprPool.pool.append(self.savedVgprPool.Register(RegisterPool.Status.Available,"restore vgprPool"))
-      self.vgprPool = self.savedVgprPool # restore vgprPool before alternate path
-      self.savedVgprPool = None
-    # swap back sgpr pool if any
-    if self.savedSgprPool != None and (not isNotLast):
-      # in case pool size in current path is larger than pool size in main path
-      # and it will miss allocate vgpr since allocating vgpr is based on pool size in main path
-      oldSize = self.savedSgprPool.size()
-      newSize = self.sgprPool.size()
-      if newSize > self.savedSgprPool.size():
-        for i in range(oldSize-1,newSize):
-          self.savedSgprPool.pool.append(self.savedSgprPool.Register(RegisterPool.Status.Available,"restore sgprPool"))
-      self.sgprPool = self.savedSgprPool # restore vgprPool before alternate path
-      self.savedSgprPool = None
+    def swapBackGprPool(gprPool, savedGprPool, isNotLast):
+      if savedGprPool != None and (not isNotLast):
+        # in case pool size in current path is larger than pool size in main path
+        # and it will miss allocate vgpr since allocating vgpr is based on pool size in main path
+        newSize = gprPool.size()
+        savedGprPool.appendPool(newSize)
+        return savedGprPool, None # restore vgprPool before alternate path
+      return gprPool, savedGprPool
+
+    self.vgprPool, self.savedVgprPool = swapBackGprPool(self.vgprPool, self.savedVgprPool, isNotLast)
+    self.sgprPool, self.savedSgprPool = swapBackGprPool(self.sgprPool, self.savedSgprPool, isNotLast)
     return module
 
   ##############################################################################
@@ -11088,7 +11080,7 @@ class KernelWriterAssembly(KernelWriter):
             name = self.labels.getNameInc("Load_Bias%s_%u"%(i.toNameAbbrev(), factorDims[d]))
             multiBiasTypeLabel.append(Label(name, ""))
           multiBiasTypeLabel.append(loadBiasEndLabel)
-          offsetVgpr  = self.vgprPool.checkOut(1, 1)
+          offsetVgpr  = self.vgprPool.checkOut(1)
           with self.allocTmpSgpr(4, 1) as tmpSgprRes:
             if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
               vectorDataTypes.bias(d).dataType = kernel["ProblemType"]["BiasDataTypeList"][0]
@@ -11154,7 +11146,7 @@ class KernelWriterAssembly(KernelWriter):
           tile01 = tP["tile01Idx"]
           mt     = kernel["MacroTile%u" % tile01]
           gwvw   = min(max(mt // kernel["NumThreads"], kernel["VectorWidthA"]), tP["glvw"])
-          offsetVgpr  = self.vgprPool.checkOut(gwvw, 1)
+          offsetVgpr  = self.vgprPool.checkOut(gwvw)
           with self.allocTmpSgpr(5, 2) as tmpSgprRes:
             if kernel["GlobalSplitU"] > 1 or kernel["GlobalSplitU"] == -1:
               module.add(self.writeBiasToGlobal(kernel["ProblemType"]["ComputeDataType"], kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgprRes))
@@ -11189,7 +11181,7 @@ class KernelWriterAssembly(KernelWriter):
           totalTmpVgpr = self.getNumOfTempVgprs(vectorDataTypes, kernel, 1, factorDims[d])
           tmpVgpr      = self.vgprPool.checkOutAligned(totalTmpVgpr, 2, "store tmps")
           tmpVgprRes   = ContinuousRegister(idx=tmpVgpr, size=4)
-          offsetVgpr  = self.vgprPool.checkOut(1, 1)
+          offsetVgpr  = self.vgprPool.checkOut(1)
           with self.allocTmpSgpr(3, 1) as tmpSgprRes:
             if d == 1:
               module.add(factorDim1Label)
@@ -11434,8 +11426,8 @@ class KernelWriterAssembly(KernelWriter):
       toActModuleList = None
       isInsertActFunctionCallAddrCalc = True
       if kernel["ActivationFuncCall"]:
-        sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2, preventOverflow=0)
-        sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2, preventOverflow=0)
+        sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2, preventOverflow=False)
+        sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2, preventOverflow=False)
         activationSetPCStruct = self.ActivationSetPCStruct(sgprOffsetActivation=sgprOffsetActivation, \
           sgprOffsetBack=sgprOffsetBack, vgprActCopy=tmpVgpr.idx)
         activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]

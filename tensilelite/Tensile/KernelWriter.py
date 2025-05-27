@@ -37,6 +37,8 @@ from rocisa.instruction import BufferLoadB128, BufferLoadB32, BufferLoadB64, \
   MFMAInstruction, SBarrier, SBranch, SCBranchSCC0, SCBranchSCC1, SCmpLeU32, \
   SMFMAInstruction, SNop, SSetPrior, SSetRegIMM32B32, SSubU32, SWaitCnt, SWaitAlu, \
   SLongBranchPositive, VFmaMixF32, VMadMixF32, VMovB32
+from rocisa.register import RegisterPool
+from rocisa.enum import RegisterType
 
 from .KernelWriterModules import *
 from .Component import Component, LraTileProperties
@@ -46,7 +48,6 @@ from .AsmMemoryInstruction import MemoryInstruction
 from .Activation import ActivationModule
 from .Common import printWarning, roundUp, print2, DebugConfig, DataDirection, \
   INDEX_CHARS, IsaVersion
-from .Common.RegisterPool import RegisterPool
 from Tensile.SolutionStructs.Naming import getKernelNameMin
 from Tensile.Toolchain.Component import Assembler
 
@@ -482,7 +483,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.db["AssertNoEdge"] = 0 # Add assert in edge store code so crashes if executed
 
     # print vgpr register pool checkins and checkouts
-    self.db["PrintRP"] = 0
+    self.db["PrintRP"] = False
     self.db["AssertOnSgprOverflow"] = False
     self.db["PrintStoreRegisterDb"] = False
 
@@ -4476,7 +4477,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     ####################################
     # num sgprs: initial kernel state
-    self.sgprPool = RegisterPool(0, 's', defaultPreventOverflow=True, printRP=0)
+    self.sgprPool = RegisterPool(0, RegisterType.Sgpr, defaultPreventOverflow=True, printRP=False)
     numSgprAddressD = self.states.rpga # til end
     numSgprAddressC = self.states.rpga # til end
     numSgprAddressA = self.states.rpga # til read offsets
@@ -4611,7 +4612,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       # Safe guard for preload arguments
       while(1):
-        tmpSgpr = self.sgprPool.checkOut(1, preventOverflow=0)
+        tmpSgpr = self.sgprPool.checkOut(1, preventOverflow=False)
         if tmpSgpr >= 16:
           self.sgprPool.checkIn(tmpSgpr)
           break
@@ -4627,7 +4628,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     SgprSlot = []
     currentSize = self.sgprPool.size()
     while (1):
-      tempSgpr = self.sgprPool.checkOut(1,"fill empty slot temporarily",preventOverflow=0)
+      tempSgpr = self.sgprPool.checkOut(1,"fill empty slot temporarily",preventOverflow=False)
       if tempSgpr >= currentSize:
         self.sgprPool.checkIn(tempSgpr)
         break
@@ -4784,13 +4785,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Register Pools
     ########################################
     #print "TotalVgprs", self.states.totalVgprs
-    self.vgprPool = RegisterPool(self.states.totalVgprs, 'v', defaultPreventOverflow=False,
+    self.vgprPool = RegisterPool(self.states.totalVgprs, RegisterType.Vgpr, defaultPreventOverflow=False,
                                  printRP=self.db["PrintRP"])
     self.savedVgprPool = None
     self.savedSgprPool = None
 
     ## accumulator Buffer for storeCinUnroll feature
-    self.agprPool = RegisterPool(self.states.totalAgprs, 'a', defaultPreventOverflow=False, printRP=0)
+    self.agprPool = RegisterPool(self.states.totalAgprs, RegisterType.Accvgpr, defaultPreventOverflow=False, printRP=False)
 
     ########################################
     # reads Per Iteration
