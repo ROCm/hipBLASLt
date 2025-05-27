@@ -32,6 +32,7 @@
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 #include <Tensile/FreeSizeLibrary.hpp>
+#include <Tensile/PredictionLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
 #include <Tensile/MLPClassificationLibrary.hpp>
 #include <Tensile/PropertyMatching.hpp>
@@ -204,6 +205,12 @@ namespace TensileLite
         template <typename Value, typename IO>
         struct SequenceTraits<std::vector<TensileLite::FreeSizeEntry<Value>>, IO>
             : public DefaultSequenceTraits<std::vector<TensileLite::FreeSizeEntry<Value>>, IO, false>
+        {
+        };
+
+        template <typename Value, typename IO>
+        struct SequenceTraits<std::vector<TensileLite::PredictionEntry<Value>>, IO>
+            : public DefaultSequenceTraits<std::vector<TensileLite::PredictionEntry<Value>>, IO, false>
         {
         };
 
