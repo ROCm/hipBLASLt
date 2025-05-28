@@ -51,28 +51,6 @@ namespace TensileLite
             return static_cast<N>(d == 0 ? 0 : (n / d + (n % d != 0 ? 1 : 0)));
         }
 
-        // Placeholder for compute_reuse_in_block_gemm function.
-        // TODO move over mem1 hit rate simulation for tie-breaking.
-        double compute_reuse_in_block_gemm(size_t                  grid_m,
-                                           size_t                  grid_n,
-                                           size_t                  grid_k,
-                                           size_t                  A_size,
-                                           size_t                  B_size,
-                                           size_t                  C_size,
-                                           size_t                  nproc,
-                                           size_t                  capacity,
-                                           const std::vector<int>& radix,
-                                           bool                    print_radix,
-                                           bool                    print_output,
-                                           size_t                  max_timesteps,
-                                           size_t                  max_iters)
-        {
-            // Placeholder hit rate computation
-            // Implement your actual logic here.
-            double hit_rate = 0.8; // Assuming a default hit rate of 0.8
-            return hit_rate;
-        }
-
         // Compute the number of matrix instructions required to compute a single MT_MXMT_NXMT_K tile.
         size_t compute_number_matrix_instructions(const Hardware& hardware,
                                                   size_t          MT_M,
@@ -136,7 +114,7 @@ namespace TensileLite
             if(transA && !transB)
             {
                 //We want to penalize tiles that can't be coalesced for T,N where K is contiguous dimension.
-                //In this case, that's when the K dimension is less than 128 bytes.
+                //In this case, that's when the K dimension is indivisible by 128 bytes.
                 if(MT_K * safe_ceil_div(element_size_A, 8) % 128 != 0)
                 {
                     L_MT = L_MT * 1.5;
@@ -151,7 +129,7 @@ namespace TensileLite
             if(!transA && transB)
             {
 
-                //LDS Load Granularity is 128 Bytes -> If we load less than 128 bytes in either contiguous
+                //LDS Load Granularity is 128 Bytes -> If we load an amount indivisible by 128 bytes in either contiguous
                 //dimesion from LDS then we will get poor LDS utilization. This actually happens as more like
                 //a quantization effect where if either contiguous dimension of the tile is not evenly divisible by 128-bytes
                 //We end up with inefficient loads.
@@ -379,7 +357,7 @@ namespace TensileLite
             if(!transA && transB)
             {
 
-                //LDS Load Granularity is 128 Bytes -> If we load less than 128 bytes in either contiguous
+                //LDS Load Granularity is 128 Bytes -> If we load an amount indivisible by 128 bytes in either contiguous
                 //dimesion from LDS then we will get poor LDS utilization. This actually happens as more like
                 //a quantization effect where if either contiguous dimension of the tile is not evenly divisible by 128-bytes
                 //We end up with inefficient loads.

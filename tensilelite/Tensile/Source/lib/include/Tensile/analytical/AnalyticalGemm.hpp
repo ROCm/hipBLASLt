@@ -27,7 +27,6 @@
 #pragma once
 
 #include <Tensile/analytical/Hardware.hpp>
-#include <Tensile/analytical/Reuse.hpp>
 #include <vector>
 // #include "Hardware.hpp"
 // #include "Reuse.hpp"
