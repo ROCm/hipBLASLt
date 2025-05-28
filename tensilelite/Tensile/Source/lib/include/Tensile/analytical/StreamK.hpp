@@ -24,18 +24,17 @@
  *
  *******************************************************************************/
 
- #pragma once
+#pragma once
 
- #include <Tensile/analytical/Hardware.hpp>
- #include <Tensile/analytical/Reuse.hpp>
- #include <vector>
- // #include "Hardware.hpp"
- // #include "Reuse.hpp"
- 
- namespace TensileLite
- {
-     namespace analytical
-     {
+#include <Tensile/analytical/Hardware.hpp>
+#include <vector>
+// #include "Hardware.hpp"
+// #include "Reuse.hpp"
+
+namespace TensileLite
+{
+    namespace analytical
+    {
         namespace streamk
         {
             namespace math
@@ -137,7 +136,8 @@
                 size_t iters_per_tile = num_iters_per_tile(BLK_K, k);
                 size_t iters_total    = num_iters_total(output_tiles, iters_per_tile);
                 size_t iters_per_cta  = num_iters_per_cta(iters_total, g);
-                size_t fixup_peers = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
+                size_t fixup_peers
+                    = num_fixup_peers_v2(g, iters_total, iters_per_tile, iters_per_cta);
 
                 size_t remainder_tiles = output_tiles % g;
                 double k_split_ratio   = remainder_tiles / static_cast<double>(g);

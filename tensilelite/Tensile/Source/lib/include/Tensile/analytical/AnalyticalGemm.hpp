@@ -28,8 +28,6 @@
 
 #include <Tensile/analytical/Hardware.hpp>
 #include <vector>
-// #include "Hardware.hpp"
-// #include "Reuse.hpp"
 
 namespace TensileLite
 {
