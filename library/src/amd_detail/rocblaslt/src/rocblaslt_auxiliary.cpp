@@ -32,7 +32,9 @@
 // Remove defines that conflict locally.
 #undef CONST
 #else
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE 1
+#endif
 #include <dlfcn.h>
 #include <link.h>
 #include <unistd.h>
