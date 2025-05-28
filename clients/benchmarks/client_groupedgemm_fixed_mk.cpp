@@ -73,9 +73,9 @@
 
 typedef enum _ActivationType
 {
-    NONE = 0,
-    RELU = 1,
-    GELU = 2,
+    NONE  = 0,
+    RELU  = 1,
+    GELU  = 2,
     SWISH = 3,
 } ActivationType;
 
@@ -230,7 +230,8 @@ static void show_usage(char* argv[])
         << "\t--stride_d \t\tstride_d \tGEMM_STRIDED argument stride_d\n"
         << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha (default is 1)\n"
         << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta (default is 0)\n"
-        << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu, gelu, swish, none (default is "
+        << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu, gelu, swish, none "
+           "(default is "
            "none)\n"
         << "\t--bias \t\t\tbias \t\tGEMM_STRIDED set bias: 0 or 1 (default is 0)\n"
         << std::endl;
@@ -817,8 +818,8 @@ int test_hipblaslt(hipDataType                 in_datatype,
                   << ", " << ToString(actType[i]) << std::endl;
     }
 
-    std::vector<hipblaslt_ext::GemmEpilogueV2> gemmEpilogue(gemm_count);
-    std::vector<hipblaslt_ext::GemmInputsV2>   gemmInputs(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
     for(size_t i = 0; i < gemm_count; i++)
     {
         if(enable_bias[i] && actType[i] == ActivationType::NONE)
@@ -848,13 +849,13 @@ int test_hipblaslt(hipDataType                 in_datatype,
         gemmInputs[i].setBias(d_bias[i]);
     }
 
-    auto gemmProblemType = hipblaslt_ext::GemmProblemTypeV2(trans_a,
-                                                            trans_b,
-                                                            in_datatype,
-                                                            in_datatype,
-                                                            out_datatype,
-                                                            out_datatype,
-                                                            HIPBLAS_COMPUTE_32F);
+    auto gemmProblemType = hipblaslt_ext::GemmProblemType(trans_a,
+                                                          trans_b,
+                                                          in_datatype,
+                                                          in_datatype,
+                                                          out_datatype,
+                                                          out_datatype,
+                                                          HIPBLAS_COMPUTE_32F);
 
     // step 1: set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,

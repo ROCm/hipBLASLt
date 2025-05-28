@@ -4081,5 +4081,4 @@ std::atomic_bool& rocblaslt_internal_tensile_is_initialized()
                                                           const Tuning*                 tuning,                \
                                                           size_t&                       workspaceSizeInBytes);
 // clang-format on
-CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuning)
 CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuningV2)

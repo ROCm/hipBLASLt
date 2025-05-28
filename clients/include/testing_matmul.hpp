@@ -2297,11 +2297,11 @@ void testing_matmul_with_bias(const Arguments& arg,
     std::vector<size_t>                           heuristicTuningIndex;
 
     // Cpp API
-    hipblaslt_ext::GemmPreferenceV2 gemmPref;
+    hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    std::vector<hipblaslt_ext::Gemm>                      gemmVec;
-    std::vector<hipblaslt_ext::GroupedGemm>               groupedGemmVec;
-    std::vector<std::vector<hipblaslt_ext::GemmInputsV2>> extinputs;
+    std::vector<hipblaslt_ext::Gemm>                    gemmVec;
+    std::vector<hipblaslt_ext::GroupedGemm>             groupedGemmVec;
+    std::vector<std::vector<hipblaslt_ext::GemmInputs>> extinputs;
 
     // C to Cpp API for GG
     std::vector<std::vector<void*>> da(block_count, std::vector<void*>(gemm_count));
@@ -2331,11 +2331,11 @@ void testing_matmul_with_bias(const Arguments& arg,
                                                                 arg.compute_type));
     }
 
-    std::vector<hipblaslt_ext::GemmEpilogueV2> extepilogue;
-    hipblaslt_ext::GemmProblemTypeV2           extproblemtype;
+    std::vector<hipblaslt_ext::GemmEpilogue> extepilogue;
+    hipblaslt_ext::GemmProblemType           extproblemtype;
     if(arg.use_ext_setproblem)
     {
-        extinputs.resize(block_count, std::vector<hipblaslt_ext::GemmInputsV2>(gemm_count));
+        extinputs.resize(block_count, std::vector<hipblaslt_ext::GemmInputs>(gemm_count));
         extepilogue.resize(gemm_count);
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
@@ -2462,8 +2462,8 @@ void testing_matmul_with_bias(const Arguments& arg,
             for(size_t gsu = 0; gsu < gsu_vector.size(); gsu++)
             {
                 hipblaslt_ext::GemmTuning tuning;
-                tuning.splitK = gsu_vector[gsu];
-                tuning.wgm    = wgm_vector[wgm];
+                tuning.setSplitK(gsu_vector[gsu]);
+                tuning.setWgm(wgm_vector[wgm]);
                 tuningVec.push_back(tuning);
             }
     }
@@ -3927,8 +3927,8 @@ void testing_matmul_with_bias(const Arguments& arg,
                     archName,
                     cuNum,
                     arg,
-                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
-                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].getSplitK(),
+                    (uint32_t)tuningVec[heuristicTuningIndex[sol]].getWgm(),
                     gpu_time_used,
                     flush_time_used,
                     flops,
@@ -3985,8 +3985,8 @@ void testing_matmul_with_bias(const Arguments& arg,
                 archName,
                 cuNum,
                 arg,
-                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].splitK,
-                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].wgm,
+                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].getSplitK(),
+                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].getWgm(),
                 best_gpu_time,
                 flush_time_used,
                 best_flops,
