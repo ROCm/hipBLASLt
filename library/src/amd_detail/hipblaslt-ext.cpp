@@ -197,13 +197,15 @@ namespace hipblaslt_ext
     class GemmEpilogueV2::GemmEpilogueImpl
     {
     public:
-        hipblasLtEpilogue_t mode           = HIPBLASLT_EPILOGUE_DEFAULT;
-        hipDataType         bias_data_type = HIPBLASLT_DATATYPE_INVALID;
-        hipDataType         aux_data_type  = HIPBLASLT_DATATYPE_INVALID;
-        int                 aux_ld         = 0;
-        int                 aux_stride     = 0;
-        int                 scaling_a_type = 0;
-        int                 scaling_b_type = 0;
+        hipblasLtEpilogue_t                        mode           = HIPBLASLT_EPILOGUE_DEFAULT;
+        hipDataType                                bias_data_type = HIPBLASLT_DATATYPE_INVALID;
+        hipDataType                                aux_data_type  = HIPBLASLT_DATATYPE_INVALID;
+        int                                        aux_ld         = 0;
+        int                                        aux_stride     = 0;
+        RocblasltContractionProblem::ScalingFormat scaling_a_type
+            = RocblasltContractionProblem::ScalingFormat::None;
+        RocblasltContractionProblem::ScalingFormat scaling_b_type
+            = RocblasltContractionProblem::ScalingFormat::None;
     };
 
     GemmEpilogueV2::GemmEpilogueV2()
@@ -252,14 +254,42 @@ namespace hipblaslt_ext
         pimpl->aux_stride = aux_stride;
     }
 
-    void GemmEpilogueV2::setScalingAType(int scaling_a_type)
+    void GemmEpilogueV2::setScalingAType(hipblasLtMatmulMatrixScale_t scaling_a_type)
     {
-        pimpl->scaling_a_type = scaling_a_type;
+        switch(scaling_a_type)
+        {
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
+            pimpl->scaling_a_type = RocblasltContractionProblem::ScalingFormat::Scalar;
+            break;
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F:
+            pimpl->scaling_a_type = RocblasltContractionProblem::ScalingFormat::Vector;
+            break;
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
+        default:
+            std::cerr << "Unsupported scaling type for A matrix: "
+                      << static_cast<int>(scaling_a_type) << std::endl;
+            throw std::invalid_argument("Unsupported scaling type for A matrix");
+        }
     }
 
-    void GemmEpilogueV2::setScalingBType(int scaling_b_type)
+    void GemmEpilogueV2::setScalingBType(hipblasLtMatmulMatrixScale_t scaling_b_type)
     {
-        pimpl->scaling_b_type = scaling_b_type;
+        switch(scaling_b_type)
+        {
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F:
+            pimpl->scaling_b_type = RocblasltContractionProblem::ScalingFormat::Scalar;
+            break;
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F:
+            pimpl->scaling_b_type = RocblasltContractionProblem::ScalingFormat::Vector;
+            break;
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC16_UE4M3:
+        case HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0:
+        default:
+            std::cerr << "Unsupported scaling type for B matrix: "
+                      << static_cast<int>(scaling_b_type) << std::endl;
+            throw std::invalid_argument("Unsupported scaling type for B matrix");
+        }
     }
 
     hipblasLtEpilogue_t GemmEpilogueV2::getMode() const
@@ -287,21 +317,41 @@ namespace hipblaslt_ext
         return pimpl->aux_stride;
     }
 
-    int GemmEpilogueV2::getScalingAType() const
+    hipblasLtMatmulMatrixScale_t GemmEpilogueV2::getScalingAType() const
     {
-        return pimpl->scaling_a_type;
+        switch(pimpl->scaling_a_type)
+        {
+        case RocblasltContractionProblem::ScalingFormat::Scalar:
+            return HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+        case RocblasltContractionProblem::ScalingFormat::Vector:
+            return HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;
+        default:
+            std::cerr << "Unsupported scaling type for A matrix: "
+                      << static_cast<int>(pimpl->scaling_a_type) << std::endl;
+            throw std::invalid_argument("Unsupported scaling type for A matrix");
+        }
     }
 
-    int GemmEpilogueV2::getScalingBType() const
+    hipblasLtMatmulMatrixScale_t GemmEpilogueV2::getScalingBType() const
     {
-        return pimpl->scaling_b_type;
+        switch(pimpl->scaling_b_type)
+        {
+        case RocblasltContractionProblem::ScalingFormat::Scalar:
+            return HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+        case RocblasltContractionProblem::ScalingFormat::Vector:
+            return HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F;
+        default:
+            std::cerr << "Unsupported scaling type for B matrix: "
+                      << static_cast<int>(pimpl->scaling_b_type) << std::endl;
+            throw std::invalid_argument("Unsupported scaling type for B matrix");
+        }
     }
 
     class GemmTuningV2::GemmTuningImpl
     {
     public:
-        uint16_t  splitK = 0;
-        int16_t   wgm    = 0;
+        uint16_t splitK = 0;
+        int16_t  wgm    = 0;
     };
 
     GemmTuningV2::GemmTuningV2()

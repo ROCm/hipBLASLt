@@ -229,10 +229,12 @@ namespace hipblaslt_ext
             int auxLeadingDimension); //!< Set the aux leading dimension. Only works if mode is set to aux related epilogues.
         HIPBLASLT_EXPORT void setAuxBatchStride(
             int auxBatchStride); //!< Set the aux batch stride. Only works if mode is set to aux related epilogues.
-        HIPBLASLT_EXPORT void setScalingAType(
-            int scalingAType); //!< 0 is scalar, 1 is vector. Only works if DataTypeA = DataTypeB = FP8.
-        HIPBLASLT_EXPORT void setScalingBType(
-            int scalingBType); //!< 0 is scalar, 1 is vector. Only works if DataTypeA = DataTypeB = FP8.
+        HIPBLASLT_EXPORT void
+            setScalingAType(hipblasLtMatmulMatrixScale_t
+                                scalingAType); //!< Only works if DataTypeA = DataTypeB = FP8.
+        HIPBLASLT_EXPORT void
+            setScalingBType(hipblasLtMatmulMatrixScale_t
+                                scalingBType); //!< Only works if DataTypeA = DataTypeB = FP8.
 
         HIPBLASLT_EXPORT hipblasLtEpilogue_t
                                      getMode() const; //!< The mode of epilogue. Default is gemm.
@@ -244,9 +246,9 @@ namespace hipblaslt_ext
             const; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
         HIPBLASLT_EXPORT int getAuxBatchStride()
             const; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
-        HIPBLASLT_EXPORT int getScalingAType()
+        HIPBLASLT_EXPORT hipblasLtMatmulMatrixScale_t getScalingAType()
             const; //!< 0 is scalar, 1 is vector. Only works if DataTypeA = DataTypeB = FP8.
-        HIPBLASLT_EXPORT int getScalingBType()
+        HIPBLASLT_EXPORT hipblasLtMatmulMatrixScale_t getScalingBType()
             const; //!< 0 is scalar, 1 is vector. Only works if DataTypeA = DataTypeB = FP8.
     private:
         friend Gemm;
@@ -415,7 +417,7 @@ namespace hipblaslt_ext
             strideE2; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
         float act0; //!< The activation value 1. Some activations might use it.
         float act1; //!< The activation value 2.
-        int activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
+        int   activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
     } __attribute__((packed));
 
     /*! \ingroup types_module

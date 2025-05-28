@@ -939,8 +939,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle handle,
                 inputs.bias,
                 inputs.scaleAlphaVec,
                 inputs.alpha,
-                static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_a_type),
-                static_cast<RocblasltContractionProblem::ScalingFormat>(rocEpilogue.scaling_b_type),
+                rocEpilogue.scaling_a_type,
+                rocEpilogue.scaling_b_type,
                 // TODO: these scale block sizes might need to be set
                 0, /* scaleABlockRowSize */
                 0, /* scaleABlockColSize */
