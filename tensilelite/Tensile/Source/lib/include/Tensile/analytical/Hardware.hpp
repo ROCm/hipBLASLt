@@ -112,7 +112,8 @@ namespace TensileLite
             enum class Architecture
             {
                 gfx942,
-                gfx950
+                gfx950,
+                Count
             };
 
             static Architecture archNameToEnum(const std::string& str)
@@ -127,7 +128,7 @@ namespace TensileLite
                 }
                 else
                 {
-                    throw std::invalid_argument("Invalid architecture string");
+                    return Architecture::Count;
                 }
             }
 
