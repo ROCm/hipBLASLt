@@ -208,12 +208,6 @@ namespace TensileLite
         {
         };
 
-        template <typename Value, typename IO>
-        struct SequenceTraits<std::vector<TensileLite::PredictionEntry<Value>>, IO>
-            : public DefaultSequenceTraits<std::vector<TensileLite::PredictionEntry<Value>>, IO, false>
-        {
-        };
-
         template <typename Key, typename Value, typename IO>
         struct SequenceTraits<std::vector<TensileLite::Matching::MatchingTableEntry<Key, Value>>, IO>
             : public DefaultSequenceTraits<

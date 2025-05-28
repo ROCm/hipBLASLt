@@ -33,11 +33,6 @@
 
 namespace TensileLite
 {
-    template <typename Value>
-    struct PredictionEntry
-    {
-        Value value;
-    };
     /**
      * \ingroup SolutionLibrary
      *
