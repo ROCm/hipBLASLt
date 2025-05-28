@@ -48,6 +48,8 @@ subtrees:
   - file: reference/data-type-support
   - file: reference/datatypes
     title: hipBLASLt datatypes
+  - file: reference/env-variables
+    title: hipBLASLt environment variables
   - file: reference/api-reference
     title: hipBLASLt API
   - file: reference/ext-reference
