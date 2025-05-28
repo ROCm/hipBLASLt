@@ -980,6 +980,7 @@ void check(hipStream_t                   stream,
             hipblaslt_error += norm_error;
             if(arg.norm_check_assert)
             {
+                hipblaslt_cout<<"NormError:"<<norm_error<<" To:"<<To<<std::endl;
                 CHECK_SUCCESS(norm_check(norm_error, To));
             }
 
