@@ -57,7 +57,7 @@ target_link_libraries(hipblaslt-clients-common
 target_compile_definitions(hipblaslt-clients-common PRIVATE CLIENTS_NO_FORTRAN) # necessary?
 
 if(HIPBLASLT_ENABLE_ROCROLLER)
-    target_compile_definitions(hipblaslt-clients-common PRIVATE USE_ROCROLLER)
+    target_compile_definitions(hipblaslt-clients-common PRIVATE HIPBLASLT_USE_ROCROLLER)
     target_link_libraries(hipblaslt-clients-common PRIVATE roc::rocroller)
 endif()
 if(HIPBLASLT_ENABLE_ASAN)
@@ -122,7 +122,7 @@ if(BUILD_TESTING OR HIPBLASLT_BUILD_TESTING)
     endif()
     target_compile_definitions(hipblaslt-test PRIVATE GOOGLE_TEST HIPBLASLT_TEST)
     if(HIPBLASLT_ENABLE_ROCROLLER)
-        target_compile_definitions(hipblaslt-test PRIVATE USE_ROCROLLER)
+        target_compile_definitions(hipblaslt-test PRIVATE HIPBLASLT_USE_ROCROLLER)
         target_link_libraries(hipblaslt-test PRIVATE roc::rocroller)
     endif()
     add_subdirectory(test)

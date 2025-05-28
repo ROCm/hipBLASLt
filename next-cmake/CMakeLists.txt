@@ -275,7 +275,7 @@ endif()
 
 if(HIPBLASLT_ENABLE_ROCROLLER)
     target_link_libraries(hipblaslt PRIVATE roc::rocroller)
-    target_compile_definitions(hipblaslt PUBLIC USE_ROCROLLER)
+    target_compile_definitions(hipblaslt PUBLIC HIPBLASLT_USE_ROCROLLER)
 endif()
 
 if(HIPBLASLT_ENABLE_DEVICE)
