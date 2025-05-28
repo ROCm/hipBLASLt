@@ -2604,6 +2604,12 @@ class Solution(collections.abc.Mapping):
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + ldsNumBytesAlignedMetadata
       ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
+    need64K = state["LdsOffsetA_Blk"]>=65536 and state["ExpandPointerSwap"] and not state["1LDSBuffer"]
+    need64K = need64K or state["LdsNumElementsAlignedA"]>=65536 or state["LdsNumElementsAlignedB"]>=65536 
+    if need64K and state["StoreSwapAddr"]:
+      reject(state, printRejectionReason, "StoreSwapAddr is not supported for LDS buffer size >= 64K")
+      return
+
     # lds buffer size for reduction
     # if User want to control the LDS usage, we may open this para in the future
     ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0

@@ -156,7 +156,7 @@ class LocalReadMFMA(LocalRead):
     """
     def __call__(self, writer, kernel, bufferIdx, iui, epsi, tP):
         imod = Module("LocalReadDo%s_I%s" % (tP["tensorChar"],iui))
-
+        numVgprLocalReadAddr = writer.states.a.numVgprLocalReadAddr if (tP['tensorChar'] == 'A') else writer.states.b.numVgprLocalReadAddr
         tc = tP["tensorChar"]
         if tc == "A":
             writer.states.localReadDoCntA += 1
@@ -595,11 +595,17 @@ class LocalReadMFMA(LocalRead):
     
     
                         if(paramList[0] >=131072):
-                            paramList[0] = paramList[0] -131072
-                            srcAddr=vgpr("LocalReadAddr%s+2"%tc)
+                            if numVgprLocalReadAddr ==3:
+                                paramList[0] = paramList[0] -131072
+                                srcAddr=vgpr("LocalReadAddr%s+2"%tc)
+                            else:
+                                printWarning("Error: LocalReadAddr%s should have 3 vgpr, but only %u found"%(tc, numVgprLocalReadAddr))
                         elif (paramList[0] >=65536):
-                            paramList[0] = paramList[0] -65536
-                            srcAddr=vgpr("LocalReadAddr%s+1"%tc)
+                            if numVgprLocalReadAddr ==2:
+                                paramList[0] = paramList[0] -65536
+                                srcAddr=vgpr("LocalReadAddr%s+1"%tc)
+                            else:
+                                printWarning("Error: LocalReadAddr%s should have 2 vgpr, but only %u found"%(tc, numVgprLocalReadAddr))
                         else:
                             srcAddr=vgpr("LocalReadAddr%s"%tc)
     

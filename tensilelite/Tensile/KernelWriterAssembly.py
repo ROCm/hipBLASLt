@@ -8943,7 +8943,8 @@ class KernelWriterAssembly(KernelWriter):
 
       # using _ds_store_b8: need one more vgpr space to do lshr
       tmpVgprOffset = ((self.states.a.numVgprG2L if (tP['tensorChar'] == 'A') else self.states.m.numVgprG2L if tP["isM"] else self.states.b.numVgprG2L) / 2) if (blockWidth == 0.25) else 0
-
+      
+      numVgprLocalWriteAddr = self.states.a.numVgprLocalWriteAddr if (tP['tensorChar'] == 'A') else self.states.b.numVgprLocalWriteAddr
       # if transposing, positions of sPerp and sPara are transposed
       instructionCnt = 0
       Hcvt2BMap = {}
@@ -9383,13 +9384,19 @@ class KernelWriterAssembly(KernelWriter):
             LocalWriteX = tP["localWriteInstruction"].getInst(isHigh16Bits)
             if numBlocks == 1:
               if (paramList[1] >= 0x20000):
+                if numVgprLocalWriteAddr == 3:
                   olwa = "LocalWriteAddr%s+2"%tc  # default
                   dstAddr=vgpr(olwa)
                   paramList[1] = paramList[1] - 131072
+                else:
+                  printWarning("Error: LocalWriteAddr%s+2 not available, numVgprLocalWriteAddr=%u"%(tc, numVgprLocalWriteAddr))
               elif (paramList[1] >= 0x10000):
+                if numVgprLocalWriteAddr == 2:
                   olwa = "LocalWriteAddr%s+1"%tc  # default
                   dstAddr=vgpr(olwa)
                   paramList[1] = paramList[1] - 65536
+                else:
+                  printWarning("Error: LocalWriteAddr%s+1 not available, numVgprLocalWriteAddr=%u"%(tc, numVgprLocalWriteAddr))
               else:
                 dstAddr=vgpr(lwa)
               ds        = DSModifiers(na=1, offset=paramList[1])
