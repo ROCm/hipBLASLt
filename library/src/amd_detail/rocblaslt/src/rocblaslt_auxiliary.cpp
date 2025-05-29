@@ -537,7 +537,7 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle)
     }
     log_api(__func__, "handle", handle);
 // Destruct
-#ifdef USE_ROCROLLER
+#ifdef HIPBLASLT_USE_ROCROLLER
     if(handle->rocroller_handle)
         rocroller_destroy_handle(handle->rocroller_handle);
 #endif
