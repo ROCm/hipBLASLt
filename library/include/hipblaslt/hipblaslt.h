@@ -187,6 +187,8 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_B_SCALE_MODE = 32,                   /**<Scaling mode that defines how the matrix scaling factor for matrix B is interpreted. See hipblasLtMatmulMatrixScale_t */
   HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_A_EXT = 100,     /**<Compute input A types. Defines the data type used for the input A of matrix multiply. */
   HIPBLASLT_MATMUL_DESC_COMPUTE_INPUT_TYPE_B_EXT,           /**<Compute input B types. Defines the data type used for the input B of matrix multiply. */
+  HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT,        /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER but in vector. Default value: NULL Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT,        /**<Equivalent to HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER but in vector. Default value: NULL Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX,
 } hipblasLtMatmulDescAttributes_t;
 
