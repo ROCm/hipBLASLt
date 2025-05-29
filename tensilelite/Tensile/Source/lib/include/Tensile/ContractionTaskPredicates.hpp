@@ -95,7 +95,7 @@ namespace TensileLite
                                      : task.solution.sizeMapping.globalSplitU;
                     if(gsu == -1)
                     {
-                        bool rv = (*this)(problem);
+                        bool rv = (*this)(task);
 
                         stream << *this << ": ("
                                << "auto gsu will consider workspace size, so bypassed"
