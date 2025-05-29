@@ -49,6 +49,11 @@ if(NOT BUILD_CUDA)
 list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
 endif()
 
+
+if(BUILD_CODE_COVERAGE)
+  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build coverage reports" FORCE)
+endif()
+
 if( NOT DEFINED ENV{HIP_PATH})
     set( HIP_PATH "/opt/rocm/hip" )
 else( )
@@ -119,32 +124,6 @@ include(CMakeDependentOption)
 cmake_dependent_option(HIPBLASLT_ENABLE_MARKER "Enable roctx marker in hipBLASLt" ON "BUILD_SHARED_LIBS" OFF)
 # For rocRoller
 option(USE_ROCROLLER "Build with the rocRoller library" ON)
-
-if(BUILD_CODE_COVERAGE)
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build coverage reports" FORCE)
-  set(LLVM_DIR /opt/rocm/llvm/lib/cmake/llvm)
-  find_package(LLVM REQUIRED CONFIG)
-  message(STATUS "LLVM found: ${LLVM_DIR}")
-  include_directories(${LLVM_INCLUDE_DIRS})
-  link_directories(${LLVM_LIBRARY_DIRS})
-  add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
-  add_link_options(-fprofile-instr-generate)
-
-  add_custom_target(coverage
-    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/hipblaslt-test --output-on-failure
-    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_amax --output-on-failure
-    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale --output-on-failure
-    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_ext_op_layernorm --output-on-failure
-    COMMAND LLVM_PROFILE_VERBOSE=1 LLVM_PROFILE_FILE=./coverage_%m.profraw ./clients/staging/sample_hipblaslt_weight_swizzle_padding --output-on-failure
-    COMMAND sh -c "ls *.profraw 1>/dev/null 2>&1 && llvm-profdata merge -sparse *.profraw -o coverage_test.profdata || echo 'No .profraw files found'"
-    COMMAND sh -c "export PATH=/usr/lib/llvm-19/bin:\$PATH && llvm-cov report -instr-profile=./coverage_test.profdata ./clients/staging/sample_hipblaslt_ext_op_amax --ignore-filename-regex='.*/samples/.*|.*/build/debug/.*'"
-    COMMAND sh -c "export PATH=/usr/lib/llvm-19/bin:\$PATH && llvm-cov show ./clients/staging/sample_hipblaslt_ext_op_amax -instr-profile=./coverage_test.profdata -format=html -output-dir=coverage_report --ignore-filename-regex='.*/samples/.*|.*/build/debug/.*'"
-    COMMAND sh -c "cd ../../tensilelite && tox -v --workdir /tmp/.tensile-tox -e py3 -- Tensile/Tests -m common --cov=. --cov-report=html"
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-
-    VERBATIM
-  )
-endif()
 
 if(BUILD_ADDRESS_SANITIZER)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
@@ -429,3 +408,109 @@ rocm_create_package(
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
 )
 
+if(BUILD_CODE_COVERAGE)
+  # Force CMake to use ROCm's LLVM
+  set(LLVM_DIR /opt/rocm/llvm/lib/cmake/llvm)
+  find_package(LLVM REQUIRED CONFIG)
+  message(STATUS "LLVM found: ${LLVM_DIR}")
+
+  # Locate required LLVM tools (llvm-cov, llvm-profdata, etc.)
+  find_program(LLVM_PROFDATA_EXECUTABLE llvm-profdata HINTS ${rocm_path}/llvm/bin REQUIRED)
+  find_program(LLVM_COV_EXECUTABLE llvm-cov HINTS ${rocm_path}/llvm/bin REQUIRED)
+
+  # Use LLVM libraries and headers
+  set(LLVM_DIR ${rocm_path}/llvm/lib/cmake/llvm)
+  find_package(LLVM REQUIRED CONFIG)
+
+  # Modern: Use target_* for compiler and linker flags
+  target_compile_options(hipblaslt PRIVATE
+    -fprofile-instr-generate
+    -fcoverage-mapping
+  )
+
+  target_link_options(hipblaslt PRIVATE
+    -fprofile-instr-generate
+  )
+
+  target_include_directories(hipblaslt PRIVATE
+    ${LLVM_INCLUDE_DIRS}
+  )
+
+  target_link_directories(hipblaslt PRIVATE
+    ${LLVM_LIBRARY_DIRS}
+  )
+
+  # Print status message
+  message(STATUS "LLVM found at: ${LLVM_DIR}")
+  message(STATUS "llvm-profdata: ${LLVM_PROFDATA_EXECUTABLE}")
+  message(STATUS "llvm-cov: ${LLVM_COV_EXECUTABLE}")
+
+  # Hardcode the .profraw files because we cannot use wildcards
+  set(PROFRAW_FILES hipblaslt-test.profraw 
+                    sample_hipblaslt_ext_op_amax.profraw
+                    sample_hipblaslt_ext_op_amax_with_scale.profraw
+                    sample_hipblaslt_ext_op_layernorm.profraw
+                    sample_hipblaslt_weight_swizzle_padding.profraw)
+
+  add_custom_target(coverage
+    COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_VERBOSE=1 
+            LLVM_PROFILE_FILE=./hipblaslt-test.profraw 
+            ./clients/staging/hipblaslt-test
+            --output-on-failure
+    COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_VERBOSE=1 
+            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_amax.profraw 
+            ./clients/staging/sample_hipblaslt_ext_op_amax 
+            --output-on-failure
+    COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_VERBOSE=1 
+            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_amax_with_scale.profraw 
+            ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale 
+            --output-on-failure
+    COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_VERBOSE=1 
+            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_layernorm.profraw 
+            ./clients/staging/sample_hipblaslt_ext_op_layernorm 
+            --output-on-failure
+    COMMAND ${CMAKE_COMMAND} -E env 
+            LLVM_PROFILE_VERBOSE=1 
+            LLVM_PROFILE_FILE=./sample_hipblaslt_weight_swizzle_padding.profraw 
+            ./clients/staging/sample_hipblaslt_weight_swizzle_padding 
+            --output-on-failure
+    COMMAND ${LLVM_PROFDATA_EXECUTABLE}
+            merge -sparse
+            ${PROFRAW_FILES}
+            -o coverage_test.profdata
+    COMMAND ${LLVM_COV_EXECUTABLE} 
+            report 
+            -object ./clients/staging/hipblaslt-test
+            -object ./clients/staging/sample_hipblaslt_ext_op_amax
+            -object ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale
+            -object ./clients/staging/sample_hipblaslt_ext_op_layernorm 
+            -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
+            -instr-profile=./coverage_test.profdata 
+            --ignore-filename-regex=.*/samples/.*|.*/build/debug/.*
+    COMMAND ${LLVM_COV_EXECUTABLE} 
+            show 
+            -object ./clients/staging/hipblaslt-test
+            -object ./clients/staging/sample_hipblaslt_ext_op_amax
+            -object ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale
+            -object ./clients/staging/sample_hipblaslt_ext_op_layernorm 
+            -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
+            -instr-profile=./coverage_test.profdata 
+            -format=html -output-dir=coverage_report 
+            --ignore-filename-regex=.*/samples/.*|.*/build/debug/.*
+    
+    COMMAND tox -c ../../tensilelite -v --workdir /tmp/.tensile-tox -e py3 -- ../../tensilelite/Tensile/Tests -m common --cov=../../tensilelite --cov-report=html
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+
+    VERBATIM
+  )
+
+  add_dependencies(coverage hipblaslt-test
+                            sample_hipblaslt_ext_op_amax
+                            sample_hipblaslt_ext_op_amax_with_scale
+                            sample_hipblaslt_ext_op_layernorm
+                            sample_hipblaslt_weight_swizzle_padding)
+endif()

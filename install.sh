@@ -739,7 +739,7 @@ pushd .
           echo "Code coverage is disabled in Release mode, to enable code coverage select either Debug mode (-g | --debug) or RelWithDebInfo mode (-k | --relwithdebinfo); aborting";
           exit 1
       fi
-      cmake_common_options="${cmake_common_options} -DBUILD_CODE_COVERAGE=ON -DLLVM_DIR=/opt/rocm/llvm/lib/cmake/llvm -DCMAKE_IGNORE_PATH=/usr/lib/llvm-13;/usr/lib/llvm-13/lib -DCMAKE_PREFIX_PATH=/opt/rocm/llvm -DCMAKE_LIBRARY_PATH=/opt/rocm/llvm/lib"
+      cmake_common_options="${cmake_common_options} -DBUILD_CODE_COVERAGE=ON"
   fi
 
   # library type
