@@ -40,12 +40,12 @@
 
 using namespace rocRoller;
 
-const int MAX_BITS_WORKGROUPTILE_M = 8;
-const int MAX_BITS_WORKGROUPTILE_N = 8;
-const int MAX_BITS_WORKGROUPTILE_K = 7;
+const int MAX_BITS_WORKGROUPTILE_M    = 8;
+const int MAX_BITS_WORKGROUPTILE_N    = 8;
+const int MAX_BITS_WORKGROUPTILE_K    = 7;
 const int MAX_BITS_PREFETCH_IN_FLIGHT = 4;
-const int REQUIRED_MULTIPLE_M_N    = 16;
-const int REQUIRED_MULTIPLE_K      = 32;
+const int REQUIRED_MULTIPLE_M_N       = 16;
+const int REQUIRED_MULTIPLE_K         = 32;
 
 /**
  * @brief KernelType
@@ -114,7 +114,7 @@ struct MachineInstructionSize
 struct SolutionIndexParameters
 {
     WorkGroupTileSize workgroupTile;
-    int prefetchInFlight;
+    int               prefetchInFlight;
 };
 
 /**
@@ -140,9 +140,9 @@ struct SolutionParameters
     int  workgroupSizeY = 2;
 
     // Other options
-    bool loadLDSA  = true;
-    bool loadLDSB  = true;
-    bool storeLDSD = false;
+    bool loadLDSA    = true;
+    bool loadLDSB    = true;
+    bool storeLDSD   = false;
     bool direct2LDSA = true;
     bool direct2LDSB = true;
 
@@ -164,7 +164,7 @@ struct SolutionParameters
     // Scale options
     bool loadLDSScaleA = false;
     bool loadLDSScaleB = false;
-    bool swizzleScale = true;
+    bool swizzleScale  = true;
     bool prefetchScale = true;
 
     std::string toString() const;
@@ -282,8 +282,7 @@ SolutionIndexParameters indexToParameters(int index)
     result.workgroupTile.m
         = ((index >> pos) & mask(MAX_BITS_WORKGROUPTILE_M)) * REQUIRED_MULTIPLE_M_N;
     pos += MAX_BITS_WORKGROUPTILE_M;
-    result.prefetchInFlight
-        = (index >> pos) & mask(MAX_BITS_PREFETCH_IN_FLIGHT);
+    result.prefetchInFlight = (index >> pos) & mask(MAX_BITS_PREFETCH_IN_FLIGHT);
 
     return result;
 }
@@ -375,15 +374,20 @@ std::string SolutionParameters::toString() const
 {
     std::stringstream result;
 
-    result<<"WorkGroupTile:"<<workgroupTile.m<<"x"<<workgroupTile.n<<"x"<<workgroupTile.k<<std::endl;
-    result<<"MachineInstruction:"<<machineInstruction.m<<"x"<<machineInstruction.n<<"x"<<machineInstruction.k<<std::endl;
-    result<<"WorkgroupSize:"<<workgroupSizeX<<"x"<<workgroupSizeY<<std::endl;
-    result<<"LDS Usage";
-    result<<" A:"<<(direct2LDSA ? "DirectToLDS" : (loadLDSA ? "On" : "Off"));
-    result<<" B:"<<(direct2LDSB ? "DirectToLDS" : (loadLDSB ? "On" : "Off"));
-    result<<" D:"<<(storeLDSD ? "On" : "Off")<<std::endl;
-    result<<"Prefetch:"<<prefetch<<" InFlight:"<<prefetchInFlight<<" LDSFactor:"<<prefetchLDSFactor<<" MixMemOps:"<<prefetchMixMemOps<<std::endl;
-    result<<"Block Scale Options:"<<" Swizzle Scale:"<<swizzleScale<<" Prefetch Scale:"<<prefetchScale<<" loadLDS A:"<<loadLDSScaleA<<" loadLDS B:"<<loadLDSScaleB<<std::endl;
+    result << "WorkGroupTile:" << workgroupTile.m << "x" << workgroupTile.n << "x"
+           << workgroupTile.k << std::endl;
+    result << "MachineInstruction:" << machineInstruction.m << "x" << machineInstruction.n << "x"
+           << machineInstruction.k << std::endl;
+    result << "WorkgroupSize:" << workgroupSizeX << "x" << workgroupSizeY << std::endl;
+    result << "LDS Usage";
+    result << " A:" << (direct2LDSA ? "DirectToLDS" : (loadLDSA ? "On" : "Off"));
+    result << " B:" << (direct2LDSB ? "DirectToLDS" : (loadLDSB ? "On" : "Off"));
+    result << " D:" << (storeLDSD ? "On" : "Off") << std::endl;
+    result << "Prefetch:" << prefetch << " InFlight:" << prefetchInFlight
+           << " LDSFactor:" << prefetchLDSFactor << " MixMemOps:" << prefetchMixMemOps << std::endl;
+    result << "Block Scale Options:" << " Swizzle Scale:" << swizzleScale
+           << " Prefetch Scale:" << prefetchScale << " loadLDS A:" << loadLDSScaleA
+           << " loadLDS B:" << loadLDSScaleB << std::endl;
 
     return result.str();
 }
@@ -498,11 +502,12 @@ KernelType genKernelType(const RocblasltContractionProblem& prob)
     return kernelType;
 }
 
-const std::vector<WorkGroupTileSize> possibleTileSizes = {
-    {256, 256, 128}, {256, 128, 128}, {128, 256, 128}, {256, 64, 128}, {64, 256, 128},  {128, 128, 128},
-    {256, 32, 128},  {32, 256, 128},  {128, 64, 128},  {64, 128, 128}, {256, 16, 128},  {16, 256, 128},
-    {128, 32, 128},  {32, 128, 128},  {64, 64, 128},   {64, 32, 128},  {32, 64, 128},   {64, 16, 128},
-    {16, 64, 128},   {32, 32, 64},    {32, 16, 128},   {16, 32, 128},  {16, 16, 128}};
+const std::vector<WorkGroupTileSize> possibleTileSizes
+    = {{256, 256, 128}, {256, 128, 128}, {128, 256, 128}, {256, 64, 128}, {64, 256, 128},
+       {128, 128, 128}, {256, 32, 128},  {32, 256, 128},  {128, 64, 128}, {64, 128, 128},
+       {256, 16, 128},  {16, 256, 128},  {128, 32, 128},  {32, 128, 128}, {64, 64, 128},
+       {64, 32, 128},   {32, 64, 128},   {64, 16, 128},   {16, 64, 128},  {32, 32, 64},
+       {32, 16, 128},   {16, 32, 128},   {16, 16, 128}};
 
 /**
  * @brief Choose the SolutionIndexParameters to use for a given problem
@@ -526,6 +531,14 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
         if((requestedAlgoCount == -1)
            || (prob.m % wgt.m == 0 && prob.n % wgt.n == 0 && prob.k % wgt.k == 0))
         {
+            // FP8 kernels run out of registers with larger tile sizes
+            if((kernelType.typeA == rocRoller::DataType::FP8
+                || kernelType.typeA == rocRoller::DataType::BF8
+                || kernelType.typeB == rocRoller::DataType::FP8
+                || kernelType.typeB == rocRoller::DataType::BF8)
+               && wgt.m + wgt.n > 256)
+                continue;
+
             params.push_back({wgt, 1});
 
             if(kernelType.typeA == rocRoller::DataType::Half
@@ -535,9 +548,12 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
                 params.back().workgroupTile.k = 32;
             }
 
-            if(kernelType.typeA == rocRoller::DataType::FP4 &&
-               kernelType.typeB == rocRoller::DataType::FP4 &&
-               (prob.k % (wgt.k * 4) == 0))
+            // Other datatypes run out of registers when prefetchInFlight is too
+            // larger.
+            // There is an error with smaller tile sizes and larger prefetchInFlight.
+            if(kernelType.typeA == rocRoller::DataType::FP4
+               && kernelType.typeB == rocRoller::DataType::FP4 && wgt.m > 32 && wgt.n > 32
+               && (prob.k % (wgt.k * 4) == 0))
             {
                 params.back().prefetchInFlight = 4;
             }
@@ -589,10 +605,12 @@ std::shared_ptr<SolutionParameters>
     {
         // F6 with 16X16X256 MI gives higher rnorms than expected with
         // certain tile sizes
-        if ((gemm->kernelType.typeA == rocRoller::DataType::FP6 || gemm->kernelType.typeA == rocRoller::DataType::BF6 ||
-             gemm->kernelType.typeB == rocRoller::DataType::FP6 || gemm->kernelType.typeB == rocRoller::DataType::BF6) &&
-            ((gemm->workgroupTile.m == 256 && gemm->workgroupTile.n == 64) ||
-             (gemm->workgroupTile.m == 64 && gemm->workgroupTile.n == 256)))
+        if((gemm->kernelType.typeA == rocRoller::DataType::FP6
+            || gemm->kernelType.typeA == rocRoller::DataType::BF6
+            || gemm->kernelType.typeB == rocRoller::DataType::FP6
+            || gemm->kernelType.typeB == rocRoller::DataType::BF6)
+           && ((gemm->workgroupTile.m == 256 && gemm->workgroupTile.n == 64)
+               || (gemm->workgroupTile.m == 64 && gemm->workgroupTile.n == 256)))
             gemm->machineInstruction = {32, 32, 64, 1};
         else if(gemm->workgroupTile.k % 128 == 0)
             gemm->machineInstruction = {16, 16, 128, 1};
@@ -615,33 +633,36 @@ std::shared_ptr<SolutionParameters>
     }
 
     // Direct To LDS only supported in certain situations
-    if (kernelType.typeA == rocRoller::DataType::FP6 || kernelType.typeA == rocRoller::DataType::BF6)
+    if(kernelType.typeA == rocRoller::DataType::FP6 || kernelType.typeA == rocRoller::DataType::BF6)
         gemm->direct2LDSA = false;
-    if (kernelType.typeB == rocRoller::DataType::FP6 || kernelType.typeB == rocRoller::DataType::BF6)
+    if(kernelType.typeB == rocRoller::DataType::FP6 || kernelType.typeB == rocRoller::DataType::BF6)
         gemm->direct2LDSB = false;
-    if ((kernelType.typeA == rocRoller::DataType::FP4 || kernelType.typeB == rocRoller::DataType::FP4)
-        && (solutionIndexParameters.workgroupTile.m <= 64 || solutionIndexParameters.workgroupTile.n <= 64))
+    if((kernelType.typeA == rocRoller::DataType::FP4
+        || kernelType.typeB == rocRoller::DataType::FP4)
+       && (solutionIndexParameters.workgroupTile.m <= 64
+           || solutionIndexParameters.workgroupTile.n <= 64))
     {
         gemm->direct2LDSA = false;
         gemm->direct2LDSB = false;
     }
 
-    if (gemm->direct2LDSA == false || gemm->direct2LDSB == false)
+    if(gemm->direct2LDSA == false || gemm->direct2LDSB == false)
     {
         gemm->prefetchLDSFactor = 2;
     }
 
     // Swizzle Scale only support in certain situations
     // Swizzle Scale also runs out of registers with FP8
-    if (solutionIndexParameters.workgroupTile.m >= 128 && solutionIndexParameters.workgroupTile.n >= 128)
+    if(solutionIndexParameters.workgroupTile.m >= 128
+       && solutionIndexParameters.workgroupTile.n >= 128)
     {
-        gemm->swizzleScale = true;
+        gemm->swizzleScale  = true;
         gemm->loadLDSScaleA = false;
         gemm->loadLDSScaleB = false;
     }
     else
     {
-        gemm->swizzleScale = false;
+        gemm->swizzleScale  = false;
         gemm->prefetchScale = false;
         gemm->loadLDSScaleA = true;
         gemm->loadLDSScaleB = true;
@@ -651,25 +672,22 @@ std::shared_ptr<SolutionParameters>
     auto workgroupSize = gemm->workgroupSizeX * gemm->workgroupSizeY;
     auto numScaleElementsA
         = gemm->workgroupTile.m
-            * (gemm->workgroupTile.k
-                / (gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize));
+          * (gemm->workgroupTile.k
+             / (gemm->kernelType.scaleABlockRowSize * gemm->kernelType.scaleABlockColSize));
     auto numScaleElementsB
         = gemm->workgroupTile.n
-            * (gemm->workgroupTile.k
-                / (gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize));
+          * (gemm->workgroupTile.k
+             / (gemm->kernelType.scaleBBlockRowSize * gemm->kernelType.scaleBBlockColSize));
     if(numScaleElementsA % workgroupSize != 0)
     {
-        gemm->loadLDSScaleA = false;
+        gemm->loadLDSScaleA     = false;
         gemm->prefetchMixMemOps = false;
     }
     if(numScaleElementsB % workgroupSize != 0)
     {
-        gemm->loadLDSScaleB = false;
+        gemm->loadLDSScaleB     = false;
         gemm->prefetchMixMemOps = false;
     }
-
-    std::cout<<"Generating Solution Parameters:"<<std::endl;
-    std::cout<<gemm->toString()<<std::endl;
 
     return gemm;
 }
@@ -1039,8 +1057,8 @@ std::shared_ptr<GemmKernel> genGemmKernel(std::shared_ptr<SolutionParameters> ge
         params->setDimensionInfo(tagStoreD, macTileD);
     }
 
-    params->unrollX = gemm->unrollX;
-    params->unrollY = gemm->unrollY;
+    params->unrollX       = gemm->unrollX;
+    params->unrollY       = gemm->unrollY;
     params->swizzleScale  = gemm->swizzleScale;
     params->prefetchScale = gemm->prefetchScale;
 
@@ -1248,8 +1266,11 @@ rocblaslt_status
                              size_t                                          maxWorkSpaceBytes)
 {
     heuristicResults.resize(possibleTileSizes.size());
-    int returnAlgoCount;
-    return getRocRollerBestSolutions(handle, prob, -1, heuristicResults.data(), &returnAlgoCount);
+    int  returnAlgoCount;
+    auto result
+        = getRocRollerBestSolutions(handle, prob, -1, heuristicResults.data(), &returnAlgoCount);
+    heuristicResults.resize(returnAlgoCount);
+    return result;
 }
 
 /**
@@ -1423,7 +1444,6 @@ rocblaslt_status isRocRollerSolutionSupported(rocblaslt_handle             handl
 rocblaslt_status runGemmKernel(std::shared_ptr<GemmKernel>        gemm,
                                const RocblasltContractionProblem& prob)
 {
-    std::cout<<"Run Solution Parameters:\n"<<gemm->params->toString()<<std::endl;
     auto commandArgs = createCommandArguments(gemm, prob);
 
     auto runtimeArgs = commandArgs.runtimeArguments();
