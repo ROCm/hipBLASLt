@@ -4028,35 +4028,38 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.a.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsA"] and kernel["NonDTLTailLoopA"]) else 1 * self.states.rpla
     self.states.b.numVgprLocalWriteAddrTailLoop = 0 if not (kernel["DirectToLdsB"] and kernel["NonDTLTailLoopB"]) else 1 * self.states.rpla
 
-    # TODO: Refactor vgpr multiplier calculation
-    # based on comments here: https://github.com/ROCm/hipBLASLt/pull/2061/files#r2085714139
-    if self.states.archCaps["DeviceLDS"] > 65536 and not kernel["StoreSwapAddr"]:
-      need128K = kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]
-      need64K = kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"]
+    numVgprMultiplierA = 1
+    numVgprMultiplierB = 1
+    numVgprMultiplierMetadata = 1
+    if self.states.archCaps["DeviceLDS"] > 65536:
+      need128K = kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]
+      need64K = kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]
       if need128K or kernel["LdsNumElementsAlignedA"]>=131072:
-        self.states.a.numVgprLocalReadAddr *= 3
-        self.states.a.numVgprLocalWriteAddr *= 3
-        self.states.a.numVgprLocalWriteAddrTailLoop *= 3
+        numVgprMultiplierA = 3
       elif need64K or kernel["LdsNumElementsAlignedA"]>=65536:
-        self.states.a.numVgprLocalReadAddr *= 2
-        self.states.a.numVgprLocalWriteAddr *= 2
-        self.states.a.numVgprLocalWriteAddrTailLoop *= 2
+        numVgprMultiplierA = 2
 
       if need128K or kernel["LdsNumElementsAlignedB"]>=131072:
-        self.states.b.numVgprLocalReadAddr *= 3
-        self.states.b.numVgprLocalWriteAddr *= 3
-        self.states.b.numVgprLocalWriteAddrTailLoop *= 3
+        numVgprMultiplierB = 3
       elif need64K or kernel["LdsNumElementsAlignedB"]>=65536:
-        self.states.b.numVgprLocalReadAddr *= 2
-        self.states.b.numVgprLocalWriteAddr *= 2
-        self.states.b.numVgprLocalWriteAddrTailLoop *= 2
+        numVgprMultiplierB = 2
 
       if need128K or kernel["LdsNumElementsAlignedMetadata"]>=131072:
-        self.states.m.numVgprLocalReadAddr *= 3
-        self.states.m.numVgprLocalWriteAddr *= 3
+        numVgprMultiplierMetadata = 3
       elif need64K or kernel["LdsNumElementsAlignedMetadata"]>=65536:
-        self.states.m.numVgprLocalReadAddr *= 2
-        self.states.m.numVgprLocalWriteAddr *= 2
+        numVgprMultiplierMetadata = 2
+
+    self.states.a.numVgprLocalReadAddr *= numVgprMultiplierA
+    self.states.a.numVgprLocalWriteAddr *= numVgprMultiplierA
+    self.states.a.numVgprLocalWriteAddrTailLoop *= numVgprMultiplierA
+
+    self.states.b.numVgprLocalReadAddr *= numVgprMultiplierB
+    self.states.b.numVgprLocalWriteAddr *= numVgprMultiplierB
+    self.states.b.numVgprLocalWriteAddrTailLoop *= numVgprMultiplierB
+
+    self.states.m.numVgprLocalReadAddr *= numVgprMultiplierMetadata
+    self.states.m.numVgprLocalWriteAddr *= numVgprMultiplierMetadata
+
 
     if not (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]):
       self.states.m.numVgprLocalReadAddr = 0
