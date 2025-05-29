@@ -29,6 +29,7 @@
  *********************************************************/
 
 #include "rocroller_host.hpp"
+#include "Debug.hpp"
 #include "handle.h"
 #include "utility.hpp"
 
@@ -287,17 +288,16 @@ SolutionIndexParameters indexToParameters(int index)
     return result;
 }
 
-inline std::string scaleModeOption(std::string                                arg,
-                                   RocblasltContractionProblem::ScalingFormat scale)
+inline std::string scaleModeOption(RocblasltContractionProblem::ScalingFormat scale)
 {
     switch(scale)
     {
     case RocblasltContractionProblem::ScalingFormat::Scalar:
-        return arg + " 1";
+        return "1";
     case RocblasltContractionProblem::ScalingFormat::Vector:
-        return arg + " 2";
+        return "2";
     case RocblasltContractionProblem::ScalingFormat::Block:
-        return arg + " 3";
+        return "3";
     default:
         return "";
     }
@@ -310,64 +310,208 @@ inline void logBench(const RocblasltContractionProblem& prob,
                      const int32_t&                     coldIterations,
                      const int32_t&                     hotIterations)
 {
-    log_bench(__func__,
-              "--api_method",
-              "c",
-              "-m",
-              prob.m,
-              "-n",
-              prob.n,
-              "-k",
-              prob.k,
-              "--lda",
-              prob.col_stride_a,
-              "--ldb",
-              prob.col_stride_b,
-              "--ldc",
-              prob.col_stride_c,
-              "--ldd",
-              prob.col_stride_d,
-              "--stride_a",
-              prob.batch_stride_a,
-              "--stride_b",
-              prob.batch_stride_b,
-              "--stride_c",
-              prob.batch_stride_c,
-              "--stride_d",
-              prob.batch_stride_d,
-              "--alpha",
-              *((float*)prob.alpha),
-              "--beta",
-              *((float*)prob.beta),
-              "--transA",
-              prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
-              "--transB",
-              prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
-              "--batch_count",
-              prob.batch_count,
-              scaleModeOption("--scaleA", prob.scaleAType),
-              scaleModeOption("--scaleB", prob.scaleBType),
-              "--a_type",
-              hipDataType_to_bench_string(prob.a_type),
-              "--b_type",
-              hipDataType_to_bench_string(prob.b_type),
-              "--c_type",
-              hipDataType_to_bench_string(prob.c_type),
-              "--d_type",
-              hipDataType_to_bench_string(prob.d_type),
-              "--compute_type",
-              "f32_r",
-              "--algo_method",
-              "index",
-              "--solution_index",
-              solutionIndex,
-              flush ? "--flush" : "",
-              "--rotating",
-              rotatingBufferSize,
-              "--cold_iters",
-              coldIterations,
-              "--iters",
-              hotIterations);
+    auto s = log_str(__func__,
+                     "--api_method",
+                     "c",
+                     "-m",
+                     prob.m,
+                     "-n",
+                     prob.n,
+                     "-k",
+                     prob.k,
+                     "--lda",
+                     prob.col_stride_a,
+                     "--ldb",
+                     prob.col_stride_b,
+                     "--ldc",
+                     prob.col_stride_c,
+                     "--ldd",
+                     prob.col_stride_d,
+                     "--stride_a",
+                     prob.batch_stride_a,
+                     "--stride_b",
+                     prob.batch_stride_b,
+                     "--stride_c",
+                     prob.batch_stride_c,
+                     "--stride_d",
+                     prob.batch_stride_d,
+                     "--alpha",
+                     *((float*)prob.alpha),
+                     "--beta",
+                     *((float*)prob.beta),
+                     "--transA",
+                     prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
+                     "--transB",
+                     prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
+                     "--batch_count",
+                     prob.batch_count,
+                     "--scaleA",
+                     scaleModeOption(prob.scaleAType),
+                     "--scaleB",
+                     scaleModeOption(prob.scaleBType),
+                     "--a_type",
+                     hipDataType_to_bench_string(prob.a_type),
+                     "--b_type",
+                     hipDataType_to_bench_string(prob.b_type),
+                     "--c_type",
+                     hipDataType_to_bench_string(prob.c_type),
+                     "--d_type",
+                     hipDataType_to_bench_string(prob.d_type),
+                     "--compute_type",
+                     "f32_r",
+                     "--algo_method",
+                     "index",
+                     "--solution_index",
+                     solutionIndex,
+                     flush ? "--flush" : "",
+                     "--rotating",
+                     rotatingBufferSize,
+                     "--cold_iters",
+                     coldIterations,
+                     "--iters",
+                     hotIterations);
+
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+        log_bench_from_str(s);
+    if(rocblaslt::Debug::Instance().printLogAsMarker())
+    {
+        rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
+        rocblaslt::Debug::Instance().logMarkerStop();
+    }
+}
+
+inline void logProfile(const RocblasltContractionProblem& prob,
+                       bool                               flush,
+                       const int32_t&                     rotatingBufferSize,
+                       const int32_t&                     coldIterations,
+                       const int32_t&                     hotIterations)
+{
+    log_profile("matmul",
+                "M",
+                prob.m,
+                "N",
+                prob.n,
+                "K",
+                prob.k,
+                "lda",
+                prob.col_stride_a,
+                "ldb",
+                prob.col_stride_b,
+                "ldc",
+                prob.col_stride_c,
+                "ldd",
+                prob.col_stride_d,
+                "stride_a",
+                prob.batch_stride_a,
+                "stride_b",
+                prob.batch_stride_b,
+                "stride_c",
+                prob.batch_stride_c,
+                "stride_d",
+                prob.batch_stride_e,
+                "alpha",
+                *((float*)prob.alpha),
+                "beta",
+                *((float*)prob.beta),
+                "transA",
+                prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
+                "transB",
+                prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
+                "batch_count",
+                prob.batch_count,
+                "scaleA",
+                scaleModeOption(prob.scaleAType),
+                "scaleB",
+                scaleModeOption(prob.scaleBType),
+                "a_type",
+                hipDataType_to_bench_string(prob.a_type),
+                "b_type",
+                hipDataType_to_bench_string(prob.b_type),
+                "c_type",
+                hipDataType_to_bench_string(prob.c_type),
+                "d_type",
+                hipDataType_to_bench_string(prob.d_type),
+                "compute_type",
+                "f32_r",
+                "flush",
+                flush ? "true" : "false",
+                "rotating",
+                rotatingBufferSize,
+                "cold_iters",
+                coldIterations,
+                "iters",
+                hotIterations);
+}
+
+inline void logExtendedProfile(const RocblasltContractionProblem& prob,
+                               const int&                         solutionIndex,
+                               const std::string&                 kernelName,
+                               bool                               flush,
+                               const int32_t&                     rotatingBufferSize,
+                               const int32_t&                     coldIterations,
+                               const int32_t&                     hotIterations)
+{
+    log_profile("matmul",
+                "M",
+                prob.m,
+                "N",
+                prob.n,
+                "K",
+                prob.k,
+                "lda",
+                prob.col_stride_a,
+                "ldb",
+                prob.col_stride_b,
+                "ldc",
+                prob.col_stride_c,
+                "ldd",
+                prob.col_stride_d,
+                "stride_a",
+                prob.batch_stride_a,
+                "stride_b",
+                prob.batch_stride_b,
+                "stride_c",
+                prob.batch_stride_c,
+                "stride_d",
+                prob.batch_stride_e,
+                "alpha",
+                *((float*)prob.alpha),
+                "beta",
+                *((float*)prob.beta),
+                "transA",
+                prob.trans_a == HIPBLAS_OP_T ? "T" : "N",
+                "transB",
+                prob.trans_b == HIPBLAS_OP_T ? "T" : "N",
+                "batch_count",
+                prob.batch_count,
+                "scaleA",
+                scaleModeOption(prob.scaleAType),
+                "scaleB",
+                scaleModeOption(prob.scaleBType),
+                "a_type",
+                hipDataType_to_bench_string(prob.a_type),
+                "b_type",
+                hipDataType_to_bench_string(prob.b_type),
+                "c_type",
+                hipDataType_to_bench_string(prob.c_type),
+                "d_type",
+                hipDataType_to_bench_string(prob.d_type),
+                "compute_type",
+                "f32_r",
+                "flush",
+                flush ? "true" : "false",
+                "rotating",
+                rotatingBufferSize,
+                "cold_iters",
+                coldIterations,
+                "iters",
+                hotIterations,
+                "solution_index",
+                solutionIndex,
+                "solution_Name",
+                kernelName,
+                "kernel_name",
+                kernelName);
 }
 
 std::string SolutionParameters::toString() const
@@ -788,6 +932,8 @@ std::string genKernelName(std::shared_ptr<SolutionParameters> gemm)
     rv << "WGT_";
     rocRoller::streamJoin(
         rv, std::vector{gemm->workgroupTile.m, gemm->workgroupTile.n, gemm->workgroupTile.k}, "x");
+
+    rv << "_UR_" << gemm->prefetchInFlight;
 
     return rv.str();
 }
@@ -1492,19 +1638,42 @@ rocblaslt_status runRocRollerContractionProblem(rocblaslt_handle                
         algo = &heuristicResult.algo;
     }
 
+    // Get the values of static member variables flush and rotating size from UserClientArguments
+    UserClientArguments ClientArguments;
+    bool                flush              = ClientArguments.GetFlushValue();
+    int32_t             rotatingBufferSize = ClientArguments.GetRotatingBufferSizeValue();
+    int32_t             hotIterations      = ClientArguments.GetHotIterationsValue();
+    int32_t             coldIterations     = ClientArguments.GetColdIterationsValue();
+
     int* solutionIndex = (int*)algo->data;
 
-    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+    if((get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+       || rocblaslt::Debug::Instance().printLogAsMarker())
     {
-        // TODO: Fill in other parameters after merge with
-        //       mainline.
-        logBench(prob, *solutionIndex, false, 0, 0, 0);
+        logBench(prob, *solutionIndex, flush, rotatingBufferSize, coldIterations, hotIterations);
+    }
+
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_profile)
+    {
+        logProfile(prob, flush, rotatingBufferSize, coldIterations, hotIterations);
     }
 
     std::shared_ptr<GemmKernel> kernel;
     auto                        status = getKernelFromAlgo(handle, prob, algo, kernel);
     if(status != rocblaslt_status_success)
         return status;
+
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_extended_profile)
+    {
+        auto kernelName = genKernelName(kernel->params);
+        logExtendedProfile(prob,
+                           *solutionIndex,
+                           kernelName,
+                           flush,
+                           rotatingBufferSize,
+                           coldIterations,
+                           hotIterations);
+    }
 
     return runGemmKernel(kernel, prob);
 }

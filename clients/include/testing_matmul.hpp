@@ -413,7 +413,7 @@ void epilogue_func(int64_t     m,
     auto in_Tact = static_cast<Tact>(in[pos]) + bias_data;                                    \
     if(e && !gradient)                                                                        \
     {                                                                                         \
-        saturate_cast_to_type(e, in_Tact* scaleE, aux_type, pos);                             \
+        saturate_cast_to_type(e, in_Tact * scaleE, aux_type, pos);                            \
     }                                                                                         \
     Tact in_Tact_act = 0;                                                                     \
     if(gradient)                                                                              \
@@ -559,12 +559,12 @@ void epilogue_func(int64_t     m,
                    bool        gradient,
                    hipDataType To)
 {
-#define CALCULATE_EPILOGUE_BASIC                               \
-    auto pos  = j * ld + i;                                    \
-    Tc   temp = static_cast<Ti>(*(in + pos)) + bias_data;      \
-    if(e)                                                      \
-    {                                                          \
-        saturate_cast_to_type(e, temp* scaleE, aux_type, pos); \
+#define CALCULATE_EPILOGUE_BASIC                                \
+    auto pos  = j * ld + i;                                     \
+    Tc   temp = static_cast<Ti>(*(in + pos)) + bias_data;       \
+    if(e)                                                       \
+    {                                                           \
+        saturate_cast_to_type(e, temp * scaleE, aux_type, pos); \
     }
 
     for(int i = 0; i < m; i++)
@@ -980,7 +980,6 @@ void check(hipStream_t                   stream,
             hipblaslt_error += norm_error;
             if(arg.norm_check_assert)
             {
-                hipblaslt_cout<<"NormError:"<<norm_error<<" To:"<<To<<std::endl;
                 CHECK_SUCCESS(norm_check(norm_error, To));
             }
 
@@ -1931,7 +1930,8 @@ void testing_matmul_with_bias(const Arguments& arg,
            || arg.scaleA == hipblaslt_scaling_format::Vector)
         {
             if(arg.norm_check)
-                hipblaslt_init_small(hScaleA[i].buf(), size_scaleAVec[i], 1, size_scaleAVec[i], Talpha);
+                hipblaslt_init_small(
+                    hScaleA[i].buf(), size_scaleAVec[i], 1, size_scaleAVec[i], Talpha);
             else
                 hipblaslt_init(hScaleA[i].buf(), size_scaleAVec[i], 1, size_scaleAVec[i], Talpha);
         }
@@ -1940,7 +1940,8 @@ void testing_matmul_with_bias(const Arguments& arg,
            || arg.scaleB == hipblaslt_scaling_format::Vector)
         {
             if(arg.norm_check)
-                hipblaslt_init_small(hScaleB[i].buf(), size_scaleBVec[i], 1, size_scaleBVec[i], Talpha);
+                hipblaslt_init_small(
+                    hScaleB[i].buf(), size_scaleBVec[i], 1, size_scaleBVec[i], Talpha);
             else
                 hipblaslt_init(hScaleB[i].buf(), size_scaleBVec[i], 1, size_scaleBVec[i], Talpha);
         }
@@ -3161,12 +3162,13 @@ void testing_matmul_with_bias(const Arguments& arg,
                         (arg.scaleA == hipblaslt_scaling_format::Block),
                         (arg.scaleB == hipblaslt_scaling_format::Block));
 
-                    auto                        pos       = stride_d[gemmIdx] * batchIdx;
-                    std::vector<HipHostBuffer>* hEInst    = arg.gradient ? &hE : &hE_gold;
-                    void*                       ePos      = ((*hEInst).size() <= gemmIdx)
-                                                                ? nullptr
-                                                                : ((*hEInst)[gemmIdx].as<char>() + pos * realDataTypeSize(Taux));
-                    auto                        applyBias = arg.gradient ? false : arg.bias_vector;
+                    auto                        pos    = stride_d[gemmIdx] * batchIdx;
+                    std::vector<HipHostBuffer>* hEInst = arg.gradient ? &hE : &hE_gold;
+                    void*                       ePos
+                        = ((*hEInst).size() <= gemmIdx)
+                              ? nullptr
+                              : ((*hEInst)[gemmIdx].as<char>() + pos * realDataTypeSize(Taux));
+                    auto  applyBias = arg.gradient ? false : arg.bias_vector;
                     void* hBias_buf = ((hBias).size() <= gemmIdx) ? nullptr : hBias[gemmIdx].buf();
 
                     switch(arg.activation_type)
