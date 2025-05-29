@@ -391,9 +391,9 @@ def writeSolutionsAndKernelsTCL(
         multiArg=False,
         return_as="list"
     )
-    passPostKernelInfoToSolution(
-        ret, uniqueAsmKernels, solutions, splitGSU
-    )
+    # passPostKernelInfoToSolution(
+    #     ret, uniqueAsmKernels, solutions, splitGSU
+    # )
     # result.src is very large so let garbage collector know to clean up
     del ret
 
