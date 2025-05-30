@@ -32,7 +32,6 @@
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
 #include <Tensile/FreeSizeLibrary.hpp>
-#include <Tensile/PredictionLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
 #include <Tensile/MLPClassificationLibrary.hpp>
 #include <Tensile/PropertyMatching.hpp>
