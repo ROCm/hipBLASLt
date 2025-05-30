@@ -508,8 +508,6 @@ inline void logExtendedProfile(const RocblasltContractionProblem& prob,
                 hotIterations,
                 "solution_index",
                 solutionIndex,
-                "solution_Name",
-                kernelName,
                 "kernel_name",
                 kernelName);
 }
@@ -693,7 +691,7 @@ std::vector<SolutionIndexParameters> chooseSolutionIndexParameters(
             }
 
             // Other datatypes run out of registers when prefetchInFlight is too
-            // larger.
+            // large.
             // There is an error with smaller tile sizes and larger prefetchInFlight.
             if(kernelType.typeA == rocRoller::DataType::FP4
                && kernelType.typeB == rocRoller::DataType::FP4 && wgt.m > 32 && wgt.n > 32
