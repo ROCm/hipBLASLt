@@ -33,6 +33,7 @@
 
 namespace TensileLite
 {
+
     /**
      * \ingroup SolutionLibrary
      *
@@ -187,8 +188,7 @@ namespace TensileLite
                                                              std::get<3>(tile),
                                                              std::get<4>(tile),
                                                              std::get<5>(tile),
-                                                             std::get<6>(tile),
-                                                             std::get<7>(tile)));
+                                                             std::get<6>(tile)));
                 auto smapiter = solutionmap.find(mapiter->second);
                 if(mapiter != tile_map.end() && smapiter != solutionmap.end())
                 {
