@@ -8510,15 +8510,15 @@ class KernelWriterAssembly(KernelWriter):
           comment="swap Red Blk SGPR"))
       else:
         module.add(VXorB32(
-            dst=vgpr("LocalWriteAddr%s+%u"%(tc,0)), \
+            dst=vgpr("LocalWriteAddr%s"%tc), \
             src0=src0Val, \
-            src1=vgpr("LocalWriteAddr%s+%u"%(tc,0)), \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
             comment="swap Red Blk"))
         for i in range(1,numLwa):
           module.add(VAddU32(
             dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
             src0=(i * 0x10000), \
-            src1=vgpr("LocalWriteAddr%s+%u"%(tc,0)), \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
             comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
 
     if needSwap:
@@ -8622,9 +8622,9 @@ class KernelWriterAssembly(KernelWriter):
               comment="reset to Red"))
         else:
           module.add(VAndB32(
-            dst=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], 0)), \
+            dst=vgpr("LocalWriteAddr%s"%tc), \
             src0=resetMask, \
-            src1=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], 0)), \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
             comment="reset to Red"))
     if needMetaReset:
       if kernel["DirectToVgprSparseMetadata"]:
@@ -8666,7 +8666,6 @@ class KernelWriterAssembly(KernelWriter):
             src1=vgpr("LocalWriteAddr%s+%u"%(tPM["tensorChar"], 0)), \
             comment="reset to Red"))
 
-
     numLwa = 0
     if tP["isA"]:
       numLwa = self.states.a.numVgprLocalWriteAddr
@@ -8677,9 +8676,9 @@ class KernelWriterAssembly(KernelWriter):
 
     for i in range(1, numLwa):
       module.add(VAddU32(
-        dst=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], i)), \
+        dst=vgpr("LocalWriteAddr%s+%u"%(tc, i)), \
         src0=(i * 0x10000), \
-        src1=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], 0)), \
+        src1=vgpr("LocalWriteAddr%s"%tc), \
         comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
     return module
 
@@ -9500,7 +9499,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(VAddU32(
         dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
         src0=(i * 0x10000), \
-        src1=vgpr("LocalReadAddr%s+%u"%(tc,0)), \
+        src1=vgpr("LocalReadAddr%s"%tc), \
         comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
 
     return module
@@ -9554,7 +9553,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(VAddU32(
         dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
         src0=(i * 0x10000), \
-        src1=vgpr("LocalReadAddr%s+%u"%(tc,0)), \
+        src1=vgpr("LocalReadAddr%s"%tc), \
         comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
 
     return module
@@ -9587,7 +9586,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VAddU32(
           dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
           src0=(i * 0x10000), \
-          src1=vgpr("LocalReadAddr%s+%u"%(tc,0)), \
+          src1=vgpr("LocalReadAddr%s"%tc), \
           comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
     return module
 
