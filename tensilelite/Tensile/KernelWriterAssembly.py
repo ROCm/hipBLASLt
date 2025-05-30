@@ -8517,9 +8517,9 @@ class KernelWriterAssembly(KernelWriter):
         for i in range(1,numLwa):
           module.add(VAddU32(
             dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
-            src0=(i * 0x10000), \
+            src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
             src1=vgpr("LocalWriteAddr%s"%tc), \
-            comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
+            comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
 
     if needSwap:
       #fixme-iui  need to use wrapping increment for double or triple buffering:
@@ -8677,9 +8677,9 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(1, numLwa):
       module.add(VAddU32(
         dst=vgpr("LocalWriteAddr%s+%u"%(tc, i)), \
-        src0=(i * 0x10000), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
         src1=vgpr("LocalWriteAddr%s"%tc), \
-        comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
     return module
 
   ##############################################################################
@@ -9498,9 +9498,9 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(1,numLra):
       module.add(VAddU32(
         dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
-        src0=(i * 0x10000), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
         src1=vgpr("LocalReadAddr%s"%tc), \
-        comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
 
     return module
 
@@ -9552,9 +9552,9 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(1,numLra):
       module.add(VAddU32(
         dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
-        src0=(i * 0x10000), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
         src1=vgpr("LocalReadAddr%s"%tc), \
-        comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
 
     return module
 
@@ -9585,9 +9585,9 @@ class KernelWriterAssembly(KernelWriter):
       for i in range(1, numLra):
         module.add(VAddU32(
           dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
-          src0=(i * 0x10000), \
+          src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
           src1=vgpr("LocalReadAddr%s"%tc), \
-          comment="Final Offset Plus %uK"%((i * 0x10000) / 1024)))
+          comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
     return module
 
   ##############################################################################
