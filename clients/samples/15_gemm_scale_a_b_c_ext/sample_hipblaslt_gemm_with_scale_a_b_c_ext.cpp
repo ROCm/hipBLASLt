@@ -30,7 +30,7 @@
 
 #include "helper.h"
 
-void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
+void simpleGemmScaleABCExt(hipblasLtHandle_t  handle,
                           hipblasOperation_t trans_a,
                           hipblasOperation_t trans_b,
                           int64_t            m,
@@ -47,20 +47,22 @@ void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
                           int64_t            max_workspace_size,
                           hipStream_t        stream,
                           float              h_scale_a,
-                          float              h_scale_b);
+                          float              h_scale_b,
+                          float              h_scale_c);
 
 int main()
 {
-    // This is an example using hipblaslt extension API: ScaleA & ScaleB
+    // This is an example using hipblaslt extension API: ScaleA & ScaleB & ScaleC
     Runner<hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, float> runner(
         128, 128, 128, 1, 1.f, 1.f, 32 * 128 * 128);
 
     float scale_a = 0.5f; // scale A setting
     float scale_b = 2.0f; // scale B setting
-    std::cout << "Running with Scale A = " << scale_a << " and Scale B = " << scale_b << std::endl;
+    float scale_c = 2.0f; // scale C setting
+    std::cout << "Running with Scale A = " << scale_a << ", Scale B = " << scale_b << ", and Scale C = " << scale_c << std::endl;
 
-    runner.run([&runner, scale_a, scale_b] {
-        simpleGemmScaleABExt(runner.handle,
+    runner.run([&runner, scale_a, scale_b, scale_c] {
+        simpleGemmScaleABCExt(runner.handle,
                              HIPBLAS_OP_N,
                              HIPBLAS_OP_N,
                              runner.m,
@@ -77,13 +79,14 @@ int main()
                              runner.max_workspace_size,
                              runner.stream,
                              scale_a,
-                             scale_b);
+                             scale_b,
+                             scale_c);
     });
 
     return 0;
 }
 
-void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
+void simpleGemmScaleABCExt(hipblasLtHandle_t  handle,
                           hipblasOperation_t trans_a,
                           hipblasOperation_t trans_b,
                           int64_t            m,
@@ -100,7 +103,8 @@ void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
                           int64_t            max_workspace_size,
                           hipStream_t        stream,
                           float              h_scale_a,
-                          float              h_scale_b)
+                          float              h_scale_b,
+                          float              h_scale_c)
 {
     hipblaslt_ext::GemmPreferenceV2 gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
@@ -109,8 +113,8 @@ void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
                              trans_b,
                              HIP_R_8F_E4M3_FNUZ,
                              HIP_R_8F_E4M3_FNUZ,
-                             HIP_R_16F,
-                             HIP_R_16F,
+                             HIP_R_8F_E4M3_FNUZ,
+                             HIP_R_8F_E4M3_FNUZ,
                              HIPBLAS_COMPUTE_32F);
 
     hipblaslt_ext::GemmEpilogueV2
@@ -118,12 +122,16 @@ void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::GemmInputsV2 inputs;
     float*                      d_scale_a;
     float*                      d_scale_b;
+    float*                      d_scale_c;
     CHECK_HIP_ERROR(hipMalloc(&d_scale_a, sizeof(float)));
     CHECK_HIP_ERROR(hipMalloc(&d_scale_b, sizeof(float)));
+    CHECK_HIP_ERROR(hipMalloc(&d_scale_c, sizeof(float)));
     CHECK_HIP_ERROR(
         hipMemcpyAsync(d_scale_a, &h_scale_a, sizeof(float), hipMemcpyHostToDevice, stream));
     CHECK_HIP_ERROR(
         hipMemcpyAsync(d_scale_b, &h_scale_b, sizeof(float), hipMemcpyHostToDevice, stream));
+    CHECK_HIP_ERROR(
+        hipMemcpyAsync(d_scale_c, &h_scale_c, sizeof(float), hipMemcpyHostToDevice, stream));
 
     inputs.setA(d_a);
     inputs.setB(d_b);
@@ -133,6 +141,7 @@ void simpleGemmScaleABExt(hipblasLtHandle_t  handle,
     inputs.setBeta(&beta);
     inputs.setScaleA(d_scale_a);
     inputs.setScaleB(d_scale_b);
+    inputs.setScaleC(d_scale_c);
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
     const int                                     request_solutions = 1;
