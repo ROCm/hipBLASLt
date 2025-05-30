@@ -4031,23 +4031,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numVgprMultiplierA = 1
     numVgprMultiplierB = 1
     numVgprMultiplierMetadata = 1
-    if self.states.archCaps["DeviceLDS"] > 65536:
-      need128K = kernel["LdsOffsetA_Blk"]>=131072 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]
-      need64K = kernel["LdsOffsetA_Blk"]>=65536 and kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]
-      if need128K or kernel["LdsNumElementsAlignedA"]>=131072:
-        numVgprMultiplierA = 3
-      elif need64K or kernel["LdsNumElementsAlignedA"]>=65536:
-        numVgprMultiplierA = 2
+    maxLDSConstOffset = self.states.regCaps["maxLDSConstOffset"]
 
-      if need128K or kernel["LdsNumElementsAlignedB"]>=131072:
-        numVgprMultiplierB = 3
-      elif need64K or kernel["LdsNumElementsAlignedB"]>=65536:
-        numVgprMultiplierB = 2
+    if self.states.archCaps["DeviceLDS"] > maxLDSConstOffset:
+      hasMultipleBuffer = kernel["ExpandPointerSwap"] and not kernel["1LDSBuffer"] and not kernel["StoreSwapAddr"]
 
-      if need128K or kernel["LdsNumElementsAlignedMetadata"]>=131072:
-        numVgprMultiplierMetadata = 3
-      elif need64K or kernel["LdsNumElementsAlignedMetadata"]>=65536:
-        numVgprMultiplierMetadata = 2
+      numVgprMultiplier = 1 if not hasMultipleBuffer else (kernel["LdsOffsetA_Blk"] // maxLDSConstOffset + 1)
+
+      numVgprMultiplierA = max(numVgprMultiplier, kernel["LdsNumElementsAlignedA"] // maxLDSConstOffset + 1)
+      numVgprMultiplierB = max(numVgprMultiplier, kernel["LdsNumElementsAlignedB"] // maxLDSConstOffset + 1)
+      numVgprMultiplierMetadata = max(numVgprMultiplier, kernel["LdsNumElementsAlignedMetadata"] // maxLDSConstOffset + 1)
+
 
     self.states.a.numVgprLocalReadAddr *= numVgprMultiplierA
     self.states.a.numVgprLocalWriteAddr *= numVgprMultiplierA
