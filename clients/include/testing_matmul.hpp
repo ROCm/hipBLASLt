@@ -2152,7 +2152,7 @@ void testing_matmul_with_bias(const Arguments& arg,
             // Set the row and col sizes of scale block for matrix B
             if(arg.scaleB == hipblaslt_scaling_format::Block)
             {
-                if(arg.scaleBBlockRowSize == 32 && arg.scaleBBlockColSize == 1)
+                if(arg.scaleBBlockRowSize == 1 && arg.scaleBBlockColSize == 32)
                 {
                     mode = HIPBLASLT_MATMUL_MATRIX_SCALE_VEC32_UE8M0;
                 }
