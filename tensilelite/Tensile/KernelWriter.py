@@ -4403,7 +4403,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       #align 64 bit
       vgprIdx = int((vgprIdx + 1) / 2) * 2
       self.states.startVgprCvt = vgprIdx
-      vgprIdx += 9 # for vgpr serial id
+      vgprIdx += 20 # for vgpr serial id
 
     self.states.totalVgprs = max(vgprIdx, self.states.c.numVgprValu)
     if self.states.totalVgprs < 0 or self.states.totalVgprs > self.states.regCaps["MaxVgpr"]:

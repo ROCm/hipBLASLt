@@ -891,7 +891,7 @@ class Solution(collections.abc.Mapping):
     # the keys "EnableF32XdlMathOp" and "F32XdlMathOp".
     state["EnableF32XdlMathOp"] = False
     state["UseF32XEmulation"] = False #enable emulation for missing hardware support
-    state["EnableF32XEmulationLds"] = True
+    state["EnableF32XEmulationLds"] = False
     #ignore the F32 xDL MathOp by default.
     #enable F32 xDL MathOp only when the input type is f32.
     if "F32XdlMathOp" in state["ProblemType"] \
@@ -1499,6 +1499,7 @@ class Solution(collections.abc.Mapping):
         ldsPadB = state["LdsPadB"]
         optPadA = optPadB = lrvw
         readRegsA = readRegsB = lrvw * state["ProblemType"]["DataType"].numBytes() // 4
+        print("calcLds, {0}, {1}".format(readRegsA, readRegsB))
         if state["ProblemType"]["Sparse"]:
           if state["ProblemType"]["Sparse"] == 2:
             optPadB //= 2
@@ -1507,6 +1508,7 @@ class Solution(collections.abc.Mapping):
             optPadA //= 2
             readRegsA //= 2
         if (not isaInfoMap[isa].asmCaps['HasWMMA']) and (readRegsA > 4 or readRegsB > 4):
+          print("error1, {0}, {1}".format(readRegsA, readRegsB))
           reject(state, "LocalReadVectorWidth results in attemping to read LDS larger than b128, reject")
           return
         if state["EnableMatrixInstruction"]:
@@ -1586,6 +1588,7 @@ class Solution(collections.abc.Mapping):
         if state["DirectToVgprB"]:
           ldsPadB = 0
 
+        print("values: {0}, {1}, {2}".format(ldsPadA, ldsPadB, ldsPadM))
         return ldsPadA, ldsPadB, ldsPadM
 
       def calcLdsBlockSizePerPad(lrvw: int) -> int:
@@ -1707,9 +1710,9 @@ class Solution(collections.abc.Mapping):
           if state["ProblemType"]["Sparse"] and state["MIInputPerThread"] * state["ProblemType"]["DataType"].numBytes() > 16:
             if state["LocalReadVectorWidth"] < state["MIInputPerThread"] // 2:
               reject(state, printRejectionReason, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"] // 2))
-          elif not state["ProblemType"]["Sparse"] and not(state["ProblemType"]["DataType"].is8bitFloat() and (state["MatrixInstK"] == 64 or state["MatrixInstK"] == 128)):
-            if state["LocalReadVectorWidth"] < state["MIInputPerThread"]:
-              reject(state, printRejectionReason, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"]))
+          #elif not state["ProblemType"]["Sparse"] and not(state["ProblemType"]["DataType"].is8bitFloat() and (state["MatrixInstK"] == 64 or state["MatrixInstK"] == 128)):
+            #if state["LocalReadVectorWidth"] < state["MIInputPerThread"]:
+            #  reject(state, printRejectionReason, "LocalReadVectorWidth < %u" %(state["MIInputPerThread"]))
           if state["LocalReadVectorWidth"] > state["MIInputPerThread"] and not state["TransposeLDS"]:
             reject(state, printRejectionReason, "LocalReadVectorWidth require Transpose LDS")
 
@@ -1865,8 +1868,8 @@ class Solution(collections.abc.Mapping):
         reject(state, printRejectionReason, "VWB * DataType.numBytes() > 16")
 
       # reject - GRVW too big
-      if (state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataTypeA"].numBytes()) > 16:
-        reject(state, printRejectionReason, "GRVWA * DataTypeA.numBytes() > 16")
+      #if (state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataTypeA"].numBytes()) > 16:
+      #  reject(state, printRejectionReason, "GRVWA * DataTypeA.numBytes() > 16")
       if (state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataTypeB"].numBytes()) > 16:
         reject(state, printRejectionReason, "GRVWB * DataTypeB.numBytes() > 16")
 
@@ -2546,6 +2549,8 @@ class Solution(collections.abc.Mapping):
       state["NoLdsWriteCode"] = True
 
     # calculate ldsPad
+    result = calcLdsPad(state["LocalReadVectorWidth"], isaInfoMap)
+    print("result: " + str(result))
     state["LdsPadA"], state["LdsPadB"], state["LdsPadMetadata"] = calcLdsPad(state["LocalReadVectorWidth"], isaInfoMap)
 
     if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadA"] == 16 // state["ProblemType"]["DataType"].numBytes():

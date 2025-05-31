@@ -5556,8 +5556,8 @@ class KernelWriterAssembly(KernelWriter):
 
         if noExit:
           # No exit. No dec code if decValue is 2
-          if decValue == 2:
-            decCode = ""
+          # if decValue == 2:
+          decCode = ""
           condCode = ""
           nonFinalJumpNeeded = False
           if finalLoop:
@@ -6769,8 +6769,10 @@ class KernelWriterAssembly(KernelWriter):
                 acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1))
                 acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1))
                 emulation = F32XEmulationMFMA()
+                #mfma_1k = True
                 imod.add(emulation(kernel, acc, acc2, src0, src1, miInInstType, miOutInstType, variant, mfma_1k,\
-                  neg_flag=neg_flag))
+                  vgprPerInputA, neg_flag=neg_flag))
+                imod.add(TextBlock("/*mfma ops: {0} {1}*/\n".format(str(src0), str(src1))))
               else:
                 imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                        acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
