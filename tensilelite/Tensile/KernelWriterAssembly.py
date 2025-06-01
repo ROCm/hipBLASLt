@@ -8509,12 +8509,17 @@ class KernelWriterAssembly(KernelWriter):
           src1=sgpr("LocalWriteAddr%s"%tc), \
           comment="swap Red Blk SGPR"))
       else:
-        for i in range(0,numLwa):
-          module.add(VXorB32(
-            dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+        module.add(VXorB32(
+            dst=vgpr("LocalWriteAddr%s"%tc), \
             src0=src0Val, \
-            src1=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
             comment="swap Red Blk"))
+        for i in range(1,numLwa):
+          module.add(VAddU32(
+            dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+            src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
+            comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
 
     if needSwap:
       #fixme-iui  need to use wrapping increment for double or triple buffering:
@@ -8616,17 +8621,11 @@ class KernelWriterAssembly(KernelWriter):
               src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
               comment="reset to Red"))
         else:
-          numLwa = 0
-          if tP["isA"]:
-            numLwa = self.states.a.numVgprLocalWriteAddr
-          elif tP["isB"]:
-            numLwa = self.states.b.numVgprLocalWriteAddr
-          for i in range(numLwa):
-            module.add(VAndB32(
-                dst=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], i)), \
-                src0=resetMask, \
-                src1=vgpr("LocalWriteAddr%s+%u"%(tP["tensorChar"], i)), \
-                comment="reset to Red"))
+          module.add(VAndB32(
+            dst=vgpr("LocalWriteAddr%s"%tc), \
+            src0=resetMask, \
+            src1=vgpr("LocalWriteAddr%s"%tc), \
+            comment="reset to Red"))
     if needMetaReset:
       if kernel["DirectToVgprSparseMetadata"]:
         tP["metadataWriteSwapByteOffset"] = 0
@@ -8661,13 +8660,26 @@ class KernelWriterAssembly(KernelWriter):
                                comment="Set LWA to first buffer offset"))
             self.vgprPool.checkIn(tmpvgpr)
         else:
-          numLwa = self.states.m.numVgprLocalWriteAddr
-          for i in range(numLwa):
-            module.add(VAndB32(
-                dst=vgpr("LocalWriteAddr%s+%u"%(tPM["tensorChar"], i)), \
-                src0=resetMask, \
-                src1=vgpr("LocalWriteAddr%s+%u"%(tPM["tensorChar"], i)), \
-                comment="reset to Red"))
+          module.add(VAndB32(
+            dst=vgpr("LocalWriteAddr%s+%u"%(tPM["tensorChar"], 0)), \
+            src0=resetMask, \
+            src1=vgpr("LocalWriteAddr%s+%u"%(tPM["tensorChar"], 0)), \
+            comment="reset to Red"))
+
+    numLwa = 0
+    if tP["isA"]:
+      numLwa = self.states.a.numVgprLocalWriteAddr
+    elif tP["isB"]:
+      numLwa = self.states.b.numVgprLocalWriteAddr
+    elif tP["isM"]:
+      numLwa = self.states.m.numVgprLocalWriteAddr
+
+    for i in range(1, numLwa):
+      module.add(VAddU32(
+        dst=vgpr("LocalWriteAddr%s+%u"%(tc, i)), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
+        src1=vgpr("LocalWriteAddr%s"%tc), \
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
     return module
 
   ##############################################################################
@@ -9457,6 +9469,7 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["1LDSBuffer"] or ((tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]): # no local read code if DirectToVgpr is enabled
       return Module("localReadSwapOffsets (Empty)")
     module = Module("localReadSwapOffsets")
+
     if internalPointerSwap or kernel["StoreSwapAddr"]:
       if not kernel["StoreSwapAddr"]:
         tP["localReadSwapByteOffset"] = 0 if tP["localReadSwapByteOffset"] else kernel["LdsOffsetA_Blk"]
@@ -9468,19 +9481,27 @@ class KernelWriterAssembly(KernelWriter):
           src1=vgpr("LocalReadAddr%s"%tc), \
           comment="swap Red Blk"))
     else:
-      numLra = 0
-      if tP["isA"]:
-        numLra = self.states.a.numVgprLocalReadAddr
-      elif tP["isB"]:
-        numLra = self.states.b.numVgprLocalReadAddr
-      elif tP["isM"]:
-        numLra = self.states.m.numVgprLocalReadAddr
-      for i in range(numLra):
-        module.add(VXorB32(
-            dst=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            src0=hex(kernel["LdsOffsetA_Blk"]), \
-            src1=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            comment="swap Red Blk"))
+      module.add(VXorB32(
+        dst=vgpr("LocalReadAddr%s"%tc), \
+        src0=hex(kernel["LdsOffsetA_Blk"]), \
+        src1=vgpr("LocalReadAddr%s"%tc), \
+        comment="swap Red Blk"))
+
+    numLra = 0
+    if tP["isA"]:
+      numLra = self.states.a.numVgprLocalReadAddr
+    elif tP["isB"]:
+      numLra = self.states.b.numVgprLocalReadAddr
+    elif tP["isM"]:
+      numLra = self.states.m.numVgprLocalReadAddr
+
+    for i in range(1,numLra):
+      module.add(VAddU32(
+        dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
+        src1=vgpr("LocalReadAddr%s"%tc), \
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
+
     return module
 
   ##############################################################################
@@ -9513,19 +9534,28 @@ class KernelWriterAssembly(KernelWriter):
                       comment="Set LRA to first buffer offset"))
       self.vgprPool.checkIn(tmpvgpr)
     else:
-      numLra = 0
-      if tP["isA"]:
-        numLra = self.states.a.numVgprLocalReadAddr
-      elif tP["isB"]:
-        numLra = self.states.b.numVgprLocalReadAddr
-      elif tP["isM"]:
-        numLra = self.states.m.numVgprLocalReadAddr
-      for i in range(numLra):
-        module.add(VAndB32(
-            dst=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            src0=hex(kernel["LdsOffsetA_Blk"]-1), \
-            src1=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            comment="reset Red,Blk -> Red"))
+
+      module.add(VAndB32(
+        dst=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], 0)), \
+        src0=hex(kernel["LdsOffsetA_Blk"]-1), \
+        src1=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], 0)), \
+        comment="reset Red,Blk -> Red"))
+
+    numLra = 0
+    if tP["isA"]:
+      numLra = self.states.a.numVgprLocalReadAddr
+    elif tP["isB"]:
+      numLra = self.states.b.numVgprLocalReadAddr
+    elif tP["isM"]:
+      numLra = self.states.m.numVgprLocalReadAddr
+
+    for i in range(1,numLra):
+      module.add(VAddU32(
+        dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
+        src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
+        src1=vgpr("LocalReadAddr%s"%tc), \
+        comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
+
     return module
 
   ##############################################################################
@@ -9547,12 +9577,17 @@ class KernelWriterAssembly(KernelWriter):
         numLra = self.states.b.numVgprLocalReadAddr
       elif tP["isM"]:
         numLra = self.states.m.numVgprLocalReadAddr
-      for i in range(numLra):
-        module.add(VAndB32(
-            dst=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            src0=hex(kernel["LdsOffset%s_Blk"%tP["tensorChar"]]-1), \
-            src1=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], i)), \
-            comment="init Red,Blk -> Red"))
+      module.add(VAndB32(
+        dst=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], 0)), \
+        src0=hex(kernel["LdsOffset%s_Blk"%tP["tensorChar"]]-1), \
+        src1=vgpr("LocalReadAddr%s+%u"%(tP["tensorChar"], 0)), \
+        comment="init Red,Blk -> Red"))
+      for i in range(1, numLra):
+        module.add(VAddU32(
+          dst=vgpr("LocalReadAddr%s+%u"%(tc,i)), \
+          src0=(i * self.states.regCaps["maxLDSConstOffset"]), \
+          src1=vgpr("LocalReadAddr%s"%tc), \
+          comment="Final Offset Plus %uK"%((i * self.states.regCaps["maxLDSConstOffset"]) / 1024)))
     return module
 
   ##############################################################################
