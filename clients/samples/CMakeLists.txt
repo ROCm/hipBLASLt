@@ -55,7 +55,6 @@ add_executable( sample_hipblaslt_gemm_mix_precision_ext 19_mix_precision_gemm_ex
 add_executable( sample_hipblaslt_gemm_mix_precision_with_amax_ext 20_mix_precision_gemm_amax_ext/sample_hipblaslt_gemm_mix_precision_with_amax_ext.cpp)
 add_executable( sample_hipblaslt_gemm_attr_tciA_tciB 21_gemm_cvtA_cvtB/sample_hipblaslt_gemm_attr_tciA_tciB.cpp)
 add_executable( sample_hipblaslt_ext_op_layernorm 22_layernorm_ext/sample_hipblaslt_ext_op_layernorm.cpp)
-add_executable( sample_hipblaslt_gemm_ext_deprecated deprecated/sample_hipblaslt_gemm_ext_deprecated.cpp)
 add_executable( sample_hipblaslt_ext_op_amax 23_amax_ext/sample_hipblaslt_ext_op_amax.cpp)
 add_executable( sample_hipblaslt_ext_op_amax_with_scale 24_amax_with_scale_ext/sample_hipblaslt_ext_op_amax_with_scale.cpp)
 add_executable( sample_hipblaslt_gemm_with_TF32 25_gemm_with_TF32/sample_hipblaslt_gemm_with_TF32.cpp)
@@ -98,7 +97,6 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_mix_precision_with_amax_ext
             sample_hipblaslt_gemm_attr_tciA_tciB
             sample_hipblaslt_ext_op_layernorm
-            sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_ext_op_amax
             sample_hipblaslt_ext_op_amax_with_scale
             sample_hipblaslt_gemm_with_TF32
