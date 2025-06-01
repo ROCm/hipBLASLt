@@ -410,16 +410,15 @@ rocm_create_package(
 
 if(BUILD_CODE_COVERAGE)
   # Force CMake to use ROCm's LLVM
-  set(LLVM_DIR /opt/rocm/llvm/lib/cmake/llvm)
+  set(LLVM_DIR ${rocm_path}/llvm/lib/cmake/llvm)
   find_package(LLVM REQUIRED CONFIG)
   message(STATUS "LLVM found: ${LLVM_DIR}")
 
   # Locate required LLVM tools (llvm-cov, llvm-profdata, etc.)
-  find_program(LLVM_PROFDATA_EXECUTABLE llvm-profdata HINTS ${rocm_path}/llvm/bin REQUIRED)
-  find_program(LLVM_COV_EXECUTABLE llvm-cov HINTS ${rocm_path}/llvm/bin REQUIRED)
+  find_program(LLVM_PROFDATA_EXECUTABLE llvm-profdata HINTS ${rocm_path}/llvm/bin/llvm-profdata REQUIRED)
+  find_program(LLVM_COV_EXECUTABLE llvm-cov HINTS ${rocm_path}/llvm/bin/llvm-cov REQUIRED)
 
   # Use LLVM libraries and headers
-  set(LLVM_DIR ${rocm_path}/llvm/lib/cmake/llvm)
   find_package(LLVM REQUIRED CONFIG)
 
   # Modern: Use target_* for compiler and linker flags
@@ -428,7 +427,7 @@ if(BUILD_CODE_COVERAGE)
     -fcoverage-mapping
   )
 
-  target_link_options(hipblaslt PRIVATE
+  target_link_options(hipblaslt PUBLIC
     -fprofile-instr-generate
   )
 
@@ -445,43 +444,33 @@ if(BUILD_CODE_COVERAGE)
   message(STATUS "llvm-profdata: ${LLVM_PROFDATA_EXECUTABLE}")
   message(STATUS "llvm-cov: ${LLVM_COV_EXECUTABLE}")
 
-  # Hardcode the .profraw files because we cannot use wildcards
-  set(PROFRAW_FILES hipblaslt-test.profraw 
-                    sample_hipblaslt_ext_op_amax.profraw
-                    sample_hipblaslt_ext_op_amax_with_scale.profraw
-                    sample_hipblaslt_ext_op_layernorm.profraw
-                    sample_hipblaslt_weight_swizzle_padding.profraw)
-
   add_custom_target(coverage
     COMMAND ${CMAKE_COMMAND} -E env 
             LLVM_PROFILE_VERBOSE=1 
-            LLVM_PROFILE_FILE=./hipblaslt-test.profraw 
+            LLVM_PROFILE_FILE=./hipblaslt-test_%m.profraw 
             ./clients/staging/hipblaslt-test
             --output-on-failure
     COMMAND ${CMAKE_COMMAND} -E env 
             LLVM_PROFILE_VERBOSE=1 
-            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_amax.profraw 
+            LLVM_PROFILE_FILE=./hipblaslt-coverage_%m.profraw 
             ./clients/staging/sample_hipblaslt_ext_op_amax 
             --output-on-failure
     COMMAND ${CMAKE_COMMAND} -E env 
             LLVM_PROFILE_VERBOSE=1 
-            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_amax_with_scale.profraw 
+            LLVM_PROFILE_FILE=./hipblaslt-coverage_%m.profraw 
             ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale 
             --output-on-failure
     COMMAND ${CMAKE_COMMAND} -E env 
             LLVM_PROFILE_VERBOSE=1 
-            LLVM_PROFILE_FILE=./sample_hipblaslt_ext_op_layernorm.profraw 
+            LLVM_PROFILE_FILE=./hipblaslt-coverage_%m.profraw 
             ./clients/staging/sample_hipblaslt_ext_op_layernorm 
             --output-on-failure
     COMMAND ${CMAKE_COMMAND} -E env 
             LLVM_PROFILE_VERBOSE=1 
-            LLVM_PROFILE_FILE=./sample_hipblaslt_weight_swizzle_padding.profraw 
+            LLVM_PROFILE_FILE=./hipblaslt-coverage_%m.profraw 
             ./clients/staging/sample_hipblaslt_weight_swizzle_padding 
             --output-on-failure
-    COMMAND ${LLVM_PROFDATA_EXECUTABLE}
-            merge -sparse
-            ${PROFRAW_FILES}
-            -o coverage_test.profdata
+    COMMAND ${CMAKE_COMMAND} -E env /bin/sh -c "${LLVM_PROFDATA_EXECUTABLE} merge -sparse ${CMAKE_BINARY_DIR}/*.profraw -o ${CMAKE_BINARY_DIR}/coverage_test.profdata"
     COMMAND ${LLVM_COV_EXECUTABLE} 
             report 
             -object ./clients/staging/hipblaslt-test
@@ -490,7 +479,7 @@ if(BUILD_CODE_COVERAGE)
             -object ./clients/staging/sample_hipblaslt_ext_op_layernorm 
             -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
             -instr-profile=./coverage_test.profdata 
-            --ignore-filename-regex=.*/samples/.*|.*/build/debug/.*
+            --ignore-filename-regex=.*/build/debug/.*
     COMMAND ${LLVM_COV_EXECUTABLE} 
             show 
             -object ./clients/staging/hipblaslt-test
@@ -500,7 +489,7 @@ if(BUILD_CODE_COVERAGE)
             -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
             -instr-profile=./coverage_test.profdata 
             -format=html -output-dir=coverage_report 
-            --ignore-filename-regex=.*/samples/.*|.*/build/debug/.*
+            --ignore-filename-regex=.*/build/debug/.*
     
     COMMAND tox -c ../../tensilelite -v --workdir /tmp/.tensile-tox -e py3 -- ../../tensilelite/Tensile/Tests -m common --cov=../../tensilelite --cov-report=html
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}

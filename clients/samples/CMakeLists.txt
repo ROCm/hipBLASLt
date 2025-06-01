@@ -135,15 +135,7 @@ foreach( exe ${sample_list_all} )
     SYSTEM PRIVATE
       $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
       )
-  if(BUILD_CODE_COVERAGE)
-    target_compile_options(${exe} PRIVATE
-      -fprofile-instr-generate
-      -fcoverage-mapping
-    )
-    target_link_options(${exe} PRIVATE
-      -fprofile-instr-generate
-    )
-  endif()
+
   if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # GCC or hip-clang needs specific flags to turn on f16c intrinsics
     target_compile_options( ${exe} PRIVATE -mf16c -Wno-unused-result )
