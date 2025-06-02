@@ -407,13 +407,13 @@ rocm_create_package(
 
 if(BUILD_CODE_COVERAGE)
   # Force CMake to use ROCm's LLVM
-  set(LLVM_DIR ${rocm_path}/llvm/lib/cmake/llvm)
+  set(LLVM_BIN_DIR /opt/rocm/llvm/bin)
   find_package(LLVM REQUIRED CONFIG)
-  message(STATUS "LLVM found: ${LLVM_DIR}")
+  message(STATUS "LLVM found: ${LLVM_BIN_DIR}")
 
   # Locate required LLVM tools (llvm-cov, llvm-profdata, etc.)
-  find_program(LLVM_PROFDATA_EXECUTABLE llvm-profdata HINTS ${rocm_path}/llvm/bin/llvm-profdata REQUIRED)
-  find_program(LLVM_COV_EXECUTABLE llvm-cov HINTS ${rocm_path}/llvm/bin/llvm-cov REQUIRED)
+  find_program(LLVM_PROFDATA_EXECUTABLE llvm-profdata HINTS ${LLVM_BIN_DIR} REQUIRED)
+  find_program(LLVM_COV_EXECUTABLE llvm-cov HINTS ${LLVM_BIN_DIR} REQUIRED)
 
   # Use LLVM libraries and headers
   find_package(LLVM REQUIRED CONFIG)
@@ -437,7 +437,7 @@ if(BUILD_CODE_COVERAGE)
   )
 
   # Print status message
-  message(STATUS "LLVM found at: ${LLVM_DIR}")
+  message(STATUS "LLVM found at: ${LLVM_BIN_DIR}")
   message(STATUS "llvm-profdata: ${LLVM_PROFDATA_EXECUTABLE}")
   message(STATUS "llvm-cov: ${LLVM_COV_EXECUTABLE}")
 
@@ -478,7 +478,7 @@ if(BUILD_CODE_COVERAGE)
             show 
             -object ./library/libhipblaslt-d.so.0.15
             -instr-profile=./coverage_test.profdata 
-            -format=html -output-dir=coverage_report 
+            -format=html -output-dir=coverage-report 
             --ignore-filename-regex=.*/build/debug/.*
     
     COMMAND tox -c ../../tensilelite -v --workdir /tmp/.tensile-tox -e py3 -- ../../tensilelite/Tensile/Tests -m common --cov=../../tensilelite --cov-report=html
