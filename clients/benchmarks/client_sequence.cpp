@@ -187,10 +187,8 @@ int32_t type2Size(hipDataType type)
     {
     case hipDataType::HIP_R_8F_E4M3_FNUZ:
     case hipDataType::HIP_R_8F_E5M2_FNUZ:
-#ifdef ROCM_USE_FLOAT8
     case hipDataType::HIP_R_8F_E4M3:
     case hipDataType::HIP_R_8F_E5M2:
-#endif
         return sizeof(float) / 4;
     case hipDataType::HIP_R_32F:
         return sizeof(float);
@@ -212,13 +210,11 @@ void initData(hipDataType type, void* data, int m, int n, int lda, int stride, i
             (hipblaslt_f8_fnuz*)data, m, n, lda, stride, batch_count);
     }
     break;
-#ifdef ROCM_USE_FLOAT8
     case hipDataType::HIP_R_8F_E4M3:
     {
         hipblaslt_init_cos<hipblaslt_f8>((hipblaslt_f8*)data, m, n, lda, stride, batch_count);
     }
     break;
-#endif
     case hipDataType::HIP_R_16F:
     {
         hipblaslt_init_cos<hipblasLtHalf>((hipblasLtHalf*)data, m, n, lda, stride, batch_count);
