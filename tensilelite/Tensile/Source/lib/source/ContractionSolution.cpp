@@ -532,6 +532,8 @@ namespace TensileLite
     // check if this solution is a CU-Fallback solution for current hardware
     bool ContractionSolution::isFallbackForHW(Hardware const& hardware) const
     {
+        using std::static_pointer_cast;
+
         // return the result if we already tested it.
         if(isFallbackCUSol != -1)
             return (isFallbackCUSol == 1);
