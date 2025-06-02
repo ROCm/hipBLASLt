@@ -31,7 +31,7 @@ from shlex import split
 from subprocess import check_output, STDOUT, CalledProcessError, PIPE, run
 from typing import List
 
-from Tensile.Common import SemanticVersion, print1
+from Tensile.Common import SemanticVersion, print2
 from .Validators import ToolchainDefaults, validateToolchain
 
 def _invoke(args: List[str], desc: str=""):
@@ -44,7 +44,7 @@ def _invoke(args: List[str], desc: str=""):
   Return:
       subprocess output
   """
-  #print1(f"{desc}: {' '.join(args)}")
+  print2(f"{desc}: {' '.join(args)}")
   try:
       out = check_output(args, stderr=STDOUT)
   except CalledProcessError as err:
