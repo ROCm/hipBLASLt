@@ -28,11 +28,11 @@ namespace rocisa
     // External structures and functions
     struct rocIsaPassOption
     {
-        bool insertDelayAlu   = true;
-        bool removeDupFunc    = true;
-        bool removeDupAssign  = true;
-        bool getCycles        = true;
-        int  numWaves         = 0; // is used when getCycles is true
+        bool insertDelayAlu  = true;
+        bool removeDupFunc   = true;
+        bool removeDupAssign = true;
+        bool getCycles       = true;
+        int  numWaves        = 0; // is used when getCycles is true
 
         bool doOpt() const
         {
@@ -49,7 +49,7 @@ namespace rocisa
     std::string getActFuncBranchModuleName();
 
     rocIsaPassResult rocIsaPass(std::shared_ptr<KernelBody>& kernel,
-                                const rocIsaPassOption& option); // Return value is std::move()
+                                const rocIsaPassOption&      option); // Return value is std::move()
 
     // Internal use only
     struct Graph
