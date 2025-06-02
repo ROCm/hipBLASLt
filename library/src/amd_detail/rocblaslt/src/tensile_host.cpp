@@ -238,22 +238,22 @@ RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     
         {
             this->bias_type = this->d_type;
         }
+    }
 
-        if(this->aux_type == HIPBLASLT_DATATYPE_INVALID)
-        {
-            this->aux_type = this->d_type;
-        }
+    if(this->aux_type == HIPBLASLT_DATATYPE_INVALID)
+    {
+        this->aux_type = this->d_type;
+    }
 
-        if(this->trans_a == HIPBLAS_OP_C)
-        {
-            if(rocblaslt_is_complex_datatype(this->a_type))
-                this->trans_a = HIPBLAS_OP_T;
-        }
-        if(this->trans_b == HIPBLAS_OP_C)
-        {
-            if(rocblaslt_is_complex_datatype(this->b_type))
-                this->trans_b = HIPBLAS_OP_T;
-        }
+    if(this->trans_a == HIPBLAS_OP_C)
+    {
+        if(rocblaslt_is_complex_datatype(this->a_type))
+            this->trans_a = HIPBLAS_OP_T;
+    }
+    if(this->trans_b == HIPBLAS_OP_C)
+    {
+        if(rocblaslt_is_complex_datatype(this->b_type))
+            this->trans_b = HIPBLAS_OP_T;
     }
 }
 
@@ -715,7 +715,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -730,7 +730,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -1889,7 +1889,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto& get_device_property() const
+        auto&                            get_device_property() const
         {
             return m_deviceProp;
         }
@@ -3720,7 +3720,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
                     std::ostringstream msg;
-                    msg << "Match " << "[" << i << "]: " << solution->description();
+                    msg << "Match "
+                        << "[" << i << "]: " << solution->description();
                     solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
                     msg << std::endl;
                     log_info(__func__, msg.str());
