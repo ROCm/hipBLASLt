@@ -446,7 +446,6 @@ if(HIPBLASLT_ENABLE_SAMPLES)
         TARGETS
             sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
-            sample_hipblaslt_gemm_ext_deprecated
             sample_hipblaslt_gemm_batched
             sample_hipblaslt_gemm_batched_ext
             sample_hipblaslt_gemm_tuning_splitk_ext
