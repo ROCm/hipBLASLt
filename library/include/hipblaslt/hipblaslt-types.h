@@ -33,7 +33,7 @@
 #define _HIPBLASLT_TYPES_H_
 
 #if(HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR == 2 && HIP_VERSION_PATCH > 42130) \
-    || (HIP_VERSION_MAJOR == 6 && HIP_VERSION_MINOR >= 3) //tmp before gfx94 use hip f8 header
+    || (HIP_VERSION_MAJOR >= 6 && HIP_VERSION_MINOR >= 3) //tmp before gfx94 use hip f8 header
 
 #define HIPBLASLT_USE_F8_FNUZ_BC 1 // Always use custom impl for now
 #define HIPBLASLT_USE_F8_OCP_BC 0 // Always use ocp impl for hip header
