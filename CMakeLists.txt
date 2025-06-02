@@ -50,9 +50,6 @@ list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
 endif()
 
 
-if(BUILD_CODE_COVERAGE)
-  set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build coverage reports" FORCE)
-endif()
 
 if( NOT DEFINED ENV{HIP_PATH})
     set( HIP_PATH "/opt/rocm/hip" )
@@ -471,22 +468,15 @@ if(BUILD_CODE_COVERAGE)
             ./clients/staging/sample_hipblaslt_weight_swizzle_padding 
             --output-on-failure
     COMMAND ${CMAKE_COMMAND} -E env /bin/sh -c "${LLVM_PROFDATA_EXECUTABLE} merge -sparse ${CMAKE_BINARY_DIR}/*.profraw -o ${CMAKE_BINARY_DIR}/coverage_test.profdata"
+    
     COMMAND ${LLVM_COV_EXECUTABLE} 
             report 
-            -object ./clients/staging/hipblaslt-test
-            -object ./clients/staging/sample_hipblaslt_ext_op_amax
-            -object ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale
-            -object ./clients/staging/sample_hipblaslt_ext_op_layernorm 
-            -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
+            -object ./library/libhipblaslt-d.so.0.15
             -instr-profile=./coverage_test.profdata 
             --ignore-filename-regex=.*/build/debug/.*
     COMMAND ${LLVM_COV_EXECUTABLE} 
             show 
-            -object ./clients/staging/hipblaslt-test
-            -object ./clients/staging/sample_hipblaslt_ext_op_amax
-            -object ./clients/staging/sample_hipblaslt_ext_op_amax_with_scale
-            -object ./clients/staging/sample_hipblaslt_ext_op_layernorm 
-            -object ./clients/staging/sample_hipblaslt_weight_swizzle_padding
+            -object ./library/libhipblaslt-d.so.0.15
             -instr-profile=./coverage_test.profdata 
             -format=html -output-dir=coverage_report 
             --ignore-filename-regex=.*/build/debug/.*
