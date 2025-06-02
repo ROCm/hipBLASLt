@@ -90,7 +90,7 @@ namespace TensileLite
                 virtual bool debugEval(Task const& task, std::ostream& stream) const override
                 {
 
-                    size_t gsu = task.problem.getParams().gsu() > 0
+                    size_t gsu = task.problem.getParams().gsu() != 0
                                      ? task.problem.getParams().gsu()
                                      : task.solution.sizeMapping.globalSplitU;
                     if(gsu == -1)
