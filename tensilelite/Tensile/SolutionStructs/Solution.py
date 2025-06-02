@@ -1303,10 +1303,6 @@ class Solution(collections.abc.Mapping):
     if state["enableLDSTrB"]:
       state["VectorWidthB"] = 1
 
-    if state["LDSTrInst"] and state["1LDSBuffer"] == 0:
-      reject(state, "Current LDS Transpose implementation does not support two LDS buffers")
-      return
-
     # if state["EnableMatrixInstruction"] and not state["SourceSwap"] and (state["VectorWidthA"] > 1 or state["VectorWidthB"] > 1):
     #   reject(state, printRejectionReason, "not implement VectorWidth without SourceSwap")
 
