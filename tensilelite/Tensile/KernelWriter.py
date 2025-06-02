@@ -3311,6 +3311,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     ripo.numWaves = kernel["NumThreads"] // kernel["WavefrontSize"]
     if kernel["ProblemType"]["ActivationType"] == "all":
       ripo.removeDupAssign = False
+    if self.states.archCaps["HasSchedMode"]:
+      ripo.insertDelayAlu = True
     passResult = rocIsaPass(moduleKernelBody, ripo)
     kernel["MathClocksUnrolledLoop"] = passResult.cycles
 

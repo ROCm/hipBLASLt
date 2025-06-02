@@ -28,7 +28,7 @@ namespace rocisa
     // External structures and functions
     struct rocIsaPassOption
     {
-        bool insertDelayAlu  = true;
+        bool insertDelayAlu  = false;
         bool removeDupFunc   = true;
         bool removeDupAssign = true;
         bool getCycles       = true;
