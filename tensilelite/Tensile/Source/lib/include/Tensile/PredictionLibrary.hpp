@@ -183,7 +183,7 @@ namespace TensileLite
                 0.8,
                 debug,
                 false,
-                6);
+                WGM);
             for(const auto& tile : selected_tiles)
             {
                 auto mapiter  = tile_map.find(std::make_tuple(std::get<1>(tile),
