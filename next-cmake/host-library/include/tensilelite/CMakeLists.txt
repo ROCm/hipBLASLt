@@ -56,7 +56,6 @@ target_sources(hipblaslt
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes.hpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_BFloat16.hpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_Float8_BFloat8.hpp"
-        "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_Float8_BFloat8_bc.hpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_Half.hpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_Int8.hpp"
         "${_CMAKE_CURRENT_SOURCE_DIR}/Tensile/DataTypes_Int8x4.hpp"

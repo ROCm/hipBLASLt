@@ -147,7 +147,6 @@ typedef struct
     uint8_t data;
 } rocblaslt_bf8_fnuz;
 
-#ifdef ROCM_USE_FLOAT8
 typedef struct
 {
     uint8_t data;
@@ -157,7 +156,6 @@ typedef struct
 {
     uint8_t data;
 } rocblaslt_bf8;
-#endif
 
 typedef int8_t  rocblasltInt8;
 typedef int32_t rocblasltInt32;
