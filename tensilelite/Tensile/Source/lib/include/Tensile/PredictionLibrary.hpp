@@ -164,6 +164,9 @@ namespace TensileLite
                 = problem.b().elementBytes() * 8; // TODO update for A/B different types
             size_t elementSizeC_bits
                 = problem.c().elementBytes() * 8; // TODO update for A/B different types
+            const analytical::Hardware& analaytical_hardware = *(pAMDGPU->analyticalHardware);
+            int                         WGM
+                = std::sqrt(std::floor(analaytical_hardware.N_CU / analaytical_hardware.NUM_XCD));
             auto selected_tiles = analytical::select_best_macro_tile_size(
                 m,
                 n,

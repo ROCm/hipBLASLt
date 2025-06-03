@@ -168,7 +168,7 @@ namespace TensileLite
 
             // compute how many 32×32 tiles are needed in each dim,
             // then multiply to get total grid size:
-            size_t grid = ((M + MT_M - 1) / MT_M) * ((N + MT_N - 1) / MT_N);
+            size_t grid = ((M + MT_M - 1) / MT_M) * ((N + MT_N - 1) / MT_N) * batch;
 
             size_t max_hw_split = std::floor(hardware.N_CU / grid);
             size_t MAX_SPLIT    = std::min(biggest_allowable_split, max_hw_split);
