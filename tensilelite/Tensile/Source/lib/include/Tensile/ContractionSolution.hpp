@@ -396,7 +396,8 @@ namespace TensileLite
                         KA&                                 args,
                         uint32_t                            numWorkGroups,
                         Hardware const*                     hardware,
-                        const ContractionProblemParameters& param) const;
+                        const ContractionProblemParameters& param,
+                        int32_t                             defaultWGM) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,

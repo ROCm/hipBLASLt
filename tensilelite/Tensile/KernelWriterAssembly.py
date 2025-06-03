@@ -163,9 +163,6 @@ class KernelWriterAssembly(KernelWriter):
   def getSgprOccupancy(self, sgprs):
     return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
 
-  def getSgprOccupancy(self, sgprs):
-    return self.states.regCaps["PhysicalMaxSgpr"]//sgprs
-
   def getVgprOccupancy(self, numThreads, vgprs, doubleVgpr=False):
     multiplier = int(ceil(max(numThreads, 256) / 256.0)) # example: wg=512 multiplier=2, 1024=4
     maxOccupancy = self.consts.maxOccupancy//multiplier
