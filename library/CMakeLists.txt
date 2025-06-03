@@ -78,6 +78,22 @@ endif()
 
 # Target compile definitions
 if(NOT BUILD_CUDA)
+  if (WIN32)
+    find_package(msgpack-cxx REQUIRED)
+
+    target_compile_definitions(hipblaslt PUBLIC -DTENSILE_MSGPACK=1)
+    get_target_property(msgpack_inc msgpack-cxx INTERFACE_INCLUDE_DIRECTORIES)
+
+    if(DEFINED msgpack_inc)
+        # include C++ headers manually
+        # External header includes included as system files
+        target_include_directories(hipblaslt
+            SYSTEM PRIVATE $<BUILD_INTERFACE:${msgpack_inc}>
+        )
+
+      target_link_libraries(hipblaslt PRIVATE TensileHost shlwapi)
+    endif()
+  endif()
 
   if( BUILD_SHARED_LIBS )
     target_link_libraries( hipblaslt PRIVATE TensileHost )
@@ -207,6 +223,10 @@ set_target_properties(hipblaslt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBI
 set_target_properties(hipblaslt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging")
 set_target_propertieS(hipblaslt PROPERTIES DEBUG_POSTFIX "-d")
 
+if (WIN32 AND BUILD_CLIENTS)
+  add_custom_command( TARGET hipblaslt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/staging/$<TARGET_FILE_NAME:hipblaslt> ${PROJECT_BINARY_DIR}/clients/staging/$<TARGET_FILE_NAME:hipblaslt> )
+endif()
+
 # TODO ??
 # Following boost conventions of prefixing 'lib' on static built libraries
 if(NOT BUILD_SHARED_LIBS)
@@ -239,7 +259,7 @@ install(
 
 if ( NOT BUILD_CUDA )
     if (WIN32)
-      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library" )
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/bin/hipblaslt" CACHE PATH "path to tensile library" )
     else()
       set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library" )
     endif()

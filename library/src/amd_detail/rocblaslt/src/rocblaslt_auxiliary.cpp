@@ -2256,10 +2256,13 @@ std::optional<std::filesystem::path> rocblaslt_find_library_relative_path(
         //   {lib_dir}/hipblaslt/library
         // Legacy:
         //   {lib_dir}/../Tensile/library
+        //   {lib_dir}/../../Tensile/library
         //   {lib_dir}/library
         if(auto p = pathIfExists(lib_dir / "hipblaslt" / "library"))
             return *p;
         if(auto p = pathIfExists(lib_dir.parent_path() / "Tensile" / "library"))
+            return *p;
+        if(auto p = pathIfExists(lib_dir.parent_path().parent_path() / "Tensile" / "library"))
             return *p;
         if(auto p = pathIfExists(lib_dir / "library"))
             return *p;
