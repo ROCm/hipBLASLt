@@ -222,7 +222,8 @@ namespace TensileLite
                                    size_t          element_size_A,
                                    size_t          element_size_B,
                                    size_t          element_size_out,
-                                   double          H_L2,
+                                   int             WGM,
+                                   double          H_mem1,
                                    bool            debug);
 
         // Check if MT fits in LDS

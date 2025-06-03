@@ -828,6 +828,7 @@ namespace TensileLite
                                    size_t          element_size_A,
                                    size_t          element_size_B,
                                    size_t          element_size_out,
+                                   int             WGM,
                                    double          H_mem1,
                                    bool            debug)
         {
@@ -836,7 +837,6 @@ namespace TensileLite
             // Compute total time in seconds
             double cycles_per_second
                 = hardware.compute_clock_ghz * 1e9; // 1 GHz = 1e9 cycles per second
-            size_t WGM                = 6;
             size_t mx_block_size      = 0;
             double latency_cycles     = compute_total_latency(hardware,
                                                           M,
