@@ -6,12 +6,8 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 ### Changed
 
-* ``HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT`` and ``HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT`` are deprecated, use ``ROCBLASLT_MATMUL_DESC_A_SCALE_MODE`` and ``ROCBLASLT_MATMUL_DESC_B_SCALE_MODE`` attributes to set scalar (``HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F``) or vector (``HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F``).
-* The non-V2 APIs in the Cpp header are all deprecated and replaced by V2 APIs.
-
-### Deprecations
-
-* ``HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT`` and ``HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT`` are deprecated.
+* ``HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER_VEC_EXT`` and ``HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER_VEC_EXT`` are removed, use ``ROCBLASLT_MATMUL_DESC_A_SCALE_MODE`` and ``ROCBLASLT_MATMUL_DESC_B_SCALE_MODE`` attributes to set scalar (``HIPBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F``) or vector (``HIPBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F``).
+* The non-V2 APIs in the Cpp header are all removed and replaced by V2 APIs. For users already using V2 APIs, just remove the "V2" and recompile again.
 
 ## hipBLASLt 0.12.0 for ROCm 6.4.0
 
