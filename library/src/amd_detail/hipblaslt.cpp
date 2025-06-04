@@ -44,12 +44,28 @@
 
 bool override_path_compare_git_version(OverrideSingleton& override, hipblasLtHandle_t& handle)
 {
+static std::string cached_firstline;
+    static std::string cached_path;
+    static bool cached = false;
+    
     char git_version[128];
     hipblasLtGetGitRevision(handle, &git_version[0]);
-    std::ifstream file_read(override.file_path);
-    std::string   firstline;
+    
+    std::string firstline;
+    if (!cached || cached_path != override.file_path)
+    {
+        std::ifstream file_read(override.file_path);
+        std::getline(file_read, firstline);
+        cached_firstline = firstline;
+        cached_path = override.file_path;
+        cached = true;
+    }
+    else
+    {
+        firstline = cached_firstline;
+    }
+    
     std::string   header = "Git Version: ";
-    std::getline(file_read, firstline);
     size_t pos = firstline.find(header);
     if(pos != std::string::npos)
     {
