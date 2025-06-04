@@ -57,6 +57,8 @@ target_sources(hipblaslt
 #target_compile_options( TensileHost PUBLIC -Wno-deprecated-declarations -Wno-ignored-attributes -Wdll-attribute-on-redeclaration -fdelayed-template-parsing )
 #endif()
 
+add_subdirectory(analytical)
+
 if(HIPBLASLT_ENABLE_LLVM)
   add_subdirectory(llvm)
 endif()

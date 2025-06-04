@@ -21,6 +21,8 @@
 #
 # ########################################################################
 
+add_subdirectory(analytical)
+
 if(HIPBLASLT_ENABLE_LLVM)
   add_subdirectory(llvm)
 endif()
