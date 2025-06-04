@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -54,8 +54,7 @@ int main()
      *  b = (k, n). ldb = k
      *  c = d = (m, n). ldc = ldd = m
      */
-    Runner<float, float, float, float, float> runner(
-        128, 128, 128, 1, 1.f, 1.f, 32 * 128 * 128);
+    Runner<float, float, float, float, float> runner(128, 128, 128, 1, 1.f, 1.f, 32 * 128 * 128);
 
     runner.run([&runner] {
         simpleGemm(runner.handle,
@@ -127,7 +126,8 @@ void simpleGemm(hipblasLtHandle_t  handle,
     }
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F_FAST_TF32, HIP_R_32F));
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F_FAST_TF32, HIP_R_32F));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
