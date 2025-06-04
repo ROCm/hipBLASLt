@@ -25,6 +25,14 @@
 
 namespace rocisa
 {
+    enum class RegisterType : int
+    {
+        Vgpr,
+        Sgpr,
+        Accvgpr,
+        mgpr
+    };
+
     enum class DataType : int
     {
         Float,
@@ -246,4 +254,76 @@ namespace rocisa
         UPPER      = 3,
         LOWER      = 4
     };
+
+    enum class DelayALUType : int
+    {
+        VALU  = 0,
+        TRANS = 1,
+        SALU  = 2,
+        OTHER = 3,
+    };
+
+    enum class DelayALUSkip : int
+    {
+        SAME   = 0,
+        NEXT   = 1,
+        SKIP_1 = 2,
+        SKIP_2 = 3,
+        SKIP_3 = 4,
+        SKIP_4 = 5,
+    };
+
+    inline std::string toString(DelayALUSkip cnt)
+    {
+        switch(cnt)
+        {
+        case DelayALUSkip::SAME:
+            return "SAME";
+        case DelayALUSkip::NEXT:
+            return "NEXT";
+        case DelayALUSkip::SKIP_1:
+            return "SKIP_1";
+        case DelayALUSkip::SKIP_2:
+            return "SKIP_2";
+        case DelayALUSkip::SKIP_3:
+            return "SKIP_3";
+        case DelayALUSkip::SKIP_4:
+            return "SKIP_4";
+        default:
+            return "";
+        }
+    }
+
+    inline std::string toString(DelayALUType type)
+    {
+        switch(type)
+        {
+        case DelayALUType::VALU:
+            return "VALU";
+        case DelayALUType::TRANS:
+            return "TRANS";
+        case DelayALUType::SALU:
+            return "SALU";
+        default:
+            return "";
+        }
+    }
+
+    inline std::string toString(DelayALUType type, int cnt)
+    {
+        if(!cnt)
+            return "NO_DEP";
+
+        switch(type)
+        {
+        case DelayALUType::VALU:
+        case DelayALUType::TRANS:
+            return toString(type) + "_DEP_" + std::to_string(cnt);
+        case DelayALUType::SALU:
+            return "SALU_CYCLE_" + std::to_string(cnt);
+        case DelayALUType::OTHER:
+        default:
+            return "";
+        }
+    }
 }

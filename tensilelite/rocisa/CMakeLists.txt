@@ -26,6 +26,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+message(STATUS "CMAKE_BUILD_TYPE set to ${CMAKE_BUILD_TYPE}")
+
 if(DEFINED Python_EXECUTABLE AND Python_EXECUTABLE)
     message(STATUS "Manually set Python_EXECUTABLE to ${Python_EXECUTABLE}")
 endif()
@@ -65,7 +68,8 @@ set(ROCISAPASS_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/pass.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/graph.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/composite.cpp
                       ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/cycle.cpp
-                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/remove.cpp)
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/remove.cpp
+                      ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/pass/insert_delay_alu.cpp)
 
 nanobind_add_module(rocisa NOMINSIZE NB_SUPPRESS_WARNINGS
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/main.cpp
@@ -77,6 +81,7 @@ nanobind_add_module(rocisa NOMINSIZE NB_SUPPRESS_WARNINGS
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/helper.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/label.cpp
                         ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/macro.cpp
+                        ${CMAKE_CURRENT_SOURCE_DIR}/rocisa/src/register.cpp
                         ${ROCISAINST_SOURCE}
                         ${ROCISAPASS_SOURCE}
                         ${ROCISAFUNC_SOURCE})

@@ -222,7 +222,6 @@ RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     
             else //more default cases once support C != D
                 this->bias_type = HIP_R_16F;
         }
-#ifdef ROCM_USE_FLOAT8
         else if((this->a_type == HIP_R_8F_E4M3 || this->a_type == HIP_R_8F_E5M2)
                 && (this->b_type == HIP_R_8F_E4M3 || this->b_type == HIP_R_8F_E5M2))
         {
@@ -233,27 +232,26 @@ RocblasltContractionProblem::RocblasltContractionProblem(hipblasOperation_t     
             else //more default cases once support C != D
                 this->bias_type = HIP_R_16F;
         }
-#endif
         else
         {
             this->bias_type = this->d_type;
         }
+    }
 
-        if(this->aux_type == HIPBLASLT_DATATYPE_INVALID)
-        {
-            this->aux_type = this->d_type;
-        }
+    if(this->aux_type == HIPBLASLT_DATATYPE_INVALID)
+    {
+        this->aux_type = this->d_type;
+    }
 
-        if(this->trans_a == HIPBLAS_OP_C)
-        {
-            if(rocblaslt_is_complex_datatype(this->a_type))
-                this->trans_a = HIPBLAS_OP_T;
-        }
-        if(this->trans_b == HIPBLAS_OP_C)
-        {
-            if(rocblaslt_is_complex_datatype(this->b_type))
-                this->trans_b = HIPBLAS_OP_T;
-        }
+    if(this->trans_a == HIPBLAS_OP_C)
+    {
+        if(rocblaslt_is_complex_datatype(this->a_type))
+            this->trans_a = HIPBLAS_OP_T;
+    }
+    if(this->trans_b == HIPBLAS_OP_C)
+    {
+        if(rocblaslt_is_complex_datatype(this->b_type))
+            this->trans_b = HIPBLAS_OP_T;
     }
 }
 
@@ -385,12 +383,10 @@ namespace
             return rocisa::DataType::Float8_fnuz;
         case HIP_R_8F_E5M2_FNUZ:
             return rocisa::DataType::BFloat8_fnuz;
-#ifdef ROCM_USE_FLOAT8
         case HIP_R_8F_E4M3:
             return rocisa::DataType::Float8;
         case HIP_R_8F_E5M2:
             return rocisa::DataType::BFloat8;
-#endif
         case HIP_R_8I:
             return rocisa::DataType::Int8;
         case HIP_R_32I:
@@ -423,12 +419,10 @@ namespace
             return HIP_R_8F_E4M3_FNUZ;
         case rocisa::DataType::BFloat8_fnuz:
             return HIP_R_8F_E5M2_FNUZ;
-#ifdef ROCM_USE_FLOAT8
         case rocisa::DataType::Float8:
             return HIP_R_8F_E4M3;
         case rocisa::DataType::BFloat8:
             return HIP_R_8F_E5M2;
-#endif
         case rocisa::DataType::Int8:
             return HIP_R_8I;
         case rocisa::DataType::Int32:
@@ -453,12 +447,10 @@ namespace
         case rocblaslt_compute_f32_fast_bf8_fnuz:
         case rocblaslt_compute_f32_fast_f8bf8_fnuz:
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
-#ifdef ROCM_USE_FLOAT8
         case rocblaslt_compute_f32_fast_f8:
         case rocblaslt_compute_f32_fast_bf8:
         case rocblaslt_compute_f32_fast_f8bf8:
         case rocblaslt_compute_f32_fast_bf8f8:
-#endif
             return rocisa::DataType::Float;
         case rocblaslt_compute_f64:
             return rocisa::DataType::Double;
@@ -489,7 +481,6 @@ namespace
             return rocisa::DataType::Float8BFloat8_fnuz;
         case rocblaslt_compute_f32_fast_bf8f8_fnuz:
             return rocisa::DataType::BFloat8Float8_fnuz;
-#ifdef ROCM_USE_FLOAT8
         case rocblaslt_compute_f32_fast_f8:
             return rocisa::DataType::Float8;
         case rocblaslt_compute_f32_fast_bf8:
@@ -498,7 +489,6 @@ namespace
             return rocisa::DataType::Float8BFloat8;
         case rocblaslt_compute_f32_fast_bf8f8:
             return rocisa::DataType::BFloat8Float8;
-#endif
         default:;
         }
 
@@ -511,7 +501,6 @@ namespace
             return rocisa::DataType::BFloat8Float8_fnuz;
         }
 
-#ifdef ROCM_USE_FLOAT8
         if(typeA == rocisa::DataType::Float8 && typeB == rocisa::DataType::BFloat8)
         {
             return rocisa::DataType::Float8BFloat8;
@@ -520,7 +509,6 @@ namespace
         {
             return rocisa::DataType::BFloat8Float8;
         }
-#endif
 
         return TensileLite::DataTypeInfo::Get(typeA).elementSize
                        <= TensileLite::DataTypeInfo::Get(typeB).elementSize
@@ -715,7 +703,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[1])
                 : "",
             "--stride_a",
             problem.a().strides()[2],
@@ -730,7 +718,7 @@ namespace
                 : "",
             problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides().size()
                 ? std::to_string(
-                      problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
+                    problem.tensor(TensileLite::ContractionProblemGemm::TENSOR::E).strides()[2])
                 : "",
             "--alpha",
             ToString(inputs.alpha),
@@ -1889,7 +1877,7 @@ namespace
             return m_devicePropMap.at(deviceName);
         }
 #else
-        auto& get_device_property() const
+        auto&                            get_device_property() const
         {
             return m_deviceProp;
         }
@@ -3720,7 +3708,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
                 {
                     std::ostringstream msg;
-                    msg << "Match " << "[" << i << "]: " << solution->description();
+                    msg << "Match "
+                        << "[" << i << "]: " << solution->description();
                     solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
                     msg << std::endl;
                     log_info(__func__, msg.str());
@@ -4081,5 +4070,4 @@ std::atomic_bool& rocblaslt_internal_tensile_is_initialized()
                                                           const Tuning*                 tuning,                \
                                                           size_t&                       workspaceSizeInBytes);
 // clang-format on
-CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuning)
 CREATECOMPATIBILITYFUNCTION(rocblaslt::RocTuningV2)
