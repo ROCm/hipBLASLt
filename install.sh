@@ -853,7 +853,7 @@ pushd .
   fi
 
   if [[ "${use_rocroller}" == false ]]; then
-    cmake_common_options="${cmake_common_options} -DUSE_ROCROLLER=OFF"
+    cmake_common_options="${cmake_common_options} -DHIPBLASLT_USE_ROCROLLER=OFF"
   fi
 
   echo $cmake_common_options
@@ -882,7 +882,7 @@ pushd .
     FC=gfortran CXX=${compiler} ${cmake_executable} ${cmake_common_options} ${cmake_client_options} -DCPACK_SET_DESTDIR=OFF -DCMAKE_INSTALL_PREFIX=${install_prefix} -DCPACK_PACKAGING_INSTALL_PREFIX=${rocm_path} -DROCM_PATH="${rocm_path}" ${root_path}
   fi
   check_exit_code "$?"
-  
+
   if [[ "${quiet}" == true ]]; then
     make -j$(nproc) install
   else
