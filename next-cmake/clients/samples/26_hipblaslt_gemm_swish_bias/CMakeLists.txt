@@ -21,5 +21,5 @@
 #
 # ########################################################################
 
-add_executable(sample_hipblaslt_weight_swizzle_padding ${TEMP_HIPBLASLT_SAMPLE_DIR}/26_gemm_swizzle_a/sample_hipblaslt_weight_swizzle_padding.cpp)
-target_link_libraries(sample_hipblaslt_weight_swizzle_padding PRIVATE sample-helper)
+add_executable(sample_hipblaslt_gemm_swish_bias ${TEMP_HIPBLASLT_SAMPLE_DIR}/26_gemm_swish_bias/sample_hipblaslt_gemm_swish_bias.cpp)
+target_link_libraries(sample_hipblaslt_gemm_swish_bias PRIVATE sample-helper)

@@ -21,5 +21,5 @@
 #
 # ########################################################################
 
-add_executable(sample_hipblaslt_gemm_swizzle_a ${TEMP_HIPBLASLT_SAMPLE_DIR}/26_gemm_swizzle_a/sample_hipblaslt_gemm_swizzle_a.cpp)
+add_executable(sample_hipblaslt_gemm_swizzle_a ${TEMP_HIPBLASLT_SAMPLE_DIR}/25_gemm_swizzle_a/sample_hipblaslt_gemm_swizzle_a.cpp)
 target_link_libraries(sample_hipblaslt_gemm_swizzle_a PRIVATE sample-helper)
