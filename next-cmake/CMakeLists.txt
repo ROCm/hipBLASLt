@@ -121,6 +121,8 @@ if(HIPBLASLT_ENABLE_HOST)
     endif()
     if(HIPBLASLT_ENABLE_MARKER)
         find_library(rocTracer roctx64 REQUIRED)
+    else()
+        set(rocTracer)
     endif()
 endif()
 if(HIPBLASLT_REQUIRE_ROCM_SMI)
@@ -210,6 +212,7 @@ if(HIPBLASLT_ENABLE_HOST)
             hip::device
             rocisa::rocisa-cpp
             ${CMAKE_DL_LIBS}
+            ${rocTracer}
     )
 
     if(HIPBLASLT_ENABLE_ASAN)
