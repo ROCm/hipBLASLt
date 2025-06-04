@@ -25,7 +25,7 @@
 # to confirm if they are required and document what we dropped if not.
 
 cmake_minimum_required(VERSION 3.22.1)
-project(hipblaslt VERSION 0.15.0 LANGUAGES CXX)
+project(hipblaslt VERSION 1.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
@@ -39,7 +39,7 @@ include(hipblaslt_python)
 include(hipblaslt_target_configure_sanitizers)
 
 rocm_setup_version(VERSION ${PROJECT_VERSION})
-set(hipblaslt_SOVERSION 0.15)
+set(hipblaslt_SOVERSION 1.0)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(WIN32)
