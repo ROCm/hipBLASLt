@@ -700,7 +700,14 @@ namespace TensileLite
 
         if(sizeMapping.streamK != 0)
         {
-            assert(gsu == 1);
+            // SK doesn't care gsu
+            if(gsu > 1)
+            {
+                std::cerr << "Warning: Stream-K Data Parallel does not support GSU > 1, "
+                          << "setting GSU to 1." << std::endl;
+                gsu = 1;
+            }
+
             auto tiles = problem.getNumTiles(sizeMapping, gsu);
 
             // Clamp minimum iters per tile to 1 to allow stream-k index calculation to work in case K==0
