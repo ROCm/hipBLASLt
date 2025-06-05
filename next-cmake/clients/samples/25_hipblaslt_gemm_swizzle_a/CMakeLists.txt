@@ -21,5 +21,5 @@
 #
 # ########################################################################
 
-add_executable(sample_hipblaslt_gemm_swish_bias ${TEMP_HIPBLASLT_SAMPLE_DIR}/27_gemm_swish_bias/sample_hipblaslt_gemm_swish_bias.cpp)
-target_link_libraries(sample_hipblaslt_gemm_swish_bias PRIVATE sample-helper)
+add_executable(sample_hipblaslt_gemm_bias_swizzle_a_ext ${TEMP_HIPBLASLT_SAMPLE_DIR}/25_gemm_swizzle_a/sample_hipblaslt_gemm_bias_swizzle_a_ext.cpp)
+target_link_libraries(sample_hipblaslt_gemm_bias_swizzle_a_ext PRIVATE sample-helper)

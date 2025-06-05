@@ -468,7 +468,7 @@ def generateKernelHelperObjects(solutions: List[Solution], cxxCompiler: str, isa
             names = callable(solution)
             if names:
                 sortByEnum = lambda x: ("Enum" in x, x)
-                sorted(names, key=sortByEnum, reverse=True)
+                names = sorted(names, key=sortByEnum, reverse=True)
                 for name in names:
                     if name not in visited:
                         visited.add(name)

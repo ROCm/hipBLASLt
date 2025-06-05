@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024-2025 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,20 +23,20 @@
  * SOFTWARE.
  *
  *******************************************************************************/
+#include "TensorDataManipulation.hpp"
 #include <array>
 #include <cstddef>
 #include <iostream>
-#include "TensorDataManipulation.hpp"
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     constexpr size_t m{18};
     constexpr size_t k{34};
-    auto weight = Tensor::Manipulation::Tensor::create<int>({m, k});
+    auto             weight = Tensor::Manipulation::Tensor::create<int>({m, k});
 
-    for (size_t i = 0; i < m; ++i)
+    for(size_t i = 0; i < m; ++i)
     {
-        for (size_t j = 0; j < k; ++j)
+        for(size_t j = 0; j < k; ++j)
         {
             weight.setValue<int>({i, j}, i * k + j);
         }
@@ -44,19 +44,19 @@ int main(int argc, char **argv)
 
     std::cout << "Original weight:\n";
     Tensor::Manipulation::printTensorDataMultiDims<int>(std::cout, weight);
-    constexpr size_t MiM = 16;
-    constexpr size_t MiK = 16;
-    constexpr size_t MiKv = 4;
-    constexpr size_t PackK = 2;
-    constexpr auto MultipleM = MiM;
-    constexpr auto MultipleK = MiK * PackK;
-    const auto paddedM = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
-    const auto paddedK = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
+    constexpr size_t            MiM       = 16;
+    constexpr size_t            MiK       = 16;
+    constexpr size_t            MiKv      = 4;
+    constexpr size_t            PackK     = 2;
+    constexpr auto              MultipleM = MiM;
+    constexpr auto              MultipleK = MiK * PackK;
+    const auto                  paddedM   = (m / MultipleM + !!(m % MultipleM)) * MultipleM;
+    const auto                  paddedK   = (k / MultipleK + !!(k % MultipleK)) * MultipleK;
     Tensor::Manipulation::Shape paddedShape{paddedM, paddedK};
-    auto paddedWeight = ::Tensor::Manipulation::pad(weight, paddedShape, 0);
+    auto                        paddedWeight = ::Tensor::Manipulation::pad(weight, paddedShape, 0);
     std::cout << "Padded weight:\n";
     Tensor::Manipulation::printTensorDataMultiDims<int>(std::cout, paddedWeight);
-    paddedWeight.reshape({paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv , MiKv * PackK});
+    paddedWeight.reshape({paddedM / MiM, MiM, paddedK / (MiK * PackK), MiK / MiKv, MiKv * PackK});
     Tensor::Manipulation::Tensor permuted = permute(paddedWeight, {0, 2, 3, 1, 4});
     std::cout << "Swizzle weight:\n";
     Tensor::Manipulation::printTensorDataMultiDims<int>(std::cout, permuted);

@@ -388,7 +388,7 @@ if(HIPBLASLT_ENABLE_CLIENT)
         COMPONENT benchmarks
     )
     rocm_install(
-        FILES 
+        FILES
             "${HIPBLASLT_CLIENTS_DIR}/include/hipblaslt_common.yaml"
             "${HIPBLASLT_CLIENTS_DIR}/include/hipblaslt_template.yaml"
         DESTINATION "${CMAKE_INSTALL_BINDIR}"
@@ -481,7 +481,6 @@ if(HIPBLASLT_ENABLE_SAMPLES)
             sample_hipblaslt_gemm_attr_tciA_tciB
             sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_ext_op_amax
-            sample_hipblaslt_ext_op_amax_with_scale
             sample_hipblaslt_gemm_with_TF32
             sample_hipblaslt_gemm_swizzle_a
             sample_hipblaslt_gemm_bias_swizzle_a_ext
@@ -493,7 +492,7 @@ if(HIPBLASLT_ENABLE_SAMPLES)
     )
     rocm_package_setup_client_component(samples)
 endif()
-# rocm_create_package makes decisions on what type of package to produce 
+# rocm_create_package makes decisions on what type of package to produce
 # based on BUILD_SHARED_LIBS. If we don't set this here we will only get
 # a dev package.
 set(BUILD_SHARED_LIBS ${HIPBLASLT_BUILD_SHARED_LIBS})
@@ -525,9 +524,9 @@ if(HIPBLASLT_ENABLE_COVERAGE)
         DEPENDS hipblaslt-test
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${coverage_dir}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${coverage_dir}/profraw"
-        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE="${coverage_dir}/profraw/hipblaslt-coverage_%p.profraw" 
-                                        GTEST_LISTENER=NO_PASS_LINE_IN_LOG 
-                                        $<TARGET_FILE:hipblaslt-test> 
+        COMMAND ${CMAKE_COMMAND} -E env LLVM_PROFILE_FILE="${coverage_dir}/profraw/hipblaslt-coverage_%p.profraw"
+                                        GTEST_LISTENER=NO_PASS_LINE_IN_LOG
+                                        $<TARGET_FILE:hipblaslt-test>
                                         --precompile=hipblaslt-test-precompile.db
       )
       find_program(
