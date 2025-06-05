@@ -91,6 +91,13 @@ namespace hipblaslt_ext
         std::unique_ptr<GemmPreferenceImpl> pimpl;
     };
 
+    class GemmPreferenceV2
+    {
+    public:
+        // GemmPreference is the same as GemmPreferenceV2, use GemmPreference instead.
+        ~GemmPreferenceV2() = delete;
+    };
+
     /*! \ingroup types_module
      *  \brief hipblasLt extension ProblemType for gemm problems.
      *
@@ -139,6 +146,13 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT hipDataType          getTypeC() const; //!< The C matrix datatype.
         HIPBLASLT_EXPORT hipDataType          getTypeD() const; //!< The D matrix datatype.
         HIPBLASLT_EXPORT hipblasComputeType_t getTypeCompute() const; //!< The compute datatype.
+    };
+
+    class GemmProblemTypeV2
+    {
+    public:
+        // GemmProblemType is the same as GemmProblemTypeV2, use GemmProblemType instead.
+        ~GemmProblemTypeV2() = delete;
     };
 
     /*! \ingroup types_module
@@ -198,6 +212,13 @@ namespace hipblaslt_ext
         std::unique_ptr<GemmEpilogueImpl> pimpl;
     };
 
+    class GemmEpilogueV2
+    {
+    public:
+        // GemmEpilogue is the same as GemmEpilogueV2, use GemmEpilogue instead.
+        ~GemmEpilogueV2() = delete;
+    };
+
     struct GemmTuning
     {
     public:
@@ -223,6 +244,13 @@ namespace hipblaslt_ext
         friend GemmInstance;
         class GemmTuningImpl;
         std::unique_ptr<GemmTuningImpl> pimpl;
+    };
+
+    class GemmTuningV2
+    {
+    public:
+        // GemmTuning is the same as GemmTuningV2, use GemmTuning instead.
+        ~GemmTuningV2() = delete;
     };
 
     /*! \ingroup types_module
@@ -282,6 +310,13 @@ namespace hipblaslt_ext
         friend GroupedGemm;
         class GemmInputsImpl;
         std::unique_ptr<GemmInputsImpl> pimpl;
+    };
+
+    class GemmInputsV2
+    {
+    public:
+        // GemmInputs is the same as GemmInputsV2, use GemmInputs instead.
+        ~GemmInputsV2() = delete;
     };
 
     /*! \ingroup types_module
