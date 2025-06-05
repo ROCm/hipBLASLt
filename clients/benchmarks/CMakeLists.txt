@@ -92,6 +92,8 @@ if (NOT WIN32)
     list( APPEND COMMON_LINK_LIBS "-lflang -lflangrti") # for lapack
   endif()
 else()
+  find_package(lapack REQUIRED)
+  target_link_libraries(hipblaslt-bench PRIVATE ${LAPACK_LIBRARIES})
   list( APPEND COMMON_LINK_LIBS "libomp")
 endif()
 target_link_libraries( hipblaslt-bench PRIVATE ${COMMON_LINK_LIBS} )

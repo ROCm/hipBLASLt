@@ -80,17 +80,17 @@ foreach(arch IN LISTS archs)
             ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s
             ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s
             ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s
-        COMMAND ${python_launch_prefix} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s -w 256 -c 4 --sweep-once 1 --arch ${arch}
-        COMMAND ${python_launch_prefix} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s -w 256 -c 4 --sweep-once 0 --arch ${arch}
-        COMMAND ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s -m 8 -n 32 --arch ${arch}
-        COMMAND ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s -m 16 -n 16 --arch ${arch}
-        COMMAND ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s -m 4 -n 64 --arch ${arch}
-        COMMAND ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s -m 2 -n 128 --arch ${arch}
-        COMMAND ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s -m 1 -n 256 --arch ${arch}
-        COMMAND ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s -t S -d S -w 256 -c 4 --arch ${arch}
-        COMMAND ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s -t H -d H -w 256 -c 4 --arch ${arch}
-        COMMAND ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s -t H -d S -w 256 -c 4 --arch ${arch}
-        COMMAND ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s -t S -d H -w 256 -c 4 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_1_${arch}.s -w 256 -c 4 --sweep-once 1 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} LayerNormGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/L_256_4_0_${arch}.s -w 256 -c 4 --sweep-once 0 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_8_32_${arch}.s -m 8 -n 32 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_16_16_${arch}.s -m 16 -n 16 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_4_64_${arch}.s -m 4 -n 64 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_2_128_${arch}.s -m 2 -n 128 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} SoftmaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/S_1_256_${arch}.s -m 1 -n 256 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_256_4_${arch}.s -t S -d S -w 256 -c 4 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_H_256_4_${arch}.s -t H -d H -w 256 -c 4 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_H_S_256_4_${arch}.s -t H -d S -w 256 -c 4 --arch ${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_256_4_${arch}.s -t S -d H -w 256 -c 4 --arch ${arch}
         COMMENT "Creating Layer Norm, Softmax and Amax Assembly for ${arch}"
         WORKING_DIRECTORY ${ops_path}
     )
@@ -101,10 +101,10 @@ foreach(arch IN LISTS archs)
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s -t S -d S -s F8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s -t S -d S -s B8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s -t S -d H -s F8N -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s -t S -d H -s B8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8N_256_4_${arch}.s -t S -d S -s F8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8N_256_4_${arch}.s -t S -d S -s B8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8N_256_4_${arch}.s -t S -d H -s F8N -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8N_256_4_${arch}.s -t S -d H -s B8N -w 256 -c 4 --arch ${arch}
             COMMENT "Creating Extra Amax Assembly for gfx942"
             WORKING_DIRECTORY ${ops_path}
         )
@@ -123,10 +123,10 @@ foreach(arch IN LISTS archs)
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s
                 ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s -t S -d S -s F8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s -t S -d S -s B8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s -t S -d H -s F8 -w 256 -c 4 --arch ${arch}
-            COMMAND ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s -t S -d H -s B8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_F8_256_4_${arch}.s -t S -d S -s F8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_S_B8_256_4_${arch}.s -t S -d S -s B8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_F8_256_4_${arch}.s -t S -d H -s F8 -w 256 -c 4 --arch ${arch}
+            COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} AMaxGenerator.py --is-scale -o ${CMAKE_CURRENT_BINARY_DIR}/A_S_H_B8_256_4_${arch}.s -t S -d H -s B8 -w 256 -c 4 --arch ${arch}
             COMMENT "Creating Extra Amax Assembly for gfx950"
             WORKING_DIRECTORY ${ops_path}
         )
@@ -142,21 +142,31 @@ foreach(arch IN LISTS archs)
         DEPENDS ExtOpObj_${arch}
         OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
         COMMAND ${CMAKE_CXX_COMPILER};-target;amdgcn-amdhsa;-Xlinker;$<TARGET_OBJECTS:ExtOpObj_${arch}>;-o;${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co" "${PROJECT_BINARY_DIR}/Tensile/library/"
         COMMENT "Creating extop_${arch}"
         COMMAND_EXPAND_LISTS
     )
     add_custom_target(ExtOpLibrary_${arch} ALL
         DEPENDS ${dat_depends} ${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co
-        COMMAND ${python_launch_prefix} ExtOpCreateLibrary.py --src=${CMAKE_CURRENT_BINARY_DIR} --co=${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co --output=${CMAKE_CURRENT_BINARY_DIR} --arch=${arch}
+        COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} ExtOpCreateLibrary.py --src=${CMAKE_CURRENT_BINARY_DIR} --co=${CMAKE_CURRENT_BINARY_DIR}/extop_${arch}.co --output=${CMAKE_CURRENT_BINARY_DIR} --arch=${arch}
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/hipblasltExtOpLibrary.dat" "${PROJECT_BINARY_DIR}/Tensile/library/"
         COMMENT "Creating hipblasltExtOpLibrary.dat"
         WORKING_DIRECTORY ${ops_path}
     )
     list(APPEND dat_depends "ExtOpLibrary_${arch}")
 endforeach()
 
-add_custom_target(ExtOpCp ALL
-    DEPENDS ${dat_depends} TENSILE_LIBRARY_TARGET
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.co" ${PROJECT_BINARY_DIR}/Tensile/library
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/*.dat" ${PROJECT_BINARY_DIR}/Tensile/library
-    COMMENT "Copying ExtOp Library"
-)
+add_custom_target(ExtOpCp ALL  
+    DEPENDS ${dat_depends} TENSILE_LIBRARY_TARGET  
+    COMMENT "Copying .co and .dat files"
+) 
+
+file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_BINARY_DIR}/*.co" "${CMAKE_CURRENT_BINARY_DIR}/*.dat")  
+ 
+foreach(file ${FILES_TO_COPY})  
+    add_custom_command(
+        TARGET ExtOpCp POST_BUILD  
+        COMMAND ${CMAKE_COMMAND} -E copy "${file}" "${PROJECT_BINARY_DIR}/Tensile/library/"  
+        COMMENT "Copying ${file} to ${PROJECT_BINARY_DIR}/Tensile/library/"  
+    )
+endforeach()

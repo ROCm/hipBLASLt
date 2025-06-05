@@ -24,7 +24,6 @@
 ################################################################################
 from os import name as os_name
 from os import environ
-from os import sysconf
 from pathlib import Path
 from re import search, IGNORECASE
 from shlex import split
@@ -33,6 +32,9 @@ from typing import List
 
 from Tensile.Common import SemanticVersion, print2
 from .Validators import ToolchainDefaults, validateToolchain
+
+if os_name != "nt":
+    from os import sysconf
 
 def _invoke(args: List[str], desc: str=""):
   """Invokes a command with the provided arguments in a subprocess.
@@ -368,9 +370,10 @@ class Linker(Component):
         On Unix: check against system argument length limit
         """
         if os_name == "nt":
-            return True  
-        line_length = sum(len(arg) for arg in args) + len(args) - 1
-        return line_length >= sysconf("SC_ARG_MAX")
+            return True
+        else:
+            line_length = sum(len(arg) for arg in args) + len(args) - 1
+            return line_length >= sysconf("SC_ARG_MAX")
 
     def __call__(self, srcPaths: List[str], destPath: str):
         """

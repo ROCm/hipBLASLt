@@ -87,12 +87,25 @@ endif( )
 if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags
-  find_package( cblas REQUIRED CONFIG )
-  if(${BLIS_FOUND})
-    set( BLAS_LIBRARY ${BLIS_LIB} )
-    set( BLIS_CPP ../common/blis_interface.cpp )
+  if ( NOT WIN32 )
+    find_package( cblas REQUIRED CONFIG )
+    if(${BLIS_FOUND})
+      set( BLAS_LIBRARY ${BLIS_LIB} )
+      set( BLIS_CPP ../common/blis_interface.cpp )
+    else()
+      set( BLAS_LIBRARY "blas" )
+    endif()
   else()
-    set( BLAS_LIBRARY "blas" )
+    set( BLAS_INCLUDE_DIR ${OPENBLAS_DIR}/include CACHE PATH "OpenBLAS library include path" )
+    find_library( BLAS_LIBRARY libopenblas
+                  PATHS ${OPENBLAS_DIR}/lib
+                  NO_DEFAULT_PATH
+                )
+    if (NOT BLAS_LIBRARY)
+      find_package( OPENBLAS CONFIG REQUIRED )
+      set( BLAS_LIBRARY OpenBLAS::OpenBLAS )
+      set( BLAS_INCLUDE_DIR "" )
+    endif()
   endif()
 
   # Find the package ROCmSMI

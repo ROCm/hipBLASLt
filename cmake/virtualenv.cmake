@@ -8,7 +8,6 @@ find_package(Python REQUIRED COMPONENTS Interpreter)
 
 set(VIRTUALENV_PYTHON_EXE ${Python_EXECUTABLE})
 
-get_filename_component(VIRTUALENV_PYTHON_EXENAME ${VIRTUALENV_PYTHON_EXE} NAME CACHE)
 
 set(VIRTUALENV_HOME_DIR ${CMAKE_BINARY_DIR}/virtualenv CACHE PATH "Path to virtual environment")
 
@@ -23,6 +22,14 @@ function(virtualenv_create)
     else()
         set(VIRTUALENV_BIN_DIR ${VIRTUALENV_HOME_DIR}/bin CACHE PATH "Path to virtualenv bin directory")
     endif()
+
+    # verify python executable name inside virtualenv as may be python3 or python (even if installed by python3)
+     find_program(VIRTUALENV_INST_PYTHON_EXE python3 PATHS ${VIRTUALENV_BIN_DIR} NO_DEFAULT_PATH)
+     if(NOT VIRTUALENV_INST_PYTHON_EXE)
+         find_program(VIRTUALENV_INST_PYTHON_EXE python PATHS ${VIRTUALENV_BIN_DIR} NO_DEFAULT_PATH)
+     endif()
+ 
+     get_filename_component(VIRTUALENV_PYTHON_EXENAME ${VIRTUALENV_INST_PYTHON_EXE} NAME CACHE)
 endfunction()
 
 function(virtualenv_install)
