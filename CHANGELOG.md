@@ -2,6 +2,12 @@
 
 Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
+## hipBLASLt 0.12.1 for ROCm 6.4.2
+
+### Added
+
+* Support for gfx1151
+
 ## hipBLASLt 0.12.1 for ROCm 6.4.1
 
 ### Resolved issues
