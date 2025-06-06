@@ -965,18 +965,18 @@ namespace TensileLite
 
         AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(hardware);
         assert(pAMDGPU);
-        uint32_t numCUs    = pAMDGPU->computeUnitCount;
-        uint32_t numWGs    = getNumWorkGroups(problem, sizeMapping);
-        uint32_t MT0       = sizeMapping.macroTile.x;
-        uint32_t MT1       = sizeMapping.macroTile.y;
-        uint32_t MT2       = sizeMapping.depthU;
-        uint32_t M         = problem.freeSizeA(0);
-        uint32_t N         = problem.freeSizeB(0);
-        uint32_t B         = problem.batchSize(0);
-        uint32_t K         = problem.boundSize(0);
-        uint32_t GSULimit1 = max(1, (uint32_t)std::floor(numCUs / numWGs));
-        uint32_t GSULimit2 = max(1, (uint32_t)std::ceil((float)K / (float)MT2 / 2.0));
-        autoGSU            = min(GSULimit2, max(1, GSULimit1));
+        uint32_t numCUs       = pAMDGPU->computeUnitCount;
+        uint32_t numWGs       = getNumWorkGroups(problem, sizeMapping);
+        uint32_t MT0          = sizeMapping.macroTile.x;
+        uint32_t MT1          = sizeMapping.macroTile.y;
+        uint32_t MT2          = sizeMapping.depthU;
+        uint32_t M            = problem.freeSizeA(0);
+        uint32_t N            = problem.freeSizeB(0);
+        uint32_t B            = problem.batchSize(0);
+        uint32_t K            = problem.boundSize(0);
+        uint32_t GSULimit1    = max(1, (uint32_t)std::floor(numCUs / numWGs));
+        uint32_t GSULimit2    = max(1, (uint32_t)std::floor((float)K / (float)MT2 / 3.0));
+        autoGSU               = min(GSULimit2, max(1, GSULimit1));
 
         // WorkspaceCheck
         if(autoGSU > 1)
