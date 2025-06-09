@@ -90,6 +90,7 @@ namespace TensileLite
                     //----------
                     {MatrixInstruction(32, 32, 64, 8), 64}, // v_mfma_i32_32x32x16_i8
                     {MatrixInstruction(16, 16, 32, 16), 16}, // v_mfma_i32_16x16x32_f16/bf16
+                    {MatrixInstruction(32, 32, 16, 16), 32}, // v_mfma_f32_32x32x16_f16/bf16
                     //----------
                     //TODO these need to be checked.
                     {MatrixInstruction(16, 16, 128, 8), 32}, // V_MFMA_F32_16X16X128_F8
