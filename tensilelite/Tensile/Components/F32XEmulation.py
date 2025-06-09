@@ -45,7 +45,6 @@ class F32XEmulationCvtLocalWrite(F32XEmulation):
     dbgCounter = 0
     def __call__(self, srcStart):
         tf32mod = Module()
-        return tf32mod
         tf32mod.add(TextBlock("/*TF32 Emulation write lds*/\n"))
         if (F32XEmulationCvtLocalWrite.dbgCounter == 0):
             tf32mod.add(TextBlock(str("label_tf32lds_begin_") + str(F32XEmulationCvtLocalWrite.dbgCounter) + ":\n"))
@@ -124,7 +123,6 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
     dbgCounter = 0
     def __call__(self, dstStart):
         tf32mod = Module()
-        return tf32mod
         # Carson: textblock here (or in localread) is causing python issues. rocisa ambiguity issue?
         tf32mod.add(TextBlock("/*TF32 Emulation read lds*/\n"))
         tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
@@ -196,6 +194,8 @@ class F32XEmulationMFMA(F32XEmulation):
         aLow = "Cvt+12"
         bLow = "Cvt+16"
 
+        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+
         for itr in range(int(width / numElementsPerIter)):
             #tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
@@ -210,6 +210,7 @@ class F32XEmulationMFMA(F32XEmulation):
             bLow2 = bLow + "+1" + offset
             tmp1 = "Cvt+0"
             tmp2 = "Cvt+1"
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             if not kernel["EnableF32XEmulationLds"]:
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aHigh1), src0=vgpr(aStart), src1=vgpr(aStart + "+1")))
                 tf32mod.add(SNop(waitState=1, comment="1 wait s00tates for ds_read"))
@@ -274,14 +275,17 @@ class F32XEmulationMFMA(F32XEmulation):
             tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
             vgprSize = width / 2
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aLow,vgprSize))
-            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
             (src0, src1) = (vgpr(bLow,vgprSize), vgpr(aHigh,vgprSize))
-            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aHigh,vgprSize))
+            tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2))
 
