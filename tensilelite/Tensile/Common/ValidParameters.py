@@ -812,9 +812,10 @@ validParameters = { # we need to make sure this matches develop
     "WaveSplitK": [False, True],
     # Control mbsk reduction prefetch order
     # -1 : Select between 0/1 based on # store elements.
-    # 0  : Fetch from workgroup dim -> elements dim. (default)
-    # 1  : Fetch from elements dim -> workgroup dim. Has better prefetch pattern when # store elements is large.
-    "MbskPrefetchOpt": [-1, 0, 1],
+    #  0 : Fetch from workgroup dim -> elements dim.
+    #  1 : Fetch from elements dim -> workgroup dim. (default)
+    #      Has better prefetch pattern when # store elements is large.
+    "MbskPrefetchMethod": [-1, 0, 1],
 }
 
 newMIValidParameters = {
