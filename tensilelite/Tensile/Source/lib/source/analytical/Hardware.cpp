@@ -65,9 +65,8 @@ namespace TensileLite
                     {MatrixInstruction(16, 16, 8, 32), 16}, // v_mfma_f32_16x16x8_xf32
                     {MatrixInstruction(16, 16, 32, 32), 16}, // v_mfma_f32_16x16x8_xf32
                 }},
-               {Hardware::Architecture::gfx950, //TODO: NEed to make sure these are the right MFMAs
+               {Hardware::Architecture::gfx950, //TODO: Need to make sure these are the right MFMAs
                 {
-                    {MatrixInstruction(16, 16, 32, 8), 16}, // v_mfma_i32_16x16x32_i8
                     {MatrixInstruction(16, 16, 1, 32), 32}, // v_mfma_f32_16x16x1_4b_f32
                     {MatrixInstruction(16, 16, 4, 32), 32}, // v_mfma_f32_16x16x4_f32
                     {MatrixInstruction(16, 16, 4, 64), 32}, // v_mfma_f64_16x16x4_f64
