@@ -786,7 +786,6 @@ namespace
         if(rocblaslt::Debug::Instance().printLogAsMarker())
         {
             rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
-            rocblaslt::Debug::Instance().logMarkerStop();
         }
     }
 
@@ -1100,7 +1099,6 @@ namespace
         if(rocblaslt::Debug::Instance().printLogAsMarker())
         {
             rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
-            rocblaslt::Debug::Instance().logMarkerStop();
         }
     }
 
@@ -2526,6 +2524,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
             status = hip2RocStatus(
                 adapter->launchKernels(kernels, prob.stream, nullptr, nullptr, isPreloaded));
         }
+        rocblaslt::Debug::Instance().logMarkerStop(); // Stop the marker for hipblaslt-bench log
     }
     catch(const std::exception& e)
     {
@@ -2937,6 +2936,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                               true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
+            rocblaslt::Debug::Instance().logMarkerStop(); // Stop the marker for hipblaslt-bench log
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -2966,6 +2966,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                 logProfileFromTensileDataGemm(data->problem, data->inputs, true);
             }*/
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
+            rocblaslt::Debug::Instance().logMarkerStop(); // Stop the marker for hipblaslt-bench log
         }
         else
         {
@@ -3541,6 +3542,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                                      const Tuning*          tuning,
                                      size_t*                workspaceSizeInBytes)
 {
+    rocblaslt::Debug::Instance().markerStart("lazyLoading");
     std::shared_ptr<TensileLite::MasterSolutionLibrary<TensileLite::ContractionProblemGemm>>
                                            library;
     std::shared_ptr<hipDeviceProp_t>       deviceProp;
@@ -3552,6 +3554,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
 #else
     auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 #endif
+    rocblaslt::Debug::Instance().markerStop();
 
     if(!library)
     {
@@ -3565,7 +3568,9 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
     // don't overwrite data->algoIndex = *solutionIndex; here
     if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGemm>::value)
     {
+        rocblaslt::Debug::Instance().markerStart("getSolutionByIndex");
         auto solution = library->getSolutionByIndex(tensile_prob, *hardware, *solutionIndex);
+        rocblaslt::Debug::Instance().markerStop();
 
         if(tuning)
         {
@@ -3584,6 +3589,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             tensile_prob.setParams().resetInternalArgs();
         }
 
+        rocblaslt::Debug::Instance().markerStart("CUFallbackDetection");
         // cu-fallback detection
         bool isCUFallback = solution->isFallbackForHW(*hardware);
         if(isCUFallback)
@@ -3598,9 +3604,13 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         }
         // set this flag for SW predicate
         tensile_prob.setParams().setFallbackStatus(isCUFallback);
+        rocblaslt::Debug::Instance().markerStop();
 
+        rocblaslt::Debug::Instance().markerStart("TensileLite::Task");
         TensileLite::Task task(*hardware, tensile_prob, *solution);
+        rocblaslt::Debug::Instance().markerStop();
         tensile_prob.setWorkspaceSize(algo->max_workspace_bytes);
+        rocblaslt::Debug::Instance().markerStart("HardwarePredicate");
         if(!(*solution->hardwarePredicate)(*hardware))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
@@ -3614,6 +3624,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
+        rocblaslt::Debug::Instance().markerStop();
+        rocblaslt::Debug::Instance().markerStart("ProblemPredicate");
         if(!(*solution->problemPredicate)(tensile_prob))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
@@ -3628,6 +3640,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
+        rocblaslt::Debug::Instance().markerStop();
+        rocblaslt::Debug::Instance().markerStart("TaskPredicate");
         if(!(*solution->taskPredicate)(task))
         {
             if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
@@ -3646,6 +3660,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         {
             *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob, *hardware);
         }
+        rocblaslt::Debug::Instance().markerStop();
     }
     else if constexpr(std::is_same<MyProblem, TensileLite::ContractionProblemGroupedGemm>::value)
     {
