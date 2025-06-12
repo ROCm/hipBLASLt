@@ -108,6 +108,7 @@ class TailOptParams:
   finalLoop:           int         = 0
 
 dbgCounter = 0
+dbgCounterMFMA = 0
 
 ################################################################################
 # Assembly Kernel
@@ -6781,6 +6782,9 @@ class KernelWriterAssembly(KernelWriter):
                                        a=src0, b=src1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
                                        comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
             prevAccIdx = accIdx
+            global dbgCounterMFMA
+            imod.add(TextBlock(str("label_mfma_") + str(dbgCounterMFMA) + ":\n"))
+            dbgCounterMFMA += 1
 
       if kernel["ExpertSchedulingMode"] > 0:
         imod.add(SWaitAlu(va_vdst=0, comment="wait for the current iter's writes to complete"))
@@ -9241,6 +9245,7 @@ class KernelWriterAssembly(KernelWriter):
                   paramList[1] = paramList[1] - 65536
               else:
                 dstAddr=vgpr(lwa)
+              #carson: paramList[1] holds ds_write offset, but it is being split into two calls and 16 added to offset beyond this command somewhere
               ds        = DSModifiers(na=1, offset=paramList[1])
               writeInst = LocalWriteX(dstAddr=dstAddr, src=paramList[0], ds=ds, comment=comment)
             else:

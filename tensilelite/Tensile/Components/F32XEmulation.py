@@ -276,13 +276,13 @@ class F32XEmulationMFMA(F32XEmulation):
             vgprSize = width / 2
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aLow,vgprSize))
             tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
             (src0, src1) = (vgpr(bLow,vgprSize), vgpr(aHigh,vgprSize))
             tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aHigh,vgprSize))
             tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
