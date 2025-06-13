@@ -5559,8 +5559,8 @@ class KernelWriterAssembly(KernelWriter):
 
         if noExit:
           # No exit. No dec code if decValue is 2
-          # if decValue == 2:
-          decCode = ""
+          if decValue == 2:
+            decCode = ""
           condCode = ""
           nonFinalJumpNeeded = False
           if finalLoop:
@@ -8270,7 +8270,7 @@ class KernelWriterAssembly(KernelWriter):
                           glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=isHigh16Bits , \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
-                instOffset += 16 #Carson: debug 256b reads
+                #instOffset += 16 #Carson: debug 256b reads
 
                 if unrollMirrorWithSoffset:
                   codeMod = Module("mirrorIdx%u"%loopCnt)
