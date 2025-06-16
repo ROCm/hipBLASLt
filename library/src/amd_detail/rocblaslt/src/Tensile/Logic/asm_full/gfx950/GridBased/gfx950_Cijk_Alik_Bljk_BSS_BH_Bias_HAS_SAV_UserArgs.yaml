@@ -241424,307 +241424,6 @@
     ConvertAfterDS: false
     CustomKernelName: ''
     DebugStreamK: 0
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprA: 0
-    DirectToVgprB: 0
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XEmulationLds: false
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ExpertSchedulingMode: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 8
-    GlobalSplitU: 0
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUCoalesced: false
-    GlobalSplitUWorkGroupMappingRoundRobin: false
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 5, 0]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
-      SupportUserGSU: false, UseUniversalArgs: true}
-    Kernel: true
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1
-    LDSTrInst: 0
-    LSCA: 256
-    LSCB: 256
-    LSPA: 8
-    LSPB: 8
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 100352
-    LdsInitCVgprs: false
-    LdsNumBytes: 100352
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 17408
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 65536
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 82944
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 82944
-    LdsPadA: 16
-    LdsPadB: 16
-    LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
-    LocalSplitU: 1
-    LocalSplitUReuseLDS: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: 1
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 32
-    MacroTileA: 32
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MathClocksUnrolledLoop: 0
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxLDS: 163840
-    MaxOccupancy: 40
-    MbskPrefetchOpt: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonDTLTailLoopA: true
-    NonDTLTailLoopB: true
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NonTemporalWS: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 4
-    NumLoadsB: 4
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
-    NumLoadsPerpendicularB: 4
-    NumThreads: 256
-    NumWaveSplitK: 1
-    OptNoLoadLoop: 1
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: true
-    ProblemType:
-      Activation: true
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: hipblaslt_all
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: true
-      BiasDataTypeList: [0]
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 7
-      DataTypeA: 7
-      DataTypeAmaxD: 0
-      DataTypeB: 7
-      DataTypeE: 0
-      DestDataType: 0
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      OutputAmaxD: false
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      SwizzleTensorA: false
-      SwizzleTensorB: false
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: true
-      TransposeB: false
-      UseBeta: true
-      UseBias: 1
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 1
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 801
-    SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x32x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: 0
-    StoreRemapVectorWidth: 0
-    StoreSwapAddr: false
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    StreamK: 3
-    StreamKAtomic: 0
-    StreamKXCCMapping: 8
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 1
-    ThreadTileA: 4
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    ULSGRODoubleG2L: 0
-    UnrollLoopSwapGlobalReadOrder: 0
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseDotInstruction: false
-    UseF32XEmulation: false
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: 1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WaveSplitK: false
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupMappingXCCGroup: -1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 0]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: PartialsBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-    enableLDSTrA: 0
-    enableLDSTrB: 0
-    reorderGRInstForDTVA: false
-    reorderGRInstForDTVB: false
-    tailLoopOptA: false
-    tailLoopOptB: false
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertAIGreaterThanEqual: -1
-    AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    CUOccupancy: -1
-    ClusterLocalRead: 0
-    CodeObjectVersion: '4'
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DebugStreamK: 0
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -241939,7 +241638,7 @@
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 802
+    SolutionIndex: 801
     SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x96x128_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA256_LBSPPB256_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_3_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS256_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG32_8_1_WGM16_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
@@ -241996,909 +241695,6 @@
     _DepthUMetadata: 128
     _GlobalAccumulation: PartialsBuffer
     _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-    enableLDSTrA: 0
-    enableLDSTrB: 0
-    reorderGRInstForDTVA: false
-    reorderGRInstForDTVB: false
-    tailLoopOptA: false
-    tailLoopOptB: false
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertAIGreaterThanEqual: -1
-    AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    CUOccupancy: -1
-    ClusterLocalRead: 0
-    CodeObjectVersion: '4'
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DebugStreamK: 0
-    DepthU: 128
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprA: 0
-    DirectToVgprB: 0
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XEmulationLds: false
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ExpertSchedulingMode: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 8
-    GlobalSplitU: 0
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUCoalesced: false
-    GlobalSplitUWorkGroupMappingRoundRobin: false
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 5, 0]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
-      SupportUserGSU: false, UseUniversalArgs: true}
-    Kernel: true
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT64x32x128_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GLS0_ISA950_IU1_K1_LBSPPA256_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1
-    LDSTrInst: 0
-    LSCA: 128
-    LSCB: 128
-    LSPA: 16
-    LSPB: 16
-    LVCA: 16
-    LVCB: 16
-    LVPA: 2
-    LVPB: 2
-    LdsBlockSizePerPadA: 256
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 59904
-    LdsInitCVgprs: false
-    LdsNumBytes: 59904
-    LdsNumElementsAlignedA: 18432
-    LdsNumElementsAlignedB: 8704
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 18432
-    LdsOffsetB_Blk: 51200
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 18432
-    LdsOffsetMetadata_Blk: 51200
-    LdsPadA: 16
-    LdsPadB: 16
-    LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
-    LocalSplitU: 1
-    LocalSplitUReuseLDS: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 4
-    LoopUnroll: 128
-    MFMA_BF16_1K: false
-    MIArchVgpr: 1
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [4, 1]
-    MIWaveTile: [1, 2]
-    MIWaveTileA: 1
-    MIWaveTileB: 2
-    MIWaveTileMetadata: 0
-    MacroTile0: 64
-    MacroTile1: 32
-    MacroTileA: 64
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MathClocksUnrolledLoop: 0
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxLDS: 163840
-    MaxOccupancy: 40
-    MbskPrefetchOpt: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonDTLTailLoopA: true
-    NonDTLTailLoopB: true
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NonTemporalWS: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 8
-    NumGlobalWriteVectorsPerThread: 8
-    NumLoadsA: 4
-    NumLoadsB: 2
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
-    NumLoadsPerpendicularB: 2
-    NumThreads: 256
-    NumWaveSplitK: 1
-    OptNoLoadLoop: 1
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: true
-    ProblemType:
-      Activation: true
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: hipblaslt_all
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: true
-      BiasDataTypeList: [0]
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 7
-      DataTypeA: 7
-      DataTypeAmaxD: 0
-      DataTypeB: 7
-      DataTypeE: 0
-      DestDataType: 0
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      OutputAmaxD: false
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      SwizzleTensorA: false
-      SwizzleTensorB: false
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: true
-      TransposeB: false
-      UseBeta: true
-      UseBias: 1
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 1
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 803
-    SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT64x32x128_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA256_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS256_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: 0
-    StoreRemapVectorWidth: 0
-    StoreSwapAddr: false
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    StreamK: 3
-    StreamKAtomic: 0
-    StreamKXCCMapping: 0
-    SubGroup0: 16
-    SubGroup1: 16
-    SubGroupA: 16
-    SubGroupB: 16
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 2
-    ThreadTileA: 4
-    ThreadTileB: 2
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    ULSGRODoubleG2L: 0
-    UnrollLoopSwapGlobalReadOrder: 0
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseDotInstruction: false
-    UseF32XEmulation: false
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: 1
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 2
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WaveSplitK: false
-    WavefrontSize: 64
-    WorkGroup: [64, 4, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupMappingXCCGroup: -1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 0]
-    _DepthU: 128
-    _DepthUA: 128
-    _DepthUB: 128
-    _DepthUMetadata: 128
-    _GlobalAccumulation: PartialsBuffer
-    _UseSgprForGRO: 1
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-    enableLDSTrA: 0
-    enableLDSTrB: 0
-    reorderGRInstForDTVA: false
-    reorderGRInstForDTVB: false
-    tailLoopOptA: false
-    tailLoopOptB: false
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertAIGreaterThanEqual: -1
-    AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    CUOccupancy: -1
-    ClusterLocalRead: 0
-    CodeObjectVersion: '4'
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DebugStreamK: 0
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprA: 0
-    DirectToVgprB: 0
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XEmulationLds: false
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ExpertSchedulingMode: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 8
-    GlobalSplitU: 0
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUCoalesced: false
-    GlobalSplitUWorkGroupMappingRoundRobin: false
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 5, 0]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
-      SupportUserGSU: false, UseUniversalArgs: true}
-    Kernel: true
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT48x32x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC3_NTD3_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_1
-    LDSTrInst: 0
-    LSCA: 256
-    LSCB: 256
-    LSPA: 4
-    LSPB: 4
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 512
-    LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 109056
-    LdsInitCVgprs: false
-    LdsNumBytes: 109056
-    LdsNumElementsAlignedA: 26112
-    LdsNumElementsAlignedB: 17408
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 65536
-    LdsOffsetB: 26112
-    LdsOffsetB_Blk: 91648
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 26112
-    LdsOffsetMetadata_Blk: 91648
-    LdsPadA: 16
-    LdsPadB: 16
-    LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
-    LocalSplitU: 1
-    LocalSplitUReuseLDS: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: 1
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [1, 2]
-    MIWaveTile: [3, 1]
-    MIWaveTileA: 3
-    MIWaveTileB: 1
-    MIWaveTileMetadata: 0
-    MacroTile0: 48
-    MacroTile1: 32
-    MacroTileA: 48
-    MacroTileB: 32
-    MagicDivAlg: 2
-    MathClocksUnrolledLoop: 0
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxLDS: 163840
-    MaxOccupancy: 40
-    MbskPrefetchOpt: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonDTLTailLoopA: true
-    NonDTLTailLoopB: true
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 3
-    NonTemporalD: 3
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NonTemporalWS: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 12
-    NumGlobalWriteVectorsPerThread: 12
-    NumLoadsA: 12
-    NumLoadsB: 8
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 12
-    NumLoadsPerpendicularB: 8
-    NumThreads: 128
-    NumWaveSplitK: 1
-    OptNoLoadLoop: 1
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: true
-    ProblemType:
-      Activation: true
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: hipblaslt_all
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: true
-      BiasDataTypeList: [0]
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 7
-      DataTypeA: 7
-      DataTypeAmaxD: 0
-      DataTypeB: 7
-      DataTypeE: 0
-      DestDataType: 0
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      OutputAmaxD: false
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      SwizzleTensorA: false
-      SwizzleTensorB: false
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: true
-      TransposeB: false
-      UseBeta: true
-      UseBias: 1
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 1
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 804
-    SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT48x32x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT3_1_MO40_NTn1_NTA0_NTB0_NTC3_NTD3_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_8_1_WGM1_WGMXCC1_WGMXCCGn1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: 0
-    StoreRemapVectorWidth: 0
-    StoreSwapAddr: false
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    StreamK: 3
-    StreamKAtomic: 0
-    StreamKXCCMapping: 8
-    SubGroup0: 4
-    SubGroup1: 32
-    SubGroupA: 4
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 12
-    ThreadTile1: 1
-    ThreadTileA: 12
-    ThreadTileB: 1
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    ULSGRODoubleG2L: 0
-    UnrollLoopSwapGlobalReadOrder: 0
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseDotInstruction: false
-    UseF32XEmulation: false
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: 0
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WaveSplitK: false
-    WavefrontSize: 64
-    WorkGroup: [16, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupMappingXCCGroup: -1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 0]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: PartialsBuffer
-    _UseSgprForGRO: 0
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-    enableLDSTrA: 0
-    enableLDSTrB: 0
-    reorderGRInstForDTVA: false
-    reorderGRInstForDTVB: false
-    tailLoopOptA: false
-    tailLoopOptB: false
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertAIGreaterThanEqual: -1
-    AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    CUOccupancy: -1
-    ClusterLocalRead: 0
-    CodeObjectVersion: '4'
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DebugStreamK: 0
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprA: 0
-    DirectToVgprB: 0
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XEmulationLds: false
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ExpertSchedulingMode: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 8
-    GlobalSplitU: 0
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUCoalesced: false
-    GlobalSplitUWorkGroupMappingRoundRobin: false
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 5, 0]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
-      SupportUserGSU: false, UseUniversalArgs: true}
-    Kernel: true
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
-    LDSTrInst: 0
-    LSCA: 256
-    LSCB: 256
-    LSPA: 8
-    LSPB: 8
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 1024
-    LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 116736
-    LdsInitCVgprs: false
-    LdsNumBytes: 116736
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 33792
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 65536
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 82944
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 82944
-    LdsPadA: 16
-    LdsPadB: 16
-    LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
-    LocalSplitU: 1
-    LocalSplitUReuseLDS: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: 1
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 2]
-    MIWaveTileA: 1
-    MIWaveTileB: 2
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 64
-    MacroTileA: 32
-    MacroTileB: 64
-    MagicDivAlg: 2
-    MathClocksUnrolledLoop: 0
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxLDS: 163840
-    MaxOccupancy: 40
-    MbskPrefetchOpt: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonDTLTailLoopA: true
-    NonDTLTailLoopB: true
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NonTemporalWS: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 8
-    NumGlobalWriteVectorsPerThread: 8
-    NumLoadsA: 4
-    NumLoadsB: 8
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
-    NumLoadsPerpendicularB: 8
-    NumThreads: 256
-    NumWaveSplitK: 1
-    OptNoLoadLoop: 1
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: true
-    ProblemType:
-      Activation: true
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: hipblaslt_all
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: true
-      BiasDataTypeList: [0]
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 7
-      DataTypeA: 7
-      DataTypeAmaxD: 0
-      DataTypeB: 7
-      DataTypeE: 0
-      DestDataType: 0
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      OutputAmaxD: false
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      SwizzleTensorA: false
-      SwizzleTensorB: false
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: true
-      TransposeB: false
-      UseBeta: true
-      UseBias: 1
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 1
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 805
-    SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: 0
-    StoreRemapVectorWidth: 0
-    StoreSwapAddr: false
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    StreamK: 3
-    StreamKAtomic: 0
-    StreamKXCCMapping: 0
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 2
-    ThreadTileA: 4
-    ThreadTileB: 2
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    ULSGRODoubleG2L: 0
-    UnrollLoopSwapGlobalReadOrder: 0
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseDotInstruction: false
-    UseF32XEmulation: false
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: 0
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 2
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WaveSplitK: false
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupMappingXCCGroup: -1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 0]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: PartialsBuffer
-    _UseSgprForGRO: 0
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
@@ -243143,7 +241939,7 @@
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 806
+    SolutionIndex: 802
     SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT16x64x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC3_NTD3_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG16_16_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
@@ -243189,307 +241985,6 @@
     WaveSplitK: false
     WavefrontSize: 64
     WorkGroup: [16, 16, 1]
-    WorkGroupMapping: 1
-    WorkGroupMappingXCC: 1
-    WorkGroupMappingXCCGroup: -1
-    WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 0]
-    _DepthU: 256
-    _DepthUA: 256
-    _DepthUB: 256
-    _DepthUMetadata: 256
-    _GlobalAccumulation: PartialsBuffer
-    _UseSgprForGRO: 0
-    _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
-    _WorkspaceSizePerElemC: 4
-    _staggerStrideShift: 0
-    enableLDSTrA: 0
-    enableLDSTrB: 0
-    reorderGRInstForDTVA: false
-    reorderGRInstForDTVB: false
-    tailLoopOptA: false
-    tailLoopOptB: false
-  - 1LDSBuffer: 0
-    ActivationAlt: false
-    ActivationFuncCall: true
-    ActivationFused: true
-    AssertAIGreaterThanEqual: -1
-    AssertAILessThanEqual: -1
-    AssertFree0ElementMultiple: 1
-    AssertFree1ElementMultiple: 1
-    AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: true
-    AssignedProblemIndependentDerivedParameters: true
-    BufferLoad: true
-    BufferStore: true
-    CUCount: null
-    CUOccupancy: -1
-    ClusterLocalRead: 0
-    CodeObjectVersion: '4'
-    ConvertAfterDS: false
-    CustomKernelName: ''
-    DebugStreamK: 0
-    DepthU: 256
-    DirectToLds: false
-    DirectToLdsA: false
-    DirectToLdsB: false
-    DirectToVgprA: 0
-    DirectToVgprB: 0
-    DirectToVgprSparseMetadata: false
-    EdgeType: ShiftPtr
-    EnableF32XEmulationLds: false
-    EnableF32XdlMathOp: false
-    EnableMatrixInstruction: true
-    ExpandPointerSwap: 0
-    ExpertSchedulingMode: 0
-    ForceDisableShadowInit: false
-    GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 8
-    GlobalSplitU: 0
-    GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUCoalesced: false
-    GlobalSplitUWorkGroupMappingRoundRobin: false
-    GlobalWriteVectorWidth: 1
-    GroupLoadStore: false
-    GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: true
-    GuaranteeNoPartialMetadata: true
-    ISA: [9, 5, 0]
-    InnerUnroll: 1
-    InterleaveAlpha: 0
-    InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: true, SupportCustomWGM: true,
-      SupportUserGSU: false, UseUniversalArgs: true}
-    Kernel: true
-    KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1
-    LDSTrInst: 0
-    LSCA: 256
-    LSCB: 256
-    LSPA: 8
-    LSPB: 8
-    LVCA: 32
-    LVCB: 32
-    LVPA: 1
-    LVPB: 1
-    LdsBlockSizePerPadA: 512
-    LdsBlockSizePerPadB: 1024
-    LdsBlockSizePerPadMetadata: 0
-    LdsBytesNoAmax: 116736
-    LdsInitCVgprs: false
-    LdsNumBytes: 116736
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 33792
-    LdsNumElementsAlignedMetadata: 0
-    LdsOffsetA: 0
-    LdsOffsetA_Blk: 65536
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 82944
-    LdsOffsetBias: 0
-    LdsOffsetBiasGSU: 0
-    LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 17408
-    LdsOffsetMetadata_Blk: 82944
-    LdsPadA: 16
-    LdsPadB: 16
-    LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
-    LocalSplitU: 1
-    LocalSplitUReuseLDS: 1
-    LocalWritePerMfma: -1
-    LocalWriteUseSgprA: false
-    LocalWriteUseSgprB: false
-    LoopIters: 8
-    LoopUnroll: 256
-    MFMA_BF16_1K: false
-    MIArchVgpr: 1
-    MIBlock: [16, 16, 32, 1, 1, 1]
-    MIInputPerThread: 8
-    MIInputPerThreadA: 8
-    MIInputPerThreadB: 8
-    MIInputPerThreadMetadata: 8
-    MIOutputVectorWidth: 4
-    MIRegPerOut: 1
-    MIWaveGroup: [2, 2]
-    MIWaveTile: [1, 2]
-    MIWaveTileA: 1
-    MIWaveTileB: 2
-    MIWaveTileMetadata: 0
-    MacroTile0: 32
-    MacroTile1: 64
-    MacroTileA: 32
-    MacroTileB: 64
-    MagicDivAlg: 2
-    MathClocksUnrolledLoop: 0
-    MatrixInstB: 1
-    MatrixInstBM: 1
-    MatrixInstBN: 1
-    MatrixInstK: 32
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 32, 1]
-    MaxLDS: 163840
-    MaxOccupancy: 40
-    MbskPrefetchOpt: 0
-    NoLdsWriteCode: false
-    NoReject: false
-    NoTailLoop: false
-    NonDTLTailLoopA: true
-    NonDTLTailLoopB: true
-    NonTemporal: -1
-    NonTemporalA: 0
-    NonTemporalB: 0
-    NonTemporalC: 0
-    NonTemporalD: 0
-    NonTemporalE: 0
-    NonTemporalMetadata: 0
-    NonTemporalWS: 0
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 8
-    NumGlobalWriteVectorsPerThread: 8
-    NumLoadsA: 4
-    NumLoadsB: 8
-    NumLoadsCoalescedA: 1
-    NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
-    NumLoadsPerpendicularB: 8
-    NumThreads: 256
-    NumWaveSplitK: 1
-    OptNoLoadLoop: 1
-    PackedC0IdxChars: [I]
-    PackedC0IndicesX: [0]
-    PackedC1IdxChars: [J]
-    PackedC1IndicesX: [1]
-    PrefetchGlobalRead: 2
-    PrefetchLocalRead: 1
-    PreloadKernArgs: true
-    ProblemType:
-      Activation: true
-      ActivationComputeDataType: 0
-      ActivationNoGuard: false
-      ActivationType: hipblaslt_all
-      AllowNoFreeDims: false
-      AssignedDerivedParameters: true
-      Batched: true
-      BetaOnlyUseBias: true
-      BiasDataTypeList: [0]
-      BiasSrc: D
-      ComplexConjugateA: false
-      ComplexConjugateB: false
-      ComputeDataType: 0
-      DataType: 7
-      DataTypeA: 7
-      DataTypeAmaxD: 0
-      DataTypeB: 7
-      DataTypeE: 0
-      DestDataType: 0
-      F32XdlMathOp: 0
-      Gradient: false
-      GroupedGemm: false
-      HighPrecisionAccumulate: true
-      Index0: 0
-      Index01A: 0
-      Index01B: 1
-      Index1: 1
-      IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [3, 1, 2]
-      IndexAssignmentsLD: [4, 5, 6, 7]
-      IndexAssignmentsMetadata: [3, 0, 2]
-      IndexUnroll: 3
-      IndexUnrollA: 0
-      IndexUnrollB: 0
-      IndexUnrollM: 0
-      IndicesBatch: [2]
-      IndicesFree: [0, 1]
-      IndicesSummation: [3]
-      MirrorDimsA: []
-      MirrorDimsB: []
-      MirrorDimsMetadata: []
-      NumIndicesBatch: 1
-      NumIndicesC: 3
-      NumIndicesFree: 2
-      NumIndicesLD: 4
-      NumIndicesSummation: 1
-      OperationType: GEMM
-      OutputAmaxD: false
-      SetConstStrideA: []
-      SetConstStrideB: []
-      SetConstStrideBias: []
-      SilentHighPrecisionAccumulate: false
-      Sparse: 0
-      StochasticRounding: false
-      StridedBatched: true
-      SupportUserArgs: true
-      SwizzleTensorA: false
-      SwizzleTensorB: false
-      TLUA: false
-      TLUB: false
-      Tensor0: 0
-      Tensor1: 1
-      TileA: 0
-      TileAwareSelection: false
-      TileB: 1
-      TotalIndices: 4
-      TransposeA: true
-      TransposeB: false
-      UseBeta: true
-      UseBias: 1
-      UseE: false
-      UseInitialStridesAB: false
-      UseInitialStridesCD: false
-      UseScaleAB: ''
-      UseScaleAlphaVec: 1
-      UseScaleCD: false
-    ScheduleGlobalRead: 1
-    ScheduleIterAlg: 3
-    ScheduleLocalWrite: 1
-    SolutionIndex: 807
-    SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT32x64x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB1024_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_2_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM8_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO0_VSn1_VWA1_VWB2_WSGRA0_WSGRB0_WS64_WG32_8_1_WGM1_WGMXCC1_WGMXCCGn1
-    SourceSwap: 1
-    StaggerU: 0
-    StaggerUMapping: 0
-    StaggerUStride: 0
-    StorePriorityOpt: 0
-    StoreRemapVectorWidth: 0
-    StoreSwapAddr: false
-    StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    StreamK: 3
-    StreamKAtomic: 0
-    StreamKXCCMapping: 8
-    SubGroup0: 8
-    SubGroup1: 32
-    SubGroupA: 8
-    SubGroupB: 32
-    SuppressNoLoadLoop: false
-    ThreadTile: [1, 1]
-    ThreadTile0: 4
-    ThreadTile1: 2
-    ThreadTileA: 4
-    ThreadTileB: 2
-    TransposeLDS: 1
-    TransposeLDSMetadata: true
-    ULSGRODoubleG2L: 0
-    UnrollLoopSwapGlobalReadOrder: 0
-    UnrollMajorLDSA: true
-    UnrollMajorLDSB: true
-    UnrollMajorLDSMetadata: true
-    Use64bShadowLimit: 1
-    UseDotInstruction: false
-    UseF32XEmulation: false
-    UseInstOffsetForGRO: 0
-    UseSgprForGRO: 0
-    Valid: true
-    VectorStore: -1
-    VectorWidthA: 1
-    VectorWidthB: 2
-    WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
-    WaveSeparateGlobalReadMetadata: 0
-    WaveSplitK: false
-    WavefrontSize: 64
-    WorkGroup: [32, 8, 1]
     WorkGroupMapping: 1
     WorkGroupMappingXCC: 1
     WorkGroupMappingXCCGroup: -1
@@ -243745,7 +242240,7 @@
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 808
+    SolutionIndex: 803
     SolutionNameMin: Cijk_Alik_Bljk_BSS_BH_Bias_HAS_SAV_UserArgs_MT64x16x256_MI16x16x1_SN_LDSB0_AFC0_AFEM1_AFEM1_ASEM1_CLR0_CADS0_DTVA0_DTVB0_EPS0_FDSI0_GRPM1_GRVWA8_GRVWB8_GSU0_GSUAMB_GSUC0_GSUWGMRR0_GLS0_ISA950_IU1_K1_LBSPPA512_LBSPPB512_LBSPPM0_LPA16_LPB16_LPM0_LRVW8_LWPMn1_MIAV1_MIWT1_1_MO40_NTn1_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS16_NLCA1_NLCB1_ONLL1_PGR2_PLR1_PKA1_SIA3_SS1_SU0_SUM0_SUS512_SPO0_SRVW0_SSO0_SVW1_SK3_SKXCCM0_TLDS1_ULSGRO0_USL1_UIOFGRO0_USFGRO1_VSn1_VWA1_VWB1_WSGRA0_WSGRB0_WS64_WG64_4_1_WGM1_WGMXCC1_WGMXCCGn1
     SourceSwap: 1
     StaggerU: 0
@@ -243814,3651 +242309,3651 @@
     tailLoopOptB: false
 - [2, 3, 0, 1]
 - - - [32, 1024, 1, 256]
-    - [793, 4221.03]
+    - [793, 0.0]
   - - [1024, 32, 1, 1024]
-    - [794, 14219.7]
+    - [794, 0.0]
   - - [12288, 192, 1, 4096]
-    - [795, 514864.0]
+    - [795, 0.0]
   - - [49152, 32, 1, 1024]
-    - [255, 135613.0]
+    - [255, 0.0]
   - - [12288, 128, 1, 256]
-    - [0, 101328.0]
+    - [0, 0.0]
   - - [2048, 16, 1, 4096]
-    - [10, 31221.5]
+    - [10, 0.0]
   - - [16, 4096, 1, 256]
-    - [796, 8042.03]
+    - [796, 0.0]
   - - [192, 12288, 1, 1024]
-    - [797, 330625.0]
+    - [797, 0.0]
   - - [128, 512, 1, 256]
-    - [1, 8266.31]
+    - [1, 0.0]
   - - [24576, 64, 1, 256]
-    - [2, 94829.3]
+    - [2, 0.0]
   - - [192, 12288, 1, 4096]
-    - [798, 522661.0]
+    - [798, 0.0]
   - - [16, 4096, 1, 4096]
-    - [13, 51730.6]
+    - [13, 0.0]
   - - [16, 16, 1, 256]
-    - [3, 42.3077]
+    - [3, 0.0]
   - - [16, 16, 1, 1024]
-    - [4, 130.424]
+    - [4, 0.0]
   - - [16, 16, 1, 4096]
-    - [5, 348.288]
+    - [5, 0.0]
   - - [16, 32, 1, 256]
-    - [3, 80.7525]
+    - [3, 0.0]
   - - [16, 32, 1, 1024]
-    - [4, 248.685]
+    - [4, 0.0]
   - - [16, 32, 1, 4096]
-    - [5, 665.95]
+    - [5, 0.0]
   - - [32, 16, 1, 256]
-    - [6, 80.6606]
+    - [6, 0.0]
   - - [32, 16, 1, 1024]
-    - [4, 249.347]
+    - [4, 0.0]
   - - [32, 16, 1, 4096]
-    - [5, 666.183]
+    - [5, 0.0]
   - - [16, 64, 1, 256]
-    - [3, 161.669]
+    - [3, 0.0]
   - - [16, 64, 1, 1024]
-    - [4, 490.908]
+    - [4, 0.0]
   - - [16, 64, 1, 4096]
-    - [4, 1294.89]
+    - [4, 0.0]
   - - [32, 32, 1, 256]
-    - [3, 158.368]
+    - [3, 0.0]
   - - [32, 32, 1, 1024]
-    - [5, 491.15]
+    - [5, 0.0]
   - - [32, 32, 1, 4096]
-    - [5, 1321.33]
+    - [5, 0.0]
   - - [64, 16, 1, 256]
-    - [7, 159.142]
+    - [7, 0.0]
   - - [64, 16, 1, 1024]
-    - [4, 488.655]
+    - [4, 0.0]
   - - [64, 16, 1, 4096]
-    - [4, 1290.45]
+    - [4, 0.0]
   - - [16, 96, 1, 256]
-    - [3, 235.524]
+    - [3, 0.0]
   - - [16, 96, 1, 1024]
-    - [4, 725.761]
+    - [4, 0.0]
   - - [16, 96, 1, 4096]
-    - [5, 1543.41]
+    - [5, 0.0]
   - - [96, 16, 1, 256]
-    - [3, 230.817]
+    - [3, 0.0]
   - - [96, 16, 1, 1024]
-    - [4, 718.599]
+    - [4, 0.0]
   - - [96, 16, 1, 4096]
-    - [4, 1560.39]
+    - [4, 0.0]
   - - [16, 128, 1, 256]
-    - [6, 309.29]
+    - [6, 0.0]
   - - [16, 128, 1, 1024]
-    - [4, 957.431]
+    - [4, 0.0]
   - - [16, 128, 1, 4096]
-    - [5, 2026.61]
+    - [5, 0.0]
   - - [32, 64, 1, 256]
-    - [6, 310.877]
+    - [6, 0.0]
   - - [32, 64, 1, 1024]
-    - [4, 965.542]
+    - [4, 0.0]
   - - [32, 64, 1, 4096]
-    - [4, 2097.06]
+    - [4, 0.0]
   - - [64, 32, 1, 256]
-    - [3, 309.117]
+    - [3, 0.0]
   - - [64, 32, 1, 1024]
-    - [4, 959.82]
+    - [4, 0.0]
   - - [64, 32, 1, 4096]
-    - [4, 2121.8]
+    - [4, 0.0]
   - - [128, 16, 1, 256]
-    - [6, 306.64]
+    - [6, 0.0]
   - - [128, 16, 1, 1024]
-    - [5, 955.708]
+    - [5, 0.0]
   - - [128, 16, 1, 4096]
-    - [5, 2066.68]
+    - [5, 0.0]
   - - [16, 192, 1, 256]
-    - [7, 461.417]
+    - [7, 0.0]
   - - [16, 192, 1, 1024]
-    - [4, 1427.8]
+    - [4, 0.0]
   - - [16, 192, 1, 4096]
-    - [4, 3027.48]
+    - [4, 0.0]
   - - [32, 96, 1, 256]
-    - [7, 464.703]
+    - [7, 0.0]
   - - [32, 96, 1, 1024]
-    - [4, 1445.25]
+    - [4, 0.0]
   - - [32, 96, 1, 4096]
-    - [5, 3134.38]
+    - [5, 0.0]
   - - [96, 32, 1, 256]
-    - [8, 456.383]
+    - [8, 0.0]
   - - [96, 32, 1, 1024]
-    - [4, 1426.61]
+    - [4, 0.0]
   - - [96, 32, 1, 4096]
-    - [4, 3167.44]
+    - [4, 0.0]
   - - [192, 16, 1, 256]
-    - [8, 449.355]
+    - [8, 0.0]
   - - [192, 16, 1, 1024]
-    - [4, 1407.71]
+    - [4, 0.0]
   - - [192, 16, 1, 4096]
-    - [4, 3062.22]
+    - [4, 0.0]
   - - [16, 256, 1, 256]
-    - [8, 607.734]
+    - [8, 0.0]
   - - [16, 256, 1, 1024]
-    - [4, 1899.86]
+    - [4, 0.0]
   - - [16, 256, 1, 4096]
-    - [4, 4043.21]
+    - [4, 0.0]
   - - [32, 128, 1, 256]
-    - [8, 617.178]
+    - [8, 0.0]
   - - [32, 128, 1, 1024]
-    - [4, 1920.21]
+    - [4, 0.0]
   - - [32, 128, 1, 4096]
-    - [5, 4182.98]
+    - [5, 0.0]
   - - [64, 64, 1, 256]
-    - [8, 616.507]
+    - [8, 0.0]
   - - [64, 64, 1, 1024]
-    - [4, 1927.71]
+    - [4, 0.0]
   - - [64, 64, 1, 4096]
-    - [4, 4249.09]
+    - [4, 0.0]
   - - [128, 32, 1, 256]
-    - [8, 610.157]
+    - [8, 0.0]
   - - [128, 32, 1, 1024]
-    - [4, 1919.29]
+    - [4, 0.0]
   - - [128, 32, 1, 4096]
-    - [4, 4252.43]
+    - [4, 0.0]
   - - [256, 16, 1, 256]
-    - [8, 596.923]
+    - [8, 0.0]
   - - [256, 16, 1, 1024]
-    - [4, 1885.47]
+    - [4, 0.0]
   - - [256, 16, 1, 4096]
-    - [4, 4109.46]
+    - [4, 0.0]
   - - [16, 384, 1, 256]
-    - [7, 914.517]
+    - [7, 0.0]
   - - [16, 384, 1, 1024]
-    - [4, 2429.65]
+    - [4, 0.0]
   - - [16, 384, 1, 4096]
-    - [4, 6183.13]
+    - [4, 0.0]
   - - [32, 192, 1, 256]
-    - [7, 914.623]
+    - [7, 0.0]
   - - [32, 192, 1, 1024]
-    - [4, 2852.31]
+    - [4, 0.0]
   - - [32, 192, 1, 4096]
-    - [5, 6223.19]
+    - [5, 0.0]
   - - [64, 96, 1, 256]
-    - [8, 910.204]
+    - [8, 0.0]
   - - [64, 96, 1, 1024]
-    - [4, 2847.79]
+    - [4, 0.0]
   - - [64, 96, 1, 4096]
-    - [5, 6319.69]
+    - [5, 0.0]
   - - [96, 64, 1, 256]
-    - [8, 906.95]
+    - [8, 0.0]
   - - [96, 64, 1, 1024]
-    - [4, 2852.69]
+    - [4, 0.0]
   - - [96, 64, 1, 4096]
-    - [4, 6351.51]
+    - [4, 0.0]
   - - [192, 32, 1, 256]
-    - [7, 898.326]
+    - [7, 0.0]
   - - [192, 32, 1, 1024]
-    - [4, 2818.19]
+    - [4, 0.0]
   - - [192, 32, 1, 4096]
-    - [4, 6327.0]
+    - [4, 0.0]
   - - [384, 16, 1, 256]
-    - [7, 893.325]
+    - [7, 0.0]
   - - [384, 16, 1, 1024]
-    - [4, 2492.16]
+    - [4, 0.0]
   - - [384, 16, 1, 4096]
-    - [9, 6230.2]
+    - [9, 0.0]
   - - [16, 512, 1, 256]
-    - [6, 1198.42]
+    - [6, 0.0]
   - - [16, 512, 1, 1024]
-    - [4, 3115.66]
+    - [4, 0.0]
   - - [16, 512, 1, 4096]
-    - [4, 8024.82]
+    - [4, 0.0]
   - - [32, 256, 1, 256]
-    - [7, 1210.31]
+    - [7, 0.0]
   - - [32, 256, 1, 1024]
-    - [4, 3770.68]
+    - [4, 0.0]
   - - [32, 256, 1, 4096]
-    - [5, 8337.79]
+    - [5, 0.0]
   - - [64, 128, 1, 256]
-    - [7, 1211.71]
+    - [7, 0.0]
   - - [64, 128, 1, 1024]
-    - [5, 3725.63]
+    - [5, 0.0]
   - - [64, 128, 1, 4096]
-    - [5, 8496.88]
+    - [5, 0.0]
   - - [128, 64, 1, 256]
-    - [7, 1198.55]
+    - [7, 0.0]
   - - [128, 64, 1, 1024]
-    - [4, 3783.86]
+    - [4, 0.0]
   - - [128, 64, 1, 4096]
-    - [4, 8564.55]
+    - [4, 0.0]
   - - [256, 32, 1, 256]
-    - [7, 1204.54]
+    - [7, 0.0]
   - - [256, 32, 1, 1024]
-    - [4, 3745.42]
+    - [4, 0.0]
   - - [256, 32, 1, 4096]
-    - [4, 8544.92]
+    - [4, 0.0]
   - - [512, 16, 1, 256]
-    - [7, 1198.55]
+    - [7, 0.0]
   - - [512, 16, 1, 1024]
-    - [5, 3224.4]
+    - [5, 0.0]
   - - [512, 16, 1, 4096]
-    - [10, 8196.44]
+    - [10, 0.0]
   - - [96, 96, 1, 256]
-    - [7, 1352.43]
+    - [7, 0.0]
   - - [96, 96, 1, 1024]
-    - [4, 4211.44]
+    - [4, 0.0]
   - - [96, 96, 1, 4096]
-    - [4, 9405.37]
+    - [4, 0.0]
   - - [16, 768, 1, 256]
-    - [6, 1798.76]
+    - [6, 0.0]
   - - [16, 768, 1, 1024]
-    - [11, 4640.65]
+    - [11, 0.0]
   - - [16, 768, 1, 4096]
-    - [5, 11845.4]
+    - [5, 0.0]
   - - [32, 384, 1, 256]
-    - [7, 1797.01]
+    - [7, 0.0]
   - - [32, 384, 1, 1024]
-    - [4, 4846.76]
+    - [4, 0.0]
   - - [32, 384, 1, 4096]
-    - [4, 12337.6]
+    - [4, 0.0]
   - - [64, 192, 1, 256]
-    - [7, 1799.53]
+    - [7, 0.0]
   - - [64, 192, 1, 1024]
-    - [4, 5600.01]
+    - [4, 0.0]
   - - [64, 192, 1, 4096]
-    - [5, 12585.3]
+    - [5, 0.0]
   - - [96, 128, 1, 256]
-    - [7, 1796.86]
+    - [7, 0.0]
   - - [96, 128, 1, 1024]
-    - [4, 5597.77]
+    - [4, 0.0]
   - - [96, 128, 1, 4096]
-    - [4, 12568.8]
+    - [4, 0.0]
   - - [128, 96, 1, 256]
-    - [7, 1790.16]
+    - [7, 0.0]
   - - [128, 96, 1, 1024]
-    - [4, 5610.12]
+    - [4, 0.0]
   - - [128, 96, 1, 4096]
-    - [4, 12647.8]
+    - [4, 0.0]
   - - [192, 64, 1, 256]
-    - [7, 1800.25]
+    - [7, 0.0]
   - - [192, 64, 1, 1024]
-    - [4, 5617.76]
+    - [4, 0.0]
   - - [192, 64, 1, 4096]
-    - [4, 12673.3]
+    - [4, 0.0]
   - - [384, 32, 1, 256]
-    - [8, 1787.11]
+    - [8, 0.0]
   - - [384, 32, 1, 1024]
-    - [9, 4906.0]
+    - [9, 0.0]
   - - [384, 32, 1, 4096]
-    - [4, 12644.6]
+    - [4, 0.0]
   - - [768, 16, 1, 256]
-    - [7, 1792.96]
+    - [7, 0.0]
   - - [768, 16, 1, 1024]
-    - [9, 4813.47]
+    - [9, 0.0]
   - - [768, 16, 1, 4096]
-    - [4, 12132.8]
+    - [4, 0.0]
   - - [16, 1024, 1, 256]
-    - [3, 2373.37]
+    - [3, 0.0]
   - - [16, 1024, 1, 1024]
-    - [9, 6162.87]
+    - [9, 0.0]
   - - [16, 1024, 1, 4096]
-    - [4, 16162.5]
+    - [4, 0.0]
   - - [32, 512, 1, 256]
-    - [7, 2418.95]
+    - [7, 0.0]
   - - [32, 512, 1, 1024]
-    - [5, 6427.18]
+    - [5, 0.0]
   - - [32, 512, 1, 4096]
-    - [5, 16607.1]
+    - [5, 0.0]
   - - [64, 256, 1, 256]
-    - [7, 2417.42]
+    - [7, 0.0]
   - - [64, 256, 1, 1024]
-    - [4, 6536.36]
+    - [4, 0.0]
   - - [64, 256, 1, 4096]
-    - [5, 16998.1]
+    - [5, 0.0]
   - - [128, 128, 1, 256]
-    - [7, 2415.12]
+    - [7, 0.0]
   - - [128, 128, 1, 1024]
-    - [4, 7468.67]
+    - [4, 0.0]
   - - [128, 128, 1, 4096]
-    - [4, 16922.0]
+    - [4, 0.0]
   - - [256, 64, 1, 256]
-    - [7, 2385.04]
+    - [7, 0.0]
   - - [256, 64, 1, 1024]
-    - [5, 6714.24]
+    - [5, 0.0]
   - - [256, 64, 1, 4096]
-    - [4, 17173.8]
+    - [4, 0.0]
   - - [512, 32, 1, 256]
-    - [7, 2390.35]
+    - [7, 0.0]
   - - [512, 32, 1, 1024]
-    - [4, 6511.12]
+    - [4, 0.0]
   - - [512, 32, 1, 4096]
-    - [4, 17014.0]
+    - [4, 0.0]
   - - [1024, 16, 1, 256]
-    - [8, 2373.91]
+    - [8, 0.0]
   - - [1024, 16, 1, 1024]
-    - [9, 6390.46]
+    - [9, 0.0]
   - - [1024, 16, 1, 4096]
-    - [10, 16571.2]
+    - [10, 0.0]
   - - [512, 128, 1, 1024]
-    - [12, 27784.0]
+    - [12, 0.0]
   - - [96, 384, 1, 4096]
-    - [13, 43837.8]
+    - [13, 0.0]
   - - [512, 96, 1, 4096]
-    - [11, 49159.0]
+    - [11, 0.0]
   - - [64, 16384, 1, 256]
-    - [14, 78433.7]
+    - [14, 0.0]
   - - [64, 16384, 1, 1024]
-    - [15, 183540.0]
+    - [15, 0.0]
   - - [2048, 512, 1, 4096]
-    - [16, 401425.0]
+    - [16, 0.0]
   - - [2048, 768, 1, 1024]
-    - [17, 280955.0]
+    - [17, 0.0]
   - - [256, 8192, 1, 1024]
-    - [18, 323677.0]
+    - [18, 0.0]
   - - [8192, 256, 1, 4096]
-    - [19, 507878.0]
+    - [19, 0.0]
   - - [4096, 768, 1, 4096]
-    - [20, 695001.0]
+    - [20, 0.0]
   - - [384, 128, 1, 1024]
-    - [3, 21003.2]
+    - [3, 0.0]
   - - [96, 57344, 1, 256]
-    - [21, 165561.0]
+    - [21, 0.0]
   - - [96, 57344, 1, 1024]
-    - [22, 349615.0]
+    - [22, 0.0]
   - - [96, 57344, 1, 4096]
-    - [23, 399138.0]
+    - [23, 0.0]
   - - [4096, 1024, 1, 4096]
-    - [24, 763499.0]
+    - [24, 0.0]
   - - [512, 12288, 1, 4096]
-    - [25, 785480.0]
+    - [25, 0.0]
   - - [49152, 16, 1, 256]
-    - [26, 43886.5]
+    - [26, 0.0]
   - - [49152, 16, 1, 1024]
-    - [27, 73350.4]
+    - [27, 0.0]
   - - [49152, 16, 1, 4096]
-    - [28, 80915.3]
+    - [28, 0.0]
   - - [49152, 32, 1, 4096]
-    - [29, 160147.0]
+    - [29, 0.0]
   - - [768, 4096, 1, 4096]
-    - [30, 687438.0]
+    - [30, 0.0]
   - - [12288, 384, 1, 4096]
-    - [31, 669355.0]
+    - [31, 0.0]
   - - [12288, 512, 1, 4096]
-    - [32, 772645.0]
+    - [32, 0.0]
   - - [384, 49152, 1, 256]
-    - [33, 242411.0]
+    - [33, 0.0]
   - - [384, 49152, 1, 1024]
-    - [34, 497348.0]
+    - [34, 0.0]
   - - [384, 49152, 1, 4096]
-    - [35, 766440.0]
+    - [35, 0.0]
   - - [4096, 2048, 1, 256]
-    - [36, 220306.0]
+    - [36, 0.0]
   - - [32768, 384, 1, 1024]
-    - [37, 574591.0]
+    - [37, 0.0]
   - - [768, 49152, 1, 1024]
-    - [38, 552695.0]
+    - [38, 0.0]
   - - [12288, 2048, 1, 4096]
-    - [39, 862475.0]
+    - [39, 0.0]
   - - [8192, 16, 1, 4096]
-    - [40, 67597.5]
+    - [40, 0.0]
   - - [32768, 128, 1, 256]
-    - [41, 169463.0]
+    - [41, 0.0]
   - - [32768, 128, 1, 1024]
-    - [42, 371995.0]
+    - [42, 0.0]
   - - [32768, 128, 1, 4096]
-    - [43, 445307.0]
+    - [43, 0.0]
   - - [40960, 384, 1, 256]
-    - [44, 241770.0]
+    - [44, 0.0]
   - - [40960, 384, 1, 1024]
-    - [45, 528127.0]
+    - [45, 0.0]
   - - [40960, 384, 1, 4096]
-    - [46, 783841.0]
+    - [46, 0.0]
   - - [40960, 768, 1, 256]
-    - [47, 243022.0]
+    - [47, 0.0]
   - - [40960, 768, 1, 1024]
-    - [48, 564283.0]
+    - [48, 0.0]
   - - [40960, 768, 1, 4096]
-    - [49, 925506.0]
+    - [49, 0.0]
   - - [65536, 16, 1, 256]
-    - [50, 50186.3]
+    - [50, 0.0]
   - - [65536, 16, 1, 1024]
-    - [51, 77173.7]
+    - [51, 0.0]
   - - [65536, 16, 1, 4096]
-    - [52, 78340.7]
+    - [52, 0.0]
   - - [96, 192, 1, 256]
-    - [3, 2644.08]
+    - [3, 0.0]
   - - [96, 192, 1, 1024]
-    - [4, 7388.24]
+    - [4, 0.0]
   - - [96, 192, 1, 4096]
-    - [4, 18651.3]
+    - [4, 0.0]
   - - [192, 96, 1, 256]
-    - [6, 2642.16]
+    - [6, 0.0]
   - - [192, 96, 1, 1024]
-    - [4, 7406.5]
+    - [4, 0.0]
   - - [192, 96, 1, 4096]
-    - [5, 18889.6]
+    - [5, 0.0]
   - - [32, 768, 1, 256]
-    - [8, 3558.65]
+    - [8, 0.0]
   - - [32, 768, 1, 1024]
-    - [5, 9589.35]
+    - [5, 0.0]
   - - [32, 768, 1, 4096]
-    - [4, 24275.6]
+    - [4, 0.0]
   - - [64, 384, 1, 256]
-    - [7, 3562.48]
+    - [7, 0.0]
   - - [64, 384, 1, 1024]
-    - [5, 9667.26]
+    - [5, 0.0]
   - - [64, 384, 1, 4096]
-    - [4, 24894.0]
+    - [4, 0.0]
   - - [96, 256, 1, 256]
-    - [8, 3562.78]
+    - [8, 0.0]
   - - [96, 256, 1, 1024]
-    - [4, 9693.88]
+    - [4, 0.0]
   - - [96, 256, 1, 4096]
-    - [4, 25550.5]
+    - [4, 0.0]
   - - [128, 192, 1, 256]
-    - [8, 3551.81]
+    - [8, 0.0]
   - - [128, 192, 1, 1024]
-    - [4, 9776.17]
+    - [4, 0.0]
   - - [128, 192, 1, 4096]
-    - [53, 25203.8]
+    - [53, 0.0]
   - - [192, 128, 1, 256]
-    - [8, 3561.77]
+    - [8, 0.0]
   - - [192, 128, 1, 1024]
-    - [4, 9689.4]
+    - [4, 0.0]
   - - [192, 128, 1, 4096]
-    - [5, 25306.7]
+    - [5, 0.0]
   - - [256, 96, 1, 256]
-    - [8, 3546.61]
+    - [8, 0.0]
   - - [256, 96, 1, 1024]
-    - [5, 9771.23]
+    - [5, 0.0]
   - - [256, 96, 1, 4096]
-    - [5, 25644.6]
+    - [5, 0.0]
   - - [384, 64, 1, 256]
-    - [8, 3557.64]
+    - [8, 0.0]
   - - [384, 64, 1, 1024]
-    - [4, 9711.09]
+    - [4, 0.0]
   - - [384, 64, 1, 4096]
-    - [5, 25164.1]
+    - [5, 0.0]
   - - [768, 32, 1, 256]
-    - [8, 3569.55]
+    - [8, 0.0]
   - - [768, 32, 1, 1024]
-    - [4, 9696.5]
+    - [4, 0.0]
   - - [768, 32, 1, 4096]
-    - [4, 24828.9]
+    - [4, 0.0]
   - - [16, 2048, 1, 256]
-    - [3, 4113.9]
+    - [3, 0.0]
   - - [16, 2048, 1, 1024]
-    - [4, 12092.3]
+    - [4, 0.0]
   - - [16, 2048, 1, 4096]
-    - [4, 30391.9]
+    - [4, 0.0]
   - - [32, 1024, 1, 1024]
-    - [5, 12668.0]
+    - [5, 0.0]
   - - [32, 1024, 1, 4096]
-    - [4, 32354.2]
+    - [4, 0.0]
   - - [64, 512, 1, 256]
-    - [8, 4712.74]
+    - [8, 0.0]
   - - [64, 512, 1, 1024]
-    - [5, 12779.0]
+    - [5, 0.0]
   - - [64, 512, 1, 4096]
-    - [4, 33359.4]
+    - [4, 0.0]
   - - [128, 256, 1, 256]
-    - [8, 4703.49]
+    - [8, 0.0]
   - - [128, 256, 1, 1024]
-    - [5, 12803.1]
+    - [5, 0.0]
   - - [128, 256, 1, 4096]
-    - [53, 33587.3]
+    - [53, 0.0]
   - - [256, 128, 1, 256]
-    - [8, 4736.56]
+    - [8, 0.0]
   - - [256, 128, 1, 1024]
-    - [5, 12936.1]
+    - [5, 0.0]
   - - [256, 128, 1, 4096]
-    - [5, 33816.3]
+    - [5, 0.0]
   - - [512, 64, 1, 256]
-    - [8, 4708.77]
+    - [8, 0.0]
   - - [512, 64, 1, 1024]
-    - [5, 12906.3]
+    - [5, 0.0]
   - - [512, 64, 1, 4096]
-    - [5, 33459.2]
+    - [5, 0.0]
   - - [1024, 32, 1, 256]
-    - [3, 4343.86]
+    - [3, 0.0]
   - - [1024, 32, 1, 4096]
-    - [4, 32991.6]
+    - [4, 0.0]
   - - [2048, 16, 1, 256]
-    - [6, 4150.02]
+    - [6, 0.0]
   - - [2048, 16, 1, 1024]
-    - [5, 12592.2]
+    - [5, 0.0]
   - - [512, 128, 1, 4096]
-    - [11, 63861.0]
+    - [11, 0.0]
   - - [16, 12288, 1, 1024]
-    - [54, 48055.9]
+    - [54, 0.0]
   - - [32, 8192, 1, 1024]
-    - [55, 72275.0]
+    - [55, 0.0]
   - - [192, 192, 1, 256]
-    - [8, 5306.74]
+    - [8, 0.0]
   - - [96, 768, 1, 256]
-    - [56, 8660.96]
+    - [56, 0.0]
   - - [96, 768, 1, 1024]
-    - [56, 24396.0]
+    - [56, 0.0]
   - - [96, 768, 1, 4096]
-    - [57, 50699.4]
+    - [57, 0.0]
   - - [192, 384, 1, 256]
-    - [55, 8871.64]
+    - [55, 0.0]
   - - [192, 384, 1, 1024]
-    - [55, 24724.4]
+    - [55, 0.0]
   - - [192, 384, 1, 4096]
-    - [58, 51247.5]
+    - [58, 0.0]
   - - [384, 192, 1, 256]
-    - [55, 8886.89]
+    - [55, 0.0]
   - - [384, 192, 1, 1024]
-    - [55, 24845.2]
+    - [55, 0.0]
   - - [384, 192, 1, 4096]
-    - [59, 51551.1]
+    - [59, 0.0]
   - - [96, 1024, 1, 256]
-    - [55, 11452.6]
+    - [55, 0.0]
   - - [96, 1024, 1, 1024]
-    - [56, 32871.6]
+    - [56, 0.0]
   - - [96, 1024, 1, 4096]
-    - [57, 67579.4]
+    - [57, 0.0]
   - - [128, 768, 1, 256]
-    - [55, 11616.4]
+    - [55, 0.0]
   - - [128, 768, 1, 1024]
-    - [55, 32671.6]
+    - [55, 0.0]
   - - [128, 768, 1, 4096]
-    - [58, 68195.7]
+    - [58, 0.0]
   - - [192, 512, 1, 256]
-    - [55, 11612.4]
+    - [55, 0.0]
   - - [192, 512, 1, 1024]
-    - [55, 32739.6]
+    - [55, 0.0]
   - - [192, 512, 1, 4096]
-    - [58, 68504.9]
+    - [58, 0.0]
   - - [256, 384, 1, 256]
-    - [55, 11546.6]
+    - [55, 0.0]
   - - [256, 384, 1, 1024]
-    - [56, 32709.3]
+    - [56, 0.0]
   - - [256, 384, 1, 4096]
-    - [58, 69826.6]
+    - [58, 0.0]
   - - [384, 256, 1, 256]
-    - [60, 11677.1]
+    - [60, 0.0]
   - - [384, 256, 1, 1024]
-    - [55, 33105.1]
+    - [55, 0.0]
   - - [384, 256, 1, 4096]
-    - [59, 69555.8]
+    - [59, 0.0]
   - - [512, 192, 1, 256]
-    - [55, 11598.5]
+    - [55, 0.0]
   - - [512, 192, 1, 1024]
-    - [55, 32895.3]
+    - [55, 0.0]
   - - [512, 192, 1, 4096]
-    - [59, 67925.9]
+    - [59, 0.0]
   - - [768, 128, 1, 256]
-    - [55, 11619.1]
+    - [55, 0.0]
   - - [768, 128, 1, 1024]
-    - [55, 32733.7]
+    - [55, 0.0]
   - - [768, 128, 1, 4096]
-    - [59, 67137.1]
+    - [59, 0.0]
   - - [64, 2048, 1, 256]
-    - [55, 15209.9]
+    - [55, 0.0]
   - - [64, 2048, 1, 1024]
-    - [55, 42349.1]
+    - [55, 0.0]
   - - [64, 2048, 1, 4096]
-    - [57, 87151.1]
+    - [57, 0.0]
   - - [128, 1024, 1, 256]
-    - [55, 15350.8]
+    - [55, 0.0]
   - - [128, 1024, 1, 1024]
-    - [55, 43417.0]
+    - [55, 0.0]
   - - [128, 1024, 1, 4096]
-    - [57, 90270.2]
+    - [57, 0.0]
   - - [256, 512, 1, 256]
-    - [55, 15261.4]
+    - [55, 0.0]
   - - [256, 512, 1, 1024]
-    - [56, 43362.3]
+    - [56, 0.0]
   - - [256, 512, 1, 4096]
-    - [61, 91594.7]
+    - [61, 0.0]
   - - [512, 256, 1, 256]
-    - [55, 15330.4]
+    - [55, 0.0]
   - - [512, 256, 1, 1024]
-    - [55, 43632.2]
+    - [55, 0.0]
   - - [512, 256, 1, 4096]
-    - [59, 90326.4]
+    - [59, 0.0]
   - - [1024, 128, 1, 256]
-    - [55, 15372.2]
+    - [55, 0.0]
   - - [1024, 128, 1, 1024]
-    - [55, 43457.0]
+    - [55, 0.0]
   - - [1024, 128, 1, 4096]
-    - [58, 88701.2]
+    - [58, 0.0]
   - - [2048, 64, 1, 256]
-    - [55, 15269.0]
+    - [55, 0.0]
   - - [2048, 64, 1, 1024]
-    - [56, 42641.1]
+    - [56, 0.0]
   - - [2048, 64, 1, 4096]
-    - [57, 84823.3]
+    - [57, 0.0]
   - - [192, 768, 1, 256]
-    - [62, 17029.7]
+    - [62, 0.0]
   - - [192, 768, 1, 1024]
-    - [56, 49901.4]
+    - [56, 0.0]
   - - [192, 768, 1, 4096]
-    - [58, 102077.0]
+    - [58, 0.0]
   - - [384, 384, 1, 256]
-    - [55, 17259.8]
+    - [55, 0.0]
   - - [384, 384, 1, 1024]
-    - [55, 49413.1]
+    - [55, 0.0]
   - - [384, 384, 1, 4096]
-    - [58, 102727.0]
+    - [58, 0.0]
   - - [768, 192, 1, 256]
-    - [63, 17162.0]
+    - [63, 0.0]
   - - [768, 192, 1, 1024]
-    - [55, 50068.5]
+    - [55, 0.0]
   - - [768, 192, 1, 4096]
-    - [59, 100947.0]
+    - [59, 0.0]
   - - [96, 2048, 1, 256]
-    - [56, 22405.5]
+    - [56, 0.0]
   - - [96, 2048, 1, 1024]
-    - [56, 64601.9]
+    - [56, 0.0]
   - - [96, 2048, 1, 4096]
-    - [57, 132077.0]
+    - [57, 0.0]
   - - [192, 1024, 1, 256]
-    - [56, 22472.5]
+    - [56, 0.0]
   - - [192, 1024, 1, 1024]
-    - [56, 64478.8]
+    - [56, 0.0]
   - - [192, 1024, 1, 4096]
-    - [57, 135680.0]
+    - [57, 0.0]
   - - [256, 768, 1, 256]
-    - [56, 22645.4]
+    - [56, 0.0]
   - - [256, 768, 1, 1024]
-    - [56, 64729.7]
+    - [56, 0.0]
   - - [256, 768, 1, 4096]
-    - [58, 135970.0]
+    - [58, 0.0]
   - - [384, 512, 1, 256]
-    - [63, 22679.1]
+    - [63, 0.0]
   - - [384, 512, 1, 1024]
-    - [55, 65525.0]
+    - [55, 0.0]
   - - [384, 512, 1, 4096]
-    - [61, 136618.0]
+    - [61, 0.0]
   - - [512, 384, 1, 256]
-    - [55, 22687.3]
+    - [55, 0.0]
   - - [512, 384, 1, 1024]
-    - [64, 65177.1]
+    - [64, 0.0]
   - - [512, 384, 1, 4096]
-    - [58, 136400.0]
+    - [58, 0.0]
   - - [768, 256, 1, 256]
-    - [55, 22807.6]
+    - [55, 0.0]
   - - [768, 256, 1, 1024]
-    - [55, 64947.9]
+    - [55, 0.0]
   - - [768, 256, 1, 4096]
-    - [58, 133868.0]
+    - [58, 0.0]
   - - [1024, 192, 1, 256]
-    - [55, 22833.9]
+    - [55, 0.0]
   - - [1024, 192, 1, 1024]
-    - [55, 64648.6]
+    - [55, 0.0]
   - - [1024, 192, 1, 4096]
-    - [58, 132713.0]
+    - [58, 0.0]
   - - [64, 4096, 1, 256]
-    - [56, 29151.1]
+    - [56, 0.0]
   - - [64, 4096, 1, 1024]
-    - [56, 80795.1]
+    - [56, 0.0]
   - - [64, 4096, 1, 4096]
-    - [57, 157098.0]
+    - [57, 0.0]
   - - [128, 2048, 1, 256]
-    - [62, 30141.7]
+    - [62, 0.0]
   - - [128, 2048, 1, 1024]
-    - [56, 84138.0]
+    - [56, 0.0]
   - - [128, 2048, 1, 4096]
-    - [57, 172298.0]
+    - [57, 0.0]
   - - [256, 1024, 1, 256]
-    - [62, 29877.3]
+    - [62, 0.0]
   - - [256, 1024, 1, 1024]
-    - [56, 85169.8]
+    - [56, 0.0]
   - - [256, 1024, 1, 4096]
-    - [61, 177294.0]
+    - [61, 0.0]
   - - [512, 512, 1, 256]
-    - [55, 29681.1]
+    - [55, 0.0]
   - - [512, 512, 1, 1024]
-    - [65, 85413.7]
+    - [65, 0.0]
   - - [512, 512, 1, 4096]
-    - [61, 177681.0]
+    - [61, 0.0]
   - - [1024, 256, 1, 256]
-    - [55, 29939.3]
+    - [55, 0.0]
   - - [1024, 256, 1, 1024]
-    - [55, 85383.8]
+    - [55, 0.0]
   - - [1024, 256, 1, 4096]
-    - [61, 174401.0]
+    - [61, 0.0]
   - - [2048, 128, 1, 256]
-    - [55, 30475.0]
+    - [55, 0.0]
   - - [2048, 128, 1, 1024]
-    - [55, 84767.7]
+    - [55, 0.0]
   - - [2048, 128, 1, 4096]
-    - [61, 169054.0]
+    - [61, 0.0]
   - - [4096, 64, 1, 256]
-    - [55, 29524.4]
+    - [55, 0.0]
   - - [4096, 64, 1, 1024]
-    - [55, 80949.8]
+    - [55, 0.0]
   - - [4096, 64, 1, 4096]
-    - [61, 153620.0]
+    - [61, 0.0]
   - - [64, 16384, 1, 4096]
-    - [15, 264806.0]
+    - [15, 0.0]
   - - [4096, 256, 1, 256]
-    - [66, 82738.1]
+    - [66, 0.0]
   - - [2048, 768, 1, 4096]
-    - [67, 483041.0]
+    - [67, 0.0]
   - - [256, 8192, 1, 4096]
-    - [68, 506859.0]
+    - [68, 0.0]
   - - [16384, 128, 1, 256]
-    - [69, 116140.0]
+    - [69, 0.0]
   - - [8192, 384, 1, 256]
-    - [70, 158397.0]
+    - [70, 0.0]
   - - [384, 128, 1, 4096]
-    - [11, 52409.5]
+    - [11, 0.0]
   - - [128, 32768, 1, 256]
-    - [71, 171206.0]
+    - [71, 0.0]
   - - [128, 32768, 1, 1024]
-    - [72, 398781.0]
+    - [72, 0.0]
   - - [128, 32768, 1, 4096]
-    - [73, 453171.0]
+    - [73, 0.0]
   - - [8192, 512, 1, 256]
-    - [74, 188438.0]
+    - [74, 0.0]
   - - [8192, 768, 1, 256]
-    - [75, 208827.0]
+    - [75, 0.0]
   - - [192, 8192, 1, 256]
-    - [0, 102576.0]
+    - [0, 0.0]
   - - [192, 12288, 1, 256]
-    - [76, 120637.0]
+    - [76, 0.0]
   - - [12288, 256, 1, 256]
-    - [77, 155596.0]
+    - [77, 0.0]
   - - [24576, 192, 1, 256]
-    - [78, 180464.0]
+    - [78, 0.0]
   - - [24576, 256, 1, 256]
-    - [79, 200545.0]
+    - [79, 0.0]
   - - [768, 24576, 1, 256]
-    - [34, 244397.0]
+    - [34, 0.0]
   - - [4096, 2048, 1, 1024]
-    - [36, 568933.0]
+    - [36, 0.0]
   - - [32768, 384, 1, 4096]
-    - [80, 661455.0]
+    - [80, 0.0]
   - - [768, 49152, 1, 4096]
-    - [81, 878138.0]
+    - [81, 0.0]
   - - [24576, 1024, 1, 256]
-    - [82, 247753.0]
+    - [82, 0.0]
   - - [65536, 256, 1, 256]
-    - [83, 248964.0]
+    - [83, 0.0]
   - - [65536, 256, 1, 1024]
-    - [84, 506718.0]
+    - [84, 0.0]
   - - [65536, 256, 1, 4096]
-    - [84, 727471.0]
+    - [84, 0.0]
   - - [12288, 4096, 1, 256]
-    - [85, 261744.0]
+    - [85, 0.0]
   - - [12288, 4096, 1, 1024]
-    - [86, 651006.0]
+    - [86, 0.0]
   - - [12288, 4096, 1, 4096]
-    - [84, 1061720.0]
+    - [84, 0.0]
   - - [24576, 2048, 1, 256]
-    - [48, 261010.0]
+    - [48, 0.0]
   - - [24576, 2048, 1, 1024]
-    - [48, 651306.0]
+    - [48, 0.0]
   - - [24576, 2048, 1, 4096]
-    - [48, 1019290.0]
+    - [48, 0.0]
   - - [49152, 1024, 1, 256]
-    - [87, 252724.0]
+    - [87, 0.0]
   - - [49152, 1024, 1, 1024]
-    - [48, 618836.0]
+    - [48, 0.0]
   - - [49152, 1024, 1, 4096]
-    - [48, 978239.0]
+    - [48, 0.0]
   - - [65536, 768, 1, 256]
-    - [48, 253682.0]
+    - [48, 0.0]
   - - [65536, 768, 1, 1024]
-    - [86, 630491.0]
+    - [86, 0.0]
   - - [65536, 768, 1, 4096]
-    - [48, 958887.0]
+    - [48, 0.0]
   - - [8192, 8192, 1, 256]
-    - [84, 279092.0]
+    - [84, 0.0]
   - - [8192, 8192, 1, 1024]
-    - [84, 684783.0]
+    - [84, 0.0]
   - - [8192, 8192, 1, 4096]
-    - [84, 1078910.0]
+    - [84, 0.0]
   - - [16384, 4096, 1, 256]
-    - [48, 270631.0]
+    - [48, 0.0]
   - - [16384, 4096, 1, 1024]
-    - [86, 667992.0]
+    - [86, 0.0]
   - - [16384, 4096, 1, 4096]
-    - [84, 1045160.0]
+    - [84, 0.0]
   - - [32768, 2048, 1, 256]
-    - [88, 255983.0]
+    - [88, 0.0]
   - - [32768, 2048, 1, 1024]
-    - [86, 650609.0]
+    - [86, 0.0]
   - - [32768, 2048, 1, 4096]
-    - [48, 1011860.0]
+    - [48, 0.0]
   - - [65536, 1024, 1, 256]
-    - [86, 265122.0]
+    - [86, 0.0]
   - - [65536, 1024, 1, 1024]
-    - [84, 655093.0]
+    - [84, 0.0]
   - - [65536, 1024, 1, 4096]
-    - [48, 987805.0]
+    - [48, 0.0]
   - - [32768, 192, 1, 256]
-    - [89, 188924.0]
+    - [89, 0.0]
   - - [40960, 1024, 1, 256]
-    - [90, 253906.0]
+    - [90, 0.0]
   - - [40960, 1024, 1, 1024]
-    - [91, 542365.0]
+    - [91, 0.0]
   - - [40960, 1024, 1, 4096]
-    - [92, 895037.0]
+    - [92, 0.0]
   - - [65536, 32, 1, 256]
-    - [93, 86297.9]
+    - [93, 0.0]
   - - [65536, 32, 1, 1024]
-    - [94, 142069.0]
+    - [94, 0.0]
   - - [65536, 32, 1, 4096]
-    - [95, 140147.0]
+    - [95, 0.0]
   - - [16, 4096, 1, 1024]
-    - [11, 22859.5]
+    - [11, 0.0]
   - - [1024, 64, 1, 256]
-    - [6, 8277.32]
+    - [6, 0.0]
   - - [16, 12288, 1, 4096]
-    - [96, 74667.6]
+    - [96, 0.0]
   - - [32, 8192, 1, 4096]
-    - [97, 127407.0]
+    - [97, 0.0]
   - - [192, 192, 1, 1024]
-    - [8, 15730.5]
+    - [8, 0.0]
   - - [8192, 32, 1, 256]
-    - [60, 28359.4]
+    - [60, 0.0]
   - - [128, 8192, 1, 256]
-    - [98, 82738.1]
+    - [98, 0.0]
   - - [4096, 256, 1, 1024]
-    - [66, 223785.0]
+    - [66, 0.0]
   - - [4096, 384, 1, 256]
-    - [99, 106062.0]
+    - [99, 0.0]
   - - [512, 4096, 1, 256]
-    - [100, 125464.0]
+    - [100, 0.0]
   - - [16384, 128, 1, 1024]
-    - [101, 294067.0]
+    - [101, 0.0]
   - - [8192, 384, 1, 1024]
-    - [102, 402794.0]
+    - [102, 0.0]
   - - [768, 64, 1, 256]
-    - [3, 6570.04]
+    - [3, 0.0]
   - - [256, 16384, 1, 256]
-    - [103, 188454.0]
+    - [103, 0.0]
   - - [8192, 512, 1, 1024]
-    - [104, 455665.0]
+    - [104, 0.0]
   - - [8192, 768, 1, 1024]
-    - [105, 534409.0]
+    - [105, 0.0]
   - - [192, 8192, 1, 1024]
-    - [106, 279081.0]
+    - [106, 0.0]
   - - [12288, 256, 1, 1024]
-    - [107, 378626.0]
+    - [107, 0.0]
   - - [24576, 192, 1, 1024]
-    - [108, 420919.0]
+    - [108, 0.0]
   - - [24576, 256, 1, 1024]
-    - [109, 485534.0]
+    - [109, 0.0]
   - - [768, 24576, 1, 1024]
-    - [110, 595831.0]
+    - [110, 0.0]
   - - [4096, 2048, 1, 4096]
-    - [111, 912033.0]
+    - [111, 0.0]
   - - [512, 49152, 1, 256]
-    - [37, 263118.0]
+    - [37, 0.0]
   - - [512, 49152, 1, 1024]
-    - [112, 542534.0]
+    - [112, 0.0]
   - - [512, 49152, 1, 4096]
-    - [113, 872773.0]
+    - [113, 0.0]
   - - [256, 57344, 1, 256]
-    - [114, 246436.0]
+    - [114, 0.0]
   - - [256, 57344, 1, 1024]
-    - [115, 510913.0]
+    - [115, 0.0]
   - - [256, 57344, 1, 4096]
-    - [116, 728532.0]
+    - [116, 0.0]
   - - [512, 57344, 1, 256]
-    - [82, 263771.0]
+    - [82, 0.0]
   - - [512, 57344, 1, 1024]
-    - [117, 562135.0]
+    - [117, 0.0]
   - - [512, 57344, 1, 4096]
-    - [118, 895049.0]
+    - [118, 0.0]
   - - [768, 57344, 1, 256]
-    - [119, 257993.0]
+    - [119, 0.0]
   - - [768, 57344, 1, 1024]
-    - [120, 606890.0]
+    - [120, 0.0]
   - - [768, 57344, 1, 4096]
-    - [117, 964880.0]
+    - [117, 0.0]
   - - [1024, 57344, 1, 256]
-    - [118, 279682.0]
+    - [118, 0.0]
   - - [1024, 57344, 1, 1024]
-    - [118, 684111.0]
+    - [118, 0.0]
   - - [1024, 57344, 1, 4096]
-    - [118, 1004640.0]
+    - [118, 0.0]
   - - [24576, 1024, 1, 1024]
-    - [38, 596220.0]
+    - [38, 0.0]
   - - [32768, 192, 1, 1024]
-    - [121, 462295.0]
+    - [121, 0.0]
   - - [57344, 16, 1, 256]
-    - [122, 46117.4]
+    - [122, 0.0]
   - - [57344, 16, 1, 1024]
-    - [123, 73469.5]
+    - [123, 0.0]
   - - [57344, 16, 1, 4096]
-    - [124, 81644.5]
+    - [124, 0.0]
   - - [65536, 64, 1, 256]
-    - [125, 145915.0]
+    - [125, 0.0]
   - - [65536, 64, 1, 1024]
-    - [126, 272180.0]
+    - [126, 0.0]
   - - [65536, 64, 1, 4096]
-    - [127, 269244.0]
+    - [127, 0.0]
   - - [32, 2048, 1, 256]
-    - [6, 8143.33]
+    - [6, 0.0]
   - - [1024, 64, 1, 1024]
-    - [12, 27864.7]
+    - [12, 0.0]
   - - [768, 96, 1, 256]
-    - [55, 8702.9]
+    - [55, 0.0]
   - - [768, 96, 1, 1024]
-    - [56, 24488.2]
+    - [56, 0.0]
   - - [768, 96, 1, 4096]
-    - [59, 50381.0]
+    - [59, 0.0]
   - - [1024, 96, 1, 256]
-    - [55, 11564.9]
+    - [55, 0.0]
   - - [1024, 96, 1, 1024]
-    - [56, 33125.3]
+    - [56, 0.0]
   - - [1024, 96, 1, 4096]
-    - [59, 66249.0]
+    - [59, 0.0]
   - - [2048, 96, 1, 256]
-    - [55, 22566.2]
+    - [55, 0.0]
   - - [2048, 96, 1, 1024]
-    - [55, 64594.8]
+    - [55, 0.0]
   - - [2048, 96, 1, 4096]
-    - [58, 128232.0]
+    - [58, 0.0]
   - - [4096, 96, 1, 256]
-    - [128, 38552.8]
+    - [128, 0.0]
   - - [4096, 96, 1, 1024]
-    - [129, 105737.0]
+    - [129, 0.0]
   - - [4096, 96, 1, 4096]
-    - [130, 201743.0]
+    - [130, 0.0]
   - - [192, 192, 1, 4096]
-    - [131, 43156.9]
+    - [131, 0.0]
   - - [8192, 32, 1, 1024]
-    - [56, 72633.7]
+    - [56, 0.0]
   - - [128, 8192, 1, 1024]
-    - [132, 219777.0]
+    - [132, 0.0]
   - - [4096, 256, 1, 4096]
-    - [15, 392298.0]
+    - [15, 0.0]
   - - [4096, 384, 1, 1024]
-    - [133, 283453.0]
+    - [133, 0.0]
   - - [512, 4096, 1, 1024]
-    - [134, 329944.0]
+    - [134, 0.0]
   - - [16384, 128, 1, 4096]
-    - [135, 422662.0]
+    - [135, 0.0]
   - - [8192, 384, 1, 4096]
-    - [136, 642877.0]
+    - [136, 0.0]
   - - [768, 64, 1, 1024]
-    - [3, 21097.0]
+    - [3, 0.0]
   - - [256, 16384, 1, 1024]
-    - [137, 432558.0]
+    - [137, 0.0]
   - - [8192, 512, 1, 4096]
-    - [24, 721099.0]
+    - [24, 0.0]
   - - [8192, 768, 1, 4096]
-    - [138, 813628.0]
+    - [138, 0.0]
   - - [192, 8192, 1, 4096]
-    - [106, 429144.0]
+    - [106, 0.0]
   - - [12288, 256, 1, 4096]
-    - [107, 610993.0]
+    - [107, 0.0]
   - - [24576, 192, 1, 4096]
-    - [139, 584549.0]
+    - [139, 0.0]
   - - [24576, 256, 1, 4096]
-    - [109, 672861.0]
+    - [109, 0.0]
   - - [768, 24576, 1, 4096]
-    - [140, 738811.0]
+    - [140, 0.0]
   - - [8192, 1024, 1, 256]
-    - [141, 219991.0]
+    - [141, 0.0]
   - - [1024, 24576, 1, 256]
-    - [142, 262952.0]
+    - [142, 0.0]
   - - [384, 32768, 1, 256]
-    - [38, 229886.0]
+    - [38, 0.0]
   - - [384, 32768, 1, 1024]
-    - [81, 537577.0]
+    - [81, 0.0]
   - - [384, 32768, 1, 4096]
-    - [39, 753940.0]
+    - [39, 0.0]
   - - [24576, 1024, 1, 4096]
-    - [143, 833896.0]
+    - [143, 0.0]
   - - [12288, 16, 1, 1024]
-    - [144, 47563.9]
+    - [144, 0.0]
   - - [32768, 192, 1, 4096]
-    - [145, 601902.0]
+    - [145, 0.0]
   - - [57344, 32, 1, 256]
-    - [146, 82292.3]
+    - [146, 0.0]
   - - [57344, 32, 1, 1024]
-    - [147, 141371.0]
+    - [147, 0.0]
   - - [57344, 32, 1, 4096]
-    - [148, 149732.0]
+    - [148, 0.0]
   - - [65536, 96, 1, 256]
-    - [149, 174854.0]
+    - [149, 0.0]
   - - [65536, 96, 1, 1024]
-    - [150, 358204.0]
+    - [150, 0.0]
   - - [65536, 96, 1, 4096]
-    - [151, 382593.0]
+    - [151, 0.0]
   - - [32, 2048, 1, 1024]
-    - [152, 22984.7]
+    - [152, 0.0]
   - - [1024, 64, 1, 4096]
-    - [11, 62663.5]
+    - [11, 0.0]
   - - [16, 16384, 1, 256]
-    - [153, 24708.3]
+    - [153, 0.0]
   - - [384, 96, 1, 256]
-    - [8, 5279.29]
+    - [8, 0.0]
   - - [8192, 32, 1, 4096]
-    - [154, 124072.0]
+    - [154, 0.0]
   - - [128, 8192, 1, 4096]
-    - [155, 349419.0]
+    - [155, 0.0]
   - - [8192, 128, 1, 256]
-    - [14, 82399.5]
+    - [14, 0.0]
   - - [4096, 384, 1, 4096]
-    - [156, 472121.0]
+    - [156, 0.0]
   - - [512, 4096, 1, 4096]
-    - [157, 552574.0]
+    - [157, 0.0]
   - - [64, 40960, 1, 256]
-    - [158, 118710.0]
+    - [158, 0.0]
   - - [64, 40960, 1, 1024]
-    - [159, 233689.0]
+    - [159, 0.0]
   - - [64, 40960, 1, 4096]
-    - [160, 290769.0]
+    - [160, 0.0]
   - - [16384, 192, 1, 256]
-    - [161, 158427.0]
+    - [161, 0.0]
   - - [768, 64, 1, 4096]
-    - [11, 47740.5]
+    - [11, 0.0]
   - - [256, 16384, 1, 4096]
-    - [162, 694913.0]
+    - [162, 0.0]
   - - [16384, 256, 1, 256]
-    - [163, 179943.0]
+    - [163, 0.0]
   - - [16384, 384, 1, 256]
-    - [121, 205025.0]
+    - [121, 0.0]
   - - [384, 4096, 1, 256]
-    - [106, 105175.0]
+    - [106, 0.0]
   - - [12288, 192, 1, 256]
-    - [164, 121315.0]
+    - [164, 0.0]
   - - [24576, 128, 1, 256]
-    - [165, 147206.0]
+    - [165, 0.0]
   - - [49152, 96, 1, 256]
-    - [166, 159316.0]
+    - [166, 0.0]
   - - [49152, 96, 1, 1024]
-    - [167, 345013.0]
+    - [167, 0.0]
   - - [49152, 96, 1, 4096]
-    - [168, 399065.0]
+    - [168, 0.0]
   - - [49152, 128, 1, 256]
-    - [169, 190499.0]
+    - [169, 0.0]
   - - [24576, 768, 1, 256]
-    - [33, 239059.0]
+    - [33, 0.0]
   - - [8192, 1024, 1, 1024]
-    - [170, 555252.0]
+    - [170, 0.0]
   - - [1024, 24576, 1, 1024]
-    - [112, 609924.0]
+    - [112, 0.0]
   - - [768, 16384, 1, 256]
-    - [81, 233054.0]
+    - [81, 0.0]
   - - [49152, 512, 1, 256]
-    - [38, 240758.0]
+    - [38, 0.0]
   - - [49152, 512, 1, 1024]
-    - [38, 525523.0]
+    - [38, 0.0]
   - - [49152, 512, 1, 4096]
-    - [81, 854284.0]
+    - [81, 0.0]
   - - [12288, 16, 1, 4096]
-    - [171, 72643.5]
+    - [171, 0.0]
   - - [32768, 256, 1, 256]
-    - [172, 211134.0]
+    - [172, 0.0]
   - - [32768, 256, 1, 1024]
-    - [173, 498955.0]
+    - [173, 0.0]
   - - [32768, 256, 1, 4096]
-    - [111, 609321.0]
+    - [111, 0.0]
   - - [57344, 64, 1, 256]
-    - [174, 130423.0]
+    - [174, 0.0]
   - - [65536, 128, 1, 256]
-    - [175, 200723.0]
+    - [175, 0.0]
   - - [65536, 128, 1, 1024]
-    - [176, 422664.0]
+    - [176, 0.0]
   - - [65536, 128, 1, 4096]
-    - [173, 490755.0]
+    - [173, 0.0]
   - - [32, 2048, 1, 4096]
-    - [13, 59369.7]
+    - [13, 0.0]
   - - [2048, 32, 1, 256]
-    - [3, 8239.31]
+    - [3, 0.0]
   - - [16, 16384, 1, 1024]
-    - [54, 56031.8]
+    - [54, 0.0]
   - - [384, 96, 1, 1024]
-    - [3, 15920.7]
+    - [3, 0.0]
   - - [16384, 16, 1, 256]
-    - [177, 24790.4]
+    - [177, 0.0]
   - - [256, 4096, 1, 256]
-    - [66, 82883.1]
+    - [66, 0.0]
   - - [8192, 128, 1, 1024]
-    - [178, 214465.0]
+    - [178, 0.0]
   - - [8192, 192, 1, 256]
-    - [179, 102090.0]
+    - [179, 0.0]
   - - [1024, 2048, 1, 256]
-    - [180, 121311.0]
+    - [180, 0.0]
   - - [64, 49152, 1, 256]
-    - [181, 127268.0]
+    - [181, 0.0]
   - - [16384, 192, 1, 1024]
-    - [182, 376409.0]
+    - [182, 0.0]
   - - [96, 8192, 1, 256]
-    - [183, 65985.1]
+    - [183, 0.0]
   - - [96, 8192, 1, 1024]
-    - [184, 172438.0]
+    - [184, 0.0]
   - - [96, 8192, 1, 4096]
-    - [185, 285511.0]
+    - [185, 0.0]
   - - [512, 8192, 1, 256]
-    - [186, 194708.0]
+    - [186, 0.0]
   - - [16384, 256, 1, 1024]
-    - [187, 422058.0]
+    - [187, 0.0]
   - - [16384, 384, 1, 1024]
-    - [188, 512555.0]
+    - [188, 0.0]
   - - [384, 4096, 1, 1024]
-    - [189, 280662.0]
+    - [189, 0.0]
   - - [12288, 192, 1, 1024]
-    - [190, 321345.0]
+    - [190, 0.0]
   - - [24576, 128, 1, 1024]
-    - [191, 334145.0]
+    - [191, 0.0]
   - - [192, 32768, 1, 256]
-    - [192, 187277.0]
+    - [192, 0.0]
   - - [49152, 128, 1, 1024]
-    - [193, 423613.0]
+    - [193, 0.0]
   - - [24576, 768, 1, 1024]
-    - [194, 586803.0]
+    - [194, 0.0]
   - - [8192, 1024, 1, 4096]
-    - [111, 843393.0]
+    - [111, 0.0]
   - - [1024, 24576, 1, 4096]
-    - [195, 853533.0]
+    - [195, 0.0]
   - - [768, 16384, 1, 1024]
-    - [196, 615842.0]
+    - [196, 0.0]
   - - [49152, 768, 1, 256]
-    - [197, 265200.0]
+    - [197, 0.0]
   - - [40960, 16, 1, 256]
-    - [198, 39774.4]
+    - [198, 0.0]
   - - [40960, 16, 1, 1024]
-    - [199, 71576.2]
+    - [199, 0.0]
   - - [40960, 16, 1, 4096]
-    - [200, 74879.3]
+    - [200, 0.0]
   - - [57344, 64, 1, 1024]
-    - [201, 251751.0]
+    - [201, 0.0]
   - - [65536, 192, 1, 256]
-    - [142, 234096.0]
+    - [142, 0.0]
   - - [65536, 192, 1, 1024]
-    - [113, 494963.0]
+    - [113, 0.0]
   - - [65536, 192, 1, 4096]
-    - [195, 627802.0]
+    - [195, 0.0]
   - - [64, 1024, 1, 256]
-    - [6, 8154.01]
+    - [6, 0.0]
   - - [2048, 32, 1, 1024]
-    - [3, 23596.2]
+    - [3, 0.0]
   - - [16, 16384, 1, 4096]
-    - [202, 77007.8]
+    - [202, 0.0]
   - - [32, 16384, 1, 4096]
-    - [203, 149030.0]
+    - [203, 0.0]
   - - [384, 96, 1, 4096]
-    - [11, 44098.1]
+    - [11, 0.0]
   - - [16384, 16, 1, 1024]
-    - [204, 55270.4]
+    - [204, 0.0]
   - - [256, 4096, 1, 1024]
-    - [205, 227797.0]
+    - [205, 0.0]
   - - [8192, 128, 1, 4096]
-    - [206, 345734.0]
+    - [206, 0.0]
   - - [8192, 192, 1, 1024]
-    - [67, 282134.0]
+    - [67, 0.0]
   - - [1024, 2048, 1, 1024]
-    - [207, 332909.0]
+    - [207, 0.0]
   - - [64, 49152, 1, 1024]
-    - [208, 253574.0]
+    - [208, 0.0]
   - - [16384, 192, 1, 4096]
-    - [20, 571101.0]
+    - [20, 0.0]
   - - [12288, 96, 1, 256]
-    - [209, 81120.1]
+    - [209, 0.0]
   - - [512, 8192, 1, 1024]
-    - [210, 460034.0]
+    - [210, 0.0]
   - - [16384, 256, 1, 4096]
-    - [24, 669062.0]
+    - [24, 0.0]
   - - [16384, 384, 1, 4096]
-    - [138, 761638.0]
+    - [138, 0.0]
   - - [384, 4096, 1, 4096]
-    - [211, 467971.0]
+    - [211, 0.0]
   - - [24576, 128, 1, 4096]
-    - [213, 476133.0]
+    - [213, 0.0]
   - - [192, 32768, 1, 1024]
-    - [214, 473143.0]
+    - [214, 0.0]
   - - [49152, 128, 1, 4096]
-    - [215, 529089.0]
+    - [215, 0.0]
   - - [24576, 768, 1, 4096]
-    - [216, 752475.0]
+    - [216, 0.0]
   - - [16384, 512, 1, 256]
-    - [176, 220465.0]
+    - [176, 0.0]
   - - [16384, 512, 1, 1024]
-    - [176, 534471.0]
+    - [176, 0.0]
   - - [16384, 512, 1, 4096]
-    - [111, 717502.0]
+    - [111, 0.0]
   - - [2048, 12288, 1, 256]
-    - [217, 261523.0]
+    - [217, 0.0]
   - - [768, 16384, 1, 4096]
-    - [81, 771211.0]
+    - [81, 0.0]
   - - [49152, 768, 1, 1024]
-    - [218, 577518.0]
+    - [218, 0.0]
   - - [40960, 32, 1, 256]
-    - [219, 70649.3]
+    - [219, 0.0]
   - - [57344, 64, 1, 4096]
-    - [220, 278790.0]
+    - [220, 0.0]
   - - [64, 1024, 1, 1024]
-    - [8, 27953.7]
+    - [8, 0.0]
   - - [2048, 32, 1, 4096]
-    - [221, 59000.0]
+    - [221, 0.0]
   - - [16, 24576, 1, 256]
-    - [222, 29418.8]
+    - [222, 0.0]
   - - [16, 24576, 1, 1024]
-    - [223, 63269.2]
+    - [223, 0.0]
   - - [16, 24576, 1, 4096]
-    - [224, 79417.2]
+    - [224, 0.0]
   - - [64, 768, 1, 256]
-    - [3, 6242.48]
+    - [3, 0.0]
   - - [64, 768, 1, 1024]
-    - [3, 17470.8]
+    - [3, 0.0]
   - - [16384, 16, 1, 4096]
-    - [225, 76293.8]
+    - [225, 0.0]
   - - [256, 4096, 1, 4096]
-    - [226, 394532.0]
+    - [226, 0.0]
   - - [16384, 64, 1, 256]
-    - [227, 78107.7]
+    - [227, 0.0]
   - - [16384, 64, 1, 1024]
-    - [228, 178478.0]
+    - [228, 0.0]
   - - [8192, 192, 1, 4096]
-    - [156, 431300.0]
+    - [156, 0.0]
   - - [1024, 2048, 1, 4096]
-    - [229, 555396.0]
+    - [229, 0.0]
   - - [64, 49152, 1, 4096]
-    - [230, 309459.0]
+    - [230, 0.0]
   - - [64, 57344, 1, 256]
-    - [231, 130860.0]
+    - [231, 0.0]
   - - [12288, 96, 1, 1024]
-    - [232, 202199.0]
+    - [232, 0.0]
   - - [512, 8192, 1, 4096]
-    - [43, 743949.0]
+    - [43, 0.0]
   - - [128, 40960, 1, 256]
-    - [233, 182256.0]
+    - [233, 0.0]
   - - [128, 40960, 1, 1024]
-    - [234, 412015.0]
+    - [234, 0.0]
   - - [128, 40960, 1, 4096]
-    - [235, 453530.0]
+    - [235, 0.0]
   - - [128, 57344, 1, 256]
-    - [236, 197529.0]
+    - [236, 0.0]
   - - [128, 57344, 1, 1024]
-    - [237, 437205.0]
+    - [237, 0.0]
   - - [128, 57344, 1, 4096]
-    - [238, 491081.0]
+    - [238, 0.0]
   - - [768, 2048, 1, 256]
-    - [239, 103507.0]
+    - [239, 0.0]
   - - [24576, 96, 1, 256]
-    - [240, 123713.0]
+    - [240, 0.0]
   - - [24576, 96, 1, 1024]
-    - [212, 275140.0]
+    - [212, 0.0]
   - - [24576, 96, 1, 4096]
-    - [241, 361271.0]
+    - [241, 0.0]
   - - [49152, 64, 1, 256]
-    - [242, 125807.0]
+    - [242, 0.0]
   - - [192, 32768, 1, 4096]
-    - [243, 632018.0]
+    - [243, 0.0]
   - - [192, 40960, 1, 256]
-    - [244, 208268.0]
+    - [244, 0.0]
   - - [192, 40960, 1, 1024]
-    - [245, 478541.0]
+    - [245, 0.0]
   - - [192, 40960, 1, 4096]
-    - [246, 563154.0]
+    - [246, 0.0]
   - - [49152, 384, 1, 256]
-    - [33, 233994.0]
+    - [33, 0.0]
   - - [49152, 384, 1, 1024]
-    - [34, 486322.0]
+    - [34, 0.0]
   - - [49152, 384, 1, 4096]
-    - [247, 759998.0]
+    - [247, 0.0]
   - - [256, 40960, 1, 256]
-    - [248, 234764.0]
+    - [248, 0.0]
   - - [256, 40960, 1, 1024]
-    - [249, 517754.0]
+    - [249, 0.0]
   - - [256, 40960, 1, 4096]
-    - [250, 665011.0]
+    - [250, 0.0]
   - - [512, 40960, 1, 256]
-    - [251, 254496.0]
+    - [251, 0.0]
   - - [512, 40960, 1, 1024]
-    - [252, 514504.0]
+    - [252, 0.0]
   - - [512, 40960, 1, 4096]
-    - [252, 820799.0]
+    - [252, 0.0]
   - - [2048, 12288, 1, 1024]
-    - [113, 613422.0]
+    - [113, 0.0]
   - - [12288, 1024, 1, 256]
-    - [253, 238040.0]
+    - [253, 0.0]
   - - [49152, 768, 1, 4096]
-    - [81, 878953.0]
+    - [81, 0.0]
   - - [12288, 32, 1, 4096]
-    - [254, 144434.0]
+    - [254, 0.0]
   - - [40960, 32, 1, 1024]
-    - [255, 130211.0]
+    - [255, 0.0]
   - - [57344, 96, 1, 256]
-    - [256, 168965.0]
+    - [256, 0.0]
   - - [57344, 96, 1, 1024]
-    - [257, 356165.0]
+    - [257, 0.0]
   - - [57344, 96, 1, 4096]
-    - [258, 397635.0]
+    - [258, 0.0]
   - - [16, 16, 1, 8192]
-    - [5, 491.334]
+    - [5, 0.0]
   - - [16, 16, 1, 16384]
-    - [259, 416.085]
+    - [259, 0.0]
   - - [16, 32, 1, 8192]
-    - [11, 714.254]
+    - [11, 0.0]
   - - [16, 32, 1, 16384]
-    - [260, 835.031]
+    - [260, 0.0]
   - - [32, 16, 1, 8192]
-    - [11, 727.851]
+    - [11, 0.0]
   - - [32, 16, 1, 16384]
-    - [259, 838.939]
+    - [259, 0.0]
   - - [16, 64, 1, 8192]
-    - [13, 1369.51]
+    - [13, 0.0]
   - - [16, 64, 1, 16384]
-    - [259, 1668.14]
+    - [259, 0.0]
   - - [32, 32, 1, 8192]
-    - [13, 1393.05]
+    - [13, 0.0]
   - - [32, 32, 1, 16384]
-    - [259, 1689.46]
+    - [259, 0.0]
   - - [64, 16, 1, 8192]
-    - [11, 1388.8]
+    - [11, 0.0]
   - - [64, 16, 1, 16384]
-    - [259, 1669.77]
+    - [259, 0.0]
   - - [16, 96, 1, 8192]
-    - [11, 2047.0]
+    - [11, 0.0]
   - - [16, 96, 1, 16384]
-    - [259, 2503.21]
+    - [259, 0.0]
   - - [96, 16, 1, 8192]
-    - [11, 2058.59]
+    - [11, 0.0]
   - - [96, 16, 1, 16384]
-    - [259, 2519.51]
+    - [259, 0.0]
   - - [16, 128, 1, 8192]
-    - [13, 2700.34]
+    - [13, 0.0]
   - - [16, 128, 1, 16384]
-    - [260, 3320.98]
+    - [260, 0.0]
   - - [32, 64, 1, 8192]
-    - [13, 2793.46]
+    - [13, 0.0]
   - - [32, 64, 1, 16384]
-    - [10, 3492.64]
+    - [10, 0.0]
   - - [64, 32, 1, 8192]
-    - [11, 2814.66]
+    - [11, 0.0]
   - - [64, 32, 1, 16384]
-    - [261, 3530.01]
+    - [261, 0.0]
   - - [128, 16, 1, 8192]
-    - [11, 2747.98]
+    - [11, 0.0]
   - - [128, 16, 1, 16384]
-    - [261, 3340.07]
+    - [261, 0.0]
   - - [16, 192, 1, 8192]
-    - [13, 4090.71]
+    - [13, 0.0]
   - - [16, 192, 1, 16384]
-    - [259, 4994.25]
+    - [259, 0.0]
   - - [32, 96, 1, 8192]
-    - [11, 4177.73]
+    - [11, 0.0]
   - - [32, 96, 1, 16384]
-    - [262, 5094.85]
+    - [262, 0.0]
   - - [96, 32, 1, 8192]
-    - [261, 4237.6]
+    - [261, 0.0]
   - - [96, 32, 1, 16384]
-    - [259, 5158.27]
+    - [259, 0.0]
   - - [192, 16, 1, 8192]
-    - [13, 4151.75]
+    - [13, 0.0]
   - - [192, 16, 1, 16384]
-    - [261, 5041.42]
+    - [261, 0.0]
   - - [16, 256, 1, 8192]
-    - [13, 5421.84]
+    - [13, 0.0]
   - - [16, 256, 1, 16384]
-    - [259, 6646.2]
+    - [259, 0.0]
   - - [32, 128, 1, 8192]
-    - [9, 5552.25]
+    - [9, 0.0]
   - - [32, 128, 1, 16384]
-    - [262, 6849.96]
+    - [262, 0.0]
   - - [64, 64, 1, 8192]
-    - [10, 5618.82]
+    - [10, 0.0]
   - - [64, 64, 1, 16384]
-    - [260, 6867.09]
+    - [260, 0.0]
   - - [128, 32, 1, 8192]
-    - [10, 5673.4]
+    - [10, 0.0]
   - - [128, 32, 1, 16384]
-    - [261, 6962.64]
+    - [261, 0.0]
   - - [256, 16, 1, 8192]
-    - [11, 5498.97]
+    - [11, 0.0]
   - - [256, 16, 1, 16384]
-    - [261, 6762.97]
+    - [261, 0.0]
   - - [16, 384, 1, 8192]
-    - [13, 8094.31]
+    - [13, 0.0]
   - - [16, 384, 1, 16384]
-    - [259, 9909.04]
+    - [259, 0.0]
   - - [32, 192, 1, 8192]
-    - [11, 8289.34]
+    - [11, 0.0]
   - - [32, 192, 1, 16384]
-    - [260, 10139.6]
+    - [260, 0.0]
   - - [64, 96, 1, 8192]
-    - [9, 8445.47]
+    - [9, 0.0]
   - - [64, 96, 1, 16384]
-    - [260, 10339.6]
+    - [260, 0.0]
   - - [96, 64, 1, 8192]
-    - [10, 8466.43]
+    - [10, 0.0]
   - - [96, 64, 1, 16384]
-    - [263, 10368.6]
+    - [263, 0.0]
   - - [192, 32, 1, 8192]
-    - [13, 8511.45]
+    - [13, 0.0]
   - - [192, 32, 1, 16384]
-    - [261, 10426.9]
+    - [261, 0.0]
   - - [384, 16, 1, 8192]
-    - [11, 8198.93]
+    - [11, 0.0]
   - - [384, 16, 1, 16384]
-    - [261, 10050.4]
+    - [261, 0.0]
   - - [16, 512, 1, 8192]
-    - [13, 11011.7]
+    - [13, 0.0]
   - - [16, 512, 1, 16384]
-    - [259, 13041.9]
+    - [259, 0.0]
   - - [32, 256, 1, 8192]
-    - [11, 11164.9]
+    - [11, 0.0]
   - - [32, 256, 1, 16384]
-    - [259, 13596.3]
+    - [259, 0.0]
   - - [64, 128, 1, 8192]
-    - [9, 11721.5]
+    - [9, 0.0]
   - - [64, 128, 1, 16384]
-    - [260, 13904.3]
+    - [260, 0.0]
   - - [128, 64, 1, 8192]
-    - [10, 11818.5]
+    - [10, 0.0]
   - - [128, 64, 1, 16384]
-    - [261, 13984.0]
+    - [261, 0.0]
   - - [256, 32, 1, 8192]
-    - [13, 11512.8]
+    - [13, 0.0]
   - - [256, 32, 1, 16384]
-    - [261, 14038.1]
+    - [261, 0.0]
   - - [512, 16, 1, 8192]
-    - [13, 11190.7]
+    - [13, 0.0]
   - - [512, 16, 1, 16384]
-    - [261, 13294.1]
+    - [261, 0.0]
   - - [96, 96, 1, 8192]
-    - [10, 13065.5]
+    - [10, 0.0]
   - - [96, 96, 1, 16384]
-    - [260, 15398.2]
+    - [260, 0.0]
   - - [16, 768, 1, 8192]
-    - [13, 15945.5]
+    - [13, 0.0]
   - - [16, 768, 1, 16384]
-    - [259, 19151.6]
+    - [259, 0.0]
   - - [32, 384, 1, 8192]
-    - [11, 16473.0]
+    - [11, 0.0]
   - - [32, 384, 1, 16384]
-    - [264, 20056.0]
+    - [264, 0.0]
   - - [64, 192, 1, 8192]
-    - [11, 16959.7]
+    - [11, 0.0]
   - - [64, 192, 1, 16384]
-    - [265, 20774.5]
+    - [265, 0.0]
   - - [96, 128, 1, 8192]
-    - [9, 16769.9]
+    - [9, 0.0]
   - - [96, 128, 1, 16384]
-    - [260, 20548.3]
+    - [260, 0.0]
   - - [128, 96, 1, 8192]
-    - [10, 16838.0]
+    - [10, 0.0]
   - - [128, 96, 1, 16384]
-    - [259, 20495.7]
+    - [259, 0.0]
   - - [192, 64, 1, 8192]
-    - [10, 17068.5]
+    - [10, 0.0]
   - - [192, 64, 1, 16384]
-    - [261, 20923.5]
+    - [261, 0.0]
   - - [384, 32, 1, 8192]
-    - [261, 17010.4]
+    - [261, 0.0]
   - - [384, 32, 1, 16384]
-    - [261, 20792.7]
+    - [261, 0.0]
   - - [768, 16, 1, 8192]
-    - [13, 16355.8]
+    - [13, 0.0]
   - - [768, 16, 1, 16384]
-    - [259, 19493.5]
+    - [259, 0.0]
   - - [16, 1024, 1, 8192]
-    - [13, 21463.1]
+    - [13, 0.0]
   - - [16, 1024, 1, 16384]
-    - [259, 25424.2]
+    - [259, 0.0]
   - - [32, 512, 1, 8192]
-    - [13, 22226.6]
+    - [13, 0.0]
   - - [32, 512, 1, 16384]
-    - [259, 26715.5]
+    - [259, 0.0]
   - - [64, 256, 1, 8192]
-    - [11, 22934.9]
+    - [11, 0.0]
   - - [64, 256, 1, 16384]
-    - [265, 27614.6]
+    - [265, 0.0]
   - - [128, 128, 1, 8192]
-    - [10, 22717.6]
+    - [10, 0.0]
   - - [128, 128, 1, 16384]
-    - [266, 27727.5]
+    - [266, 0.0]
   - - [256, 64, 1, 8192]
-    - [10, 23051.9]
+    - [10, 0.0]
   - - [256, 64, 1, 16384]
-    - [10, 27665.8]
+    - [10, 0.0]
   - - [512, 32, 1, 8192]
-    - [10, 23032.2]
+    - [10, 0.0]
   - - [512, 32, 1, 16384]
-    - [261, 27290.2]
+    - [261, 0.0]
   - - [1024, 16, 1, 8192]
-    - [13, 21833.6]
+    - [13, 0.0]
   - - [1024, 16, 1, 16384]
-    - [259, 25830.2]
+    - [259, 0.0]
   - - [64, 1024, 1, 8192]
-    - [13, 85122.0]
+    - [13, 0.0]
   - - [1024, 64, 1, 8192]
-    - [221, 85433.7]
+    - [221, 0.0]
   - - [4096, 32, 1, 16384]
-    - [267, 125184.0]
+    - [267, 0.0]
   - - [32, 12288, 1, 16384]
-    - [268, 165482.0]
+    - [268, 0.0]
   - - [4096, 96, 1, 8192]
-    - [269, 230300.0]
+    - [269, 0.0]
   - - [4096, 96, 1, 16384]
-    - [270, 231962.0]
+    - [270, 0.0]
   - - [32, 40960, 1, 16384]
-    - [271, 187820.0]
+    - [271, 0.0]
   - - [192, 192, 1, 16384]
-    - [131, 61601.6]
+    - [131, 0.0]
   - - [512, 96, 1, 8192]
-    - [11, 66323.4]
+    - [11, 0.0]
   - - [512, 96, 1, 16384]
-    - [131, 80988.7]
+    - [131, 0.0]
   - - [16384, 32, 1, 16384]
-    - [272, 177539.0]
+    - [272, 0.0]
   - - [2048, 384, 1, 16384]
-    - [273, 411090.0]
+    - [273, 0.0]
   - - [256, 4096, 1, 8192]
-    - [274, 453817.0]
+    - [274, 0.0]
   - - [4096, 256, 1, 8192]
-    - [274, 440054.0]
+    - [274, 0.0]
   - - [64, 24576, 1, 8192]
-    - [275, 316439.0]
+    - [275, 0.0]
   - - [8192, 192, 1, 8192]
-    - [133, 476561.0]
+    - [133, 0.0]
   - - [256, 8192, 1, 8192]
-    - [276, 569448.0]
+    - [276, 0.0]
   - - [4096, 512, 1, 8192]
-    - [277, 595504.0]
+    - [277, 0.0]
   - - [64, 49152, 1, 8192]
-    - [278, 323344.0]
+    - [278, 0.0]
   - - [8192, 384, 1, 8192]
-    - [20, 662933.0]
+    - [20, 0.0]
   - - [192, 256, 1, 16384]
-    - [221, 81417.5]
+    - [221, 0.0]
   - - [96, 16384, 1, 8192]
-    - [279, 387128.0]
+    - [279, 0.0]
   - - [96, 49152, 1, 8192]
-    - [280, 439889.0]
+    - [280, 0.0]
   - - [96, 49152, 1, 16384]
-    - [281, 455304.0]
+    - [281, 0.0]
   - - [1024, 4096, 1, 8192]
-    - [282, 742103.0]
+    - [282, 0.0]
   - - [128, 40960, 1, 8192]
-    - [283, 488888.0]
+    - [283, 0.0]
   - - [8192, 768, 1, 8192]
-    - [284, 727305.0]
+    - [284, 0.0]
   - - [32768, 16, 1, 16384]
-    - [285, 105197.0]
+    - [285, 0.0]
   - - [12288, 64, 1, 16384]
-    - [286, 289747.0]
+    - [286, 0.0]
   - - [384, 4096, 1, 16384]
-    - [287, 506566.0]
+    - [287, 0.0]
   - - [49152, 32, 1, 16384]
-    - [288, 194662.0]
+    - [288, 0.0]
   - - [192, 16384, 1, 16384]
-    - [289, 510187.0]
+    - [289, 0.0]
   - - [24576, 128, 1, 16384]
-    - [290, 468282.0]
+    - [290, 0.0]
   - - [12288, 384, 1, 16384]
-    - [108, 660159.0]
+    - [108, 0.0]
   - - [384, 16384, 1, 16384]
-    - [291, 762763.0]
+    - [291, 0.0]
   - - [49152, 128, 1, 16384]
-    - [291, 559062.0]
+    - [291, 0.0]
   - - [12288, 768, 1, 8192]
-    - [247, 807098.0]
+    - [247, 0.0]
   - - [768, 24576, 1, 8192]
-    - [292, 900628.0]
+    - [292, 0.0]
   - - [384, 57344, 1, 16384]
-    - [293, 931025.0]
+    - [293, 0.0]
   - - [8192, 1024, 1, 16384]
-    - [294, 927919.0]
+    - [294, 0.0]
   - - [256, 49152, 1, 16384]
-    - [112, 821534.0]
+    - [112, 0.0]
   - - [32768, 384, 1, 16384]
-    - [295, 897754.0]
+    - [295, 0.0]
   - - [65536, 384, 1, 16384]
-    - [80, 928857.0]
+    - [80, 0.0]
   - - [768, 16384, 1, 16384]
-    - [296, 1048820.0]
+    - [296, 0.0]
   - - [768, 32768, 1, 16384]
-    - [296, 1074160.0]
+    - [296, 0.0]
   - - [512, 32768, 1, 8192]
-    - [297, 929614.0]
+    - [297, 0.0]
   - - [512, 32768, 1, 16384]
-    - [298, 1061780.0]
+    - [298, 0.0]
   - - [1024, 16384, 1, 8192]
-    - [299, 1008630.0]
+    - [299, 0.0]
   - - [1024, 16384, 1, 16384]
-    - [300, 1152910.0]
+    - [300, 0.0]
   - - [16384, 1024, 1, 8192]
-    - [48, 998352.0]
+    - [48, 0.0]
   - - [16384, 1024, 1, 16384]
-    - [86, 1116390.0]
+    - [86, 0.0]
   - - [32768, 512, 1, 8192]
-    - [301, 905150.0]
+    - [301, 0.0]
   - - [32768, 512, 1, 16384]
-    - [298, 1038890.0]
+    - [298, 0.0]
   - - [1024, 32768, 1, 8192]
-    - [297, 1087390.0]
+    - [297, 0.0]
   - - [1024, 32768, 1, 16384]
-    - [297, 1167680.0]
+    - [297, 0.0]
   - - [32768, 1024, 1, 8192]
-    - [48, 1056310.0]
+    - [48, 0.0]
   - - [32768, 1024, 1, 16384]
-    - [84, 1151210.0]
+    - [84, 0.0]
   - - [65536, 512, 1, 8192]
-    - [302, 952727.0]
+    - [302, 0.0]
   - - [65536, 512, 1, 16384]
-    - [303, 1060970.0]
+    - [303, 0.0]
   - - [1024, 49152, 1, 8192]
-    - [297, 1085460.0]
+    - [297, 0.0]
   - - [1024, 49152, 1, 16384]
-    - [297, 1163350.0]
+    - [297, 0.0]
   - - [32768, 96, 1, 8192]
-    - [304, 390667.0]
+    - [304, 0.0]
   - - [40960, 128, 1, 8192]
-    - [305, 470065.0]
+    - [305, 0.0]
   - - [40960, 384, 1, 8192]
-    - [306, 851308.0]
+    - [306, 0.0]
   - - [40960, 384, 1, 16384]
-    - [307, 934013.0]
+    - [307, 0.0]
   - - [40960, 768, 1, 8192]
-    - [306, 1009040.0]
+    - [306, 0.0]
   - - [40960, 768, 1, 16384]
-    - [45, 1076240.0]
+    - [45, 0.0]
   - - [57344, 64, 1, 16384]
-    - [308, 347685.0]
+    - [308, 0.0]
   - - [57344, 384, 1, 16384]
-    - [309, 929757.0]
+    - [309, 0.0]
   - - [65536, 96, 1, 8192]
-    - [310, 450121.0]
+    - [310, 0.0]
   - - [96, 192, 1, 8192]
-    - [13, 25350.1]
+    - [13, 0.0]
   - - [96, 192, 1, 16384]
-    - [311, 30772.2]
+    - [311, 0.0]
   - - [192, 96, 1, 8192]
-    - [9, 25546.0]
+    - [9, 0.0]
   - - [192, 96, 1, 16384]
-    - [9, 30628.6]
+    - [9, 0.0]
   - - [32, 768, 1, 8192]
-    - [10, 32306.8]
+    - [10, 0.0]
   - - [32, 768, 1, 16384]
-    - [13, 38728.8]
+    - [13, 0.0]
   - - [64, 384, 1, 8192]
-    - [11, 33437.2]
+    - [11, 0.0]
   - - [64, 384, 1, 16384]
-    - [265, 40310.7]
+    - [265, 0.0]
   - - [96, 256, 1, 8192]
-    - [312, 33479.8]
+    - [312, 0.0]
   - - [96, 256, 1, 16384]
-    - [312, 40633.5]
+    - [312, 0.0]
   - - [128, 192, 1, 8192]
-    - [10, 33758.6]
+    - [10, 0.0]
   - - [128, 192, 1, 16384]
-    - [313, 41389.4]
+    - [313, 0.0]
   - - [192, 128, 1, 8192]
-    - [314, 33610.2]
+    - [314, 0.0]
   - - [192, 128, 1, 16384]
-    - [9, 41132.9]
+    - [9, 0.0]
   - - [256, 96, 1, 8192]
-    - [11, 33638.3]
+    - [11, 0.0]
   - - [256, 96, 1, 16384]
-    - [315, 40651.2]
+    - [315, 0.0]
   - - [384, 64, 1, 8192]
-    - [13, 33645.8]
+    - [13, 0.0]
   - - [384, 64, 1, 16384]
-    - [316, 40447.0]
+    - [316, 0.0]
   - - [768, 32, 1, 8192]
-    - [261, 33610.2]
+    - [261, 0.0]
   - - [768, 32, 1, 16384]
-    - [261, 39377.7]
+    - [261, 0.0]
   - - [64, 1024, 1, 16384]
-    - [13, 101482.0]
+    - [13, 0.0]
   - - [1024, 64, 1, 16384]
-    - [131, 103677.0]
+    - [131, 0.0]
   - - [2048, 192, 1, 8192]
-    - [129, 235674.0]
+    - [129, 0.0]
   - - [2048, 192, 1, 16384]
-    - [269, 256485.0]
+    - [269, 0.0]
   - - [32, 16384, 1, 8192]
-    - [317, 161351.0]
+    - [317, 0.0]
   - - [32, 49152, 1, 8192]
-    - [318, 171724.0]
+    - [318, 0.0]
   - - [384, 96, 1, 8192]
-    - [11, 49403.5]
+    - [11, 0.0]
   - - [96, 768, 1, 8192]
-    - [319, 62724.5]
+    - [319, 0.0]
   - - [96, 768, 1, 16384]
-    - [58, 73045.2]
+    - [58, 0.0]
   - - [192, 384, 1, 8192]
-    - [58, 64293.7]
+    - [58, 0.0]
   - - [192, 384, 1, 16384]
-    - [58, 74301.0]
+    - [58, 0.0]
   - - [384, 192, 1, 8192]
-    - [59, 64345.0]
+    - [59, 0.0]
   - - [384, 192, 1, 16384]
-    - [59, 73563.5]
+    - [59, 0.0]
   - - [96, 1024, 1, 8192]
-    - [57, 82815.6]
+    - [57, 0.0]
   - - [96, 1024, 1, 16384]
-    - [57, 95726.5]
+    - [57, 0.0]
   - - [128, 768, 1, 8192]
-    - [59, 84492.7]
+    - [59, 0.0]
   - - [128, 768, 1, 16384]
-    - [58, 99245.1]
+    - [58, 0.0]
   - - [192, 512, 1, 8192]
-    - [61, 85720.2]
+    - [61, 0.0]
   - - [192, 512, 1, 16384]
-    - [58, 98423.3]
+    - [58, 0.0]
   - - [256, 384, 1, 8192]
-    - [58, 86600.7]
+    - [58, 0.0]
   - - [256, 384, 1, 16384]
-    - [58, 99585.7]
+    - [58, 0.0]
   - - [384, 256, 1, 8192]
-    - [59, 86100.7]
+    - [59, 0.0]
   - - [384, 256, 1, 16384]
-    - [59, 98417.3]
+    - [59, 0.0]
   - - [512, 192, 1, 8192]
-    - [59, 83598.1]
+    - [59, 0.0]
   - - [512, 192, 1, 16384]
-    - [61, 95843.3]
+    - [61, 0.0]
   - - [768, 128, 1, 8192]
-    - [59, 83325.5]
+    - [59, 0.0]
   - - [768, 128, 1, 16384]
-    - [59, 97810.6]
+    - [59, 0.0]
   - - [64, 2048, 1, 8192]
-    - [57, 106659.0]
+    - [57, 0.0]
   - - [64, 2048, 1, 16384]
-    - [61, 121408.0]
+    - [61, 0.0]
   - - [128, 1024, 1, 8192]
-    - [61, 110569.0]
+    - [61, 0.0]
   - - [128, 1024, 1, 16384]
-    - [57, 128483.0]
+    - [57, 0.0]
   - - [256, 512, 1, 8192]
-    - [61, 115257.0]
+    - [61, 0.0]
   - - [256, 512, 1, 16384]
-    - [61, 132600.0]
+    - [61, 0.0]
   - - [512, 256, 1, 8192]
-    - [59, 110865.0]
+    - [59, 0.0]
   - - [512, 256, 1, 16384]
-    - [58, 128618.0]
+    - [58, 0.0]
   - - [1024, 128, 1, 8192]
-    - [61, 108408.0]
+    - [61, 0.0]
   - - [1024, 128, 1, 16384]
-    - [58, 124842.0]
+    - [58, 0.0]
   - - [2048, 64, 1, 8192]
-    - [57, 105103.0]
+    - [57, 0.0]
   - - [2048, 64, 1, 16384]
-    - [59, 120034.0]
+    - [59, 0.0]
   - - [192, 768, 1, 8192]
-    - [58, 125684.0]
+    - [58, 0.0]
   - - [192, 768, 1, 16384]
-    - [58, 148520.0]
+    - [58, 0.0]
   - - [384, 384, 1, 8192]
-    - [58, 127960.0]
+    - [58, 0.0]
   - - [384, 384, 1, 16384]
-    - [58, 146716.0]
+    - [58, 0.0]
   - - [768, 192, 1, 8192]
-    - [59, 123733.0]
+    - [59, 0.0]
   - - [768, 192, 1, 16384]
-    - [59, 146051.0]
+    - [59, 0.0]
   - - [96, 2048, 1, 8192]
-    - [57, 159623.0]
+    - [57, 0.0]
   - - [96, 2048, 1, 16384]
-    - [61, 180267.0]
+    - [61, 0.0]
   - - [192, 1024, 1, 8192]
-    - [58, 163604.0]
+    - [58, 0.0]
   - - [192, 1024, 1, 16384]
-    - [320, 188639.0]
+    - [320, 0.0]
   - - [256, 768, 1, 8192]
-    - [58, 166539.0]
+    - [58, 0.0]
   - - [256, 768, 1, 16384]
-    - [57, 190801.0]
+    - [57, 0.0]
   - - [384, 512, 1, 8192]
-    - [61, 168437.0]
+    - [61, 0.0]
   - - [384, 512, 1, 16384]
-    - [58, 194540.0]
+    - [58, 0.0]
   - - [512, 384, 1, 8192]
-    - [58, 168340.0]
+    - [58, 0.0]
   - - [512, 384, 1, 16384]
-    - [58, 192782.0]
+    - [58, 0.0]
   - - [768, 256, 1, 8192]
-    - [58, 161479.0]
+    - [58, 0.0]
   - - [768, 256, 1, 16384]
-    - [61, 184670.0]
+    - [61, 0.0]
   - - [1024, 192, 1, 8192]
-    - [59, 161084.0]
+    - [59, 0.0]
   - - [1024, 192, 1, 16384]
-    - [58, 183711.0]
+    - [58, 0.0]
   - - [64, 4096, 1, 8192]
-    - [57, 186105.0]
+    - [57, 0.0]
   - - [64, 4096, 1, 16384]
-    - [320, 202261.0]
+    - [320, 0.0]
   - - [128, 2048, 1, 8192]
-    - [57, 206278.0]
+    - [57, 0.0]
   - - [128, 2048, 1, 16384]
-    - [320, 225870.0]
+    - [320, 0.0]
   - - [256, 1024, 1, 8192]
-    - [57, 213805.0]
+    - [57, 0.0]
   - - [256, 1024, 1, 16384]
-    - [320, 240316.0]
+    - [320, 0.0]
   - - [512, 512, 1, 8192]
-    - [61, 217233.0]
+    - [61, 0.0]
   - - [512, 512, 1, 16384]
-    - [61, 240269.0]
+    - [61, 0.0]
   - - [1024, 256, 1, 8192]
-    - [58, 206925.0]
+    - [58, 0.0]
   - - [1024, 256, 1, 16384]
-    - [59, 233141.0]
+    - [59, 0.0]
   - - [2048, 128, 1, 8192]
-    - [61, 204374.0]
+    - [61, 0.0]
   - - [2048, 128, 1, 16384]
-    - [58, 220904.0]
+    - [58, 0.0]
   - - [4096, 64, 1, 8192]
-    - [61, 183090.0]
+    - [61, 0.0]
   - - [4096, 64, 1, 16384]
-    - [59, 196106.0]
+    - [59, 0.0]
   - - [768, 768, 1, 8192]
-    - [321, 325329.0]
+    - [321, 0.0]
   - - [4096, 192, 1, 8192]
-    - [273, 366983.0]
+    - [273, 0.0]
   - - [256, 4096, 1, 16384]
-    - [322, 453243.0]
+    - [322, 0.0]
   - - [4096, 256, 1, 16384]
-    - [323, 438526.0]
+    - [323, 0.0]
   - - [64, 24576, 1, 16384]
-    - [324, 310671.0]
+    - [324, 0.0]
   - - [8192, 192, 1, 16384]
-    - [325, 435531.0]
+    - [325, 0.0]
   - - [256, 8192, 1, 16384]
-    - [276, 504055.0]
+    - [276, 0.0]
   - - [4096, 512, 1, 16384]
-    - [326, 555214.0]
+    - [326, 0.0]
   - - [64, 49152, 1, 16384]
-    - [327, 340491.0]
+    - [327, 0.0]
   - - [8192, 384, 1, 16384]
-    - [328, 581200.0]
+    - [328, 0.0]
   - - [384, 128, 1, 8192]
-    - [131, 66594.1]
+    - [131, 0.0]
   - - [96, 16384, 1, 16384]
-    - [329, 370758.0]
+    - [329, 0.0]
   - - [96, 57344, 1, 8192]
-    - [23, 438402.0]
+    - [23, 0.0]
   - - [96, 57344, 1, 16384]
-    - [330, 470492.0]
+    - [330, 0.0]
   - - [1024, 4096, 1, 16384]
-    - [282, 728988.0]
+    - [282, 0.0]
   - - [128, 40960, 1, 16384]
-    - [331, 530313.0]
+    - [331, 0.0]
   - - [8192, 768, 1, 16384]
-    - [188, 814803.0]
+    - [188, 0.0]
   - - [192, 4096, 1, 8192]
-    - [332, 379343.0]
+    - [332, 0.0]
   - - [24576, 32, 1, 8192]
-    - [333, 172229.0]
+    - [333, 0.0]
   - - [768, 2048, 1, 8192]
-    - [334, 565494.0]
+    - [334, 0.0]
   - - [192, 12288, 1, 8192]
-    - [335, 548880.0]
+    - [335, 0.0]
   - - [384, 8192, 1, 8192]
-    - [336, 644352.0]
+    - [336, 0.0]
   - - [49152, 64, 1, 8192]
-    - [337, 325328.0]
+    - [337, 0.0]
   - - [24576, 192, 1, 8192]
-    - [338, 561958.0]
+    - [338, 0.0]
   - - [768, 8192, 1, 8192]
-    - [339, 758496.0]
+    - [339, 0.0]
   - - [192, 40960, 1, 8192]
-    - [340, 613555.0]
+    - [340, 0.0]
   - - [12288, 768, 1, 16384]
-    - [341, 932295.0]
+    - [341, 0.0]
   - - [768, 24576, 1, 16384]
-    - [35, 1020410.0]
+    - [35, 0.0]
   - - [256, 32768, 1, 8192]
-    - [342, 669064.0]
+    - [342, 0.0]
   - - [16384, 512, 1, 8192]
-    - [343, 732727.0]
+    - [343, 0.0]
   - - [512, 24576, 1, 8192]
-    - [80, 855058.0]
+    - [80, 0.0]
   - - [512, 49152, 1, 8192]
-    - [195, 926508.0]
+    - [195, 0.0]
   - - [768, 49152, 1, 8192]
-    - [344, 1033750.0]
+    - [344, 0.0]
   - - [12288, 1024, 1, 8192]
-    - [345, 908131.0]
+    - [345, 0.0]
   - - [24576, 1024, 1, 8192]
-    - [39, 1012410.0]
+    - [39, 0.0]
   - - [1024, 40960, 1, 8192]
-    - [117, 1045490.0]
+    - [117, 0.0]
   - - [1024, 40960, 1, 16384]
-    - [346, 1041160.0]
+    - [346, 0.0]
   - - [12288, 32, 1, 16384]
-    - [347, 162036.0]
+    - [347, 0.0]
   - - [32768, 96, 1, 16384]
-    - [348, 415063.0]
+    - [348, 0.0]
   - - [40960, 16, 1, 16384]
-    - [349, 101825.0]
+    - [349, 0.0]
   - - [40960, 128, 1, 16384]
-    - [350, 530418.0]
+    - [350, 0.0]
   - - [40960, 1024, 1, 8192]
-    - [92, 1045090.0]
+    - [92, 0.0]
   - - [40960, 1024, 1, 16384]
-    - [49, 1015710.0]
+    - [49, 0.0]
   - - [57344, 96, 1, 8192]
-    - [310, 420675.0]
+    - [310, 0.0]
   - - [57344, 256, 1, 8192]
-    - [351, 768525.0]
+    - [351, 0.0]
   - - [57344, 256, 1, 16384]
-    - [352, 880205.0]
+    - [352, 0.0]
   - - [57344, 512, 1, 8192]
-    - [353, 940662.0]
+    - [353, 0.0]
   - - [57344, 512, 1, 16384]
-    - [354, 1041040.0]
+    - [354, 0.0]
   - - [65536, 96, 1, 16384]
-    - [355, 478455.0]
+    - [355, 0.0]
   - - [16, 2048, 1, 8192]
-    - [356, 41818.7]
+    - [356, 0.0]
   - - [16, 2048, 1, 16384]
-    - [357, 48288.1]
+    - [357, 0.0]
   - - [128, 512, 1, 8192]
-    - [13, 87902.8]
+    - [13, 0.0]
   - - [2048, 32, 1, 8192]
-    - [131, 81559.7]
+    - [131, 0.0]
   - - [16, 12288, 1, 16384]
-    - [358, 92996.2]
+    - [358, 0.0]
   - - [16, 32768, 1, 8192]
-    - [359, 93585.8]
+    - [359, 0.0]
   - - [16, 32768, 1, 16384]
-    - [360, 105037.0]
+    - [360, 0.0]
   - - [32, 16384, 1, 16384]
-    - [361, 177363.0]
+    - [361, 0.0]
   - - [32, 49152, 1, 16384]
-    - [362, 192102.0]
+    - [362, 0.0]
   - - [384, 96, 1, 16384]
-    - [221, 59701.9]
+    - [221, 0.0]
   - - [8192, 32, 1, 8192]
-    - [363, 142679.0]
+    - [363, 0.0]
   - - [768, 768, 1, 16384]
-    - [364, 349118.0]
+    - [364, 0.0]
   - - [4096, 192, 1, 16384]
-    - [273, 393609.0]
+    - [273, 0.0]
   - - [512, 2048, 1, 8192]
-    - [365, 489144.0]
+    - [365, 0.0]
   - - [8192, 128, 1, 8192]
-    - [366, 405661.0]
+    - [366, 0.0]
   - - [128, 12288, 1, 8192]
-    - [367, 447217.0]
+    - [367, 0.0]
   - - [16384, 96, 1, 8192]
-    - [368, 402424.0]
+    - [368, 0.0]
   - - [512, 4096, 1, 8192]
-    - [369, 616800.0]
+    - [369, 0.0]
   - - [8192, 256, 1, 8192]
-    - [369, 555546.0]
+    - [369, 0.0]
   - - [128, 24576, 1, 8192]
-    - [370, 521787.0]
+    - [370, 0.0]
   - - [16384, 192, 1, 8192]
-    - [20, 547741.0]
+    - [20, 0.0]
   - - [384, 128, 1, 16384]
-    - [131, 79614.4]
+    - [131, 0.0]
   - - [96, 24576, 1, 8192]
-    - [371, 417876.0]
+    - [371, 0.0]
   - - [128, 32768, 1, 8192]
-    - [372, 487367.0]
+    - [372, 0.0]
   - - [4096, 1024, 1, 8192]
-    - [187, 716642.0]
+    - [187, 0.0]
   - - [128, 49152, 1, 8192]
-    - [373, 508702.0]
+    - [373, 0.0]
   - - [16384, 384, 1, 8192]
-    - [374, 678324.0]
+    - [374, 0.0]
   - - [192, 4096, 1, 16384]
-    - [185, 407167.0]
+    - [185, 0.0]
   - - [24576, 32, 1, 16384]
-    - [375, 184786.0]
+    - [375, 0.0]
   - - [768, 2048, 1, 16384]
-    - [376, 540764.0]
+    - [376, 0.0]
   - - [192, 12288, 1, 16384]
-    - [377, 478597.0]
+    - [377, 0.0]
   - - [384, 8192, 1, 16384]
-    - [378, 600087.0]
+    - [378, 0.0]
   - - [49152, 64, 1, 16384]
-    - [379, 341185.0]
+    - [379, 0.0]
   - - [24576, 192, 1, 16384]
-    - [380, 601202.0]
+    - [380, 0.0]
   - - [768, 8192, 1, 16384]
-    - [381, 852209.0]
+    - [381, 0.0]
   - - [192, 40960, 1, 16384]
-    - [382, 688120.0]
+    - [382, 0.0]
   - - [24576, 384, 1, 8192]
-    - [216, 732264.0]
+    - [216, 0.0]
   - - [24576, 768, 1, 8192]
-    - [247, 911519.0]
+    - [247, 0.0]
   - - [256, 32768, 1, 16384]
-    - [294, 777770.0]
+    - [294, 0.0]
   - - [16384, 512, 1, 16384]
-    - [294, 868233.0]
+    - [294, 0.0]
   - - [512, 24576, 1, 16384]
-    - [37, 974446.0]
+    - [37, 0.0]
   - - [512, 49152, 1, 16384]
-    - [383, 1016360.0]
+    - [383, 0.0]
   - - [768, 49152, 1, 16384]
-    - [81, 1125800.0]
+    - [81, 0.0]
   - - [12288, 1024, 1, 16384]
-    - [39, 1057750.0]
+    - [39, 0.0]
   - - [24576, 1024, 1, 16384]
-    - [143, 1128930.0]
+    - [143, 0.0]
   - - [32768, 128, 1, 8192]
-    - [384, 463270.0]
+    - [384, 0.0]
   - - [40960, 32, 1, 8192]
-    - [385, 167133.0]
+    - [385, 0.0]
   - - [40960, 192, 1, 8192]
-    - [386, 616104.0]
+    - [386, 0.0]
   - - [65536, 256, 1, 8192]
-    - [387, 799861.0]
+    - [387, 0.0]
   - - [65536, 256, 1, 16384]
-    - [298, 900908.0]
+    - [298, 0.0]
   - - [49152, 1024, 1, 8192]
-    - [84, 1090390.0]
+    - [84, 0.0]
   - - [49152, 1024, 1, 16384]
-    - [298, 1168730.0]
+    - [298, 0.0]
   - - [65536, 768, 1, 8192]
-    - [86, 1059590.0]
+    - [86, 0.0]
   - - [65536, 768, 1, 16384]
-    - [84, 1130980.0]
+    - [84, 0.0]
   - - [65536, 1024, 1, 8192]
-    - [84, 1106420.0]
+    - [84, 0.0]
   - - [65536, 1024, 1, 16384]
-    - [84, 1178290.0]
+    - [84, 0.0]
   - - [57344, 96, 1, 16384]
-    - [388, 467653.0]
+    - [388, 0.0]
   - - [57344, 768, 1, 8192]
-    - [352, 1036710.0]
+    - [352, 0.0]
   - - [57344, 768, 1, 16384]
-    - [389, 1111800.0]
+    - [389, 0.0]
   - - [57344, 1024, 1, 8192]
-    - [92, 1084490.0]
+    - [92, 0.0]
   - - [57344, 1024, 1, 16384]
-    - [389, 1149310.0]
+    - [389, 0.0]
   - - [65536, 128, 1, 8192]
-    - [390, 536602.0]
+    - [390, 0.0]
   - - [65536, 128, 1, 16384]
-    - [391, 593266.0]
+    - [391, 0.0]
   - - [32, 1024, 1, 8192]
-    - [13, 42887.7]
+    - [13, 0.0]
   - - [32, 1024, 1, 16384]
-    - [13, 50782.0]
+    - [13, 0.0]
   - - [64, 512, 1, 8192]
-    - [13, 44337.5]
+    - [13, 0.0]
   - - [64, 512, 1, 16384]
-    - [392, 53595.7]
+    - [392, 0.0]
   - - [128, 256, 1, 8192]
-    - [312, 45771.4]
+    - [312, 0.0]
   - - [128, 256, 1, 16384]
-    - [131, 54939.4]
+    - [131, 0.0]
   - - [256, 128, 1, 8192]
-    - [9, 45044.2]
+    - [9, 0.0]
   - - [256, 128, 1, 16384]
-    - [313, 54644.8]
+    - [313, 0.0]
   - - [512, 64, 1, 8192]
-    - [4, 44590.3]
+    - [4, 0.0]
   - - [512, 64, 1, 16384]
-    - [131, 53774.6]
+    - [131, 0.0]
   - - [1024, 32, 1, 8192]
-    - [10, 44237.6]
+    - [10, 0.0]
   - - [1024, 32, 1, 16384]
-    - [315, 51414.2]
+    - [315, 0.0]
   - - [128, 512, 1, 16384]
-    - [13, 105418.0]
+    - [13, 0.0]
   - - [2048, 32, 1, 16384]
-    - [221, 93295.1]
+    - [221, 0.0]
   - - [768, 96, 1, 8192]
-    - [57, 62996.2]
+    - [57, 0.0]
   - - [768, 96, 1, 16384]
-    - [57, 72230.7]
+    - [57, 0.0]
   - - [1024, 96, 1, 8192]
-    - [57, 82739.2]
+    - [57, 0.0]
   - - [1024, 96, 1, 16384]
-    - [61, 94110.1]
+    - [61, 0.0]
   - - [2048, 96, 1, 8192]
-    - [58, 156202.0]
+    - [58, 0.0]
   - - [2048, 96, 1, 16384]
-    - [59, 176229.0]
+    - [59, 0.0]
   - - [16, 40960, 1, 8192]
-    - [393, 88979.5]
+    - [393, 0.0]
   - - [16, 40960, 1, 16384]
-    - [393, 98798.5]
+    - [393, 0.0]
   - - [32, 57344, 1, 8192]
-    - [394, 179943.0]
+    - [394, 0.0]
   - - [64, 768, 1, 8192]
-    - [13, 64985.5]
+    - [13, 0.0]
   - - [64, 768, 1, 16384]
-    - [13, 77731.7]
+    - [13, 0.0]
   - - [8192, 32, 1, 16384]
-    - [64, 150054.0]
+    - [64, 0.0]
   - - [64, 12288, 1, 8192]
-    - [395, 275563.0]
+    - [395, 0.0]
   - - [8192, 96, 1, 8192]
-    - [364, 304245.0]
+    - [364, 0.0]
   - - [8192, 96, 1, 16384]
-    - [396, 283241.0]
+    - [396, 0.0]
   - - [512, 2048, 1, 16384]
-    - [322, 492805.0]
+    - [322, 0.0]
   - - [8192, 128, 1, 16384]
-    - [226, 372904.0]
+    - [226, 0.0]
   - - [128, 12288, 1, 16384]
-    - [397, 383214.0]
+    - [397, 0.0]
   - - [16384, 96, 1, 16384]
-    - [398, 370385.0]
+    - [398, 0.0]
   - - [512, 4096, 1, 16384]
-    - [399, 561061.0]
+    - [399, 0.0]
   - - [8192, 256, 1, 16384]
-    - [400, 495499.0]
+    - [400, 0.0]
   - - [128, 24576, 1, 16384]
-    - [401, 469280.0]
+    - [401, 0.0]
   - - [16384, 192, 1, 16384]
-    - [402, 507025.0]
+    - [402, 0.0]
   - - [768, 64, 1, 8192]
-    - [131, 65585.2]
+    - [131, 0.0]
   - - [96, 24576, 1, 16384]
-    - [403, 393000.0]
+    - [403, 0.0]
   - - [128, 32768, 1, 16384]
-    - [73, 509134.0]
+    - [73, 0.0]
   - - [4096, 1024, 1, 16384]
-    - [162, 713606.0]
+    - [162, 0.0]
   - - [128, 49152, 1, 16384]
-    - [404, 559269.0]
+    - [404, 0.0]
   - - [16384, 384, 1, 16384]
-    - [105, 747865.0]
+    - [105, 0.0]
   - - [384, 2048, 1, 8192]
-    - [405, 411615.0]
+    - [405, 0.0]
   - - [49152, 16, 1, 8192]
-    - [406, 95069.6]
+    - [406, 0.0]
   - - [12288, 128, 1, 8192]
-    - [407, 422951.0]
+    - [407, 0.0]
   - - [12288, 192, 1, 8192]
-    - [408, 547869.0]
+    - [408, 0.0]
   - - [768, 4096, 1, 8192]
-    - [213, 697719.0]
+    - [213, 0.0]
   - - [192, 24576, 1, 8192]
-    - [409, 554272.0]
+    - [409, 0.0]
   - - [49152, 96, 1, 8192]
-    - [168, 423869.0]
+    - [168, 0.0]
   - - [12288, 512, 1, 8192]
-    - [410, 697833.0]
+    - [410, 0.0]
   - - [192, 49152, 1, 8192]
-    - [35, 651101.0]
+    - [35, 0.0]
   - - [192, 49152, 1, 16384]
-    - [35, 715399.0]
+    - [35, 0.0]
   - - [24576, 384, 1, 16384]
-    - [216, 842233.0]
+    - [216, 0.0]
   - - [24576, 768, 1, 16384]
-    - [341, 1031860.0]
+    - [341, 0.0]
   - - [512, 16384, 1, 8192]
-    - [170, 765849.0]
+    - [170, 0.0]
   - - [256, 40960, 1, 8192]
-    - [411, 711610.0]
+    - [411, 0.0]
   - - [1024, 12288, 1, 8192]
-    - [113, 925880.0]
+    - [113, 0.0]
   - - [1024, 24576, 1, 8192]
-    - [412, 1000270.0]
+    - [412, 0.0]
   - - [256, 57344, 1, 8192]
-    - [116, 765788.0]
+    - [116, 0.0]
   - - [256, 57344, 1, 16384]
-    - [114, 851189.0]
+    - [114, 0.0]
   - - [512, 57344, 1, 8192]
-    - [118, 946338.0]
+    - [118, 0.0]
   - - [512, 57344, 1, 16384]
-    - [118, 1002530.0]
+    - [118, 0.0]
   - - [24576, 512, 1, 8192]
-    - [143, 840248.0]
+    - [143, 0.0]
   - - [49152, 512, 1, 8192]
-    - [38, 902356.0]
+    - [38, 0.0]
   - - [4096, 16, 1, 16384]
-    - [413, 78072.5]
+    - [413, 0.0]
   - - [24576, 16, 1, 16384]
-    - [414, 97269.3]
+    - [414, 0.0]
   - - [32768, 128, 1, 16384]
-    - [415, 512108.0]
+    - [415, 0.0]
   - - [40960, 32, 1, 16384]
-    - [416, 185358.0]
+    - [416, 0.0]
   - - [40960, 192, 1, 16384]
-    - [417, 680802.0]
+    - [417, 0.0]
   - - [57344, 128, 1, 8192]
-    - [418, 494153.0]
+    - [418, 0.0]
   - - [65536, 16, 1, 8192]
-    - [419, 103146.0]
+    - [419, 0.0]
   - - [65536, 16, 1, 16384]
-    - [420, 104796.0]
+    - [420, 0.0]
   - - [65536, 192, 1, 8192]
-    - [421, 677228.0]
+    - [421, 0.0]
   - - [65536, 192, 1, 16384]
-    - [422, 730070.0]
+    - [422, 0.0]
   - - [2048, 16, 1, 8192]
-    - [423, 42177.9]
+    - [423, 0.0]
   - - [2048, 16, 1, 16384]
-    - [423, 48858.0]
+    - [423, 0.0]
   - - [256, 256, 1, 8192]
-    - [221, 90131.2]
+    - [221, 0.0]
   - - [16, 8192, 1, 8192]
-    - [424, 83944.4]
+    - [424, 0.0]
   - - [16, 8192, 1, 16384]
-    - [425, 85303.2]
+    - [425, 0.0]
   - - [16, 16384, 1, 8192]
-    - [426, 89993.4]
+    - [426, 0.0]
   - - [16, 49152, 1, 8192]
-    - [427, 99962.7]
+    - [427, 0.0]
   - - [16, 49152, 1, 16384]
-    - [428, 107940.0]
+    - [428, 0.0]
   - - [32, 24576, 1, 16384]
-    - [429, 193617.0]
+    - [429, 0.0]
   - - [32, 57344, 1, 16384]
-    - [430, 186598.0]
+    - [430, 0.0]
   - - [128, 384, 1, 8192]
-    - [13, 66367.2]
+    - [13, 0.0]
   - - [16384, 16, 1, 8192]
-    - [431, 90459.5]
+    - [431, 0.0]
   - - [64, 12288, 1, 16384]
-    - [432, 295725.0]
+    - [432, 0.0]
   - - [64, 16384, 1, 8192]
-    - [433, 303164.0]
+    - [433, 0.0]
   - - [1024, 1024, 1, 8192]
-    - [434, 492368.0]
+    - [434, 0.0]
   - - [16384, 64, 1, 8192]
-    - [435, 306956.0]
+    - [435, 0.0]
   - - [2048, 768, 1, 8192]
-    - [325, 559381.0]
+    - [325, 0.0]
   - - [64, 32768, 1, 8192]
-    - [436, 279159.0]
+    - [436, 0.0]
   - - [1024, 2048, 1, 8192]
-    - [277, 640077.0]
+    - [277, 0.0]
   - - [16384, 128, 1, 8192]
-    - [400, 429310.0]
+    - [400, 0.0]
   - - [256, 12288, 1, 8192]
-    - [102, 594084.0]
+    - [102, 0.0]
   - - [64, 57344, 1, 8192]
-    - [437, 310122.0]
+    - [437, 0.0]
   - - [768, 64, 1, 16384]
-    - [221, 78336.4]
+    - [221, 0.0]
   - - [96, 32768, 1, 8192]
-    - [438, 390170.0]
+    - [438, 0.0]
   - - [256, 16384, 1, 8192]
-    - [439, 640365.0]
+    - [439, 0.0]
   - - [8192, 512, 1, 8192]
-    - [187, 659451.0]
+    - [187, 0.0]
   - - [256, 24576, 1, 8192]
-    - [374, 601095.0]
+    - [374, 0.0]
   - - [128, 57344, 1, 8192]
-    - [440, 502473.0]
+    - [440, 0.0]
   - - [384, 2048, 1, 16384]
-    - [441, 423632.0]
+    - [441, 0.0]
   - - [49152, 16, 1, 16384]
-    - [442, 102227.0]
+    - [442, 0.0]
   - - [12288, 128, 1, 16384]
-    - [443, 373580.0]
+    - [443, 0.0]
   - - [12288, 192, 1, 16384]
-    - [444, 465665.0]
+    - [444, 0.0]
   - - [768, 4096, 1, 16384]
-    - [445, 655014.0]
+    - [445, 0.0]
   - - [192, 24576, 1, 16384]
-    - [446, 583529.0]
+    - [446, 0.0]
   - - [49152, 96, 1, 16384]
-    - [257, 442717.0]
+    - [257, 0.0]
   - - [12288, 512, 1, 16384]
-    - [447, 773199.0]
+    - [447, 0.0]
   - - [384, 24576, 1, 8192]
-    - [34, 747825.0]
+    - [34, 0.0]
   - - [49152, 192, 1, 8192]
-    - [35, 618197.0]
+    - [35, 0.0]
   - - [49152, 384, 1, 8192]
-    - [341, 813171.0]
+    - [341, 0.0]
   - - [512, 16384, 1, 16384]
-    - [448, 859296.0]
+    - [448, 0.0]
   - - [256, 40960, 1, 16384]
-    - [449, 785102.0]
+    - [449, 0.0]
   - - [1024, 12288, 1, 16384]
-    - [195, 1017020.0]
+    - [195, 0.0]
   - - [1024, 24576, 1, 16384]
-    - [195, 1084470.0]
+    - [195, 0.0]
   - - [768, 57344, 1, 8192]
-    - [450, 1028520.0]
+    - [450, 0.0]
   - - [768, 57344, 1, 16384]
-    - [451, 1003390.0]
+    - [451, 0.0]
   - - [1024, 57344, 1, 8192]
-    - [452, 1030220.0]
+    - [452, 0.0]
   - - [1024, 57344, 1, 16384]
-    - [117, 1092100.0]
+    - [117, 0.0]
   - - [24576, 512, 1, 16384]
-    - [81, 953842.0]
+    - [81, 0.0]
   - - [49152, 512, 1, 16384]
-    - [345, 995287.0]
+    - [345, 0.0]
   - - [32768, 192, 1, 8192]
-    - [453, 583973.0]
+    - [453, 0.0]
   - - [40960, 64, 1, 8192]
-    - [454, 315748.0]
+    - [454, 0.0]
   - - [40960, 256, 1, 8192]
-    - [455, 679195.0]
+    - [455, 0.0]
   - - [57344, 16, 1, 16384]
-    - [456, 105730.0]
+    - [456, 0.0]
   - - [57344, 128, 1, 16384]
-    - [457, 557077.0]
+    - [457, 0.0]
   - - [65536, 32, 1, 8192]
-    - [458, 177923.0]
+    - [458, 0.0]
   - - [16, 4096, 1, 8192]
-    - [356, 69286.6]
+    - [356, 0.0]
   - - [16, 4096, 1, 16384]
-    - [357, 77956.7]
+    - [357, 0.0]
   - - [256, 256, 1, 16384]
-    - [221, 109092.0]
+    - [221, 0.0]
   - - [32, 4096, 1, 8192]
-    - [459, 113827.0]
+    - [459, 0.0]
   - - [16, 16384, 1, 16384]
-    - [460, 99940.3]
+    - [460, 0.0]
   - - [16, 57344, 1, 8192]
-    - [461, 100547.0]
+    - [461, 0.0]
   - - [16, 57344, 1, 16384]
-    - [462, 109470.0]
+    - [462, 0.0]
   - - [128, 384, 1, 16384]
-    - [131, 80389.3]
+    - [131, 0.0]
   - - [16384, 16, 1, 16384]
-    - [463, 97593.0]
+    - [463, 0.0]
   - - [1024, 768, 1, 8192]
-    - [464, 414248.0]
+    - [464, 0.0]
   - - [64, 16384, 1, 16384]
-    - [465, 301240.0]
+    - [465, 0.0]
   - - [1024, 1024, 1, 16384]
-    - [466, 519525.0]
+    - [466, 0.0]
   - - [16384, 64, 1, 16384]
-    - [467, 312654.0]
+    - [467, 0.0]
   - - [2048, 768, 1, 16384]
-    - [325, 537729.0]
+    - [325, 0.0]
   - - [64, 32768, 1, 16384]
-    - [468, 329299.0]
+    - [468, 0.0]
   - - [1024, 2048, 1, 16384]
-    - [369, 584226.0]
+    - [369, 0.0]
   - - [16384, 128, 1, 16384]
-    - [469, 406755.0]
+    - [469, 0.0]
   - - [256, 12288, 1, 16384]
-    - [470, 575014.0]
+    - [470, 0.0]
   - - [64, 57344, 1, 16384]
-    - [471, 353848.0]
+    - [471, 0.0]
   - - [96, 8192, 1, 8192]
-    - [472, 309195.0]
+    - [472, 0.0]
   - - [96, 8192, 1, 16384]
-    - [473, 285944.0]
+    - [473, 0.0]
   - - [96, 32768, 1, 16384]
-    - [474, 429819.0]
+    - [474, 0.0]
   - - [256, 16384, 1, 16384]
-    - [475, 616744.0]
+    - [475, 0.0]
   - - [8192, 512, 1, 16384]
-    - [476, 670310.0]
+    - [476, 0.0]
   - - [256, 24576, 1, 16384]
-    - [176, 710439.0]
+    - [176, 0.0]
   - - [128, 57344, 1, 16384]
-    - [477, 576614.0]
+    - [477, 0.0]
   - - [768, 1024, 1, 8192]
-    - [441, 414076.0]
+    - [441, 0.0]
   - - [192, 8192, 1, 8192]
-    - [478, 482143.0]
+    - [478, 0.0]
   - - [24576, 64, 1, 8192]
-    - [479, 320095.0]
+    - [479, 0.0]
   - - [24576, 96, 1, 8192]
-    - [480, 423507.0]
+    - [480, 0.0]
   - - [12288, 256, 1, 8192]
-    - [481, 575317.0]
+    - [481, 0.0]
   - - [384, 12288, 1, 8192]
-    - [482, 661165.0]
+    - [482, 0.0]
   - - [192, 32768, 1, 8192]
-    - [483, 582482.0]
+    - [483, 0.0]
   - - [24576, 256, 1, 8192]
-    - [484, 622784.0]
+    - [484, 0.0]
   - - [384, 24576, 1, 16384]
-    - [247, 863471.0]
+    - [247, 0.0]
   - - [49152, 192, 1, 16384]
-    - [341, 715073.0]
+    - [341, 0.0]
   - - [49152, 384, 1, 16384]
-    - [247, 902956.0]
+    - [247, 0.0]
   - - [1024, 8192, 1, 8192]
-    - [391, 838034.0]
+    - [391, 0.0]
   - - [512, 40960, 1, 8192]
-    - [250, 897127.0]
+    - [250, 0.0]
   - - [16384, 768, 1, 8192]
-    - [37, 883291.0]
+    - [37, 0.0]
   - - [32768, 768, 1, 8192]
-    - [485, 961865.0]
+    - [485, 0.0]
   - - [384, 32768, 1, 8192]
-    - [486, 815944.0]
+    - [486, 0.0]
   - - [49152, 256, 1, 8192]
-    - [487, 736021.0]
+    - [487, 0.0]
   - - [49152, 768, 1, 8192]
-    - [38, 1025000.0]
+    - [38, 0.0]
   - - [8192, 16, 1, 16384]
-    - [488, 83823.0]
+    - [488, 0.0]
   - - [32768, 32, 1, 16384]
-    - [489, 199028.0]
+    - [489, 0.0]
   - - [32768, 192, 1, 16384]
-    - [284, 647017.0]
+    - [284, 0.0]
   - - [40960, 64, 1, 16384]
-    - [490, 324746.0]
+    - [490, 0.0]
   - - [40960, 256, 1, 16384]
-    - [491, 802006.0]
+    - [491, 0.0]
   - - [57344, 32, 1, 8192]
-    - [492, 175342.0]
+    - [492, 0.0]
   - - [57344, 192, 1, 8192]
-    - [493, 643297.0]
+    - [493, 0.0]
   - - [65536, 32, 1, 16384]
-    - [494, 192831.0]
+    - [494, 0.0]
   - - [32, 2048, 1, 8192]
-    - [13, 81079.3]
+    - [13, 0.0]
   - - [512, 128, 1, 8192]
-    - [221, 88285.9]
+    - [221, 0.0]
   - - [32, 4096, 1, 16384]
-    - [495, 128215.0]
+    - [495, 0.0]
   - - [16, 24576, 1, 8192]
-    - [496, 93441.3]
+    - [496, 0.0]
   - - [16, 24576, 1, 16384]
-    - [497, 100674.0]
+    - [497, 0.0]
   - - [32, 32768, 1, 16384]
-    - [498, 188954.0]
+    - [498, 0.0]
   - - [96, 384, 1, 16384]
-    - [131, 59713.4]
+    - [131, 0.0]
   - - [256, 192, 1, 8192]
-    - [131, 68758.3]
+    - [131, 0.0]
   - - [384, 768, 1, 8192]
-    - [499, 191555.0]
+    - [499, 0.0]
   - - [384, 768, 1, 16384]
-    - [500, 221947.0]
+    - [500, 0.0]
   - - [768, 384, 1, 8192]
-    - [63, 191813.0]
+    - [63, 0.0]
   - - [768, 384, 1, 16384]
-    - [501, 213470.0]
+    - [501, 0.0]
   - - [96, 4096, 1, 8192]
-    - [270, 233048.0]
+    - [270, 0.0]
   - - [96, 4096, 1, 16384]
-    - [502, 229409.0]
+    - [502, 0.0]
   - - [384, 1024, 1, 8192]
-    - [503, 244261.0]
+    - [503, 0.0]
   - - [384, 1024, 1, 16384]
-    - [504, 259768.0]
+    - [504, 0.0]
   - - [512, 768, 1, 8192]
-    - [130, 246372.0]
+    - [130, 0.0]
   - - [512, 768, 1, 16384]
-    - [505, 261641.0]
+    - [505, 0.0]
   - - [768, 512, 1, 8192]
-    - [270, 248367.0]
+    - [270, 0.0]
   - - [768, 512, 1, 16384]
-    - [270, 258777.0]
+    - [270, 0.0]
   - - [1024, 384, 1, 8192]
-    - [506, 244437.0]
+    - [506, 0.0]
   - - [1024, 384, 1, 16384]
-    - [507, 260514.0]
+    - [507, 0.0]
   - - [64, 8192, 1, 8192]
-    - [508, 238263.0]
+    - [508, 0.0]
   - - [64, 8192, 1, 16384]
-    - [504, 228435.0]
+    - [504, 0.0]
   - - [128, 4096, 1, 8192]
-    - [509, 287459.0]
+    - [509, 0.0]
   - - [128, 4096, 1, 16384]
-    - [503, 279549.0]
+    - [503, 0.0]
   - - [256, 2048, 1, 8192]
-    - [507, 304141.0]
+    - [507, 0.0]
   - - [256, 2048, 1, 16384]
-    - [504, 315450.0]
+    - [504, 0.0]
   - - [512, 1024, 1, 8192]
-    - [503, 314508.0]
+    - [503, 0.0]
   - - [512, 1024, 1, 16384]
-    - [510, 314969.0]
+    - [510, 0.0]
   - - [1024, 512, 1, 8192]
-    - [506, 311001.0]
+    - [506, 0.0]
   - - [1024, 512, 1, 16384]
-    - [511, 309010.0]
+    - [511, 0.0]
   - - [2048, 256, 1, 8192]
-    - [507, 302545.0]
+    - [507, 0.0]
   - - [2048, 256, 1, 16384]
-    - [511, 295998.0]
+    - [511, 0.0]
   - - [4096, 128, 1, 8192]
-    - [269, 292381.0]
+    - [269, 0.0]
   - - [4096, 128, 1, 16384]
-    - [507, 284230.0]
+    - [507, 0.0]
   - - [8192, 64, 1, 8192]
-    - [508, 241451.0]
+    - [508, 0.0]
   - - [8192, 64, 1, 16384]
-    - [510, 231679.0]
+    - [510, 0.0]
   - - [1024, 768, 1, 16384]
-    - [364, 447093.0]
+    - [364, 0.0]
   - - [128, 8192, 1, 8192]
-    - [512, 411431.0]
+    - [512, 0.0]
   - - [2048, 512, 1, 8192]
-    - [512, 475024.0]
+    - [512, 0.0]
   - - [96, 12288, 1, 8192]
-    - [513, 328292.0]
+    - [513, 0.0]
   - - [4096, 384, 1, 8192]
-    - [156, 529171.0]
+    - [156, 0.0]
   - - [128, 16384, 1, 8192]
-    - [514, 470678.0]
+    - [514, 0.0]
   - - [2048, 1024, 1, 8192]
-    - [326, 671869.0]
+    - [326, 0.0]
   - - [64, 40960, 1, 8192]
-    - [515, 324130.0]
+    - [515, 0.0]
   - - [4096, 768, 1, 8192]
-    - [516, 706055.0]
+    - [516, 0.0]
   - - [96, 512, 1, 8192]
-    - [13, 65950.3]
+    - [13, 0.0]
   - - [96, 512, 1, 16384]
-    - [13, 80988.8]
+    - [13, 0.0]
   - - [12288, 96, 1, 8192]
-    - [517, 325034.0]
+    - [517, 0.0]
   - - [96, 40960, 1, 8192]
-    - [518, 415220.0]
+    - [518, 0.0]
   - - [512, 8192, 1, 8192]
-    - [519, 696324.0]
+    - [519, 0.0]
   - - [16384, 256, 1, 8192]
-    - [24, 599348.0]
+    - [24, 0.0]
   - - [512, 12288, 1, 8192]
-    - [520, 701318.0]
+    - [520, 0.0]
   - - [192, 2048, 1, 8192]
-    - [504, 235596.0]
+    - [504, 0.0]
   - - [192, 2048, 1, 16384]
-    - [521, 256791.0]
+    - [521, 0.0]
   - - [768, 1024, 1, 16384]
-    - [405, 446985.0]
+    - [405, 0.0]
   - - [192, 8192, 1, 16384]
-    - [522, 432136.0]
+    - [522, 0.0]
   - - [24576, 64, 1, 16384]
-    - [523, 298103.0]
+    - [523, 0.0]
   - - [24576, 96, 1, 16384]
-    - [524, 376950.0]
+    - [524, 0.0]
   - - [12288, 256, 1, 16384]
-    - [525, 539101.0]
+    - [525, 0.0]
   - - [384, 12288, 1, 16384]
-    - [526, 689887.0]
+    - [526, 0.0]
   - - [192, 32768, 1, 16384]
-    - [527, 650041.0]
+    - [527, 0.0]
   - - [24576, 256, 1, 16384]
-    - [448, 700370.0]
+    - [448, 0.0]
   - - [768, 12288, 1, 8192]
-    - [528, 809151.0]
+    - [528, 0.0]
   - - [384, 49152, 1, 8192]
-    - [33, 831267.0]
+    - [33, 0.0]
   - - [192, 57344, 1, 8192]
-    - [529, 666997.0]
+    - [529, 0.0]
   - - [192, 57344, 1, 16384]
-    - [530, 725826.0]
+    - [530, 0.0]
   - - [1024, 8192, 1, 16384]
-    - [170, 951969.0]
+    - [170, 0.0]
   - - [512, 40960, 1, 16384]
-    - [449, 957197.0]
+    - [449, 0.0]
   - - [16384, 768, 1, 16384]
-    - [531, 982348.0]
+    - [531, 0.0]
   - - [32768, 768, 1, 16384]
-    - [532, 1035290.0]
+    - [532, 0.0]
   - - [384, 32768, 1, 16384]
-    - [81, 932901.0]
+    - [81, 0.0]
   - - [49152, 256, 1, 16384]
-    - [296, 839123.0]
+    - [296, 0.0]
   - - [49152, 768, 1, 16384]
-    - [81, 1084290.0]
+    - [81, 0.0]
   - - [32768, 64, 1, 8192]
-    - [533, 283512.0]
+    - [533, 0.0]
   - - [32768, 256, 1, 8192]
-    - [534, 635068.0]
+    - [534, 0.0]
   - - [40960, 96, 1, 8192]
-    - [535, 401470.0]
+    - [535, 0.0]
   - - [40960, 512, 1, 8192]
-    - [536, 871669.0]
+    - [536, 0.0]
   - - [57344, 32, 1, 16384]
-    - [537, 187372.0]
+    - [537, 0.0]
   - - [57344, 192, 1, 16384]
-    - [538, 719886.0]
+    - [538, 0.0]
   - - [65536, 64, 1, 8192]
-    - [539, 334203.0]
+    - [539, 0.0]
   - - [32, 2048, 1, 16384]
-    - [13, 93258.9]
+    - [13, 0.0]
   - - [512, 128, 1, 16384]
-    - [221, 104261.0]
+    - [221, 0.0]
   - - [4096, 32, 1, 8192]
-    - [540, 114440.0]
+    - [540, 0.0]
   - - [32, 12288, 1, 8192]
-    - [541, 160605.0]
+    - [541, 0.0]
   - - [32, 8192, 1, 16384]
-    - [542, 148912.0]
+    - [542, 0.0]
   - - [32, 40960, 1, 8192]
-    - [543, 165004.0]
+    - [543, 0.0]
   - - [192, 192, 1, 8192]
-    - [131, 50589.8]
+    - [131, 0.0]
   - - [256, 192, 1, 16384]
-    - [131, 81781.0]
+    - [131, 0.0]
   - - [16384, 32, 1, 8192]
-    - [544, 159189.0]
+    - [544, 0.0]
   - - [2048, 384, 1, 8192]
-    - [273, 407386.0]
+    - [273, 0.0]
   - - [128, 8192, 1, 16384]
-    - [155, 388839.0]
+    - [155, 0.0]
   - - [2048, 512, 1, 16384]
-    - [366, 456955.0]
+    - [366, 0.0]
   - - [96, 12288, 1, 16384]
-    - [545, 314350.0]
+    - [545, 0.0]
   - - [4096, 384, 1, 16384]
-    - [546, 507036.0]
+    - [546, 0.0]
   - - [128, 16384, 1, 16384]
-    - [547, 414673.0]
+    - [547, 0.0]
   - - [2048, 1024, 1, 16384]
-    - [207, 572141.0]
+    - [207, 0.0]
   - - [64, 40960, 1, 16384]
-    - [548, 321147.0]
+    - [548, 0.0]
   - - [4096, 768, 1, 16384]
-    - [549, 673890.0]
+    - [549, 0.0]
   - - [192, 256, 1, 8192]
-    - [221, 67145.6]
+    - [221, 0.0]
   - - [12288, 96, 1, 16384]
-    - [156, 322060.0]
+    - [156, 0.0]
   - - [96, 40960, 1, 16384]
-    - [550, 430161.0]
+    - [550, 0.0]
   - - [512, 8192, 1, 16384]
-    - [73, 676453.0]
+    - [73, 0.0]
   - - [16384, 256, 1, 16384]
-    - [551, 596963.0]
+    - [551, 0.0]
   - - [512, 12288, 1, 16384]
-    - [381, 799695.0]
+    - [381, 0.0]
   - - [32768, 16, 1, 8192]
-    - [552, 91218.4]
+    - [552, 0.0]
   - - [12288, 64, 1, 8192]
-    - [553, 276313.0]
+    - [553, 0.0]
   - - [384, 4096, 1, 8192]
-    - [554, 522222.0]
+    - [554, 0.0]
   - - [49152, 32, 1, 8192]
-    - [29, 182784.0]
+    - [29, 0.0]
   - - [192, 16384, 1, 8192]
-    - [555, 566799.0]
+    - [555, 0.0]
   - - [24576, 128, 1, 8192]
-    - [556, 467992.0]
+    - [556, 0.0]
   - - [12288, 384, 1, 8192]
-    - [557, 690746.0]
+    - [557, 0.0]
   - - [384, 16384, 1, 8192]
-    - [558, 663163.0]
+    - [558, 0.0]
   - - [49152, 128, 1, 8192]
-    - [559, 508109.0]
+    - [559, 0.0]
   - - [768, 12288, 1, 16384]
-    - [560, 933917.0]
+    - [560, 0.0]
   - - [384, 49152, 1, 16384]
-    - [216, 922415.0]
+    - [216, 0.0]
   - - [384, 57344, 1, 8192]
-    - [530, 868555.0]
+    - [530, 0.0]
   - - [8192, 1024, 1, 8192]
-    - [294, 807451.0]
+    - [294, 0.0]
   - - [256, 49152, 1, 8192]
-    - [561, 730067.0]
+    - [561, 0.0]
   - - [32768, 384, 1, 8192]
-    - [37, 794946.0]
+    - [37, 0.0]
   - - [65536, 384, 1, 8192]
-    - [80, 864043.0]
+    - [80, 0.0]
   - - [768, 16384, 1, 8192]
-    - [296, 893404.0]
+    - [296, 0.0]
   - - [768, 32768, 1, 8192]
-    - [196, 982597.0]
+    - [196, 0.0]
   - - [384, 40960, 1, 8192]
-    - [562, 871104.0]
+    - [562, 0.0]
   - - [384, 40960, 1, 16384]
-    - [563, 953382.0]
+    - [563, 0.0]
   - - [768, 40960, 1, 8192]
-    - [564, 1025880.0]
+    - [564, 0.0]
   - - [768, 40960, 1, 16384]
-    - [565, 1072160.0]
+    - [565, 0.0]
   - - [12288, 16, 1, 16384]
-    - [566, 90257.3]
+    - [566, 0.0]
   - - [32768, 64, 1, 16384]
-    - [19, 315322.0]
+    - [19, 0.0]
   - - [32768, 256, 1, 16384]
-    - [173, 766823.0]
+    - [173, 0.0]
   - - [40960, 96, 1, 16384]
-    - [567, 426547.0]
+    - [567, 0.0]
   - - [40960, 512, 1, 16384]
-    - [568, 1003150.0]
+    - [568, 0.0]
   - - [57344, 64, 1, 8192]
-    - [569, 327725.0]
+    - [569, 0.0]
   - - [57344, 384, 1, 8192]
-    - [570, 847102.0]
+    - [570, 0.0]
   - - [65536, 64, 1, 16384]
-    - [571, 352733.0]
+    - [571, 0.0]
   - - [12288, 32, 1, 8192]
-    - [572, 159304.0]
+    - [572, 0.0]
   - - [40960, 16, 1, 8192]
-    - [573, 85249.4]
+    - [573, 0.0]
   - - [16, 12288, 1, 8192]
-    - [574, 89309.0]
+    - [574, 0.0]
   - - [4096, 16, 1, 8192]
-    - [423, 70224.5]
+    - [423, 0.0]
   - - [24576, 16, 1, 8192]
-    - [575, 94723.0]
+    - [575, 0.0]
   - - [32, 24576, 1, 8192]
-    - [576, 169722.0]
+    - [576, 0.0]
   - - [57344, 16, 1, 8192]
-    - [577, 98778.3]
+    - [577, 0.0]
   - - [8192, 16, 1, 8192]
-    - [578, 83296.4]
+    - [578, 0.0]
   - - [32768, 32, 1, 8192]
-    - [579, 165933.0]
+    - [579, 0.0]
   - - [32, 32768, 1, 8192]
-    - [580, 165047.0]
+    - [580, 0.0]
   - - [96, 384, 1, 8192]
-    - [13, 49258.6]
+    - [13, 0.0]
   - - [32, 8192, 1, 8192]
-    - [581, 142443.0]
+    - [581, 0.0]
   - - [12288, 16, 1, 8192]
-    - [582, 89757.0]
+    - [582, 0.0]
   - - [64, 1024, 1, 4096]
-    - [13, 62830.7]
+    - [13, 0.0]
   - - [16, 8192, 1, 256]
-    - [583, 14673.9]
+    - [583, 0.0]
   - - [16, 8192, 1, 1024]
-    - [584, 37761.5]
+    - [584, 0.0]
   - - [32, 12288, 1, 256]
-    - [585, 36192.2]
+    - [585, 0.0]
   - - [32, 24576, 1, 1024]
-    - [586, 119953.0]
+    - [586, 0.0]
   - - [64, 768, 1, 4096]
-    - [13, 47156.2]
+    - [13, 0.0]
   - - [384, 768, 1, 256]
-    - [504, 33799.5]
+    - [504, 0.0]
   - - [384, 768, 1, 1024]
-    - [587, 88283.3]
+    - [587, 0.0]
   - - [384, 768, 1, 4096]
-    - [269, 151632.0]
+    - [269, 0.0]
   - - [768, 384, 1, 256]
-    - [588, 33971.9]
+    - [588, 0.0]
   - - [768, 384, 1, 1024]
-    - [587, 88889.6]
+    - [587, 0.0]
   - - [768, 384, 1, 4096]
-    - [505, 153612.0]
+    - [505, 0.0]
   - - [96, 4096, 1, 256]
-    - [587, 38533.6]
+    - [587, 0.0]
   - - [96, 4096, 1, 1024]
-    - [504, 105103.0]
+    - [504, 0.0]
   - - [96, 4096, 1, 4096]
-    - [504, 195406.0]
+    - [504, 0.0]
   - - [384, 1024, 1, 256]
-    - [508, 44034.5]
+    - [508, 0.0]
   - - [384, 1024, 1, 1024]
-    - [504, 109367.0]
+    - [504, 0.0]
   - - [384, 1024, 1, 4096]
-    - [270, 199340.0]
+    - [270, 0.0]
   - - [512, 768, 1, 256]
-    - [588, 44234.3]
+    - [588, 0.0]
   - - [512, 768, 1, 1024]
-    - [504, 109119.0]
+    - [504, 0.0]
   - - [512, 768, 1, 4096]
-    - [505, 200025.0]
+    - [505, 0.0]
   - - [768, 512, 1, 256]
-    - [129, 44357.8]
+    - [129, 0.0]
   - - [768, 512, 1, 1024]
-    - [587, 109654.0]
+    - [587, 0.0]
   - - [768, 512, 1, 4096]
-    - [270, 200582.0]
+    - [270, 0.0]
   - - [1024, 384, 1, 256]
-    - [587, 44686.0]
+    - [587, 0.0]
   - - [1024, 384, 1, 1024]
-    - [129, 108736.0]
+    - [129, 0.0]
   - - [1024, 384, 1, 4096]
-    - [505, 200573.0]
+    - [505, 0.0]
   - - [64, 8192, 1, 256]
-    - [588, 49067.8]
+    - [588, 0.0]
   - - [64, 8192, 1, 1024]
-    - [587, 130255.0]
+    - [587, 0.0]
   - - [64, 8192, 1, 4096]
-    - [270, 206766.0]
+    - [270, 0.0]
   - - [128, 4096, 1, 256]
-    - [504, 50897.6]
+    - [504, 0.0]
   - - [128, 4096, 1, 1024]
-    - [508, 136492.0]
+    - [508, 0.0]
   - - [128, 4096, 1, 4096]
-    - [502, 245500.0]
+    - [502, 0.0]
   - - [256, 2048, 1, 256]
-    - [589, 52143.3]
+    - [589, 0.0]
   - - [256, 2048, 1, 1024]
-    - [508, 139205.0]
+    - [508, 0.0]
   - - [256, 2048, 1, 4096]
-    - [504, 257244.0]
+    - [504, 0.0]
   - - [512, 1024, 1, 256]
-    - [504, 51437.2]
+    - [504, 0.0]
   - - [512, 1024, 1, 1024]
-    - [270, 139992.0]
+    - [270, 0.0]
   - - [512, 1024, 1, 4096]
-    - [270, 260310.0]
+    - [270, 0.0]
   - - [1024, 512, 1, 256]
-    - [590, 51608.6]
+    - [590, 0.0]
   - - [1024, 512, 1, 1024]
-    - [511, 138785.0]
+    - [511, 0.0]
   - - [1024, 512, 1, 4096]
-    - [270, 262046.0]
+    - [270, 0.0]
   - - [2048, 256, 1, 256]
-    - [591, 52190.6]
+    - [591, 0.0]
   - - [2048, 256, 1, 1024]
-    - [129, 140040.0]
+    - [129, 0.0]
   - - [2048, 256, 1, 4096]
-    - [270, 253928.0]
+    - [270, 0.0]
   - - [4096, 128, 1, 256]
-    - [129, 50654.3]
+    - [129, 0.0]
   - - [4096, 128, 1, 1024]
-    - [587, 137084.0]
+    - [587, 0.0]
   - - [4096, 128, 1, 4096]
-    - [503, 246949.0]
+    - [503, 0.0]
   - - [8192, 64, 1, 256]
-    - [508, 48906.9]
+    - [508, 0.0]
   - - [8192, 64, 1, 1024]
-    - [508, 128417.0]
+    - [508, 0.0]
   - - [8192, 64, 1, 4096]
-    - [508, 208108.0]
+    - [508, 0.0]
   - - [512, 2048, 1, 256]
-    - [592, 82426.0]
+    - [592, 0.0]
   - - [16384, 64, 1, 4096]
-    - [593, 268149.0]
+    - [593, 0.0]
   - - [16384, 96, 1, 256]
-    - [594, 99929.9]
+    - [594, 0.0]
   - - [2048, 1024, 1, 256]
-    - [180, 120051.0]
+    - [180, 0.0]
   - - [128, 24576, 1, 256]
-    - [595, 148265.0]
+    - [595, 0.0]
   - - [64, 57344, 1, 1024]
-    - [596, 254001.0]
+    - [596, 0.0]
   - - [12288, 96, 1, 4096]
-    - [597, 290845.0]
+    - [597, 0.0]
   - - [1024, 4096, 1, 256]
-    - [71, 197215.0]
+    - [71, 0.0]
   - - [128, 49152, 1, 256]
-    - [598, 177395.0]
+    - [598, 0.0]
   - - [192, 2048, 1, 256]
-    - [508, 44194.8]
+    - [508, 0.0]
   - - [192, 2048, 1, 1024]
-    - [504, 106698.0]
+    - [504, 0.0]
   - - [192, 2048, 1, 4096]
-    - [504, 206510.0]
+    - [504, 0.0]
   - - [768, 2048, 1, 1024]
-    - [599, 279786.0]
+    - [599, 0.0]
   - - [192, 16384, 1, 256]
-    - [600, 152735.0]
+    - [600, 0.0]
   - - [49152, 64, 1, 1024]
-    - [601, 249550.0]
+    - [601, 0.0]
   - - [384, 16384, 1, 256]
-    - [602, 201905.0]
+    - [602, 0.0]
   - - [192, 49152, 1, 256]
-    - [247, 214412.0]
+    - [247, 0.0]
   - - [192, 49152, 1, 1024]
-    - [603, 481686.0]
+    - [603, 0.0]
   - - [192, 49152, 1, 4096]
-    - [530, 621587.0]
+    - [530, 0.0]
   - - [384, 24576, 1, 256]
-    - [34, 223343.0]
+    - [34, 0.0]
   - - [384, 24576, 1, 1024]
-    - [528, 551433.0]
+    - [528, 0.0]
   - - [384, 24576, 1, 4096]
-    - [33, 720277.0]
+    - [33, 0.0]
   - - [192, 57344, 1, 256]
-    - [604, 215610.0]
+    - [604, 0.0]
   - - [192, 57344, 1, 1024]
-    - [605, 503033.0]
+    - [605, 0.0]
   - - [192, 57344, 1, 4096]
-    - [606, 632340.0]
+    - [606, 0.0]
   - - [384, 57344, 1, 256]
-    - [607, 242014.0]
+    - [607, 0.0]
   - - [384, 57344, 1, 1024]
-    - [608, 515375.0]
+    - [608, 0.0]
   - - [384, 57344, 1, 4096]
-    - [529, 792257.0]
+    - [529, 0.0]
   - - [256, 49152, 1, 256]
-    - [113, 242159.0]
+    - [113, 0.0]
   - - [256, 49152, 1, 1024]
-    - [609, 541799.0]
+    - [609, 0.0]
   - - [256, 49152, 1, 4096]
-    - [610, 705523.0]
+    - [610, 0.0]
   - - [512, 24576, 1, 256]
-    - [611, 246137.0]
+    - [611, 0.0]
   - - [512, 24576, 1, 1024]
-    - [112, 583841.0]
+    - [112, 0.0]
   - - [512, 24576, 1, 4096]
-    - [37, 806087.0]
+    - [37, 0.0]
   - - [2048, 12288, 1, 4096]
-    - [195, 882045.0]
+    - [195, 0.0]
   - - [12288, 1024, 1, 1024]
-    - [39, 610770.0]
+    - [39, 0.0]
   - - [384, 40960, 1, 256]
-    - [612, 241934.0]
+    - [612, 0.0]
   - - [384, 40960, 1, 1024]
-    - [613, 563571.0]
+    - [613, 0.0]
   - - [384, 40960, 1, 4096]
-    - [614, 806470.0]
+    - [614, 0.0]
   - - [768, 40960, 1, 256]
-    - [615, 257998.0]
+    - [615, 0.0]
   - - [768, 40960, 1, 1024]
-    - [616, 590002.0]
+    - [616, 0.0]
   - - [768, 40960, 1, 4096]
-    - [617, 947844.0]
+    - [617, 0.0]
   - - [24576, 16, 1, 256]
-    - [618, 29319.1]
+    - [618, 0.0]
   - - [24576, 16, 1, 1024]
-    - [619, 63012.5]
+    - [619, 0.0]
   - - [24576, 16, 1, 4096]
-    - [620, 79031.0]
+    - [620, 0.0]
   - - [40960, 32, 1, 4096]
-    - [621, 157624.0]
+    - [621, 0.0]
   - - [57344, 128, 1, 256]
-    - [622, 185620.0]
+    - [622, 0.0]
   - - [16, 8192, 1, 4096]
-    - [623, 68864.5]
+    - [623, 0.0]
   - - [32, 12288, 1, 1024]
-    - [624, 88365.2]
+    - [624, 0.0]
   - - [32, 24576, 1, 4096]
-    - [625, 156674.0]
+    - [625, 0.0]
   - - [128, 384, 1, 256]
-    - [8, 7011.3]
+    - [8, 0.0]
   - - [16384, 32, 1, 256]
-    - [588, 45771.4]
+    - [588, 0.0]
   - - [512, 2048, 1, 1024]
-    - [66, 223300.0]
+    - [66, 0.0]
   - - [96, 12288, 1, 256]
-    - [189, 80280.5]
+    - [189, 0.0]
   - - [96, 12288, 1, 1024]
-    - [626, 199354.0]
+    - [626, 0.0]
   - - [16384, 96, 1, 1024]
-    - [627, 245014.0]
+    - [627, 0.0]
   - - [2048, 1024, 1, 1024]
-    - [19, 332168.0]
+    - [19, 0.0]
   - - [128, 24576, 1, 1024]
-    - [628, 345474.0]
+    - [628, 0.0]
   - - [64, 57344, 1, 4096]
-    - [629, 279073.0]
+    - [629, 0.0]
   - - [96, 16384, 1, 256]
-    - [630, 100062.0]
+    - [630, 0.0]
   - - [1024, 4096, 1, 1024]
-    - [42, 477019.0]
+    - [42, 0.0]
   - - [128, 49152, 1, 1024]
-    - [448, 420406.0]
+    - [448, 0.0]
   - - [32768, 16, 1, 256]
-    - [631, 36600.8]
+    - [631, 0.0]
   - - [32768, 16, 1, 1024]
-    - [632, 67416.5]
+    - [632, 0.0]
   - - [32768, 16, 1, 4096]
-    - [633, 79185.0]
+    - [633, 0.0]
   - - [768, 2048, 1, 4096]
-    - [106, 483734.0]
+    - [106, 0.0]
   - - [192, 16384, 1, 1024]
-    - [634, 359889.0]
+    - [634, 0.0]
   - - [49152, 64, 1, 4096]
-    - [635, 300912.0]
+    - [635, 0.0]
   - - [384, 16384, 1, 1024]
-    - [636, 497734.0]
+    - [636, 0.0]
   - - [768, 12288, 1, 256]
-    - [247, 220752.0]
+    - [247, 0.0]
   - - [256, 32768, 1, 256]
-    - [173, 226431.0]
+    - [173, 0.0]
   - - [256, 32768, 1, 1024]
-    - [173, 506031.0]
+    - [173, 0.0]
   - - [256, 32768, 1, 4096]
-    - [404, 642781.0]
+    - [404, 0.0]
   - - [512, 16384, 1, 256]
-    - [176, 227221.0]
+    - [176, 0.0]
   - - [512, 16384, 1, 1024]
-    - [173, 550104.0]
+    - [173, 0.0]
   - - [512, 16384, 1, 4096]
-    - [637, 729377.0]
+    - [637, 0.0]
   - - [1024, 12288, 1, 256]
-    - [113, 246448.0]
+    - [113, 0.0]
   - - [32768, 768, 1, 256]
-    - [485, 253418.0]
+    - [485, 0.0]
   - - [12288, 1024, 1, 4096]
-    - [38, 815017.0]
+    - [38, 0.0]
   - - [512, 32768, 1, 256]
-    - [638, 258902.0]
+    - [638, 0.0]
   - - [512, 32768, 1, 1024]
-    - [639, 572133.0]
+    - [639, 0.0]
   - - [512, 32768, 1, 4096]
-    - [387, 868798.0]
+    - [387, 0.0]
   - - [1024, 16384, 1, 256]
-    - [638, 261273.0]
+    - [638, 0.0]
   - - [1024, 16384, 1, 1024]
-    - [84, 601499.0]
+    - [84, 0.0]
   - - [1024, 16384, 1, 4096]
-    - [387, 931365.0]
+    - [387, 0.0]
   - - [2048, 8192, 1, 256]
-    - [640, 254635.0]
+    - [640, 0.0]
   - - [2048, 8192, 1, 1024]
-    - [297, 607680.0]
+    - [297, 0.0]
   - - [2048, 8192, 1, 4096]
-    - [387, 967872.0]
+    - [387, 0.0]
   - - [4096, 4096, 1, 256]
-    - [641, 252139.0]
+    - [641, 0.0]
   - - [4096, 4096, 1, 1024]
-    - [642, 600806.0]
+    - [642, 0.0]
   - - [4096, 4096, 1, 4096]
-    - [297, 962814.0]
+    - [297, 0.0]
   - - [8192, 2048, 1, 256]
-    - [639, 250997.0]
+    - [639, 0.0]
   - - [8192, 2048, 1, 1024]
-    - [48, 608671.0]
+    - [48, 0.0]
   - - [8192, 2048, 1, 4096]
-    - [84, 948665.0]
+    - [84, 0.0]
   - - [16384, 1024, 1, 256]
-    - [643, 247269.0]
+    - [643, 0.0]
   - - [16384, 1024, 1, 1024]
-    - [48, 588347.0]
+    - [48, 0.0]
   - - [16384, 1024, 1, 4096]
-    - [84, 922445.0]
+    - [84, 0.0]
   - - [32768, 512, 1, 256]
-    - [644, 244977.0]
+    - [644, 0.0]
   - - [32768, 512, 1, 1024]
-    - [642, 559364.0]
+    - [642, 0.0]
   - - [32768, 512, 1, 4096]
-    - [86, 852661.0]
+    - [86, 0.0]
   - - [1024, 32768, 1, 256]
-    - [638, 273202.0]
+    - [638, 0.0]
   - - [1024, 32768, 1, 1024]
-    - [84, 629646.0]
+    - [84, 0.0]
   - - [1024, 32768, 1, 4096]
-    - [387, 989923.0]
+    - [387, 0.0]
   - - [2048, 16384, 1, 256]
-    - [645, 266229.0]
+    - [645, 0.0]
   - - [2048, 16384, 1, 1024]
-    - [297, 632736.0]
+    - [297, 0.0]
   - - [2048, 16384, 1, 4096]
-    - [297, 1028350.0]
+    - [297, 0.0]
   - - [4096, 8192, 1, 256]
-    - [646, 265743.0]
+    - [646, 0.0]
   - - [4096, 8192, 1, 1024]
-    - [297, 625645.0]
+    - [297, 0.0]
   - - [4096, 8192, 1, 4096]
-    - [387, 1030080.0]
+    - [387, 0.0]
   - - [8192, 4096, 1, 256]
-    - [647, 270573.0]
+    - [647, 0.0]
   - - [8192, 4096, 1, 1024]
-    - [86, 635921.0]
+    - [86, 0.0]
   - - [8192, 4096, 1, 4096]
-    - [84, 1043860.0]
+    - [84, 0.0]
   - - [16384, 2048, 1, 256]
-    - [648, 258992.0]
+    - [648, 0.0]
   - - [16384, 2048, 1, 1024]
-    - [86, 613989.0]
+    - [86, 0.0]
   - - [16384, 2048, 1, 4096]
-    - [86, 1005520.0]
+    - [86, 0.0]
   - - [32768, 1024, 1, 256]
-    - [48, 247358.0]
+    - [48, 0.0]
   - - [32768, 1024, 1, 1024]
-    - [48, 596079.0]
+    - [48, 0.0]
   - - [32768, 1024, 1, 4096]
-    - [48, 972447.0]
+    - [48, 0.0]
   - - [65536, 512, 1, 256]
-    - [649, 254665.0]
+    - [649, 0.0]
   - - [65536, 512, 1, 1024]
-    - [48, 584742.0]
+    - [48, 0.0]
   - - [65536, 512, 1, 4096]
-    - [86, 914929.0]
+    - [86, 0.0]
   - - [1024, 49152, 1, 256]
-    - [650, 281324.0]
+    - [650, 0.0]
   - - [1024, 49152, 1, 1024]
-    - [84, 645778.0]
+    - [84, 0.0]
   - - [1024, 49152, 1, 4096]
-    - [84, 1016830.0]
+    - [84, 0.0]
   - - [2048, 24576, 1, 256]
-    - [85, 274075.0]
+    - [85, 0.0]
   - - [2048, 24576, 1, 1024]
-    - [297, 659461.0]
+    - [297, 0.0]
   - - [2048, 24576, 1, 4096]
-    - [387, 1039170.0]
+    - [387, 0.0]
   - - [4096, 12288, 1, 256]
-    - [651, 268249.0]
+    - [651, 0.0]
   - - [4096, 12288, 1, 1024]
-    - [297, 658042.0]
+    - [297, 0.0]
   - - [4096, 12288, 1, 4096]
-    - [86, 1075280.0]
+    - [86, 0.0]
   - - [2048, 32768, 1, 256]
-    - [652, 282260.0]
+    - [652, 0.0]
   - - [2048, 32768, 1, 1024]
-    - [297, 688832.0]
+    - [297, 0.0]
   - - [2048, 32768, 1, 4096]
-    - [297, 1050620.0]
+    - [297, 0.0]
   - - [4096, 16384, 1, 256]
-    - [653, 282285.0]
+    - [653, 0.0]
   - - [4096, 16384, 1, 1024]
-    - [47, 673963.0]
+    - [47, 0.0]
   - - [4096, 16384, 1, 4096]
-    - [84, 1068920.0]
+    - [84, 0.0]
   - - [40960, 64, 1, 256]
-    - [654, 115944.0]
+    - [654, 0.0]
   - - [40960, 64, 1, 1024]
-    - [655, 230861.0]
+    - [655, 0.0]
   - - [40960, 64, 1, 4096]
-    - [656, 289720.0]
+    - [656, 0.0]
   - - [57344, 128, 1, 1024]
-    - [657, 412057.0]
+    - [657, 0.0]
   - - [128, 512, 1, 1024]
-    - [152, 27582.6]
+    - [152, 0.0]
   - - [32, 4096, 1, 256]
-    - [658, 17549.3]
+    - [658, 0.0]
   - - [32, 12288, 1, 4096]
-    - [659, 145756.0]
+    - [659, 0.0]
   - - [32, 32768, 1, 256]
-    - [660, 68344.3]
+    - [660, 0.0]
   - - [32, 32768, 1, 1024]
-    - [661, 127851.0]
+    - [661, 0.0]
   - - [32, 32768, 1, 4096]
-    - [662, 148995.0]
+    - [662, 0.0]
   - - [128, 384, 1, 1024]
-    - [8, 21041.5]
+    - [8, 0.0]
   - - [16384, 32, 1, 1024]
-    - [504, 102495.0]
+    - [504, 0.0]
   - - [512, 2048, 1, 4096]
-    - [512, 408109.0]
+    - [512, 0.0]
   - - [96, 12288, 1, 4096]
-    - [663, 308643.0]
+    - [663, 0.0]
   - - [16384, 96, 1, 4096]
-    - [664, 342600.0]
+    - [664, 0.0]
   - - [2048, 1024, 1, 4096]
-    - [212, 557314.0]
+    - [212, 0.0]
   - - [128, 24576, 1, 4096]
-    - [665, 470524.0]
+    - [665, 0.0]
   - - [96, 512, 1, 256]
-    - [7, 6732.38]
+    - [7, 0.0]
   - - [96, 512, 1, 1024]
-    - [3, 17477.3]
+    - [3, 0.0]
   - - [96, 16384, 1, 1024]
-    - [666, 244323.0]
+    - [666, 0.0]
   - - [1024, 4096, 1, 4096]
-    - [162, 790084.0]
+    - [162, 0.0]
   - - [128, 49152, 1, 4096]
-    - [667, 575982.0]
+    - [667, 0.0]
   - - [192, 4096, 1, 256]
-    - [184, 67242.4]
+    - [184, 0.0]
   - - [192, 4096, 1, 1024]
-    - [441, 183425.0]
+    - [441, 0.0]
   - - [192, 4096, 1, 4096]
-    - [184, 334102.0]
+    - [184, 0.0]
   - - [384, 2048, 1, 256]
-    - [441, 67816.4]
+    - [441, 0.0]
   - - [384, 2048, 1, 1024]
-    - [405, 184011.0]
+    - [405, 0.0]
   - - [384, 2048, 1, 4096]
-    - [184, 346551.0]
+    - [184, 0.0]
   - - [768, 1024, 1, 256]
-    - [405, 67325.0]
+    - [405, 0.0]
   - - [768, 1024, 1, 1024]
-    - [405, 186815.0]
+    - [405, 0.0]
   - - [768, 1024, 1, 4096]
-    - [405, 354223.0]
+    - [405, 0.0]
   - - [192, 16384, 1, 4096]
-    - [668, 561502.0]
+    - [668, 0.0]
   - - [192, 24576, 1, 256]
-    - [669, 176550.0]
+    - [669, 0.0]
   - - [192, 24576, 1, 1024]
-    - [670, 414944.0]
+    - [670, 0.0]
   - - [192, 24576, 1, 4096]
-    - [671, 581411.0]
+    - [671, 0.0]
   - - [384, 16384, 1, 4096]
-    - [558, 769610.0]
+    - [558, 0.0]
   - - [768, 12288, 1, 1024]
-    - [35, 585035.0]
+    - [35, 0.0]
   - - [1024, 8192, 1, 256]
-    - [672, 227197.0]
+    - [672, 0.0]
   - - [1024, 12288, 1, 1024]
-    - [113, 646633.0]
+    - [113, 0.0]
   - - [32768, 768, 1, 1024]
-    - [673, 588683.0]
+    - [673, 0.0]
   - - [24576, 512, 1, 256]
-    - [253, 238069.0]
+    - [253, 0.0]
   - - [24576, 512, 1, 1024]
-    - [674, 551186.0]
+    - [674, 0.0]
   - - [24576, 512, 1, 4096]
-    - [675, 807894.0]
+    - [675, 0.0]
   - - [49152, 256, 1, 256]
-    - [676, 237263.0]
+    - [676, 0.0]
   - - [49152, 256, 1, 1024]
-    - [81, 514569.0]
+    - [81, 0.0]
   - - [49152, 256, 1, 4096]
-    - [143, 699112.0]
+    - [143, 0.0]
   - - [1024, 40960, 1, 256]
-    - [119, 274114.0]
+    - [119, 0.0]
   - - [1024, 40960, 1, 1024]
-    - [677, 595130.0]
+    - [677, 0.0]
   - - [1024, 40960, 1, 4096]
-    - [120, 925702.0]
+    - [120, 0.0]
   - - [32768, 32, 1, 1024]
-    - [678, 128345.0]
+    - [678, 0.0]
   - - [40960, 96, 1, 256]
-    - [679, 140600.0]
+    - [679, 0.0]
   - - [40960, 96, 1, 1024]
-    - [680, 304519.0]
+    - [680, 0.0]
   - - [40960, 96, 1, 4096]
-    - [681, 382861.0]
+    - [681, 0.0]
   - - [57344, 128, 1, 4096]
-    - [682, 519815.0]
+    - [682, 0.0]
   - - [128, 512, 1, 4096]
-    - [13, 62978.2]
+    - [13, 0.0]
   - - [32, 4096, 1, 1024]
-    - [40, 42171.2]
+    - [40, 0.0]
   - - [2048, 192, 1, 256]
-    - [683, 44279.7]
+    - [683, 0.0]
   - - [2048, 192, 1, 1024]
-    - [129, 109834.0]
+    - [129, 0.0]
   - - [2048, 192, 1, 4096]
-    - [503, 207489.0]
+    - [503, 0.0]
   - - [32, 40960, 1, 256]
-    - [684, 71579.9]
+    - [684, 0.0]
   - - [32, 40960, 1, 1024]
-    - [685, 131770.0]
+    - [685, 0.0]
   - - [32, 40960, 1, 4096]
-    - [686, 158552.0]
+    - [686, 0.0]
   - - [128, 384, 1, 4096]
-    - [13, 52560.8]
+    - [13, 0.0]
   - - [16384, 32, 1, 4096]
-    - [687, 148117.0]
+    - [687, 0.0]
   - - [1024, 1024, 1, 256]
-    - [205, 82646.0]
+    - [205, 0.0]
   - - [64, 24576, 1, 256]
-    - [688, 94867.9]
+    - [688, 0.0]
   - - [64, 24576, 1, 1024]
-    - [689, 211393.0]
+    - [689, 0.0]
   - - [64, 24576, 1, 4096]
-    - [690, 270084.0]
+    - [690, 0.0]
   - - [64, 32768, 1, 256]
-    - [691, 117335.0]
+    - [691, 0.0]
   - - [64, 32768, 1, 1024]
-    - [692, 231858.0]
+    - [692, 0.0]
   - - [64, 32768, 1, 4096]
-    - [693, 288998.0]
+    - [693, 0.0]
   - - [4096, 512, 1, 256]
-    - [694, 124189.0]
+    - [694, 0.0]
   - - [256, 12288, 1, 256]
-    - [695, 156612.0]
+    - [695, 0.0]
   - - [96, 512, 1, 4096]
-    - [13, 48535.5]
+    - [13, 0.0]
   - - [96, 16384, 1, 4096]
-    - [696, 341175.0]
+    - [696, 0.0]
   - - [2048, 2048, 1, 256]
-    - [697, 195651.0]
+    - [697, 0.0]
   - - [256, 24576, 1, 256]
-    - [188, 210743.0]
+    - [188, 0.0]
   - - [12288, 64, 1, 256]
-    - [183, 65393.7]
+    - [183, 0.0]
   - - [12288, 64, 1, 1024]
-    - [698, 153644.0]
+    - [698, 0.0]
   - - [12288, 128, 1, 1024]
-    - [699, 257321.0]
+    - [699, 0.0]
   - - [384, 8192, 1, 256]
-    - [700, 153697.0]
+    - [700, 0.0]
   - - [384, 12288, 1, 256]
-    - [701, 186988.0]
+    - [701, 0.0]
   - - [768, 8192, 1, 256]
-    - [702, 201981.0]
+    - [702, 0.0]
   - - [768, 12288, 1, 4096]
-    - [252, 814701.0]
+    - [252, 0.0]
   - - [1024, 8192, 1, 1024]
-    - [448, 571247.0]
+    - [448, 0.0]
   - - [1024, 12288, 1, 4096]
-    - [37, 789949.0]
+    - [37, 0.0]
   - - [32768, 768, 1, 4096]
-    - [383, 820461.0]
+    - [383, 0.0]
   - - [768, 32768, 1, 256]
-    - [703, 249875.0]
+    - [703, 0.0]
   - - [32768, 32, 1, 4096]
-    - [704, 152294.0]
+    - [704, 0.0]
   - - [40960, 128, 1, 256]
-    - [705, 173395.0]
+    - [705, 0.0]
   - - [40960, 128, 1, 1024]
-    - [706, 366399.0]
+    - [706, 0.0]
   - - [40960, 128, 1, 4096]
-    - [707, 483005.0]
+    - [707, 0.0]
   - - [57344, 192, 1, 256]
-    - [195, 222520.0]
+    - [195, 0.0]
   - - [57344, 192, 1, 1024]
-    - [708, 487417.0]
+    - [708, 0.0]
   - - [57344, 192, 1, 4096]
-    - [709, 632210.0]
+    - [709, 0.0]
   - - [256, 256, 1, 256]
-    - [8, 8753.13]
+    - [8, 0.0]
   - - [32, 4096, 1, 4096]
-    - [710, 90473.1]
+    - [710, 0.0]
   - - [16, 32768, 1, 256]
-    - [711, 37005.0]
+    - [711, 0.0]
   - - [16, 32768, 1, 1024]
-    - [712, 68623.9]
+    - [712, 0.0]
   - - [16, 32768, 1, 4096]
-    - [713, 79109.1]
+    - [713, 0.0]
   - - [32, 49152, 1, 256]
-    - [684, 79241.1]
+    - [684, 0.0]
   - - [32, 49152, 1, 1024]
-    - [714, 134790.0]
+    - [714, 0.0]
   - - [32, 49152, 1, 4096]
-    - [715, 156595.0]
+    - [715, 0.0]
   - - [256, 192, 1, 256]
-    - [8, 7006.43]
+    - [8, 0.0]
   - - [768, 768, 1, 256]
-    - [716, 55437.8]
+    - [716, 0.0]
   - - [768, 768, 1, 1024]
-    - [364, 146715.0]
+    - [364, 0.0]
   - - [768, 768, 1, 4096]
-    - [698, 269923.0]
+    - [698, 0.0]
   - - [1024, 1024, 1, 1024]
-    - [66, 225102.0]
+    - [66, 0.0]
   - - [128, 12288, 1, 256]
-    - [717, 102386.0]
+    - [717, 0.0]
   - - [128, 16384, 1, 256]
-    - [718, 119743.0]
+    - [718, 0.0]
   - - [4096, 512, 1, 1024]
-    - [400, 329796.0]
+    - [400, 0.0]
   - - [256, 12288, 1, 1024]
-    - [719, 373365.0]
+    - [719, 0.0]
   - - [192, 256, 1, 256]
-    - [7, 7013.26]
+    - [7, 0.0]
   - - [96, 24576, 1, 256]
-    - [720, 122374.0]
+    - [720, 0.0]
   - - [96, 24576, 1, 1024]
-    - [668, 266479.0]
+    - [668, 0.0]
   - - [96, 24576, 1, 4096]
-    - [444, 361588.0]
+    - [444, 0.0]
   - - [2048, 2048, 1, 1024]
-    - [721, 491159.0]
+    - [721, 0.0]
   - - [256, 24576, 1, 1024]
-    - [188, 475227.0]
+    - [188, 0.0]
   - - [12288, 64, 1, 4096]
-    - [722, 239468.0]
+    - [722, 0.0]
   - - [12288, 128, 1, 4096]
-    - [723, 368074.0]
+    - [723, 0.0]
   - - [384, 8192, 1, 1024]
-    - [107, 383705.0]
+    - [107, 0.0]
   - - [384, 12288, 1, 1024]
-    - [234, 453746.0]
+    - [234, 0.0]
   - - [768, 8192, 1, 1024]
-    - [724, 521478.0]
+    - [724, 0.0]
   - - [12288, 768, 1, 256]
-    - [449, 220790.0]
+    - [449, 0.0]
   - - [1024, 8192, 1, 4096]
-    - [391, 843645.0]
+    - [391, 0.0]
   - - [16384, 768, 1, 256]
-    - [80, 241967.0]
+    - [80, 0.0]
   - - [65536, 384, 1, 256]
-    - [485, 250496.0]
+    - [485, 0.0]
   - - [768, 32768, 1, 1024]
-    - [143, 593837.0]
+    - [143, 0.0]
   - - [4096, 16, 1, 1024]
-    - [8, 22369.6]
+    - [8, 0.0]
   - - [32768, 64, 1, 256]
-    - [725, 114057.0]
+    - [725, 0.0]
   - - [32768, 64, 1, 1024]
-    - [726, 230033.0]
+    - [726, 0.0]
   - - [32768, 64, 1, 4096]
-    - [727, 288702.0]
+    - [727, 0.0]
   - - [40960, 192, 1, 256]
-    - [728, 196271.0]
+    - [728, 0.0]
   - - [57344, 384, 1, 256]
-    - [217, 244147.0]
+    - [217, 0.0]
   - - [256, 256, 1, 1024]
-    - [12, 27488.4]
+    - [12, 0.0]
   - - [4096, 32, 1, 256]
-    - [729, 17494.4]
+    - [729, 0.0]
   - - [16, 40960, 1, 256]
-    - [730, 39481.8]
+    - [730, 0.0]
   - - [16, 40960, 1, 1024]
-    - [731, 71374.3]
+    - [731, 0.0]
   - - [16, 40960, 1, 4096]
-    - [732, 75728.2]
+    - [732, 0.0]
   - - [32, 57344, 1, 256]
-    - [733, 80816.5]
+    - [733, 0.0]
   - - [32, 57344, 1, 1024]
-    - [734, 141778.0]
+    - [734, 0.0]
   - - [32, 57344, 1, 4096]
-    - [735, 147131.0]
+    - [735, 0.0]
   - - [256, 192, 1, 1024]
-    - [12, 20826.8]
+    - [12, 0.0]
   - - [64, 12288, 1, 256]
-    - [736, 65055.6]
+    - [736, 0.0]
   - - [64, 12288, 1, 1024]
-    - [432, 156856.0]
+    - [432, 0.0]
   - - [1024, 1024, 1, 4096]
-    - [226, 407064.0]
+    - [226, 0.0]
   - - [128, 12288, 1, 1024]
-    - [737, 261802.0]
+    - [737, 0.0]
   - - [128, 16384, 1, 1024]
-    - [738, 298073.0]
+    - [738, 0.0]
   - - [4096, 512, 1, 4096]
-    - [739, 545633.0]
+    - [739, 0.0]
   - - [256, 12288, 1, 4096]
-    - [20, 624932.0]
+    - [20, 0.0]
   - - [192, 256, 1, 1024]
-    - [8, 20792.4]
+    - [8, 0.0]
   - - [96, 32768, 1, 256]
-    - [740, 139470.0]
+    - [740, 0.0]
   - - [96, 32768, 1, 1024]
-    - [741, 302447.0]
+    - [741, 0.0]
   - - [96, 32768, 1, 4096]
-    - [742, 383534.0]
+    - [742, 0.0]
   - - [2048, 2048, 1, 4096]
-    - [210, 772575.0]
+    - [210, 0.0]
   - - [256, 24576, 1, 4096]
-    - [743, 722223.0]
+    - [743, 0.0]
   - - [24576, 32, 1, 256]
-    - [744, 56903.8]
+    - [744, 0.0]
   - - [24576, 64, 1, 1024]
-    - [745, 209769.0]
+    - [745, 0.0]
   - - [24576, 64, 1, 4096]
-    - [746, 278824.0]
+    - [746, 0.0]
   - - [384, 8192, 1, 4096]
-    - [30, 646148.0]
+    - [30, 0.0]
   - - [384, 12288, 1, 4096]
-    - [747, 709475.0]
+    - [747, 0.0]
   - - [768, 8192, 1, 4096]
-    - [748, 846340.0]
+    - [748, 0.0]
   - - [12288, 768, 1, 1024]
-    - [341, 578032.0]
+    - [341, 0.0]
   - - [2048, 4096, 1, 256]
-    - [749, 222696.0]
+    - [749, 0.0]
   - - [16384, 768, 1, 1024]
-    - [112, 625626.0]
+    - [112, 0.0]
   - - [65536, 384, 1, 1024]
-    - [37, 573535.0]
+    - [37, 0.0]
   - - [768, 32768, 1, 4096]
-    - [750, 852436.0]
+    - [750, 0.0]
   - - [4096, 16, 1, 4096]
-    - [13, 53113.4]
+    - [13, 0.0]
   - - [32768, 96, 1, 256]
-    - [751, 139471.0]
+    - [751, 0.0]
   - - [40960, 192, 1, 1024]
-    - [752, 463950.0]
+    - [752, 0.0]
   - - [57344, 384, 1, 1024]
-    - [753, 549279.0]
+    - [753, 0.0]
   - - [256, 256, 1, 4096]
-    - [221, 65578.3]
+    - [221, 0.0]
   - - [4096, 32, 1, 1024]
-    - [584, 42631.1]
+    - [584, 0.0]
   - - [16, 49152, 1, 256]
-    - [754, 43912.7]
+    - [754, 0.0]
   - - [16, 49152, 1, 1024]
-    - [755, 73579.4]
+    - [755, 0.0]
   - - [16, 49152, 1, 4096]
-    - [756, 83495.7]
+    - [756, 0.0]
   - - [256, 192, 1, 4096]
-    - [131, 57330.5]
+    - [131, 0.0]
   - - [64, 12288, 1, 4096]
-    - [757, 245154.0]
+    - [757, 0.0]
   - - [2048, 512, 1, 256]
-    - [592, 82850.0]
+    - [592, 0.0]
   - - [128, 12288, 1, 4096]
-    - [758, 399282.0]
+    - [758, 0.0]
   - - [128, 16384, 1, 4096]
-    - [759, 444106.0]
+    - [759, 0.0]
   - - [8192, 256, 1, 256]
-    - [760, 119810.0]
+    - [760, 0.0]
   - - [4096, 768, 1, 256]
-    - [70, 154051.0]
+    - [70, 0.0]
   - - [192, 256, 1, 4096]
-    - [131, 57352.3]
+    - [131, 0.0]
   - - [96, 40960, 1, 256]
-    - [761, 144526.0]
+    - [761, 0.0]
   - - [96, 40960, 1, 1024]
-    - [762, 304623.0]
+    - [762, 0.0]
   - - [96, 40960, 1, 4096]
-    - [763, 383769.0]
+    - [763, 0.0]
   - - [4096, 1024, 1, 256]
-    - [764, 193187.0]
+    - [764, 0.0]
   - - [512, 12288, 1, 256]
-    - [765, 209360.0]
+    - [765, 0.0]
   - - [24576, 32, 1, 1024]
-    - [766, 119437.0]
+    - [766, 0.0]
   - - [49152, 32, 1, 256]
-    - [767, 78418.1]
+    - [767, 0.0]
   - - [768, 4096, 1, 256]
-    - [700, 152030.0]
+    - [700, 0.0]
   - - [12288, 384, 1, 256]
-    - [78, 178673.0]
+    - [78, 0.0]
   - - [12288, 512, 1, 256]
-    - [768, 200495.0]
+    - [768, 0.0]
   - - [12288, 768, 1, 4096]
-    - [33, 793490.0]
+    - [33, 0.0]
   - - [2048, 4096, 1, 1024]
-    - [391, 583073.0]
+    - [391, 0.0]
   - - [16384, 768, 1, 4096]
-    - [769, 774953.0]
+    - [769, 0.0]
   - - [65536, 384, 1, 4096]
-    - [485, 761849.0]
+    - [485, 0.0]
   - - [12288, 2048, 1, 256]
-    - [607, 250000.0]
+    - [607, 0.0]
   - - [32768, 96, 1, 1024]
-    - [770, 311319.0]
+    - [770, 0.0]
   - - [40960, 192, 1, 4096]
-    - [771, 654398.0]
+    - [771, 0.0]
   - - [57344, 384, 1, 4096]
-    - [753, 727445.0]
+    - [753, 0.0]
   - - [512, 128, 1, 256]
-    - [3, 8414.64]
+    - [3, 0.0]
   - - [4096, 32, 1, 4096]
-    - [540, 92396.1]
+    - [540, 0.0]
   - - [16, 57344, 1, 256]
-    - [772, 45705.4]
+    - [772, 0.0]
   - - [16, 57344, 1, 1024]
-    - [773, 74385.9]
+    - [773, 0.0]
   - - [16, 57344, 1, 4096]
-    - [756, 82902.4]
+    - [756, 0.0]
   - - [96, 384, 1, 1024]
-    - [8, 15909.7]
+    - [8, 0.0]
   - - [512, 96, 1, 256]
-    - [3, 6812.58]
+    - [3, 0.0]
   - - [512, 96, 1, 1024]
-    - [12, 17706.4]
+    - [12, 0.0]
   - - [1024, 768, 1, 256]
-    - [464, 66930.0]
+    - [464, 0.0]
   - - [1024, 768, 1, 1024]
-    - [273, 183635.0]
+    - [273, 0.0]
   - - [1024, 768, 1, 4096]
-    - [464, 347262.0]
+    - [464, 0.0]
   - - [2048, 384, 1, 256]
-    - [464, 66885.5]
+    - [464, 0.0]
   - - [2048, 384, 1, 1024]
-    - [273, 183649.0]
+    - [273, 0.0]
   - - [2048, 384, 1, 4096]
-    - [464, 332643.0]
+    - [464, 0.0]
   - - [4096, 192, 1, 256]
-    - [464, 66087.6]
+    - [464, 0.0]
   - - [4096, 192, 1, 1024]
-    - [464, 179394.0]
+    - [464, 0.0]
   - - [4096, 192, 1, 4096]
-    - [464, 322852.0]
+    - [464, 0.0]
   - - [8192, 96, 1, 256]
-    - [716, 66073.3]
+    - [716, 0.0]
   - - [8192, 96, 1, 1024]
-    - [364, 168004.0]
+    - [364, 0.0]
   - - [8192, 96, 1, 4096]
-    - [464, 281123.0]
+    - [464, 0.0]
   - - [2048, 512, 1, 1024]
-    - [205, 224161.0]
+    - [205, 0.0]
   - - [2048, 768, 1, 256]
-    - [594, 105030.0]
+    - [594, 0.0]
   - - [256, 8192, 1, 256]
-    - [774, 119650.0]
+    - [774, 0.0]
   - - [8192, 256, 1, 1024]
-    - [775, 322977.0]
+    - [775, 0.0]
   - - [4096, 768, 1, 1024]
-    - [182, 397925.0]
+    - [182, 0.0]
   - - [384, 128, 1, 256]
-    - [7, 6987.55]
+    - [7, 0.0]
   - - [96, 49152, 1, 256]
-    - [776, 158047.0]
+    - [776, 0.0]
   - - [96, 49152, 1, 1024]
-    - [777, 344673.0]
+    - [777, 0.0]
   - - [96, 49152, 1, 4096]
-    - [778, 438075.0]
+    - [778, 0.0]
   - - [4096, 1024, 1, 1024]
-    - [779, 460460.0]
+    - [779, 0.0]
   - - [512, 12288, 1, 1024]
-    - [25, 525311.0]
+    - [25, 0.0]
   - - [24576, 32, 1, 4096]
-    - [780, 155415.0]
+    - [780, 0.0]
   - - [768, 4096, 1, 1024]
-    - [107, 389404.0]
+    - [107, 0.0]
   - - [12288, 384, 1, 1024]
-    - [108, 440733.0]
+    - [108, 0.0]
   - - [12288, 512, 1, 1024]
-    - [781, 492951.0]
+    - [781, 0.0]
   - - [24576, 384, 1, 256]
-    - [782, 222971.0]
+    - [782, 0.0]
   - - [24576, 384, 1, 1024]
-    - [33, 538106.0]
+    - [33, 0.0]
   - - [24576, 384, 1, 4096]
-    - [341, 705685.0]
+    - [341, 0.0]
   - - [49152, 192, 1, 256]
-    - [35, 219487.0]
+    - [35, 0.0]
   - - [49152, 192, 1, 1024]
-    - [216, 475312.0]
+    - [216, 0.0]
   - - [49152, 192, 1, 4096]
-    - [247, 609742.0]
+    - [247, 0.0]
   - - [2048, 4096, 1, 4096]
-    - [783, 865945.0]
+    - [783, 0.0]
   - - [32768, 384, 1, 256]
-    - [784, 237974.0]
+    - [784, 0.0]
   - - [768, 49152, 1, 256]
-    - [785, 274402.0]
+    - [785, 0.0]
   - - [12288, 2048, 1, 1024]
-    - [38, 604254.0]
+    - [38, 0.0]
   - - [8192, 16, 1, 1024]
-    - [786, 38115.2]
+    - [786, 0.0]
   - - [32768, 96, 1, 4096]
-    - [787, 409757.0]
+    - [787, 0.0]
   - - [40960, 256, 1, 256]
-    - [788, 223769.0]
+    - [788, 0.0]
   - - [40960, 256, 1, 1024]
-    - [789, 504966.0]
+    - [789, 0.0]
   - - [40960, 256, 1, 4096]
-    - [790, 679465.0]
+    - [790, 0.0]
   - - [40960, 512, 1, 256]
-    - [791, 237941.0]
+    - [791, 0.0]
   - - [40960, 512, 1, 1024]
-    - [790, 505625.0]
+    - [790, 0.0]
   - - [40960, 512, 1, 4096]
-    - [536, 812834.0]
+    - [536, 0.0]
   - - [57344, 256, 1, 256]
-    - [641, 238290.0]
+    - [641, 0.0]
   - - [57344, 256, 1, 1024]
-    - [114, 511729.0]
+    - [114, 0.0]
   - - [57344, 256, 1, 4096]
-    - [792, 719756.0]
+    - [792, 0.0]
   - - [57344, 512, 1, 256]
-    - [85, 244161.0]
+    - [85, 0.0]
   - - [57344, 512, 1, 1024]
-    - [92, 542045.0]
+    - [92, 0.0]
   - - [57344, 512, 1, 4096]
-    - [91, 895301.0]
+    - [91, 0.0]
   - - [57344, 768, 1, 256]
-    - [645, 247328.0]
+    - [645, 0.0]
   - - [57344, 768, 1, 1024]
-    - [91, 581560.0]
+    - [91, 0.0]
   - - [57344, 768, 1, 4096]
-    - [91, 929371.0]
+    - [91, 0.0]
   - - [57344, 1024, 1, 256]
-    - [645, 256239.0]
+    - [645, 0.0]
   - - [57344, 1024, 1, 1024]
-    - [91, 627836.0]
+    - [91, 0.0]
   - - [57344, 1024, 1, 4096]
-    - [353, 952781.0]
+    - [353, 0.0]
   - - [32768, 32, 1, 256]
-    - [799, 68130.4]
+    - [799, 0.0]
   - - [4096, 16, 1, 256]
-    - [8, 8204.56]
+    - [8, 0.0]
   - - [96, 384, 1, 256]
-    - [8, 5306.67]
+    - [8, 0.0]
   - - [8192, 16, 1, 256]
-    - [800, 14571.8]
+    - [800, 0.0]
   - - [32, 8192, 1, 256]
-    - [801, 28295.9]
+    - [56, 0.0]
   - - [32, 24576, 1, 256]
-    - [802, 57286.7]
+    - [801, 0.0]
   - - [12288, 32, 1, 256]
-    - [803, 36322.8]
+    - [588, 0.0]
   - - [12288, 32, 1, 1024]
-    - [804, 86777.8]
+    - [254, 0.0]
   - - [32, 16384, 1, 256]
-    - [805, 45922.8]
+    - [129, 0.0]
   - - [16, 12288, 1, 256]
-    - [806, 19650.4]
+    - [802, 0.0]
   - - [32, 16384, 1, 1024]
-    - [807, 104857.0]
+    - [508, 0.0]
   - - [12288, 16, 1, 256]
-    - [808, 19594.3]
+    - [803, 0.0]
 - null
 - null
 - DeviceEfficiency
