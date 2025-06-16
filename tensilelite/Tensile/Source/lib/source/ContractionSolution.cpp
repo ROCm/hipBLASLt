@@ -43,8 +43,6 @@
 #include <cstdlib>
 #include <random>
 
-#include <stdio.h>
-
 #ifdef ENABLE_ROCTX
 #include <roctracer/roctx.h>
 #endif
@@ -3184,7 +3182,7 @@ namespace TensileLite
                 {
                     size_t splitGrid = tiles * frac;
                     size_t itersPerCU = itersPerTile / frac;
-                    if(splitGrid < cuCount && itersPerCU >= 8)
+                    if(splitGrid <= cuCount && itersPerCU >= 8)
                     {
                         skGrid = splitGrid;
                         break;
