@@ -360,6 +360,7 @@ class Linker(Component):
         """
         with open(Path.cwd() / "clang_args.txt", "wt") as file:
             file.write(" ".join(srcPaths).replace('\\', '\\\\') if os_name == "nt" else " ".join(srcPaths))
+            file.flush()
         return [*(self.default_args), "-o", destPath, "@clang_args.txt"]
 
     def _use_response_file(self, args: List[str]) -> bool:
