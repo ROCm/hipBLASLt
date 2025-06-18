@@ -19140,8 +19140,8 @@
     ExpertSchedulingMode: 0
     ForceDisableShadowInit: false
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 4
-    GlobalReadVectorWidthB: 4
+    GlobalReadVectorWidthA: 1
+    GlobalReadVectorWidthB: 1
     GlobalSplitU: 0
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalSplitUCoalesced: false
