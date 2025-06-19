@@ -157,16 +157,8 @@ foreach(arch IN LISTS archs)
 endforeach()
 
 add_custom_target(ExtOpCp ALL  
-    DEPENDS ${dat_depends} TENSILE_LIBRARY_TARGET  
+    DEPENDS ${dat_depends} TENSILE_LIBRARY_TARGET
+    COMMAND ${CMAKE_COMMAND} -E env ${python_launch_prefix} "${ops_path}/copy_files.py" ${CMAKE_CURRENT_BINARY_DIR} ${PROJECT_BINARY_DIR}/Tensile/library/
     COMMENT "Copying .co and .dat files"
-) 
+)
 
-file(GLOB FILES_TO_COPY "${CMAKE_CURRENT_BINARY_DIR}/*.co" "${CMAKE_CURRENT_BINARY_DIR}/*.dat")  
- 
-foreach(file ${FILES_TO_COPY})  
-    add_custom_command(
-        TARGET ExtOpCp POST_BUILD  
-        COMMAND ${CMAKE_COMMAND} -E copy "${file}" "${PROJECT_BINARY_DIR}/Tensile/library/"  
-        COMMENT "Copying ${file} to ${PROJECT_BINARY_DIR}/Tensile/library/"  
-    )
-endforeach()
