@@ -26,6 +26,7 @@ import collections
 import math
 import shutil
 import subprocess
+import os
 
 from pathlib import Path
 from typing import List, Union, NamedTuple
@@ -122,6 +123,12 @@ def buildAssemblyCodeObjectFiles(
         linker(objFiles, str(coFileRaw))
         coFile = destDir / coFileRaw.name.replace(extCoRaw, extCo)
         if compress:
+          if os.path.exists(str(coFileRaw)):
+            print(f"exist")
+            print(str(coFileRaw))
+          else:
+            print(f"non exist")
+            print(str(coFileRaw))
           bundler.compress(str(coFileRaw), str(coFile), gfx)
         else:
           shutil.move(coFileRaw, coFile)
