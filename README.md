@@ -1,5 +1,8 @@
 # hipBLASLt
 
+> [!CAUTION]
+> The hipBLASLt repository is retired, please use the [ROCm/rocm-libraries](https://github.com/ROCm/rocm-libraries) repository
+>
 hipBLASLt is a library that provides general matrix-matrix operations. It has a flexible API that extends
 functionalities beyond a traditional BLAS library, such as adding flexibility to matrix data layouts, input
 types, compute types, and algorithmic implementations and heuristics.
