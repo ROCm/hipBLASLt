@@ -3994,7 +3994,6 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(1) as tmpSgprInfo:
           module.add(vectorStaticMultiplyAdd(vgpr("LocalReadAddr%s"%tc), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpeDS"], vgpr("LocalReadAddr%s"%tc), tmpSgprInfo, \
                                        "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
-
       # release resources
       self.vgprPool.checkIn(tmpVgpr)
       self.vgprPool.checkIn(wave_id)
@@ -8262,7 +8261,6 @@ class KernelWriterAssembly(KernelWriter):
                 # TODO: is it possible to load only hi16 when no in tail? (need to check INT8 too)
                 datatype = kernel["ProblemType"]["DataType%s"%tc] if kernel["ConvertAfterDS"] else kernel["ProblemType"]["DataType"]
                 isHigh16Bits = (datatype.isHalf() or datatype.isBFloat16()) and loopCnt%2==1 if not tP["isM"] else False
-                #Carson: global reads called here
                 loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                           bpl, destVgpr=destVgpr, \
                           addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
@@ -8270,7 +8268,8 @@ class KernelWriterAssembly(KernelWriter):
                           glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=isHigh16Bits , \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
-                #instOffset += 16 #Carson: debug 256b reads
+                if tc == 'A':
+                  instOffset += 16 # 256b reads require 16B offset
 
                 if unrollMirrorWithSoffset:
                   codeMod = Module("mirrorIdx%u"%loopCnt)
@@ -9245,7 +9244,6 @@ class KernelWriterAssembly(KernelWriter):
                   paramList[1] = paramList[1] - 65536
               else:
                 dstAddr=vgpr(lwa)
-              #carson: paramList[1] holds ds_write offset, but it is being split into two calls and 16 added to offset beyond this command somewhere
               ds        = DSModifiers(na=1, offset=paramList[1])
               writeInst = LocalWriteX(dstAddr=dstAddr, src=paramList[0], ds=ds, comment=comment)
             else:
