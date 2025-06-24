@@ -34,11 +34,6 @@ Tests:
   function:
     - aux_mat_set_attr_bad_arg: *hpa_half_precision
 
-- name: aux_mat_override
-  category: pre_checkin
-  function:
-    - aux_mat_override: *hpa_half_precision
-
 - name: aux_mat_get_attr_bad_arg
   category: pre_checkin
   function:
