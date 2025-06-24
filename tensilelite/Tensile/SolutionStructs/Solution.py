@@ -2549,8 +2549,6 @@ class Solution(collections.abc.Mapping):
       state["NoLdsWriteCode"] = True
 
     # calculate ldsPad
-    result = calcLdsPad(state["LocalReadVectorWidth"], isaInfoMap)
-    print("result: " + str(result))
     state["LdsPadA"], state["LdsPadB"], state["LdsPadMetadata"] = calcLdsPad(state["LocalReadVectorWidth"], isaInfoMap)
 
     if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadA"] == 16 // state["ProblemType"]["DataType"].numBytes():
