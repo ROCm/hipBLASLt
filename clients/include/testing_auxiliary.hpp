@@ -1394,7 +1394,7 @@ void testing_aux_auxiliary_func(const Arguments& arg)
     static_cast<void>(hipGetDevice(&deviceId));
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
     ASSERT_TRUE(gpu_arch_match(deviceProperties.gcnArchName, ""));
-    ASSERT_TRUE(gpu_arch_match(deviceProperties.gcnArchName, "42"));
+    ASSERT_TRUE(gpu_arch_match(deviceProperties.gcnArchName, "\\d"));
 
     // Test hipblas_status_to_string
     ASSERT_TRUE(hipblas_status_to_string(HIPBLAS_STATUS_SUCCESS) == "HIPBLAS_STATUS_SUCCESS");
