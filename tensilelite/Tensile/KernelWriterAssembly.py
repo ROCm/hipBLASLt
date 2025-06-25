@@ -11841,10 +11841,10 @@ class KernelWriterAssembly(KernelWriter):
         else:
           assert 0, "%s\nchooseGlobalRead: bad bpl %u"%(self.states.kernelName,bpl)
       
-      global dbgCounter
-      rv.add(SWaitCnt(lgkmcnt=0, comment=""))
-      rv.add(TextBlock(str("label_gr_") + str(dbgCounter) + ":\n"))
-      dbgCounter += 1
+      # global dbgCounter
+      # rv.add(SWaitCnt(lgkmcnt=0, comment=""))
+      # rv.add(TextBlock(str("label_gr_") + str(dbgCounter) + ":\n"))
+      # dbgCounter += 1
 
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead

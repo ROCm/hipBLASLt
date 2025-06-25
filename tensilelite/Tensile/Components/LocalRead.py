@@ -216,7 +216,6 @@ class LocalReadMFMA(LocalRead):
         numSplitMetadata = max(ceil((blockWidth * 4) // (kernel["MIInputPerThread%s"%tc] * tP["bpeDS"])) - 1, 0) if tP["isM"] else 0
         valufIdx = 0
         if enableLDSTr:
-            print("WEEEE1")
             numberMTilesPerWave = kernel["MIWaveTile"][tile01]
             highBits = 0
             for tIdx in range(0, numberMTilesPerWave):
@@ -238,7 +237,6 @@ class LocalReadMFMA(LocalRead):
                 ds = DSModifiers(na=1, offset=paramList[1])
                 localReadCode.add(LocalReadX(dst=destVgpr, src=vgpr("LocalReadAddr%s"%tc), ds=ds, comment=comment))
         else:
-            print("WEEEE2")
             for vIdx in range(0, numVectorsPerTile):
                 for eIdx in range(0, numReadsPerVector):
                     valuiIdx = int(valufIdx)
@@ -547,13 +545,10 @@ class LocalReadMFMA(LocalRead):
                                 incOffset = rIdx * numElementPerRead * UnrollStride + incOffset
                                 offset_val = (incOffset + offset_val + tP["localReadOffset"]) * tP["bpeDS"]
                             else:
-                                print("offsetval: {0}, {1}, {2}", offset_val, numElementPerRead, UnrollStride)
                                 offset_val = (rIdx * numElementPerRead * UnrollStride + offset_val + tP["localReadOffset"]) * tP["bpeDS"]
-                                print("offsetval2: ", offset_val)
     
                             if (kernel["LdsBlockSizePerPad%s"%tc] != 0) and (kernel["LdsPad%s"%tc] != 0):
                                 offset_val = offset_val + (offset_val // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpeDS"]
-                                print("offsetval3: ", offset_val, kernel["LdsBlockSizePerPad%s"%tc], kernel["LdsPad%s"%tc], tP["bpeDS"])
                             offset_val = offset_val + tP["localReadSwapByteOffset"]
                             # offset_val = offset_val * 4 #Carson: Debug
                             if (kernel["DirectToLds%s" % tc] and  \

@@ -394,7 +394,6 @@ class GlobalWriteBatchWriter:
       module.add(VMovB32(dst=vgpr(bufferOOB), src="BufferOOB"))
     else:
       bufferOOB = None
-      print("carsonGlobalWriteBatchWriter1")
     #when factorDim = 1 the bias's gwvw is alwasy be 1.
     factor_gwvw = 1 if self.factorDim else self.ss.cfg.gwvw
     for elementIdx, element in enumerate(self.batchElements):
@@ -418,7 +417,6 @@ class GlobalWriteBatchWriter:
       sumIdxGSUSYNC = self.ss.elementSumIdx[elementIdx]
 
       module.add(addrCalc.emitAddressSetupCode(self.kernel, self.tPB, self.ss, self.tmpVgpr, self.tmpS01, self.edge, self.beta, self.atomic, elementIdx, addrDVgpr))
-      print("carsonGlobalWriteBatchWriter2")
 
       if self.edge:
         module.add(addrCalc.edgeProtectCode(self.kernel, self.edge, self.beta, self.atomic, mask, self.tmpSgpr))
@@ -429,10 +427,8 @@ class GlobalWriteBatchWriter:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'C', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrCVgpr, self.addrC, 0))
         if dataBeta not in loadedDataBeta:
           if self.kernel["GroupLoadStore"]:
-            print("carsonGlobalWriteBatchWriter3")
             loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
           else:
-            print("carsonGlobalWriteBatchWriter3.2", elementIdx)
             module.add(self.parentWriter.readInput(self.kernel, self.ss, 'C', self.kernel["ProblemType"]["DestDataType"], addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
           loadedDataBeta[dataBeta] = ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.ss.cfg.gwvw / 16)
           self.loadsBetaIssued += ceil(self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw / 16)
@@ -443,10 +439,8 @@ class GlobalWriteBatchWriter:
         if dataE not in loadedDataE:
           loadOffset = int((self.kernel["ProblemType"]["ComputeDataType"].numRegisters() - self.kernel["ProblemType"]["DataTypeE"].numRegisters()) * self.ss.cfg.gwvw)
           if self.kernel["GroupLoadStore"]:
-            print("carsonGlobalWriteBatchWriter4")
             loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["DataTypeE"], addrCalc, vc0, dataE + loadOffset, self.gwvw, addrEVgpr, self.tmpS01))
           else:
-            print("carsonGlobalWriteBatchWriter4.2")
             module.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["DataTypeE"], addrCalc, vc0, dataE + loadOffset, self.gwvw, addrEVgpr, self.tmpS01))
           loadedDataE[dataE] = ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.ss.cfg.gwvw / 16)
           self.loadsEIssued += ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.gwvw / 16)
