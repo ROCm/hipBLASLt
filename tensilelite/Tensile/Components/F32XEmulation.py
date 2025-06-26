@@ -125,7 +125,7 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
         tf32mod = Module()
         # Carson: textblock here (or in localread) is causing python issues. rocisa ambiguity issue?
         tf32mod.add(TextBlock("/*TF32 Emulation read lds*/\n"))
-        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         #tf32mod.add(SNop(waitState=27, comment="wait for ds_read"))
         tf32mod.add(TextBlock(str("label_tf32Read_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
         F32XEmulationCvtLocalRead.dbgCounter += 1
@@ -162,7 +162,7 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
         # 3: [2low, 3low]
         #
 
-        tf32mod.add(TextBlock(str("label_tf32Read_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
+        tf32mod.add(TextBlock(str("label_tf32Read_end_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
         F32XEmulationCvtLocalRead.dbgCounter += 1
         return tf32mod
 
@@ -184,6 +184,7 @@ class F32XEmulationMFMA(F32XEmulation):
         numElementsPerIter = 4
         vgprSize = width / 2
 
+        # Cvt register layout:
         #cvt0-1: Tmp
         #cvt2-5: AHigh
         #cvt6-9: Bhigh
@@ -222,12 +223,30 @@ class F32XEmulationMFMA(F32XEmulation):
             tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh1), src0=vgpr(bStart), src1=vgpr(bStart + "+1")))
             tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh2), src0=vgpr(bStart + "+2"), src1=vgpr(bStart + "+3")))
 
-            tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
-            tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
+        tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
+        tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
+        if kernel["EnableF32XEmulationLds"]:
+            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart,2))
+            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+        else:
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aHigh,vgprSize))
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2))
+
+        for itr in range(int(width / numElementsPerIter)):
+            offset = "+" + str(itr * 2)
+            aHigh1 = aHigh + offset
+            aHigh2 = aHigh + "+1" + offset
+            aLow1 = aLow + offset
+            aLow2 = aLow + "+1" + offset
+            bHigh1 = bHigh + offset
+            bHigh2 = bHigh + "+1" + offset
+            bLow1 = bLow + offset
+            bLow2 = bLow + "+1" + offset
+            tmp1 = "Cvt+0"
+            tmp2 = "Cvt+1"
             if kernel["EnableF32XEmulationLds"]:
                 None
                 #tf32mod.add(SNop(waitState=1020, comment="1 wait states for ds_read"))
@@ -250,12 +269,30 @@ class F32XEmulationMFMA(F32XEmulation):
                 tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(aStart+"+3"), src1=vgpr(tmp2)))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aLow2), src0=vgpr(tmp1), src1=vgpr(tmp2)))
 
-            tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
+        tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
+        if kernel["EnableF32XEmulationLds"]:
+            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart + "+2",2))
+            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+        else:
             (src0, src1) = (vgpr(bHigh,vgprSize), vgpr(aLow,vgprSize))
             # # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             # tf32mod.add(SNop(waitState=64, comment="1 wait s00tates for ds_read"))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                               acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+
+        for itr in range(int(width / numElementsPerIter)):
+            offset = "+" + str(itr * 2)
+            aHigh1 = aHigh + offset
+            aHigh2 = aHigh + "+1" + offset
+            aLow1 = aLow + offset
+            aLow2 = aLow + "+1" + offset
+            bHigh1 = bHigh + offset
+            bHigh2 = bHigh + "+1" + offset
+            bLow1 = bLow + offset
+            bLow2 = bLow + "+1" + offset
+            tmp1 = "Cvt+0"
+            tmp2 = "Cvt+1"
 
             tf32mod.add(TextBlock("/*bf16BLow = B - float32(bf16BHigh)*/\n"))
             tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh1, vgprMask="", vi=0))
@@ -274,20 +311,20 @@ class F32XEmulationMFMA(F32XEmulation):
 
         #todo: working impl using in situ cvt cmd. lds currently some kernels are failing
         if kernel["EnableF32XEmulationLds"]:
-            tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
-            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart + "+2",2))
-            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            # tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
+            # (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart + "+2",2))
+            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             (src0, src1) = (vgpr("Cvt+6",2), vgpr(aStart,2))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
-            tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
+            # tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart,2))
-            tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
-                                acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
+            # (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart,2))
+            # tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
+            #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         else:
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
