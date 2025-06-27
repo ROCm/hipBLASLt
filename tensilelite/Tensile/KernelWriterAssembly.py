@@ -6069,9 +6069,6 @@ class KernelWriterAssembly(KernelWriter):
       module.add(RegSet("s", "sgprSrdTD", self.sgprs["SrdTD"]))
       self.defineSgpr("GSUSync", 1)
       module.add(RegSet("s", "sgprGSUSync", self.sgprs["GSUSync"]))
-    if (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
-      self.defineSgpr("GSUStartWGIdx", 1)
-      module.add(RegSet("s", "sgprGSUStartWGIdx", self.sgprs["GSUStartWGIdx"]))
 
     if kernel["ProblemType"]["UseE"]:
       self.defineSgpr("SrdE", 4, 4)
@@ -11495,10 +11492,15 @@ class KernelWriterAssembly(KernelWriter):
         
       gsuComponent = Component.GSU.find(self)
       if kernel["GlobalSplitU"] > 1 and kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
+        self.defineSgpr("GSUStartWGIdx", 1)
+        module.add(RegSet("s", "sgprGSUStartWGIdx", self.sgprs["GSUStartWGIdx"]))
+        module.addSpaceLine()
         module.add(reductionStartLabel)
         module.add(gsuComponent.reductionBranches(self, kernel, tPB, vectorWidths_1, elements_1, tmpVgpr, cvtVgprStruct, \
           vectorDataTypes, factorDims, endLabel))
         module.add(reductionEndLabel)
+        module.add(self.undefineSgpr("GSUStartWGIdx"))
+        module.addSpaceLine()
 
 
       betaModules = Module("Betas")
