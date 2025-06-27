@@ -2875,10 +2875,13 @@ namespace TensileLite
             }
             const bool streamKDP = Debug::Instance().useStreamKDataParrallel();
             auto       tiles     = problem.getNumTiles(sizeMapping, gsu);
-            size_t     skGrid    = getSKGrid(problem, hardware, tiles);
-            // Get space required for partial tiles
-            if(tiles % skGrid != 0 && !streamKDP)
-                size += partialTileSize(skGrid);
+            if(tiles > 0) // Grouped GEMM reports 0 tiles
+            {
+                size_t     skGrid    = getSKGrid(problem, hardware, tiles);
+                // Get space required for partial tiles
+                if(skGrid > 0 && tiles % skGrid != 0 && !streamKDP)
+                    size += partialTileSize(skGrid);
+            }
         }
         else
         {
@@ -3141,6 +3144,58 @@ namespace TensileLite
                                                      false,
                                                      sizeMapping.workGroupMapping,
                                                      10);
+        }
+        else if(pAMDGPU->skDynamicGrid == 6)
+        {
+            auto itersPerTile = max(1, problem.getItersPerTile(sizeMapping));
+            size_t skGrid = tiles; // Fallback if no good fractional tile is found
+            // More tiles than CUs
+            // Distribute tiles evenly across maximum number of CUs
+            // Split remaining tiles as evenly as possible for better caching
+            if(tiles > cuCount)
+            {
+                size_t virtCUCount = cuCount;
+                if (sizeMapping.CUOccupancy > 1)
+                    virtCUCount *= sizeMapping.CUOccupancy;
+                // const std::vector<double> tileFractions = {0.0, 1.0/8.0, 1.0/5.0, 1.0/4.0, 1.0/3.0, 1.0/2.0, 1.0};
+                // const std::vector<double> tileFractions = {0.0, 1.0/2.0, 1.0/8.0, 1.0/5.0, 1.0/4.0, 1.0/3.0, 1.0};
+                const std::vector<double> tileFractions = {0.0, 1.0/2.0, 1.0/8.0, 1.0/5.0, 1.0/4.0, 1.0/3.0};
+                size_t minEvenTiles = tiles / virtCUCount;
+                for(double frac: tileFractions)
+                {
+                    size_t fracGrid = (size_t)((tiles / (minEvenTiles + frac)) + 0.5);
+                    // Check if higher occupancy would cause excessive workspace requirements (set current limit to 128MB)
+                    if((tiles % fracGrid != 0) && (partialTileSize(fracGrid) > 128*1024*1024))
+                        continue;
+                    if(fracGrid <= virtCUCount)
+                    {
+                        skGrid = fracGrid;
+                        break;
+                    }
+                }
+            }
+            // Fewer tiles than CUs
+            // Split tiles evenly in k-dimension
+            // Attempt to maximize CU utilization, up to a peak number of splits
+            // Max splitting is currently constant, but should be dependant on K dimension
+            else if (tiles < cuCount)
+            {
+                const std::vector<int> tileFractions = {8, 6, 4, 3, 2, 1};
+                for(int frac: tileFractions)
+                {
+                    size_t splitGrid = tiles * frac;
+                    size_t itersPerCU = itersPerTile / frac;
+                    if(splitGrid <= cuCount && itersPerCU >= 8)
+                    {
+                        skGrid = splitGrid;
+                        break;
+                    }
+                }
+            }
+
+            if (tiles % skGrid != 0 && partialTileSize(skGrid) > problem.workspaceSize())
+                skGrid = tiles;
+            return skGrid;
         }
         // Limit the CUs Stream-K is launched on either max or the specified,
         // whichever is minimum.
