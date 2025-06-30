@@ -216,17 +216,18 @@ class F32XEmulationMFMA(F32XEmulation):
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
             if not kernel["EnableF32XEmulationLds"]:
+                tf32mod.add(TextBlock("/*bf16AHigh*/\n"))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aHigh1), src0=vgpr(aStart), src1=vgpr(aStart + "+1")))
                 tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aHigh2), src0=vgpr(aStart + "+2"), src1=vgpr(aStart + "+3")))
-            tf32mod.add(TextBlock("/*bf16BHigh*/\n"))
-            tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh1), src0=vgpr(bStart), src1=vgpr(bStart + "+1")))
-            tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh2), src0=vgpr(bStart + "+2"), src1=vgpr(bStart + "+3")))
+                tf32mod.add(TextBlock("/*bf16BHigh*/\n"))
+                tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh1), src0=vgpr(bStart), src1=vgpr(bStart + "+1")))
+                tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bHigh2), src0=vgpr(bStart + "+2"), src1=vgpr(bStart + "+3")))
 
-        tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
+        # tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
         tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))
         if kernel["EnableF32XEmulationLds"]:
-            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart,2))
+            (src0, src1) = (vgpr(bStart,vgprSize), vgpr(aStart,vgprSize))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
         else:
@@ -256,8 +257,8 @@ class F32XEmulationMFMA(F32XEmulation):
                 #tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                 #                    acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
                 #tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-            tf32mod.add(TextBlock("/*bf16ALow = A - float32(bf16AHigh)*/\n"))
             if not kernel["EnableF32XEmulationLds"]:
+                tf32mod.add(TextBlock("/*bf16ALow = A - float32(bf16AHigh)*/\n"))
                 tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=aHigh1, vgprMask="", vi=0))
                 tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(aStart+"+0"), src1=vgpr(tmp1)))
                 tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=aHigh1, vgprMask="", vi=1))
@@ -271,7 +272,7 @@ class F32XEmulationMFMA(F32XEmulation):
 
         tf32mod.add(TextBlock("/*acc = bf16ALow * bf16BHigh*/\n"))
         if kernel["EnableF32XEmulationLds"]:
-            (src0, src1) = (vgpr("Cvt+2",2), vgpr(aStart + "+2",2))
+            (src0, src1) = (vgpr(bStart,vgprSize), vgpr(aStart + "+" + str(vgprSize),vgprSize))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
         else:
@@ -294,17 +295,18 @@ class F32XEmulationMFMA(F32XEmulation):
             tmp1 = "Cvt+0"
             tmp2 = "Cvt+1"
 
-            tf32mod.add(TextBlock("/*bf16BLow = B - float32(bf16BHigh)*/\n"))
-            tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh1, vgprMask="", vi=0))
-            tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+0"), src1=vgpr(tmp1)))
-            tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh1, vgprMask="", vi=1))
-            tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+1"), src1=vgpr(tmp2)))
-            tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow1), src0=vgpr(tmp1), src1=vgpr(tmp2)))
-            tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh2, vgprMask="", vi=0))
-            tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+2"), src1=vgpr(tmp1)))
-            tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh2, vgprMask="", vi=1))
-            tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+3"), src1=vgpr(tmp2)))
-            tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow2), src0=vgpr(tmp1), src1=vgpr(tmp2)))
+            if not kernel["EnableF32XEmulationLds"]:
+                tf32mod.add(TextBlock("/*bf16BLow = B - float32(bf16BHigh)*/\n"))
+                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh1, vgprMask="", vi=0))
+                tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+0"), src1=vgpr(tmp1)))
+                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh1, vgprMask="", vi=1))
+                tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+1"), src1=vgpr(tmp2)))
+                tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow1), src0=vgpr(tmp1), src1=vgpr(tmp2)))
+                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh2, vgprMask="", vi=0))
+                tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+2"), src1=vgpr(tmp1)))
+                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh2, vgprMask="", vi=1))
+                tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+3"), src1=vgpr(tmp2)))
+                tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow2), src0=vgpr(tmp1), src1=vgpr(tmp2)))
 
             aStart = aStart + "+4"
             bStart = bStart + "+4"
@@ -317,7 +319,7 @@ class F32XEmulationMFMA(F32XEmulation):
             #                     acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BLow*/\n"))
             # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-            (src0, src1) = (vgpr("Cvt+6",2), vgpr(aStart,2))
+            (src0, src1) = (vgpr(bStart + "+" + str(vgprSize),vgprSize), vgpr(aStart,vgprSize))
             tf32mod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                 acc=acc, a=src0, b=src1, acc2=acc2, neg=neg_flag))
             # tf32mod.add(TextBlock("/*acc += bf16AHigh * bf16BHigh*/\n"))

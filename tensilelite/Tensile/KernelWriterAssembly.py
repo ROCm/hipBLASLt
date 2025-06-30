@@ -9251,9 +9251,9 @@ class KernelWriterAssembly(KernelWriter):
               writeInst = LocalWriteX(dstAddr=vgpr(lwa), src0=paramList[0], src1=paramList[1], ds=ds, comment=comment)
             if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
               vgrStr = str(destVgprPrefix + "+%u"%(g2lIdx + eccOffset))
-              if "A" in vgrStr:
-                emulationLocalWrite = F32XEmulationCvtLocalWrite()
-                localWriteCode.add(emulationLocalWrite(vgrStr))
+              # if "A" in vgrStr:
+              emulationLocalWrite = F32XEmulationCvtLocalWrite()
+              localWriteCode.add(emulationLocalWrite(vgrStr))
             if self.do["LocalWriteCVT"]:
               localWriteCode.add(localWriteCVTCode)
             if self.do["LocalWrite%s"%tc]:

@@ -1084,6 +1084,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       insertedPackM = 0
 
       def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
+        if not (hasattr(lr, 'dst') and callable(lr.dst)):
+          return False
         lrDataReg = lr.dst
 
         if isinstance(inst, MFMAInstruction):
