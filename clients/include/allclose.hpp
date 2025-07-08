@@ -69,7 +69,7 @@ bool allclose(size_t* N, T* a, T* b, double atol, double rtol,
             success = false;
 
         double error     = std::abs(a[i] - b[i]);
-        double relError = (std::abs(a[i]) < 1e-06) ? 0.0 : error / std::abs(a[i]) + 1e-06;
+        double relError = (std::abs(a[i]) < 1e-06) ? 0.0 : error / (std::abs(a[i]) + 1e-06);
         double tolerance = atol + std::abs(rtol * b[i]);
         if(!(error <= tolerance))
             success = false;

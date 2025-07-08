@@ -28,7 +28,7 @@ from rocisa.instruction import VAdd3U32, VCvtF32toF16, VLShiftRightB32, \
                             VCmpUF32, VCndMaskB32, VCvtPkF32toFP8, VCvtPkF32toBF8, \
                             VCmpClassF32, VOrB32, VPackF16toB32, \
                             VAndOrB32, VBfeU32, VLShiftLeftB16, SNop, VMed3F32, \
-                            VCvtPkF32toBF16, VAndB32, VCvtBF16toFP32, \
+                            VCvtPkF32toBF16, VAndB32, VCvtBF16toFP32, SWaitCnt, \
                             VMovB32, VLShiftLeftB32, VSubF32, MFMAInstruction
 from rocisa.enum import InstType
 # from ..TensileInstructions import *
@@ -72,7 +72,7 @@ class F32XEmulationCvtLocalWrite(F32XEmulation):
 
         # # high bits
         # tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+0"), src0=vgpr(srcStart), src1=vgpr(srcStart + "+1")))
         # tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
         tf32mod.add(VCvtPkF32toBF16(dst=vgpr("Cvt+1"), src0=vgpr(srcStart + "+2"), src1=vgpr(srcStart + "+3")))
@@ -125,7 +125,7 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
         tf32mod = Module()
         # Carson: textblock here (or in localread) is causing python issues. rocisa ambiguity issue?
         tf32mod.add(TextBlock("/*TF32 Emulation read lds*/\n"))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         #tf32mod.add(SNop(waitState=27, comment="wait for ds_read"))
         tf32mod.add(TextBlock(str("label_tf32Read_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
         F32XEmulationCvtLocalRead.dbgCounter += 1
@@ -196,7 +196,7 @@ class F32XEmulationMFMA(F32XEmulation):
         aLow = "Cvt+12"
         bLow = "Cvt+16"
 
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
         # tf32mod.add(SNop(waitState=1, comment="1 wait states for ds_read"))
 
         for itr in range(int(width / numElementsPerIter)):
@@ -259,14 +259,14 @@ class F32XEmulationMFMA(F32XEmulation):
                 #tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
             if not kernel["EnableF32XEmulationLds"]:
                 tf32mod.add(TextBlock("/*bf16ALow = A - float32(bf16AHigh)*/\n"))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=aHigh1, vgprMask=None, vi=0))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp1), src=vgpr(aHigh1), vgprMask=None, vi=0))
                 tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(aStart+"+0"), src1=vgpr(tmp1)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=aHigh1, vgprMask=None, vi=1))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp2), src=vgpr(aHigh1), vgprMask=None, vi=1))
                 tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(aStart+"+1"), src1=vgpr(tmp2)))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aLow1), src0=vgpr(tmp1), src1=vgpr(tmp2)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=aHigh2, vgprMask=None, vi=0))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp1), src=vgpr(aHigh2), vgprMask=None, vi=0))
                 tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(aStart+"+2"), src1=vgpr(tmp1)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=aHigh2, vgprMask=None, vi=1))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp2), src=vgpr(aHigh2), vgprMask=None, vi=1))
                 tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(aStart+"+3"), src1=vgpr(tmp2)))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(aLow2), src0=vgpr(tmp1), src1=vgpr(tmp2)))
 
@@ -297,14 +297,14 @@ class F32XEmulationMFMA(F32XEmulation):
 
             if not kernel["EnableF32XEmulationLds"]:
                 tf32mod.add(TextBlock("/*bf16BLow = B - float32(bf16BHigh)*/\n"))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh1, vgprMask=None, vi=0))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp1), src=vgpr(bHigh1), vgprMask=None, vi=0))
                 tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+0"), src1=vgpr(tmp1)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh1, vgprMask=None, vi=1))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp2), src=vgpr(bHigh1), vgprMask=None, vi=1))
                 tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+1"), src1=vgpr(tmp2)))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow1), src0=vgpr(tmp1), src1=vgpr(tmp2)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp1, src=bHigh2, vgprMask=None, vi=0))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp1), src=vgpr(bHigh2), vgprMask=None, vi=0))
                 tf32mod.add(VSubF32(dst=vgpr(tmp1), src0=vgpr(bStart+"+2"), src1=vgpr(tmp1)))
-                tf32mod.add(VCvtBF16toFP32(dst=tmp2, src=bHigh2, vgprMask=None, vi=1))
+                tf32mod.add(VCvtBF16toFP32(dst=vgpr(tmp2), src=vgpr(bHigh2), vgprMask=None, vi=1))
                 tf32mod.add(VSubF32(dst=vgpr(tmp2), src0=vgpr(bStart+"+3"), src1=vgpr(tmp2)))
                 tf32mod.add(VCvtPkF32toBF16(dst=vgpr(bLow2), src0=vgpr(tmp1), src1=vgpr(tmp2)))
 
