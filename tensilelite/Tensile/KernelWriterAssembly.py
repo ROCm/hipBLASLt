@@ -5628,8 +5628,8 @@ class KernelWriterAssembly(KernelWriter):
 
         if noExit:
           # No exit. No dec code if decValue is 2
-          if decValue == 2:
-            decCode = ""
+          # if decValue == 2:
+            # decCode = ""
           condCode = ""
           nonFinalJumpNeeded = False
           if finalLoop:
