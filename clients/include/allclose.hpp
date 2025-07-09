@@ -48,8 +48,14 @@
 /*! \brief compare the allclose error of two matrices hCPU & hGPU */
 
 template <typename T>
-bool allclose(size_t* N, T* a, T* b, double atol, double rtol, bool equal_nan = false)
+bool allclose(size_t* N, T* a, T* b, double atol, double rtol,
+              bool equal_nan,
+              double& absErrorMax,
+              double& absErrorAvg,
+              double& relErrorMax,
+              double& relErrorAvg)
 {
+    bool success = true;
     for(size_t i = 0; i < *N; i++)
     {
         //Returning ture immediately if 2 elements are identical.
@@ -60,14 +66,21 @@ bool allclose(size_t* N, T* a, T* b, double atol, double rtol, bool equal_nan = 
         if(equal_nan && (std::isnan(a[i]) && std::isnan(b[i])))
             continue;
         if(equal_nan && (std::isnan(a[i]) ^ std::isnan(b[i])))
-            return false;
+            success = false;
 
         double error     = std::abs(a[i] - b[i]);
+        double relError = (std::abs(a[i]) < 1e-06) ? 0.0 : error / (std::abs(a[i]) + 1e-06);
         double tolerance = atol + std::abs(rtol * b[i]);
         if(!(error <= tolerance))
-            return false;
+            success = false;
+        absErrorAvg += error;
+        relErrorAvg += relError;
+        absErrorMax = std::max(error, absErrorMax);
+        relErrorMax = std::max(relError, relErrorMax);
     }
-    return true;
+    absErrorAvg = absErrorAvg / double(*N);
+    relErrorAvg = relErrorAvg / double(*N);
+    return success;
 }
 
 template <
@@ -83,7 +96,12 @@ bool allclose_check_general(char    allclose_type,
                             T*      hCPU,
                             T*      hGPU,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg
+                        )
 {
     if(M * N == 0)
         return 0;
@@ -107,7 +125,8 @@ bool allclose_check_general(char    allclose_type,
     {
         for(auto& rtol : rtols)
         {
-            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false))
+            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg))
             {
                 hipblaslt_atol = atol;
                 hipblaslt_rtol = rtol;
@@ -139,7 +158,11 @@ bool allclose_check_general(char    allclose_type,
                             T*      hCPU,
                             T*      hGPU,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -163,7 +186,8 @@ bool allclose_check_general(char    allclose_type,
     {
         for(auto& rtol : rtols)
         {
-            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false))
+            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg))
             {
                 hipblaslt_atol = atol;
                 hipblaslt_rtol = rtol;
@@ -194,7 +218,11 @@ bool allclose_check_general(char    allclose_type,
                             T*      hCPU,
                             T*      hGPU,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -218,7 +246,8 @@ bool allclose_check_general(char    allclose_type,
     {
         for(auto& rtol : rtols)
         {
-            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false))
+            if(allclose(&size, hCPU_double.data(), hGPU_double.data(), atol, rtol, false, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg))
             {
                 hipblaslt_atol = atol;
                 hipblaslt_rtol = rtol;
@@ -250,7 +279,11 @@ bool allclose_check_general(char    allclose_type,
                             VEC&&   hCPU,
                             T*      hGPU,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -269,7 +302,8 @@ bool allclose_check_general(char    allclose_type,
     }
 
     return allclose_check_general<double>(
-        allclose_type, M, N, lda, hCPU_double, hGPU_double, hipblaslt_atol, hipblaslt_rtol);
+        allclose_type, M, N, lda, hCPU_double, hGPU_double, hipblaslt_atol, hipblaslt_rtol, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg);
 }
 
 // For int8, we convert the results to int first
@@ -281,7 +315,11 @@ bool allclose_check_general(char    allclose_type,
                             VEC&&   hCPU,
                             T*      hGPU,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -300,7 +338,8 @@ bool allclose_check_general(char    allclose_type,
     }
 
     return allclose_check_general<int>(
-        allclose_type, M, N, lda, hCPU_int, hGPU_int, hipblaslt_atol, hipblaslt_rtol);
+        allclose_type, M, N, lda, hCPU_int, hGPU_int, hipblaslt_atol, hipblaslt_rtol, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg);
 }
 
 /* ============== allclose check for strided_batched case ============= */
@@ -314,7 +353,11 @@ bool allclose_check_general(char    allclose_type,
                             T*      hGPU,
                             int64_t batch_count,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -323,7 +366,8 @@ bool allclose_check_general(char    allclose_type,
     {
         auto index = i * stride_a;
         bool close = allclose_check_general(
-            allclose_type, M, N, lda, hCPU + index, hGPU + index, hipblaslt_atol, hipblaslt_rtol);
+            allclose_type, M, N, lda, hCPU + index, hGPU + index, hipblaslt_atol, hipblaslt_rtol, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg);
         if(!close)
             return false;
     }
@@ -341,7 +385,11 @@ bool allclose_check_general(char    allclose_type,
                             T*      hGPU[],
                             int64_t batch_count,
                             double& hipblaslt_atol,
-                            double& hipblaslt_rtol)
+                            double& hipblaslt_rtol,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     if(M * N == 0)
         return 0;
@@ -350,7 +398,8 @@ bool allclose_check_general(char    allclose_type,
     {
         auto index = i;
         bool close = allclose_check_general<T>(
-            allclose_type, M, N, lda, hCPU[index], hGPU[index], hipblaslt_atol, hipblaslt_rtol);
+            allclose_type, M, N, lda, hCPU[index], hGPU[index], hipblaslt_atol, hipblaslt_rtol, absErrorMax, absErrorAvg,
+                relErrorMax, relErrorAvg);
         if(!close)
             return false;
     }
@@ -368,7 +417,11 @@ bool allclose_check_general(char        allclose_type,
                             int64_t     batch_count,
                             double&     hipblaslt_atol,
                             double&     hipblaslt_rtol,
-                            hipDataType type)
+                            hipDataType type,
+                            double& absErrorMax,
+                            double& absErrorAvg,
+                            double& relErrorMax,
+                            double& relErrorAvg)
 {
     switch(type)
     {
@@ -382,7 +435,11 @@ bool allclose_check_general(char        allclose_type,
                                              static_cast<float*>(hGPU),
                                              batch_count,
                                              hipblaslt_atol,
-                                             hipblaslt_rtol);
+                                             hipblaslt_rtol,
+                                             absErrorMax,
+                                             absErrorAvg,
+                                             relErrorMax,
+                                             relErrorAvg);
     case HIP_R_64F:
         return allclose_check_general<double>(allclose_type,
                                               M,
@@ -393,7 +450,11 @@ bool allclose_check_general(char        allclose_type,
                                               static_cast<double*>(hGPU),
                                               batch_count,
                                               hipblaslt_atol,
-                                              hipblaslt_rtol);
+                                              hipblaslt_rtol,
+                                              absErrorMax,
+                                              absErrorAvg,
+                                              relErrorMax,
+                                              relErrorAvg);
     case HIP_R_16F:
         return allclose_check_general<hipblasLtHalf>(allclose_type,
                                                      M,
@@ -404,7 +465,11 @@ bool allclose_check_general(char        allclose_type,
                                                      static_cast<hipblasLtHalf*>(hGPU),
                                                      batch_count,
                                                      hipblaslt_atol,
-                                                     hipblaslt_rtol);
+                                                     hipblaslt_rtol,
+                                                     absErrorMax,
+                                                     absErrorAvg,
+                                                     relErrorMax,
+                                                     relErrorAvg);
     case HIP_R_16BF:
         return allclose_check_general<hip_bfloat16>(allclose_type,
                                                     M,
@@ -415,7 +480,11 @@ bool allclose_check_general(char        allclose_type,
                                                     static_cast<hip_bfloat16*>(hGPU),
                                                     batch_count,
                                                     hipblaslt_atol,
-                                                    hipblaslt_rtol);
+                                                    hipblaslt_rtol,
+                                                    absErrorMax,
+                                                    absErrorAvg,
+                                                    relErrorMax,
+                                                    relErrorAvg);
     case HIP_R_8F_E4M3_FNUZ:
         return allclose_check_general<hipblaslt_f8_fnuz>(allclose_type,
                                                          M,
@@ -426,7 +495,11 @@ bool allclose_check_general(char        allclose_type,
                                                          static_cast<hipblaslt_f8_fnuz*>(hGPU),
                                                          batch_count,
                                                          hipblaslt_atol,
-                                                         hipblaslt_rtol);
+                                                         hipblaslt_rtol,
+                                                         absErrorMax,
+                                                         absErrorAvg,
+                                                         relErrorMax,
+                                                         relErrorAvg);
     case HIP_R_8F_E5M2_FNUZ:
         return allclose_check_general<hipblaslt_bf8_fnuz>(allclose_type,
                                                           M,
@@ -437,7 +510,12 @@ bool allclose_check_general(char        allclose_type,
                                                           static_cast<hipblaslt_bf8_fnuz*>(hGPU),
                                                           batch_count,
                                                           hipblaslt_atol,
-                                                          hipblaslt_rtol);
+                                                          hipblaslt_rtol,
+                                                          absErrorMax,
+                                                          absErrorAvg,
+                                                          relErrorMax,
+                                                          relErrorAvg);
+#ifdef ROCM_USE_FLOAT8
     case HIP_R_8F_E4M3:
         return allclose_check_general<hipblaslt_f8>(allclose_type,
                                                     M,
@@ -448,7 +526,11 @@ bool allclose_check_general(char        allclose_type,
                                                     static_cast<hipblaslt_f8*>(hGPU),
                                                     batch_count,
                                                     hipblaslt_atol,
-                                                    hipblaslt_rtol);
+                                                    hipblaslt_rtol,
+                                                     absErrorMax,
+                                                     absErrorAvg,
+                                                     relErrorMax,
+                                                     relErrorAvg);
     case HIP_R_8F_E5M2:
         return allclose_check_general<hipblaslt_bf8>(allclose_type,
                                                      M,
@@ -459,7 +541,12 @@ bool allclose_check_general(char        allclose_type,
                                                      static_cast<hipblaslt_bf8*>(hGPU),
                                                      batch_count,
                                                      hipblaslt_atol,
-                                                     hipblaslt_rtol);
+                                                     hipblaslt_rtol,
+                                                     absErrorMax,
+                                                     absErrorAvg,
+                                                     relErrorMax,
+                                                     relErrorAvg);
+#endif
     case HIP_R_32I:
         return allclose_check_general<int32_t>(allclose_type,
                                                M,
@@ -470,7 +557,11 @@ bool allclose_check_general(char        allclose_type,
                                                static_cast<int32_t*>(hGPU),
                                                batch_count,
                                                hipblaslt_atol,
-                                               hipblaslt_rtol);
+                                               hipblaslt_rtol,
+                                               absErrorMax,
+                                               absErrorAvg,
+                                               relErrorMax,
+                                               relErrorAvg);
     case HIP_R_8I:
         return allclose_check_general<hipblasLtInt8>(allclose_type,
                                                      M,
@@ -481,7 +572,11 @@ bool allclose_check_general(char        allclose_type,
                                                      static_cast<hipblasLtInt8*>(hGPU),
                                                      batch_count,
                                                      hipblaslt_atol,
-                                                     hipblaslt_rtol);
+                                                     hipblaslt_rtol,
+                                                     absErrorMax,
+                                                     absErrorAvg,
+                                                     relErrorMax,
+                                                     relErrorAvg);
     default:
         hipblaslt_cerr << "Error type in allclose_check_general" << std::endl;
         return false;

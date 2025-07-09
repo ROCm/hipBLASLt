@@ -24,8 +24,8 @@
 
 from rocisa.code import Module
 from rocisa.container import vgpr, ContinuousRegister
-from rocisa.instruction import VAddU32
-from rocisa.functions import vectorStaticRemainder, \
+from rocisa.instruction import VAddU32, VLShiftLeftAddU32
+from rocisa.functions import  vectorStaticRemainder, \
     vectorStaticDivideAndRemainder, vectorStaticDivide, vectorStaticMultiply, \
     vectorStaticMultiplyAdd
 
@@ -288,9 +288,13 @@ class LraTileAssignmentMFMA(LraTileAssignment):
                                           comment="5.2 offset in wave: lrOffset = bnOffset + lrKOffset"))
                         module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \
                                           comment="6. offset in wave: lrOffset = bnOffset + lrKOffset"))
+                    #elif (kernel["MIInputPerThreadA"] == 8):
+                    #    # 256b reads require additional offset, offset += int(serialId / 16) * 16
+                    #    module.add(VLShiftLeftAddU32(dst=vgpr(tReg), shiftHex=3, src0=vgpr(kReg), src1=vgpr(tReg), \
+                    #                                comment="256b offset"))
                     else:
                         module.add(vectorStaticMultiplyAdd(vgpr(tReg), vgpr(kReg), strideK, vgpr(tReg), tmpSgprInfo, \
-                                                    "5. K offset: lrKOffset = kIdx * mStride(%u); 6. offset in wave: lrOffset = bnOffset + lrKOffset" % (strideK)))
+                                                "5. K offset: lrKOffset = kIdx * mStride(%u); 6. offset in wave: lrOffset = bnOffset + lrKOffset" % (strideK)))
 
             # wave offset
             if num1DWaves > 1:
