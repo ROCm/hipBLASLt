@@ -121,7 +121,10 @@ def issueLatencyOp(self):
 class F32XEmulationCvtLocalRead(F32XEmulation):
     asmCaps = {"HasMFMA_xf32": True}
     dbgCounter = 0
-    def __call__(self, dstStart):
+    def __call__(self, dstStart, width):
+        numElementsPerIter = 4
+        vgprSize = width / 2
+        numIters = int(width / numElementsPerIter)
         tf32mod = Module()
         # Carson: textblock here (or in localread) is causing python issues. rocisa ambiguity issue?
         tf32mod.add(TextBlock("/*TF32 Emulation read lds*/\n"))
@@ -130,30 +133,49 @@ class F32XEmulationCvtLocalRead(F32XEmulation):
         tf32mod.add(TextBlock(str("label_tf32Read_") + str(F32XEmulationCvtLocalRead.dbgCounter) + ":\n"))
         F32XEmulationCvtLocalRead.dbgCounter += 1
         #tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr("Cvt+0"), src=vgpr(dstStart + "+0")))
-        tf32mod.add(VMovB32(dst=vgpr("Cvt+1"), src=vgpr(dstStart + "+1")))
-        tf32mod.add(VMovB32(dst=vgpr("Cvt+2"), src=vgpr(dstStart + "+2")))
-        tf32mod.add(VMovB32(dst=vgpr("Cvt+3"), src=vgpr(dstStart + "+3")))
+        for itr in range(numIters):
+            offset = itr * 4
+            offsetStr = "+" + str(offset)
+            tf32mod.add(VMovB32(dst=vgpr("Cvt+0" + offsetStr), src=vgpr(dstStart + "+0" + offsetStr)))
+            tf32mod.add(VMovB32(dst=vgpr("Cvt+1" + offsetStr), src=vgpr(dstStart + "+1" + offsetStr)))
+            tf32mod.add(VMovB32(dst=vgpr("Cvt+2" + offsetStr), src=vgpr(dstStart + "+2" + offsetStr)))
+            tf32mod.add(VMovB32(dst=vgpr("Cvt+3" + offsetStr), src=vgpr(dstStart + "+3" + offsetStr)))
         #tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
 
+        cvtOffset = 0
+        cvtOffsetStr = "+" + str(cvtOffset)
+        ldsOffset = 0
+        ldsOffsetStr = "+" + str(ldsOffset)
         #pack high bits
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0"), src=vgpr("Cvt+1"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1"), src=vgpr("Cvt+2"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1"), src=vgpr("Cvt+3"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        for itr in range(numIters):
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0" + ldsOffsetStr), src=vgpr("Cvt+0" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0" + ldsOffsetStr), src=vgpr("Cvt+1" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1" + ldsOffsetStr), src=vgpr("Cvt+2" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_1)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1" + ldsOffsetStr), src=vgpr("Cvt+3" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_1)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            cvtOffset += 4
+            cvtOffsetStr = "+" + str(cvtOffset)
+            ldsOffset += 2
+            ldsOffsetStr = "+" + str(ldsOffset)
+        cvtOffset = 0
+        cvtOffsetStr = "+" + str(offset)
         #pack low bits
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+2"), src=vgpr("Cvt+0"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+2"), src=vgpr("Cvt+1"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+3"), src=vgpr("Cvt+2"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
-        tf32mod.add(VMovB32(dst=vgpr(dstStart + "+3"), src=vgpr("Cvt+3"), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
-        # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+        for itr in range(numIters):
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0" + ldsOffsetStr), src=vgpr("Cvt+0" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+0" + ldsOffsetStr), src=vgpr("Cvt+1" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1" + ldsOffsetStr), src=vgpr("Cvt+2" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0, src0_sel=SelectBit.WORD_0)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            tf32mod.add(VMovB32(dst=vgpr(dstStart + "+1" + ldsOffsetStr), src=vgpr("Cvt+3" + cvtOffsetStr), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, src0_sel=SelectBit.WORD_0)))
+            # tf32mod.add(SWaitCnt(lgkmcnt=0, comment="wait for lds read"))
+            cvtOffset += 4
+            cvtOffsetStr = "+" + str(cvtOffset)
+            ldsOffset += 2
+            ldsOffsetStr = "+" + str(ldsOffset)
 
         # read format:
         # 0: [0high, 1high]

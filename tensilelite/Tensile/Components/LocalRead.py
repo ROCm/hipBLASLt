@@ -693,10 +693,10 @@ class LocalReadMFMA(LocalRead):
                                 elif kernel["ProblemType"]["DataType"].isSingle():
                                     localReadCode.add(writer.assert_eq( dbgVgpr, 1.0) )
 
-                    #if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
-                    #    tf32mod = F32XEmulationCvtLocalRead()
-                    #    dstStart = "Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, baseValuiIdx)
-                    #    localReadCode.add(tf32mod(dstStart))
+                    if kernel["UseF32XEmulation"] and kernel["EnableF32XEmulationLds"]:
+                      tf32mod = F32XEmulationCvtLocalRead()
+                      dstStart = "Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, baseValuiIdx)
+                      localReadCode.add(tf32mod(dstStart, kernel["MIInputPerThreadA"]))
 
         # DTV case, do not return local read code. Return pack code only.
         if (tP["isA"] or tP["isB"]) and kernel["DirectToVgpr%s"%tc]:
