@@ -4258,6 +4258,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # dot2: alignment hack for wider local read
     if kernel["UseDotInstruction"] and kernel["InnerUnroll"] > 1:
       vgprIdx = ((vgprIdx+3)//4)*4
+    #vgprIdx += 2 # TODOBS: Temp alignment hack
     self.states.a.startVgprValu  = vgprIdx
     self.states.startVgpr        = vgprIdx
     vgprIdx += self.states.a.numVgprValu

@@ -1325,13 +1325,13 @@ class Solution(collections.abc.Mapping):
           reject(state, printRejectionReason, "Archs with HasEccHalf require AF0EM%2==0 except for HPA kernels")
           return
 
-    if state["ConvertAfterDS"]:
-        if (state["ProblemType"]["DataType"].isHalf() == False):
-            reject(state, printRejectionReason, "ConvertAfterDS only support DataType half")
-            return
-        if (state["ProblemType"]["DataTypeA"].isAnyFloat8() == False) and (state["ProblemType"]["DataTypeB"].isAnyFloat8() == False):
-            reject(state, printRejectionReason, "one of DataTypeA or DataTypeB need to be float8/float8_fnuz")
-            return
+    #if state["ConvertAfterDS"]:
+        #if (state["ProblemType"]["DataType"].isHalf() == False):
+        #    reject(state, printRejectionReason, "ConvertAfterDS only support DataType half")
+        #    return
+        #if (state["ProblemType"]["DataTypeA"].isAnyFloat8() == False) and (state["ProblemType"]["DataTypeB"].isAnyFloat8() == False):
+        #    reject(state, printRejectionReason, "one of DataTypeA or DataTypeB need to be float8/float8_fnuz")
+        #    return
 
     # DepthU == -1?
     if state["DepthU"] == -1:

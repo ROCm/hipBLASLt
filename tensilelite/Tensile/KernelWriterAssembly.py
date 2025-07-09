@@ -8369,8 +8369,6 @@ class KernelWriterAssembly(KernelWriter):
                           glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=isHigh16Bits , \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
-                if tc == 'A' and (kernel["MIInputPerThreadA"] == 8):
-                  instOffset += 16 # 256b reads require 16B offset
 
                 if unrollMirrorWithSoffset:
                   codeMod = Module("mirrorIdx%u"%loopCnt)
@@ -11958,7 +11956,6 @@ class KernelWriterAssembly(KernelWriter):
           # split into two dwordx4 loads. Second load offset is +0.5 bpl
           rv = Module("emulated _buffer_load_b256")
           dst = None if lds else vgpr(destVgpr, rpv//2)
-          print("emulatedb256 ", dst, addr0)
           rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
           mubuf2 = MUBUFModifiers(offen=True, offset12=int(offset + bpl/2), glc=glc, slc=slc, nt=nt, lds=lds)
@@ -11967,10 +11964,8 @@ class KernelWriterAssembly(KernelWriter):
           elif isinstance(destVgpr, int):
             dst2 = int(destVgpr + int(rpv//2))
           dst = None if lds else vgpr(dst2, rpv//2)
-          print("emulatedb2562 ", dst, addr0)
-          # rv.add(SWaitCnt(vmcnt=0, comment=""))
-          # rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
-          #                      soffset=soffset, mubuf=mubuf2, comment=comment))
+          rv.add(BufferLoadB128(dst=dst, vaddr=addr0, saddr=addr1, \
+                                soffset=soffset, mubuf=mubuf2, comment=comment))
           return rv
         elif bpl==64 and not lds:
           rv = Module("emulated _buffer_load_b512")
