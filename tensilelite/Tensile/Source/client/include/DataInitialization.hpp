@@ -704,7 +704,11 @@ namespace TensileLite
                 {
                     std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
-                    array[tensor.index(coord)] = static_cast<T>(idx);
+                    array[tensor.index(coord)] = static_cast<T>(idx % 16);
+                    if (0){
+                      uint32_t *ptr = (uint32_t *)&array[tensor.index(coord)];
+                      ptr[0] = 0xAfffBfff;
+                    }
                 }
             }
 

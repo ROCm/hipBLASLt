@@ -909,6 +909,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         packA = packCode.findNamedItem("packA_I%s"%(iui))
         packB = packCode.findNamedItem("packB_I%s"%(iui))
         packM = packCode.findNamedItem("packMetadata_I%s"%(iui))
+
         # In case localReadDo not generate pack Module
         # and findNamedItem will return None type
         # TODO: let all type have pack Module
@@ -948,51 +949,66 @@ class KernelWriter(metaclass=abc.ABCMeta):
               for n in range(instPerPackB):
                 packINtemsB[j].append(packBItems.pop(0))
 
-        while packAItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeA"].isAnyFloat8():
+        # TODOBS: Calculat these numbers using len(packAItems)
+        instPerPackA = 28 if kernel["UnrollMajorLDSA"] else 28 #len(packAItems)
+        instPerPackB = 28 if kernel["UnrollMajorLDSB"] else 28 #len(packBItems)
+        scheduleTF32Emu = kernel["UseF32XEmulation"]
+        if scheduleTF32Emu:
+          while packAItems or packBItems:
             for n in range(instPerPackA):
               if packAItems:
-                packINtemsA[0].append(packAItems.pop(0))
-              else:
-                break
-          else:
-            for j in range(self.states.numReadsIterCoalescedA):
-              for n in range(instPerPackA):
-                if packAItems:
-                  packINtemsA[j].append(packAItems.pop(0))
-                else:
-                  break
-
-        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          while packMItems:
-            for j in range(self.states.numReadsIterCoalescedMetadata):
-              for n in range(ceil(instPerPackM)):
-                if packMItems:
-                  packINtemsM[j].append(packMItems.pop(0))
-                else:
-                  break
-
-        while packBItems:
-          if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
+                packItems.append(packAItems.pop(0))
             for n in range(instPerPackB):
               if packBItems:
-                packINtemsB[0].append(packBItems.pop(0))
-              else:
-                break
-          else:
-            for j in range(self.states.numReadsIterCoalescedB):
-              for n in range(instPerPackB):
-                if packBItems:
-                  packINtemsB[j].append(packBItems.pop(0))
+                packItems.append(packBItems.pop(0))    
+        else:
+          while packAItems:
+            if kernel["ConvertAfterDS"] and (kernel["ProblemType"]["DataTypeA"].isAnyFloat8()):
+              for n in range(instPerPackA):
+                if packAItems:
+                  packINtemsA[0].append(packAItems.pop(0))
                 else:
                   break
+            else:
+              for j in range(self.states.numReadsIterCoalescedA):
+                for n in range(instPerPackA):
+                  if packAItems:
+                    packINtemsA[j].append(packAItems.pop(0))
+                  else:
+                    break
 
+          if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+            while packMItems:
+              for j in range(self.states.numReadsIterCoalescedMetadata):
+                for n in range(ceil(instPerPackM)):
+                  if packMItems:
+                    packINtemsM[j].append(packMItems.pop(0))
+                  else:
+                    break
+
+          while packBItems:
+            if kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataTypeB"].isAnyFloat8():
+              for n in range(instPerPackB):
+                if packBItems:
+                  packINtemsB[0].append(packBItems.pop(0))
+              else:
+                break
+            else:
+              for j in range(self.states.numReadsIterCoalescedB):
+                for n in range(instPerPackB):
+                  if packBItems:
+                    packINtemsB[j].append(packBItems.pop(0))
+                  else:
+                    break
+
+
+                
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB,self.states.numReadsIterCoalescedMetadata)):
           if schedulePackConsiderMetadata:
             packItemsA += packINtemsA.pop(0)
             packItemsB += packINtemsB.pop(0)
             packItemsM += packINtemsM.pop(0)
-          else:
+          elif not scheduleTF32Emu:
             packItems += packINtems.pop(0)
 
         if schedulePackConsiderMetadata:
@@ -1087,8 +1103,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       insertedPackM = 0
 
       def hasDependency(lr: DSLoadInstruction, inst: Instruction) -> bool:
-        if not (hasattr(lr, 'dst') and callable(lr.dst)):
-          return False
         lrDataReg = lr.dst
 
         if isinstance(inst, MFMAInstruction):
@@ -1137,9 +1151,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   latencyLeft -= (tPA["localWriteInstruction"].issueLatency*2)
             readLeftLROPT = 0
             for j in range(len(localReadItemsThisLoop)):
-              if (hasattr(localReadItemsThisLoop[j], "issueLatency")):
-                latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
-                readLeftLROPT += 1 if latencyLeft >= 0 else 0
+              latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+              readLeftLROPT += 1 if latencyLeft >= 0 else 0
             # at least 1 instruction
             readLeftLROPT = max(readLeftLROPT,1)
             # evenly schedule localread with each mfma
@@ -1179,11 +1192,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
               latencyLeft -= readLeft * tPA["localWriteInstruction"].issueLatency * 2
             else:
               readLeft = len(localReadItemsThisLoop)
-              if (hasattr(j, "issueLatency")):
-                latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
-          else:
-            if (hasattr(j, "issueLatency")):
               latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
+          else:
+            latencyLeft -= sum(j.issueLatency()*2 for j in localReadItemsThisLoop)
 
         # force to schedule all remaining localreads before start to schedule localwrite.
         if mfmaIndex == self.states.sync1LdsMfmaIndex and oneBufferScheduling:
@@ -1320,9 +1331,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if self.states.numItersPLR and iteration >= isBarrier:
           readLeftLROPT = 0
           for j in range(len(localReadItemsNextLoop)):
-            if (hasattr(localReadItemsNextLoop[j], "issueLatency")):
-              latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
-              readLeftLROPT += 1 if latencyLeft >= 0 else 0
+            latencyLeft -= localReadItemsNextLoop[j].issueLatency()*2
+            readLeftLROPT += 1 if latencyLeft >= 0 else 0
           # at least 1 instruction
           readLeftLROPT = max(readLeftLROPT,1)
           readLeftLREven = numReadsInst / (numMfmaPerIter - i)
@@ -1386,6 +1396,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         _instPerPackB = 0
         _instPerPackM = 0
         instPackLast = []
+  
         if packItems:
 
           # check the remain latency before mfma
@@ -3142,11 +3153,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if (not kernel["UseDotInstruction"]) and (kernel["AssertSummationElementMultiple"] % KinInnerUnroll == 0):
         tailLoopInnerUnroll = kernel["InnerUnroll"]
 
+      shiftK = Module()  
       for mValue in range(mEnd):
         if mEnd > 1:
           # print tail loop counter if mEnd>1 (means do tail loop unroll)
           module.addComment1("tail loop unroll iter %u"%(mValue))
         pack[0] = Module()
+
         for iui in range(0, tailLoopInnerUnroll):
           # local read buffer id. No prefetch in tail loop case.
           bufIdx = mValue % self.states.numVgprBuffer
@@ -3159,7 +3172,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
             module.addComment1("local read a")
             localReadCodeA, packCodeA = self.localReadDo(kernel, bufIdxA*self.states.numIterPerCoalescedReadA, iui*self.states.numIterPerCoalescedReadA, 0, tensorParametersA)
             module.add(localReadCodeA)
-            pack[0].add(packCodeA)
+            if kernel["UseF32XEmulation"]:
+              shiftK.add(packCodeA)
+            else:
+              pack[0].add(packCodeA)
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             if mValue*self.states.numIterPerCoalescedReadMetadata < mEnd:
               module.addComment1("local read metadata")
@@ -3170,7 +3186,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
             module.addComment1("local read b")
             localReadCodeB, packCodeB = self.localReadDo(kernel, bufIdxB*self.states.numIterPerCoalescedReadB, iui*self.states.numIterPerCoalescedReadB, 0, tensorParametersB)
             module.add(localReadCodeB)
-            pack[0].add(packCodeB)
+            if kernel["UseF32XEmulation"]:
+              shiftK.add(packCodeB)
+            else:
+              pack[0].add(packCodeB)
           # adjustment for DirectToLds case
           iuiParam = iui + tailLoopInnerUnroll * mValue//self.states.numReadsIterCoalescedA
           if mValue < mEnd and mValue % self.states.numReadsIterCoalescedA == 0:
@@ -3192,7 +3211,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if kernel["EnableMatrixInstruction"]:
           # always use vregSetIdx=0 for DirectToVgpr + tail loop
           vregSetIdxMFMA = 0
-          module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, mValue, tailLoopInnerUnroll, vregSetIdxMFMA, 0, tail = True, unrollIdx = mValue))
+          module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, mValue, tailLoopInnerUnroll, vregSetIdxMFMA, 0, tail = True, unrollIdx = mValue, postShiftK = shiftK))
         else: # mac instruction
           module.add(self.macIter(kernel, tensorParametersA, tensorParametersB, mValue, tailLoopInnerUnroll, True, True))
         if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
@@ -3536,6 +3555,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ScheduleIterAlg"] == 3 or kernel["ScheduleIterAlg"] == 2:
       self.states.numMfmaPerIter = kernel["MIWaveTile"][0] * kernel["MIWaveTile"][1] * kernel["InnerUnroll"]
       if kernel["ProblemType"]["DataType"].isComplex(): self.states.numMfmaPerIter *= 4
+      elif kernel["UseF32XEmulation"]: self.states.numMfmaPerIter *= 3
 
     # NamedTuple is immutable
     class intermediateTPValues(NamedTuple):
@@ -4258,6 +4278,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # dot2: alignment hack for wider local read
     if kernel["UseDotInstruction"] and kernel["InnerUnroll"] > 1:
       vgprIdx = ((vgprIdx+3)//4)*4
+    #vgprIdx += 2 # TODOBS: Temp alignment hack
     self.states.a.startVgprValu  = vgprIdx
     self.states.startVgpr        = vgprIdx
     vgprIdx += self.states.a.numVgprValu
@@ -4463,12 +4484,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.startVgprSerial = vgprIdx
     vgprIdx += 1 # for vgpr serial id
 
-    if kernel["UseF32XEmulation"]:
-      #align 64 bit
-      vgprIdx = int((vgprIdx + 1) / 2) * 2
-      self.states.startVgprCvt = vgprIdx
-      vgprIdx += 20 # for vgpr serial id
-
+    # TODO: Re-enable if cvt registers needed. Currently temp is used.
+    #if kernel["UseF32XEmulation"]:
+    #  #align 64 bit
+    #  vgprIdx = int((vgprIdx + 1) / 2) * 2
+    #  self.states.startVgprCvt = vgprIdx
+    #  vgprIdx += 9 # for vgpr serial id
+    
     self.states.totalVgprs = max(vgprIdx, self.states.c.numVgprValu)
     if self.states.totalVgprs < 0 or self.states.totalVgprs > self.states.regCaps["MaxVgpr"]:
       raise RuntimeError("Generating asm kernel error: total vgpr: %u not in [0, %u].\n" % (self.states.totalVgprs, self.states.regCaps["MaxVgpr"]))
