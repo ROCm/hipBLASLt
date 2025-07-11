@@ -28,16 +28,11 @@
 
 namespace TensileLite
 {
-    // TODD- Currently, this map is for detecting CU-Fallback + runtime modification for XCC.
-    //       XCC is introduced since 942, so this is only targeting at gfx942 for now.
-    //       (i.e. Detect this on 942 only. For other devices, we don't have problems for CU-FB + mismatching XCC,
-    //        so all the other devices will be seen as standardCU)
-    //       THIS IS A TEMPORARILY WORKAROUND. WE MAY NEED TO COME UP WITH A BETTER WAY TO DETECT CU-FALLBACK
-    static const std::map<AMDGPU::Processor, int>& StandardCUMap()
+    static const std::map<AMDGPU::Processor, std::vector<int>>& NonStandardCUMap()
     {
-        static const std::map<AMDGPU::Processor, int> StandardCU_XCC
-            = {{AMDGPU::Processor::gfx942, 304}};
-        return StandardCU_XCC;
+        static const std::map<AMDGPU::Processor, std::vector<int>> NonStandardCU = {
+            {AMDGPU::Processor::gfx90a, {104}}, {AMDGPU::Processor::gfx942, {20, 38, 64, 80, 228}}};
+        return NonStandardCU;
     }
 
     TENSILE_API std::string AMDGPU::type() const
@@ -71,12 +66,12 @@ namespace TensileLite
         // assume current device is a standard cu device.
         isStandardCUs = 1;
 
-        auto mapIter = StandardCUMap().find(processor);
-        // NB: For any other devices not included in the map, we always see them as true (they have no XCC predicate issue.)
-        if(mapIter != StandardCUMap().end())
+        auto mapIter = NonStandardCUMap().find(processor);
+        if(mapIter != NonStandardCUMap().end())
         {
-            // check if current device is a standard cu devcie.
-            if(computeUnitCount != mapIter->second)
+            auto list = mapIter->second;
+            // current device is a speicalized cu device.
+            if(std::count(list.begin(), list.end(), computeUnitCount) > 0)
                 isStandardCUs = 0;
         }
 

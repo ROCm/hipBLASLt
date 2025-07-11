@@ -200,7 +200,7 @@
     MatrixInstruction: [16, 16, 128, 1]
     MaxLDS: 163840
     MaxOccupancy: 40
-    MbskPrefetchOpt: 0
+    MbskPrefetchMethod: 0
     NoLdsWriteCode: true
     NoReject: false
     NoTailLoop: true
@@ -423,7 +423,7 @@
     MatrixInstruction: [16, 16, 128, 1]
     MaxLDS: 163840
     MaxOccupancy: 40
-    MbskPrefetchOpt: 0
+    MbskPrefetchMethod: 0
     NoLdsWriteCode: true
     NoReject: false
     NoTailLoop: true
@@ -646,7 +646,7 @@
     MatrixInstruction: [16, 16, 128, 1]
     MaxLDS: 163840
     MaxOccupancy: 40
-    MbskPrefetchOpt: 0
+    MbskPrefetchMethod: 0
     NoLdsWriteCode: true
     NoReject: false
     NoTailLoop: true
@@ -869,7 +869,7 @@
     MatrixInstruction: [16, 16, 128, 1]
     MaxLDS: 163840
     MaxOccupancy: 40
-    MbskPrefetchOpt: 0
+    MbskPrefetchMethod: 0
     NoLdsWriteCode: true
     NoReject: false
     NoTailLoop: true
@@ -1092,7 +1092,7 @@
     MatrixInstruction: [16, 16, 128, 1]
     MaxLDS: 163840
     MaxOccupancy: 40
-    MbskPrefetchOpt: 0
+    MbskPrefetchMethod: 0
     NoLdsWriteCode: true
     NoReject: false
     NoTailLoop: true
