@@ -313,8 +313,9 @@ class LocalReadMFMA(LocalRead):
                                     writer.vgprPool.checkIn(tmpvgpr4)
 
                                 if rIdx == numReadsPerUnroll - 1:
-                                    packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+4"%(tc, bufferIdx, iui, baseValuiIdx))))
-                                    packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+5"%(tc, bufferIdx, iui, baseValuiIdx))))
+                                    if not (kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16):
+                                        packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+4"%(tc, bufferIdx, iui, baseValuiIdx))))
+                                        packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+5"%(tc, bufferIdx, iui, baseValuiIdx))))
                                     
 
                             if kernel["ConvertAfterDS"] and (tP["bpe"] != tP["bpeDS"]):
@@ -640,9 +641,9 @@ class LocalReadMFMA(LocalRead):
                                         elif kernel["MatrixInstM"] == 16:
                                             incOffset = 3 * midIdx * numElementPerRead * UnrollStride
                                     else:
-                                        if kernel["MatrixInstM"] == 32:
+                                        if kernel["MatrixInstM"] == 32 and kernel["MatrixInstK"] == 16:
                                             incOffset = 4 # TODOBS:.. check
-                                        elif kernel["MatrixInstM"] == 16:
+                                        elif kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 32:
                                             incOffset = 12
                                 incOffset = rIdx * numElementPerRead * UnrollStride + incOffset
                                 #print(incOffset, offset_val, tP["localReadOffset"])

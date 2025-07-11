@@ -6891,10 +6891,16 @@ class KernelWriterAssembly(KernelWriter):
             else:
               # TF32 Emulation
               if kernel["UseF32XEmulation"]:
-                src1_0     = vgpr(aStr_base[:-4], vgprPerInputA / 2)
-                src1_1     = vgpr(aStr_base[:-4]+"+4", vgprPerInputA / 2)
-                src0_0     = vgpr(bStr_base[:-4], vgprPerInputB / 2)
-                src0_1     = vgpr(bStr_base[:-4]+"+4", vgprPerInputB / 2)
+                if kernel["SourceSwap"]:
+                  src1_0     = vgpr(aStr_base[:-4], vgprPerInputA / 2)
+                  src1_1     = vgpr(aStr_base[:-4]+"+4", vgprPerInputA / 2)
+                  src0_0     = vgpr(bStr_base[:-4], vgprPerInputB / 2)
+                  src0_1     = vgpr(bStr_base[:-4]+"+4", vgprPerInputB / 2)
+                else:
+                  src1_0     = vgpr(bStr_base[:-4], vgprPerInputB / 2)
+                  src1_1     = vgpr(bStr_base[:-4]+"+4", vgprPerInputB / 2)
+                  src0_0     = vgpr(aStr_base[:-4], vgprPerInputA / 2)
+                  src0_1     = vgpr(aStr_base[:-4]+"+4", vgprPerInputA / 2)
                 imod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                        acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                        a=src0_0, b=src1_1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\
@@ -9625,7 +9631,7 @@ class KernelWriterAssembly(KernelWriter):
               elif (self.states.localReadDoCntA)%(wlr):
                 offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * kernel["MIInputPerThreadA"]
               else:
-                if kernel["UnrollMajorLDSA"] == False and kernel["MatrixInstK"] >= 64: # Special handling for new f8 mfmas
+                if kernel["UnrollMajorLDSA"] == False and kernel["MatrixInstK"] >= 64 or (kernel["UseF32XEmulation"] and  kernel["MatrixInstK"] >= 32): # Special handling for new f8 mfmas
                   offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * (kernel["MatrixInstK"])
                 else:
                   offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * (kernel["MatrixInstK"]*lrvw//kernel["MIInputPerThreadA"]-kernel["MIInputPerThreadA"]*(lrvw//kernel["MIInputPerThreadA"]-1))
@@ -9655,7 +9661,7 @@ class KernelWriterAssembly(KernelWriter):
                 offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * kernel["MIInputPerThreadB"]
 
               else:
-                if kernel["UnrollMajorLDSB"] == False and kernel["MatrixInstK"] >= 64: # Special handling for new f8 mfmas:
+                if kernel["UnrollMajorLDSB"] == False and kernel["MatrixInstK"] >= 64 or (kernel["UseF32XEmulation"] and  kernel["MatrixInstK"] >= 32): # Special handling for new f8 mfmas:
                   offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * (kernel["MatrixInstK"])
                 else:
                   offsetInc = (kernel["MacroTile%s"%tP["tensorChar"]] + LdsPad) * (kernel["MatrixInstK"]*lrvw//kernel["MIInputPerThreadB"]-kernel["MIInputPerThreadB"]*(lrvw//kernel["MIInputPerThreadB"]-1))
