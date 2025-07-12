@@ -949,9 +949,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
               for n in range(instPerPackB):
                 packINtemsB[j].append(packBItems.pop(0))
 
-        # TODOBS: Calculate these numbers using len(packAItems)
-        instPerPackA = 28 if kernel["UnrollMajorLDSA"] else 28 #len(packAItems)
-        instPerPackB = 28 if kernel["UnrollMajorLDSB"] else 28 #len(packBItems)
+        # TODOBS: Calculate these numbers using len(packAItems) / numLR{A,B}
+        instPerPackA = len(packAItems)
+        instPerPackB = len(packBItems)
         scheduleTF32Emu = kernel["UseF32XEmulation"]
         if scheduleTF32Emu:
           while packAItems or packBItems:
