@@ -6474,7 +6474,8 @@ class KernelWriterAssembly(KernelWriter):
                 if self.states.asmCaps["HasMFMA_f8f6f4"]:
                   if group == 2 and vgprPerInputA == 8: #special layout for F8
                     kIncA = 56 if kernel["MatrixInstK"] == 128 else 24
-                    kIncA = 14 if kernel["MatrixInstK"] == 32 else 6
+                    if kernel["UseF32XEmulation"]:
+                      kIncA = 14 if kernel["MatrixInstK"] == 32 else 6
                 shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), kIncA, "add part of K"))
               if kernel["LocalSplitU"] > 1:
                 shiftK.add(SMinI32(dst=sgpr(loopCntSgpr), src0=sgpr(loopCounterName), src1=sgpr("LSUTailLoopOffset"), comment="check lsu bound"))
@@ -6519,7 +6520,8 @@ class KernelWriterAssembly(KernelWriter):
                 kIncB = numMIInput//numSet0GroupB
                 if group == 2 and vgprPerInputB == 8:
                    kIncB = 56 if kernel["MatrixInstK"] == 128 else 24
-                   kIncB = 14 if kernel["MatrixInstK"] == 32 else 6
+                   if kernel["UseF32XEmulation"]:
+                     kIncB = 14 if kernel["MatrixInstK"] == 32 else 6
                 shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), kIncB, "add part of K"))
               # replace 0 for differnet thread
               if kernel["LocalSplitU"] > 1:
@@ -6617,7 +6619,8 @@ class KernelWriterAssembly(KernelWriter):
                         kIncA = numMIInput//numSet0GroupA
                         if bk == 4 and self.states.asmCaps["HasMFMA_f8f6f4"]:
                           kIncA = 56 if kernel["MatrixInstK"] == 128 else 24
-                          kIncA = 14 if kernel["MatrixInstK"] == 32 else 6
+                          if kernel["UseF32XEmulation"]:
+                            kIncA = 14 if kernel["MatrixInstK"] == 32 else 6
                         shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), kIncA, "add part of K"))
                       # replace 0 for differnet thread
                       if kernel["LocalSplitU"] > 1:
@@ -6690,7 +6693,8 @@ class KernelWriterAssembly(KernelWriter):
                         kIncB = numMIInput//numSet0GroupB
                         if bk == 4: # when vgprPerInput == 8
                           kIncB = 56 if kernel["MatrixInstK"] == 128 else 24
-                          kIncB = 14 if kernel["MatrixInstK"] == 32 else 6
+                          if kernel["UseF32XEmulation"]:
+                            kIncB = 14 if kernel["MatrixInstK"] == 32 else 6
                         shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), kIncB, "add part of K"))
                       # replace 0 for differnet thread
                       if kernel["LocalSplitU"] > 1:
@@ -6891,16 +6895,19 @@ class KernelWriterAssembly(KernelWriter):
             else:
               # TF32 Emulation
               if kernel["UseF32XEmulation"]:
+                abOffsetStr = "+2" if kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16 else "+4"
                 if kernel["SourceSwap"]:
                   src1_0     = vgpr(aStr_base[:-4], vgprPerInputA / 2)
-                  src1_1     = vgpr(aStr_base[:-4]+"+4", vgprPerInputA / 2)
+                  src1_1     = vgpr(aStr_base[:-4] + abOffsetStr, vgprPerInputA / 2)
                   src0_0     = vgpr(bStr_base[:-4], vgprPerInputB / 2)
-                  src0_1     = vgpr(bStr_base[:-4]+"+4", vgprPerInputB / 2)
+                  src0_1     = vgpr(bStr_base[:-4] + abOffsetStr, vgprPerInputB / 2)
                 else:
                   src1_0     = vgpr(bStr_base[:-4], vgprPerInputB / 2)
-                  src1_1     = vgpr(bStr_base[:-4]+"+4", vgprPerInputB / 2)
+                  src1_1     = vgpr(bStr_base[:-4] + abOffsetStr, vgprPerInputB / 2)
                   src0_0     = vgpr(aStr_base[:-4], vgprPerInputA / 2)
-                  src0_1     = vgpr(aStr_base[:-4]+"+4", vgprPerInputA / 2)
+                  src0_1     = vgpr(aStr_base[:-4] + abOffsetStr, vgprPerInputA / 2)
+
+
                 imod.add(MFMAInstruction(instType=InstType.INST_BF16, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                        acc=self.accVgprReadWriteIndex(kernel, (accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                        a=src0_0, b=src1_1, acc2=self.accVgprReadWriteIndex(kernel, accStart, (accEnd-accStart+1)), neg=neg_flag,\

@@ -280,7 +280,7 @@ class LocalReadMFMA(LocalRead):
                         if needPack or numSplitMetadata:
 
                             if kernel["UseF32XEmulation"]:
-                                if kernel["UnrollMajorLDS%s"%tc] or (not kernel["UnrollMajorLDS%s"%tc] and valuiIdx % 4 == 0):
+                                if valuiIdx % 4 == 0:
                                     tmpvgpr = writer.vgprPool.checkOutAligned(2, 2)
                                     tmpvgpr1 = writer.vgprPool.checkOut(1)
                                     tmpvgpr2 = writer.vgprPool.checkOut(1)
@@ -302,7 +302,7 @@ class LocalReadMFMA(LocalRead):
 
                                     packCode.add(VCvtPkF32toBF16(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, valuiIdx)), src0=vgpr(tmpvgpr1), src1=vgpr(tmpvgpr2)))
                                     packCode.add(VCvtPkF32toBF16(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, valuiIdx)), src0=vgpr(tmpvgpr3), src1=vgpr(tmpvgpr4)))
-                                    
+
                                     vdst = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx), 2)
                                     packCode.add(VMovB64(dst=vdst, src=vgpr(tmpvgpr,2)))
 
@@ -316,7 +316,15 @@ class LocalReadMFMA(LocalRead):
                                     if not (kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16):
                                         packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+4"%(tc, bufferIdx, iui, baseValuiIdx))))
                                         packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+5"%(tc, bufferIdx, iui, baseValuiIdx))))
-                                    
+
+                                        if not kernel["SourceSwap"]:
+                                            # HACK add dummy waits btween swap and mfmas. TODO: improve pack scheduling to avoid this
+                                            tmpvgpr1 = writer.vgprPool.checkOut(1)
+                                            numDummy = 1 if kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16 else 2
+                                            for numd in range(numDummy):
+                                                packCode.add(VMovB32(dst=vgpr(tmpvgpr1), src=vgpr(tmpvgpr1)))
+                                            writer.vgprPool.checkIn(tmpvgpr1)
+
 
                             if kernel["ConvertAfterDS"] and (tP["bpe"] != tP["bpeDS"]):
                                 highBitsForHalf = False
