@@ -317,15 +317,6 @@ class LocalReadMFMA(LocalRead):
                                         packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+4"%(tc, bufferIdx, iui, baseValuiIdx))))
                                         packCode.add(VSwapB32(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, baseValuiIdx)), src=vgpr("Valu%s_X%u_I%u+%u+5"%(tc, bufferIdx, iui, baseValuiIdx))))
 
-                                        if not kernel["SourceSwap"]:
-                                            # HACK add dummy waits btween swap and mfmas. TODO: improve pack scheduling to avoid this
-                                            tmpvgpr1 = writer.vgprPool.checkOut(1)
-                                            numDummy = 1 if kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16 else 2
-                                            for numd in range(numDummy):
-                                                packCode.add(VMovB32(dst=vgpr(tmpvgpr1), src=vgpr(tmpvgpr1)))
-                                            writer.vgprPool.checkIn(tmpvgpr1)
-
-
                             if kernel["ConvertAfterDS"] and (tP["bpe"] != tP["bpeDS"]):
                                 highBitsForHalf = False
                                 isHigh16Bits = False

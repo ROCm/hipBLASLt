@@ -949,9 +949,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
               for n in range(instPerPackB):
                 packINtemsB[j].append(packBItems.pop(0))
 
+
         # TODOBS: Calculate these numbers using len(packAItems) / numLR{A,B}
-        instPerPackA = len(packAItems)
-        instPerPackB = len(packBItems)
+        instPerPackA = 28#len(packAItems)
+        instPerPackB = 28#len(packBItems)
         scheduleTF32Emu = kernel["UseF32XEmulation"]
         if scheduleTF32Emu:
           while packAItems or packBItems:
@@ -960,7 +961,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
                 packItems.append(packAItems.pop(0))
             for n in range(instPerPackB):
               if packBItems:
-                packItems.append(packBItems.pop(0))    
+                packItems.append(packBItems.pop(0))
         else:
           while packAItems:
             if kernel["ConvertAfterDS"] and (kernel["ProblemType"]["DataTypeA"].isAnyFloat8()):
@@ -1458,6 +1459,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
                   iterCode.add(SNop(waitState=1, comment="VALU packing writes to be consumed by matrix instruction"))
                   curPackIdx += 1
                   break
+              if not kernel["SourceSwap"] and kernel["UseF32XEmulation"]:
+                # HACK add dummy waits btween swap and mfmas. TODO: improve pack scheduling to avoid this
+                numDummy = 1 if kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16 else 2
+                for numd in range(numDummy):
+                  iterCode.add(SNop(waitState=0, comment="VALU packing writes to be consumed by matrix instruction"))
+
           else:
 
             desiredPack = instPerPackA + instPerPackB + ceil(instPerPackM)
