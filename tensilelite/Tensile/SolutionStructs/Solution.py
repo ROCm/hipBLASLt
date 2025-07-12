@@ -1579,7 +1579,6 @@ class Solution(collections.abc.Mapping):
         if state["DirectToVgprB"]:
           ldsPadB = 0
 
-        print("values: {0}, {1}, {2}".format(ldsPadA, ldsPadB, ldsPadM))
         return ldsPadA, ldsPadB, ldsPadM
 
       def calcLdsBlockSizePerPad(lrvw: int) -> int:
