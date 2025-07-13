@@ -27,7 +27,7 @@ from rocisa.container import DSModifiers, vgpr, sgpr, SDWAModifiers, VOP3PModifi
 from rocisa.enum import SelectBit
 from rocisa.instruction import SMovB32, SWaitCnt, SNop, VOrB32, VPermB32, VLShiftLeftOrB32, \
                             VMovB32, VMovB64, VLShiftRightB32, VSubF32, VSwapB32, VCvtPkFP8toF32, VCvtF32toF16, VCvtFP8toF32,\
-                            VCvtScaleFP8toF16, VCvtScalePkFP8toF16, VCvtPkF32toBF16, VCvtBF16toFP32, PVCvtBF16toFP32
+                            VCvtScaleFP8toF16, VCvtScalePkFP8toF16, VCvtPkF32toBF16, VCvtBF16toFP32, PVCvtBF16toFP32, VDot2CF32BF16
 
 from ..Component import LocalRead, F32XEmulation
 from ..Components.F32XEmulation import F32XEmulationCvtLocalRead
@@ -281,36 +281,34 @@ class LocalReadMFMA(LocalRead):
 
                             if kernel["UseF32XEmulation"]:
                                 if valuiIdx % 4 == 0:
-                                    tmpvgpr = writer.vgprPool.checkOutAligned(2, 2)
-                                    tmpvgpr1 = writer.vgprPool.checkOut(1)
-                                    tmpvgpr2 = writer.vgprPool.checkOut(1)
-                                    tmpvgpr3 = writer.vgprPool.checkOut(1)
-                                    tmpvgpr4 = writer.vgprPool.checkOut(1)
+                                    tmpvgpr01 = writer.vgprPool.checkOutAligned(2, 2)
+                                    tmpvgpr = writer.vgprPool.checkOut(1)
 
-                                    packCode.add(VCvtPkF32toBF16(dst=vgpr(tmpvgpr), src0=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr("Valu%s_X%u_I%u+%u+1"%(tc, bufferIdx, iui, valuiIdx))))
-                                    packCode.add(PVCvtBF16toFP32(dst=vgpr(tmpvgpr1), src=vgpr(tmpvgpr)))
+                                    v0 = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx))
+                                    v1 = vgpr("Valu%s_X%u_I%u+%u+1"%(tc, bufferIdx, iui, valuiIdx))
+                                    v2 = vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, valuiIdx))
+                                    v3 = vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, valuiIdx))
 
-                                    packCode.add(VCvtPkF32toBF16(dst=vgpr(tmpvgpr+1), src0=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, valuiIdx))))
-                                    packCode.add(VCvtBF16toFP32(dst=vgpr(tmpvgpr2), src=vgpr(tmpvgpr), vgprMask=None, vi=1))
+                                    packCode.add(VCvtPkF32toBF16(dst=vgpr(tmpvgpr01),   src0=v0, src1=v2))
+                                    packCode.add(VDot2CF32BF16(dst=v0, src0=hex(0x8000bf80), src1=vgpr(tmpvgpr01))) # v0_lo
+                                    packCode.add(VDot2CF32BF16(dst=v2, src0=hex(0xbf800000), src1=vgpr(tmpvgpr01))) # v2_lo
+                                    packCode.add(VCvtPkF32toBF16(dst=vgpr(tmpvgpr01+1), src0=v1, src1=v3))
 
-                                    packCode.add(VSubF32(dst=vgpr(tmpvgpr1), src0=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr(tmpvgpr1)))
-                                    packCode.add(PVCvtBF16toFP32(dst=vgpr(tmpvgpr3), src=vgpr(tmpvgpr+1)))
-                                    packCode.add(VSubF32(dst=vgpr(tmpvgpr2), src0=vgpr("Valu%s_X%u_I%u+%u+1"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr(tmpvgpr2)))
-                                    packCode.add(VCvtBF16toFP32(dst=vgpr(tmpvgpr4), src=vgpr(tmpvgpr+1), vgprMask=None, vi=1))
-                                    packCode.add(VSubF32(dst=vgpr(tmpvgpr3), src0=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr(tmpvgpr3)))
-                                    packCode.add(VSubF32(dst=vgpr(tmpvgpr4), src0=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, valuiIdx)), src1=vgpr(tmpvgpr4)))
+                                    packCode.add(VDot2CF32BF16(dst=v1, src0=hex(0x8000bf80), src1=vgpr(tmpvgpr01+1))) # v1_lo
 
-                                    packCode.add(VCvtPkF32toBF16(dst=vgpr("Valu%s_X%u_I%u+%u+2"%(tc, bufferIdx, iui, valuiIdx)), src0=vgpr(tmpvgpr1), src1=vgpr(tmpvgpr2)))
-                                    packCode.add(VCvtPkF32toBF16(dst=vgpr("Valu%s_X%u_I%u+%u+3"%(tc, bufferIdx, iui, valuiIdx)), src0=vgpr(tmpvgpr3), src1=vgpr(tmpvgpr4)))
+                                    # Note: v_dot2c_f32_bf16 needs 4 wait states for inst dependencies.
+                                    #packCode.add(VDot2CF32BF16(dst=v3, src0=hex(0xbf800000), src1=vgpr(tmpvgpr01+1))) # v3_lo
+                                    packCode.add(VCvtBF16toFP32(dst=vgpr(tmpvgpr), src=vgpr(tmpvgpr01+1), vgprMask=None, vi=1))
+                                    packCode.add(VSubF32(dst=v3, src0=v3, src1=vgpr(tmpvgpr)))
 
-                                    vdst = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx), 2)
-                                    packCode.add(VMovB64(dst=vdst, src=vgpr(tmpvgpr,2)))
+                                    packCode.add(VCvtPkF32toBF16(dst=v2, src0=v0, src1=v2))
+                                    packCode.add(VMovB32(dst=v0, src=vgpr(tmpvgpr01)))
+                                    packCode.add(VCvtPkF32toBF16(dst=v3, src0=v1, src1=v3))
+                                    packCode.add(VMovB32(dst=v1, src=vgpr(tmpvgpr01+1)))
 
+                                    writer.vgprPool.checkIn(tmpvgpr01)
                                     writer.vgprPool.checkIn(tmpvgpr)
-                                    writer.vgprPool.checkIn(tmpvgpr1)
-                                    writer.vgprPool.checkIn(tmpvgpr2)
-                                    writer.vgprPool.checkIn(tmpvgpr3)
-                                    writer.vgprPool.checkIn(tmpvgpr4)
+
 
                                 if rIdx == numReadsPerUnroll - 1:
                                     if not (kernel["MatrixInstM"] == 16 and kernel["MatrixInstK"] == 16):
