@@ -3088,15 +3088,17 @@ void testing_matmul_with_bias(const Arguments& arg,
         }
 
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
-        if(TiA == HIP_R_32F && TiB == HIP_R_32F && To == HIP_R_32F && Talpha == HIP_R_32F)
-            if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        // NOTE: This should not be needed. Converting inputs to TF32 would result in
+        // less accurate reference values.
+        /*if(TiA == HIP_R_32F && TiB == HIP_R_32F && To == HIP_R_32F && Talpha == HIP_R_32F)
+            if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32 && false)
                 for(int i = 0; i < gemm_count; i++)
                 {
                     type_to_xdl_math_op_type<hipblasLtXfloat32, float, float>(
                         static_cast<float*>(hA[i].buf()), size_A[i]);
                     type_to_xdl_math_op_type<hipblasLtXfloat32, float, float>(
                         static_cast<float*>(hB[i].buf()), size_B[i]);
-                }
+                        }*/
 
 #define epilogue_param                                                                      \
     M[gemmIdx], N[gemmIdx], ldd[gemmIdx],                                                   \
