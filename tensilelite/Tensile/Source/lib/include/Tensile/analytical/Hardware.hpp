@@ -350,9 +350,10 @@ namespace TensileLite
                 }
                 else
                 {
-                    std::cerr << "Warning: Latency not found for MI_M=" << MI_M << ", MI_N=" << MI_N
-                              << ", MI_K=" << MI_K << ", Element_Size=" << element_size
-                              << ". Returning latency value of 32 (really slow).\n";
+                    // Temporarily disable warning message for TF32 test build
+                    // std::cerr << "Warning: Latency not found for MI_M=" << MI_M << ", MI_N=" << MI_N
+                    //           << ", MI_K=" << MI_K << ", Element_Size=" << element_size
+                    //           << ". Returning latency value of 32 (really slow).\n";
                     return 32 / parallel_MI_CU; // Default latency if instruction is not found
                 }
             }
