@@ -1376,8 +1376,7 @@ void testing_matmul_with_bias(const Arguments& arg,
         do_batched[i]  = (arg.batch_count > 1);
         num_batches[i] = (do_batched[i] ? arg.batch_count : 1);
 
-        stride_a[i] = (do_batched[i] && arg.stride_a[i] >= lda[i] * A_col[i]) ? arg.stride_a[i]
-                                                                              : lda[i] * A_col[i];
+        stride_a[i] = do_batched[i] ? arg.stride_a[i] : lda[i] * A_col[i];
         stride_b[i] = do_batched[i] ? arg.stride_b[i] : ldb[i] * B_col[i];
         stride_c[i] = do_batched[i] ? arg.stride_c[i] : ldc[i] * N[i];
         stride_d[i] = do_batched[i] ? arg.stride_c[i] : ldd[i] * N[i];
