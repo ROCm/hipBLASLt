@@ -358,7 +358,9 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
     if(swizzleA && matA->batch_stride == 0)
     {
         //If batch_stride has never been assigned for swizzle, set it to the default value
-        setDefaultSwizzledBatchedStride(matA, matA->batch_stride);
+        //setDefaultSwizzledBatchedStride(matA, matA->batch_stride);
+        //改到host的stride
+        ;
     }
 
     rocblaslt_status isValid = rocblaslt_matmul_valid_args(matmul_descr,

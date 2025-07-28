@@ -133,10 +133,15 @@ int run_bench_test(Arguments&         arg,
         int64_t min_stride_c = arg.ldc[i] * arg.N[i];
         int64_t min_stride_d = arg.ldd[i] * arg.N[i];
         int64_t min_stride_e = arg.lde[i] * arg.N[i];
+
+        hipblaslt_cout << "min_stride_a: " << min_stride_a << std::endl;
+        hipblaslt_cout << "arg.stride_a[i]:"<< arg.stride_a[i] << std::endl;
+        //disable lda for swizzle_a
+        //min_stride_a = arg.swizzle_a ? arg.M[i] * arg.K[i] : min_stride_a;
         if(!any_stride && arg.stride_a[i] < min_stride_a)
         {
-            //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
-            //               << min_stride_a << std::endl;
+            hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
+                           << min_stride_a << std::endl;
             arg.stride_a[i] = min_stride_a;
         }
         if(!any_stride && arg.stride_b[i] < min_stride_b)
@@ -774,7 +779,6 @@ try
             arg.ldd[i] = ldd.size() >= length ? ldd[i] : ldd[ldd.size() - 1];
         if(lde.size() > 0)
             arg.lde[i] = lde.size() >= length ? lde[i] : lde[lde.size() - 1];
-
         if(stride_a.size() > 0)
             arg.stride_a[i]
                 = stride_a.size() >= length ? stride_a[i] : stride_a[stride_a.size() - 1];
