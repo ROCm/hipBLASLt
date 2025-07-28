@@ -846,6 +846,24 @@ Tests:
   unit_check: 1
   gpu_arch: '942'
 
+- name: matmul_swizzleA_stride0
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_swizzleA_support
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  lda: [129, 2440]
+  batch_count: 5
+  stride_a: 0
+  transA: T
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  bias_vector: [0, 1]
+  unit_check: 1
+  gpu_arch: '942'
+
 - name: matmul_swizzleA
   category: pre_checkin
   function:
@@ -855,7 +873,6 @@ Tests:
   K: [128, 129]
   lda: [129, 2440]
   batch_count: [1, 5]
-  stride_a: 0
   transA: T
   transB: N
   alpha: 1
