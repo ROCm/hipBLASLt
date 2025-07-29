@@ -1386,47 +1386,47 @@ void testing_matmul_with_bias(const Arguments& arg,
         stride_da[i] = stride_a[i];
         if(arg.swizzle_a && isSwizzleSupported(TiA))
         {
-            size_t stride_swizzle = 0;
+            int64_t stride_swizzle = 0;
 
             size_t MiM = 16, MiK = 0, __ = 0, PackK = 0;
             calculateKforSwizzling(TiA, arg, MiK, __, PackK);
             size_t K_block = MiK * PackK;
             stride_swizzle = ((M[i] + MiM - 1) / MiM) * MiM * ((K[i] + K_block - 1) / K_block) * K_block;
 
-            //TODO: support any stride_a for swizzled
-            //TODO: support stride_a=0 for swizzled
-            // if stride_da==0, it will apply setDefaultSwizzledBatchedStride()
-            // validation failed when stride_a is 0 for swizzled
-            //stride_da[i] = stride_swizzle;
-            //stride_a[i] = lda[i] * A_col[i];
+            //TODO:
+            // 1. support stride_a is 0 when swizzle --> fixed: setDefaultSwizzledBatchedStride() and setting of stride_da 
+            // 2. support any stride_a for swizzled --> not yet
+            // 3. support --any_stride for bench when swizzle --> fixed: min_stride_a and setting of stride_da 
 
-            //stride_da[i] = 0;
-            //stride_a[i] = 0;
-
-            //列TODO & show warning
-            //user給任意lda都不應該影響 (disable lda when swizzled)
-            //user給不正確的stride 可以錯
-
-            //if not ... then stride_swizzle = arg.stride_a
-            //  1. arg.stride_a != default stride = test['lda'] * K (user may give a value equal to default)
-            //  2. add a bool parameter ifGivenStrideA
-            //   3. ignore value if stride is given
-
-            //given stride > stride_swizzle (X)
-            //given stride > 0 (X)
-            if(do_batched[i] && stride_a[i] > stride_swizzle)
+            if(do_batched[i] && stride_a[i] >= stride_swizzle && stride_a[i] >= lda[i] * A_col[i])
             {
-                ;
-                //stride_da[i]   *= 2; //test if any stride will pass? failed
-                //stride_swizzle *= 2;
+                //hipblaslt_cerr << "Error: Not support stride_a[i] < lda[i] * A_col[i] when swizzle_a" << std::endl;
+                stride_da[i] = stride_swizzle;
 
+                //Do we need to set stride_a for swizzled device (stride_swizzle = stride_a) ?
+                //  1. stride_a != default stride = test['lda'] * K (user may give a value equal to default)
+                //  2. add a bool parameter ifGivenStrideA
+                //  3. ignore value if stride is given
+                //failed in hipblaslt-test, passed in hipblaslt-bench
                 //stride_da[i]   = stride_a[i];
-                //stride_swizzle = (size_t)stride_a[i];
+                //stride_swizzle = stride_a[i];
+
+                //failed in hipblaslt-test, passed in hipblaslt-bench
+                //stride_da[i]   += 64;
+                //stride_swizzle += 64;
             }
-            
+            else if(do_batched[i] && stride_a[i] != 0)
+            {
+                stride_da[i] = stride_swizzle;
+            }
+
+
             size_dA[i] = num_batches[i] * stride_swizzle;
         }
         hipblaslt_cout << "arg.stride_a[i] = " << arg.stride_a[i] << std::endl;
+        hipblaslt_cout << "arg.stride_b[i] = " << arg.stride_b[i] << std::endl;
+        hipblaslt_cout << "arg.stride_c[i] = " << arg.stride_c[i] << std::endl;
+        hipblaslt_cout << "arg.stride_d[i] = " << arg.stride_d[i] << std::endl;
         hipblaslt_cout << "stride_a[i] = " << stride_a[i] << std::endl;
         hipblaslt_cout << "stride_da[i] = " << stride_da[i] << std::endl;
 
