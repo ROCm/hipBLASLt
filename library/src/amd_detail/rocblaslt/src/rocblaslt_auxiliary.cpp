@@ -1961,7 +1961,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     matmul_desc.compute_type          = typeCompute;
     matmul_desc.scale_type            = typeD;
     rocblaslt_status status           = rocblaslt_status_success;
-    size_t           maxWorkspaceSize = std::numeric_limits<size_t>::max();
+    size_t           maxWorkspaceSize = (std::numeric_limits<size_t>::max)();
     try
     {
         int8_t alpha[16] = {0};
@@ -2005,7 +2005,7 @@ rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
+        size_t maxWorkspaceSize = (std::numeric_limits<size_t>::max)();
         status = getSolutionsFromIndex(handle, solutionIndex, heuristicResults, maxWorkspaceSize);
 
         log_api(__func__, "returnAlgoCount", heuristicResults.size());

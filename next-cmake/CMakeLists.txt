@@ -311,19 +311,17 @@ if(HIPBLASLT_ENABLE_HOST)
     set(CPACK_RPM_SPEC_MORE_DEFINE "%define __strip /opt/rocm/llvm/bin/llvm-strip") # need to generalize this
     get_target_property(hipblaslt_public_headers roc::hipblaslt INTERFACE_SOURCES)
 
-    install(
+    rocm_install(
         FILES ${hipblaslt_public_headers}
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt"
-        COMPONENT hipBLASLt_Development
     )
     # temporary workaround to avoid updating downstream components
     # TODO: remove the follow file install once rocblas is updated
-    install(
+    rocm_install(
         FILES
             "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h"
             "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        COMPONENT hipBLASLt_Development
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt"
     )
 
     rocm_install_targets(TARGETS hipblaslt)
@@ -351,7 +349,7 @@ endif()
 
 if(HIPBLASLT_ENABLE_DEVICE)
     if(WIN32)
-        set(HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library")
+        set(HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}bin/hipblaslt" CACHE PATH "path to tensile library")
     else()
         set(HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library")
     endif()

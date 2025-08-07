@@ -270,8 +270,8 @@ namespace TensileLite
         std::vector<TensorDescriptor> m_tensors;
         std::vector<std::string>      m_names;
 
-        size_t m_workspaceSize            = std::numeric_limits<size_t>::max();
-        size_t m_workspaceSizeGroupedGemm = std::numeric_limits<size_t>::max();
+        size_t m_workspaceSize            = (std::numeric_limits<size_t>::max)();
+        size_t m_workspaceSizeGroupedGemm = (std::numeric_limits<size_t>::max)();
 
         rocisa::DataType m_f32XdlMathOp;
         rocisa::DataType m_computeInputType;
@@ -1220,7 +1220,7 @@ namespace TensileLite
         bool             m_cEqualsD                = false;
         bool             m_stridedBatched          = true;
         bool             m_groupedGemm             = false;
-        int              m_groupedGemmCount        = std::numeric_limits<int>::max();
+        int              m_groupedGemmCount        = (std::numeric_limits<int>::max)();
         bool             m_highPrecisionAccumulate = false;
         bool             m_deterministicMode       = false;
         bool             m_eligibleForPK           = true;
