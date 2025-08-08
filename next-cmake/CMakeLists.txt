@@ -322,7 +322,7 @@ if(HIPBLASLT_ENABLE_HOST)
         FILES
             "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-export.h"
             "${CMAKE_CURRENT_BINARY_DIR}/host-library/include/hipblaslt/hipblaslt-version.h"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/hipblaslt"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
 
     rocm_install_targets(TARGETS hipblaslt)
