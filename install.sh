@@ -170,12 +170,12 @@ install_packages( )
   local library_dependencies_sles=( "gcc-fortran" "make" "gcc-c++" "libcxxtools9" "rpm-build" )
   local library_dependencies_mariner=( "gfortran" "make" "rpm-build" )
 
-  local client_dependencies_ubuntu=( "python3" "python3-yaml" libopenblas-dev)
-  local client_dependencies_centos=( "python36" "python3-pip" openblas-devel)
-  local client_dependencies_centos8=( "python39" "python3-virtualenv" openblas-devel)
-  local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" openblas-devel)
-  local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" openblas-devel)
-  local client_dependencies_mariner=( "python3" "python3-yaml" openblas-devel)
+  local client_dependencies_ubuntu=( "python3" "python3-yaml" "libopenblas-dev")
+  local client_dependencies_centos=( "python36" "python3-pip" "epel-release" "openblas-devel --enablerepo=crb")
+  local client_dependencies_centos8=( "python39" "python3-virtualenv" "epel-release" "openblas-devel --enablerepo=crb")
+  local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" "openblas-devel")
+  local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" "openblas-devel")
+  local client_dependencies_mariner=( "python3" "python3-yaml" "openblas-devel")
 
   if [[ "${tensile_msgpack_backend}" == true ]]; then
     library_dependencies_ubuntu+=("libmsgpack-dev")
