@@ -51,7 +51,8 @@ endif()
 
 set(HIPBLASLT_ENABLE_DEVICE ON CACHE BOOL "Build hipBLASLt device libraries.")
 set(HIPBLASLT_ENABLE_CLIENT ON CACHE BOOL "Build hipBLASLt client apps.")
-cmake_dependent_option(HIPBLASLT_ENABLE_HOST "Build hipBLASLt host library." ON "HIPBLASLT_ENABLE_CLIENT" OFF)
+set(HIPBLASLT_ENABLE_HOST ON CACHE BOOL "Build hipBLASLt host libraries.")
+#cmake_dependent_option(HIPBLASLT_ENABLE_HOST "Build hipBLASLt host library." ON "HIPBLASLT_ENABLE_CLIENT" OFF)
 set(HIPBLASLT_ENABLE_COVERAGE OFF CACHE BOOL "Build gcov support")
 
 if(HIPBLASLT_ENABLE_CLIENT)
