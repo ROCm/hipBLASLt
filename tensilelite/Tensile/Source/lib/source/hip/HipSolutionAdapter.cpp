@@ -28,6 +28,8 @@
 #include <hip/hip_runtime.h>
 
 #include <cstddef>
+#include <unistd.h>
+#include <thread>
 
 #include <Tensile/Debug.hpp>
 #include <Tensile/EmbeddedData.hpp>
@@ -86,9 +88,15 @@ namespace TensileLite
             Debug::Instance().markerStart("loadCodeObjectFile", path);
             hipModule_t module;
 
+            int device;
+            hipGetDevice(&device);
+            pid_t pid = getpid();
+            auto thread_id = std::this_thread::get_id();
+            std::cout << "started loading code object " << path << "on " << device << " pid/tid " << pid << "/" << thread_id << std::endl;
+
             HIP_CHECK_RETURN(hipModuleLoad(&module, path.c_str()));
 
-            if(m_debug)
+            //if(m_debug)
                 std::cout << "loaded code object " << path << std::endl;
 
             {
@@ -246,6 +254,14 @@ namespace TensileLite
             for(auto module : m_modules)
             {
                 err = hipModuleGetFunction(&rv, module, name.c_str());
+                if(err != hipSuccess)
+                {
+                    int device;
+                    hipGetDevice(&device);
+                    pid_t pid = getpid();
+                    auto thread_id = std::this_thread::get_id();
+                    std::cout << "On " << device << " tip/pid " << thread_id << "/" << pid << " hipModuleGetFunction err " << err << " for kernel " << name << std::endl;
+                }
 
                 if(err == hipSuccess)
                 {
@@ -336,7 +352,19 @@ namespace TensileLite
             }
 
             hipFunction_t function;
-            HIP_CHECK_RETURN(getKernel(function, kernel.kernelName));
+            //HIP_CHECK_RETURN(getKernel(function, kernel.kernelName));
+            int device;
+            hipGetDevice(&device);
+            pid_t pid = getpid();
+            auto thread_id = std::this_thread::get_id();
+
+            auto err1 = getKernel(function, kernel.kernelName);
+            if (err1)
+            {
+                std::cout << "on " << device << " pid/tid " << pid << "/" << thread_id
+                          << "Error " << err1 << " getting kernel " << kernel.kernelName << std::endl;
+                return err1;
+            }
 
             void*  kernelArgs = const_cast<void*>(kernel.args.data());
             size_t argsSize   = kernel.args.size();
@@ -349,7 +377,8 @@ namespace TensileLite
 
             if(startEvent != nullptr)
                 HIP_CHECK_RETURN(hipEventRecord(startEvent, stream));
-            HIP_CHECK_RETURN(hipExtModuleLaunchKernel(function,
+            //HIP_CHECK_RETURN(hipExtModuleLaunchKernel(function,
+            auto err2 = hipExtModuleLaunchKernel(function,
                                                       kernel.numWorkItems.x,
                                                       kernel.numWorkItems.y,
                                                       kernel.numWorkItems.z,
@@ -362,7 +391,17 @@ namespace TensileLite
                                                       (void**)&hipLaunchParams,
                                                       nullptr, // event
                                                       nullptr // event
-                                                      ));
+                                                      );
+            if (err2)
+            {
+                std::cout << "on " << device << " pid/tid " << pid << "/" << thread_id
+                          << "Error " << err2 << " launching kernel " << kernel.kernelName << std::endl;
+                std::cout << "Kernel " << kernel.kernelName << std::endl;
+                std::cout << " l" << kernel.workGroupSize << " x g" << kernel.numWorkGroups << " = "
+                          << kernel.numWorkItems << std::endl;
+                std::cout << kernel.args;
+                return err2;
+            }
             if(stopEvent != nullptr)
                 HIP_CHECK_RETURN(hipEventRecord(stopEvent, stream));
             return hipSuccess;

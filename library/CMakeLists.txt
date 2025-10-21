@@ -211,10 +211,10 @@ if ( NOT BUILD_CUDA )
       set( TENSILE_DATA_COMPONENT_NAME devel )
     endif()
 
-      rocm_install(
-        DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
-        DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
-        COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
+      #rocm_install(
+      #  DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+      #  DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
+      #  COMPONENT ${TENSILE_DATA_COMPONENT_NAME})
     endif()
 endif()
 

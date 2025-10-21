@@ -35,4 +35,4 @@ fi
 
 rocm_path="${ROCM_PATH:-/opt/rocm}"
 clang_path="${rocm_path}/bin/amdclang++"
-$clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"
+#$clang_path -x hip "$sources" --offload-arch="${archs}" -c --offload-device-only -Xoffload-linker --build-id=$build_id_kind $additional_options -o "$dest"

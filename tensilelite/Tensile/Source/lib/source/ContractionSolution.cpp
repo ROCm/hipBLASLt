@@ -38,6 +38,10 @@
 #include <cstdlib>
 #include <random>
 
+#include <unistd.h>
+#include <sys/types.h>
+#include <thread>
+
 #ifdef ENABLE_ROCTX
 #include <roctracer/roctx.h>
 #endif
@@ -2196,6 +2200,17 @@ namespace TensileLite
 
         name += "_VW" + std::to_string(vw);
 
+        int device;
+        hipGetDevice(&device);
+        pid_t pid = getpid();
+        auto thread_id = std::this_thread::get_id();
+        std::cout << "Calling PostGSU1 on: " << device << " pid/tid " << pid << "/" << thread_id << std::endl;
+        std::cout << "gsu = " << gsu << std::endl;
+        std::cout << "gsuTemp = " << gsuTemp << std::endl;
+        std::cout << "sizeMapping.globalSplitUPGR = " << sizeMapping.globalSplitUPGR << std::endl;
+        std::cout << "vw = " << vw << std::endl;
+        std::cout << "sizeMapping.streamK = " << sizeMapping.streamK << std::endl;
+
         return name;
     }
 
@@ -2491,9 +2506,12 @@ namespace TensileLite
                                    ContractionSolution::Inputs const&  inputs,
                                    Hardware const&                     hardware) const
     {
-        if(Debug::Instance().printWinningKernelName())
-            std::cout << "Running kernel: " << this->KernelName() << std::endl;
-
+        if(Debug::Instance().printWinningKernelName()){
+            auto thread_id = std::this_thread::get_id();
+            pid_t process_id = getpid();
+            std::cout << "Running kernel on tid/pid: " << thread_id << "/" << process_id << this->KernelName() << std::endl;
+        }
+        
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problem.alphaType();
         auto betaType  = problem.betaType();

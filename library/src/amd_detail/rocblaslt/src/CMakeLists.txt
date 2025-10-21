@@ -107,7 +107,9 @@ if( BUILD_WITH_TENSILE )
   set_target_properties( TensileHost PROPERTIES C_VISIBILITY_PRESET hidden)
 
   # Tensile host depends on libs build target
-  add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  if(NOT $ENV{TENSILE_SKIP_LIBRARY})
+      add_dependencies( TensileHost TENSILE_LIBRARY_TARGET )
+  endif()
 
   if( ROCBLASLT_SHARED_LIBS )
     set( BUILD_SHARED_LIBS ON )
