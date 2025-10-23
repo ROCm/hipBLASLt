@@ -401,9 +401,15 @@ if(HIPBLASLT_ENABLE_CLIENT)
             hipblaslt-bench-extop-matrixtransform
             hipblaslt-bench-extop-softmax
             hipblaslt-bench-extop-amax
-            hipblaslt-sequence
         COMPONENT benchmarks
     )
+    if(HIPBLASLT_ENABLE_LLVM)
+        rocm_install(
+            TARGETS
+                hipblaslt-sequence
+            COMPONENT benchmarks
+        )
+    endif()
     rocm_install(
         FILES
             "${HIPBLASLT_CLIENTS_DIR}/include/hipblaslt_common.yaml"
