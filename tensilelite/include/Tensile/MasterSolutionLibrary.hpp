@@ -178,6 +178,7 @@ namespace TensileLite
                                                                Hardware const&  hardware,
                                                                const int index) const override
         {
+            std::lock_guard<std::mutex> lock(solutionsGuard);
             if(solutions.find(index) == solutions.end())
             {
                 return std::shared_ptr<MySolution>();
@@ -195,6 +196,7 @@ namespace TensileLite
                                                                const int       index) const override
         {
             loadLibrary(index);
+            std::lock_guard<std::mutex> lock(solutionsGuard);
             if(solutions.find(index) == solutions.end())
             {
                 return std::shared_ptr<MySolution>();
