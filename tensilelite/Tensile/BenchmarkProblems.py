@@ -440,6 +440,7 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
                 "ForkParams": benchmarkStep.forkParams,
                 "ParamGroups": benchmarkStep.paramGroups,
                 "CustomKernels": benchmarkStep.customKernels,
+                "InternalSupportParams": benchmarkStep.internalSupportParams,
                 "CustomKernelWildcard": benchmarkStep.customKernelWildcard
             }
             LibraryIO.writeYAML(cachePath, cacheData)
@@ -464,8 +465,8 @@ def _benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSize
             writeClientConfigIni(True, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
                                  benchmarkStep.factorDimArgs, benchmarkStep.activationArgs,
                                  benchmarkStep.icacheFlushArgs, conProblemType,
-                                 stepBaseDir, codeObjectFiles, resultsFileName,
-                                 outFile, deviceId, probSolMap=probSolMap)
+                                 sourcePath, codeObjectFiles, resultsFileName,
+                                 outFile, deviceId, gfxName, probSolMap=probSolMap)
 
         # I think the size portion of this yaml could be removed,
         # but for now it's needed, so we update it even in the cache case
