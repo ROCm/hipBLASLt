@@ -794,7 +794,6 @@ namespace
         if(rocblaslt::Debug::Instance().printLogAsMarker())
         {
             rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
-            rocblaslt::Debug::Instance().logMarkerStop();
         }
         if(rocblaslt::Debug::Instance().benchPrintCommand())
         {
@@ -1141,7 +1140,6 @@ namespace
         if(rocblaslt::Debug::Instance().printLogAsMarker())
         {
             rocblaslt::Debug::Instance().logMarkerStart(s.c_str());
-            rocblaslt::Debug::Instance().logMarkerStop();
         }
         if(rocblaslt::Debug::Instance().benchPrintCommand())
         {
@@ -2729,6 +2727,8 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
             }
             status = hip2RocStatus(
                 adapter->launchKernels(kernels, prob.stream, nullptr, nullptr, isPreloaded));
+            if(rocblaslt::Debug::Instance().printLogAsMarker())
+                rocblaslt::Debug::Instance().logMarkerStop();
         }
     }
     catch(const std::exception& e)
@@ -3161,6 +3161,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                               true);
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
+            if(rocblaslt::Debug::Instance().printLogAsMarker())
+                rocblaslt::Debug::Instance().logMarkerStop();
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -3213,6 +3215,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
             }
 
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
+            if(rocblaslt::Debug::Instance().printLogAsMarker())
+                rocblaslt::Debug::Instance().logMarkerStop();
         }
         else
         {
@@ -3394,6 +3398,8 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 }
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            if(rocblaslt::Debug::Instance().printLogAsMarker())
+                rocblaslt::Debug::Instance().logMarkerStop();
         }
         else
         {
