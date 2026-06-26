@@ -38,6 +38,7 @@
 #include <string>
 
 #include "Debug.hpp"
+#include "rocblaslt-auxiliary.h"
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
@@ -232,9 +233,9 @@ hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
 try
 {
     rocblaslt::Debug::Instance().markerStart("hipblasLtMatmulDescCreate");
+    const bool requestedTf32 = (computeType == hipblasComputeType_t::HIPBLAS_COMPUTE_32F_FAST_TF32);
     char* override = std::getenv("HIPBLASLT_OVERRIDE_COMPUTE_TYPE_XF32");
-    if(override && (computeType == hipblasComputeType_t::HIPBLAS_COMPUTE_32F_FAST_TF32)
-       && (std::string(override) != ""))
+    if(override && requestedTf32 && (std::string(override) != ""))
     {
         switch(std::stoi(std::string(override)))
         {
@@ -248,6 +249,10 @@ try
         default:
             break;
         }
+    }
+    if(requestedTf32 && !rocblaslt_internal_supports_xf32_compute())
+    {
+        computeType = hipblasComputeType_t::HIPBLAS_COMPUTE_32F;
     }
     auto status = RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
         (rocblaslt_matmul_desc*)matmulDesc, (rocblaslt_compute_type)computeType, scaleType));

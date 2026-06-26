@@ -1307,16 +1307,6 @@ namespace rocisa
             return {};
         }
 
-        std::vector<InstructionInput> getDstParams() const override
-        {
-            return {};
-        }
-
-        std::vector<InstructionInput> getSrcParams() const override
-        {
-            return {};
-        }
-
         std::string toString() const override
         {
             return formatWithComment(instStr);
