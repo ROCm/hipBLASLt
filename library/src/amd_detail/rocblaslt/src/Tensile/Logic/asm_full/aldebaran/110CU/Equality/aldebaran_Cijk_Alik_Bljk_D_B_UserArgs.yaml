@@ -333,7 +333,7 @@ Solutions:
   HalfPLRB: false
   ISA: [9, 0, 10]
   InitCIterWmma: 0
-  InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: false, SupportCustomWGM: true,
+  InternalSupportParams: {SupportCustomStaggerU: false, SupportCustomWGM: true,
     SupportUserGSU: true, UseSFC: false, UseUniversalArgs: true}
   Kernel: true
   LDSSegInterleaveOffsets: null
@@ -582,7 +582,7 @@ Solutions:
   HalfPLRB: false
   ISA: [9, 0, 10]
   InitCIterWmma: 0
-  InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: false, SupportCustomWGM: true,
+  InternalSupportParams: {SupportCustomStaggerU: false, SupportCustomWGM: true,
     SupportUserGSU: true, UseSFC: false, UseUniversalArgs: true}
   Kernel: true
   LDSSegInterleaveOffsets: null
@@ -833,7 +833,7 @@ Solutions:
   HalfPLRB: false
   ISA: [9, 0, 10]
   InitCIterWmma: 0
-  InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: false, SupportCustomWGM: true,
+  InternalSupportParams: {SupportCustomStaggerU: false, SupportCustomWGM: true,
     SupportUserGSU: true, UseSFC: false, UseUniversalArgs: true}
   Kernel: true
   LDSSegInterleaveOffsets: null
@@ -1084,7 +1084,7 @@ Solutions:
   HalfPLRB: false
   ISA: [9, 0, 10]
   InitCIterWmma: 0
-  InternalSupportParams: {KernArgsVersion: 2, SupportCustomStaggerU: false, SupportCustomWGM: true,
+  InternalSupportParams: {SupportCustomStaggerU: false, SupportCustomWGM: true,
     SupportUserGSU: true, UseSFC: false, UseUniversalArgs: true}
   Kernel: true
   LDSSegInterleaveOffsets: null
